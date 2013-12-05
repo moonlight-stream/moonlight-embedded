@@ -2,10 +2,12 @@ package com.limelight;
 
 import javax.swing.JOptionPane;
 
+import com.limelight.binding.PlatformBinding;
 import com.limelight.gui.MainFrame;
 import com.limelight.gui.StreamFrame;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
+import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 
 public class Limelight implements NvConnectionListener {
 	public static final double VERSION = 1.0;
@@ -21,8 +23,11 @@ public class Limelight implements NvConnectionListener {
 	private void startUp() {
 		streamFrame = new StreamFrame();
 		streamFrame.build();
-		conn = new NvConnection(host, streamFrame, this);
-		conn.start();
+		conn = new NvConnection(host, this);
+		conn.start(PlatformBinding.getDeviceName(), streamFrame,
+				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
+				PlatformBinding.getAudioRenderer(),
+				PlatformBinding.getVideoDecoderRenderer());
 	}
 
 	public static void createInstance(String host) {
@@ -38,7 +43,6 @@ public class Limelight implements NvConnectionListener {
 	@Override
 	public void stageStarting(Stage stage) {
 		System.out.println("Starting "+stage.getName());
-
 	}
 
 	@Override
@@ -49,7 +53,6 @@ public class Limelight implements NvConnectionListener {
 	public void stageFailed(Stage stage) {
 		JOptionPane.showMessageDialog(streamFrame, "Starting "+stage.getName()+" failed", "Connection Error", JOptionPane.ERROR_MESSAGE);
 		conn.stop();
-
 	}
 
 	@Override
@@ -61,6 +64,11 @@ public class Limelight implements NvConnectionListener {
 		e.printStackTrace();
 		JOptionPane.showMessageDialog(streamFrame, "The connection failed unexpectedly", "Connection Terminated", JOptionPane.ERROR_MESSAGE);
 		conn.stop();
+	}
+
+	@Override
+	public void displayMessage(String message) {
+		JOptionPane.showMessageDialog(streamFrame, message, "Limelight", JOptionPane.INFORMATION_MESSAGE);
 	}
 }
 

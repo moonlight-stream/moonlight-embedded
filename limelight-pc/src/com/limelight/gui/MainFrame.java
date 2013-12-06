@@ -5,26 +5,37 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.xmlpull.v1.XmlPullParserException;
+
 import com.limelight.Limelight;
+import com.limelight.binding.PlatformBinding;
+import com.limelight.nvstream.NvConnection;
+import com.limelight.nvstream.http.NvHTTP;
 
 public class MainFrame {
 	private JTextField hostField;
 	private JButton pair;
 	private JButton stream;
+	private JFrame limeFrame;
 	
 	public MainFrame() {
 	}
 	
 	public void build() {
-		JFrame limeFrame = new JFrame("Limelight V" + Limelight.VERSION);
+		limeFrame = new JFrame("Limelight V" + Limelight.VERSION);
 		limeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Container mainPane = limeFrame.getContentPane();
 		
@@ -57,9 +68,15 @@ public class MainFrame {
 		pairBox.add(pair);
 		pairBox.add(Box.createHorizontalGlue());
 		
+		Box hostBox = Box.createHorizontalBox();
+		hostBox.add(Box.createHorizontalStrut(20));
+		hostBox.add(hostField);
+		hostBox.add(Box.createHorizontalStrut(20));
+		
+		
 		Box contentBox = Box.createVerticalBox();
 		contentBox.add(Box.createVerticalStrut(20));
-		contentBox.add(hostField);
+		contentBox.add(hostBox);
 		contentBox.add(Box.createVerticalStrut(10));
 		contentBox.add(streamBox);
 		contentBox.add(Box.createVerticalStrut(10));
@@ -69,8 +86,9 @@ public class MainFrame {
 		
 		centerPane.add(contentBox);
 		mainPane.add(centerPane, "Center");
-		
-		limeFrame.setSize(1000, 800);
+
+		limeFrame.setSize(300, 175);
+		limeFrame.setResizable(false);
 		limeFrame.setVisible(true);
 		
 	}
@@ -85,6 +103,56 @@ public class MainFrame {
 	}
 	
 	private ActionListener createPairButtonListener() {
-		return null;
+		return new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						String macAddress;
+						try {
+							macAddress = NvConnection.getMacAddressString();
+						} catch (SocketException e) {
+							e.printStackTrace();
+							return;
+						}
+						
+						if (macAddress == null) {
+							System.out.println("Couldn't find a MAC address");
+							return;
+						}
+						
+						NvHTTP httpConn;
+						String message;
+						try {
+							httpConn = new NvHTTP(InetAddress.getByName(hostField.getText()),
+									macAddress, PlatformBinding.getDeviceName());
+							try {
+								if (httpConn.getPairState()) {
+									message = "Already paired";
+								}
+								else {
+									int session = httpConn.getSessionId();
+									if (session == 0) {
+										message = "Pairing was declined by the target";
+									}
+									else {
+										message = "Pairing was successful";
+									}
+								}
+							} catch (IOException e) {
+								message = e.getMessage();
+							} catch (XmlPullParserException e) {
+								message = e.getMessage();
+							}
+						} catch (UnknownHostException e1) {
+							message = "Failed to resolve host";
+						}
+						
+						JOptionPane.showMessageDialog(limeFrame, message, "Limelight", JOptionPane.INFORMATION_MESSAGE);
+					}
+				}).start();
+			}
+		};
 	}
 }

@@ -17,7 +17,7 @@ import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 
 public class Limelight implements NvConnectionListener {
 	public static final double VERSION = 1.0;
- 
+
 	private String host;
 	private StreamFrame streamFrame;
 	private NvConnection conn;
@@ -42,22 +42,24 @@ public class Limelight implements NvConnectionListener {
 	}
 
 	public static void main(String args[]) {
-		// take the menu bar off the jframe
-		System.setProperty("apple.laf.useScreenMenuBar", "true");
+		//fix the menu bar if we are running in osx
+		if (System.getProperty("os.name").contains("Mac OS X")) {
+			// take the menu bar off the jframe
+			System.setProperty("apple.laf.useScreenMenuBar", "true");
 
-		// set the name of the application menu item
-		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Limelight");
+			// set the name of the application menu item
+			System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Limelight");
 
-		// set the look and feel
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			System.out.println("OH Shit...");
-			e.printStackTrace();
-			System.exit(1);
-		} 
-		
-		
+			// set the look and feel
+			try {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (Exception e) {
+				System.out.println("OH Shit...");
+				e.printStackTrace();
+				System.exit(1);
+			} 
+		}
+
 		MainFrame limeFrame = new MainFrame();
 		limeFrame.build();
 	}

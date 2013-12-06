@@ -3,6 +3,7 @@ package com.limelight.gui;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -35,8 +36,9 @@ public class MainFrame {
 	}
 	
 	public void build() {
-		limeFrame = new JFrame("Limelight V" + Limelight.VERSION);
+		limeFrame = new JFrame("Limelight");
 		limeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
 		Container mainPane = limeFrame.getContentPane();
 		
 		mainPane.setLayout(new BorderLayout());
@@ -86,8 +88,10 @@ public class MainFrame {
 		
 		centerPane.add(contentBox);
 		mainPane.add(centerPane, "Center");
-
+		
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		limeFrame.setSize(300, 175);
+		limeFrame.setLocation(dim.width/2-limeFrame.getSize().width/2, dim.height/2-limeFrame.getSize().height/2);
 		limeFrame.setResizable(false);
 		limeFrame.setVisible(true);
 		

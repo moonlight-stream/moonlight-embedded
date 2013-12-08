@@ -34,7 +34,7 @@ public class JavaxAudioRenderer implements AudioRenderer {
 	@Override
 	public void streamInitialized(int channelCount, int sampleRate) {
 		AudioFormat audioFormat = new AudioFormat(sampleRate, 16, channelCount, true, true);
-		DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat, OpusDecoder.getMaxOutputShorts());
+		DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat, OpusDecoder.getMaxOutputShorts()*8);
 		try {
 			soundLine = (SourceDataLine) AudioSystem.getLine(info);
 			soundLine.open(audioFormat);

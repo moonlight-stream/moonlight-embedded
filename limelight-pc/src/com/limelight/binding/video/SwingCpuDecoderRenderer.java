@@ -2,6 +2,7 @@ package com.limelight.binding.video;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
 
 import javax.swing.JFrame;
@@ -16,9 +17,7 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 	private Thread rendererThread;
 	private int targetFps;
 	private int width, height;
-	
-	private byte[] imageData;
-	private int[] imageBuffer;
+
 	private Graphics graphics;
 	private BufferedImage image;
 	
@@ -44,12 +43,9 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 		}
 		
 		graphics = ((JFrame)renderTarget).getGraphics();
-		
+
 		image = new BufferedImage(width, height,
-	            BufferedImage.TYPE_INT_ARGB); 
-		
-		imageData = new byte[width * height * 4]; // RGBA per pixel
-		imageBuffer = new int[width * height];
+	            BufferedImage.TYPE_INT_BGR);
 		
 		decoderBuffer = ByteBuffer.allocate(DECODER_BUFFER_SIZE + AvcDecoder.getInputPaddingSize());
 		
@@ -62,6 +58,7 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 			@Override
 			public void run() {
 				long nextFrameTime = System.currentTimeMillis();
+				int[] imageBuffer = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
 				
 				while (!isInterrupted())
 				{
@@ -76,9 +73,7 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 					}
 					
 					nextFrameTime = computePresentationTimeMs(targetFps);
-					if (AvcDecoder.getRgbFrame(imageData, imageData.length)) {
-						ByteBuffer.wrap(imageData).asIntBuffer().get(imageBuffer);
-						image.setRGB(0, 0, width, height, imageBuffer, 0, width);
+					if (AvcDecoder.getRgbFrameInt(imageBuffer, imageBuffer.length)) {
 						graphics.drawImage(image, 0, 0, width, height, null);
 					}
 				}

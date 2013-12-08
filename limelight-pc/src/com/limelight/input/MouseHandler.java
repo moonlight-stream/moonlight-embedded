@@ -8,18 +8,20 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import com.limelight.nvstream.NvConnection;
+import com.limelight.nvstream.input.MouseButtonPacket;
 
 public class MouseHandler implements MouseListener, MouseMotionListener {
 	private NvConnection conn;
 	private Robot robot;
-	private JFrame parent;
 	private Dimension size;
+	private JFrame parent;
 	private int lastX = 0;
 	private int lastY = 0;
-	
-	
+
+
 	public MouseHandler(NvConnection conn, JFrame parent) {
 		this.conn = conn;
 		this.parent = parent;
@@ -29,8 +31,9 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 			e.printStackTrace();
 		}
 		size = new Dimension();
+
 	}
-	
+
 	@Override
 	public void mouseClicked(MouseEvent e) {
 	}
@@ -41,8 +44,6 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 
 	@Override
 	public void mouseExited(MouseEvent e) {
-		System.out.println("Mouse Exiting!");
-		parent.getSize(size);
 		robot.mouseMove(size.width / 2, size.height / 2);
 		lastX = size.width / 2;
 		lastY = size.height / 2;
@@ -50,12 +51,44 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		conn.sendMouseButtonDown();
+		byte mouseButton = 0x0;
+		
+		if (SwingUtilities.isLeftMouseButton(e)) {
+			mouseButton = MouseButtonPacket.BUTTON_1;
+		}
+		
+		if (SwingUtilities.isMiddleMouseButton(e)) {
+			mouseButton = MouseButtonPacket.BUTTON_2;
+		}
+		
+		if (SwingUtilities.isRightMouseButton(e)) {
+			mouseButton = MouseButtonPacket.BUTTON_3;
+		}
+		
+		if (mouseButton > 0) {
+			conn.sendMouseButtonDown(mouseButton);
+		}
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		conn.sendMouseButtonUp();
+		byte mouseButton = 0x0;
+		
+		if (SwingUtilities.isLeftMouseButton(e)) {
+			mouseButton = MouseButtonPacket.BUTTON_1;
+		}
+		
+		if (SwingUtilities.isMiddleMouseButton(e)) {
+			mouseButton = MouseButtonPacket.BUTTON_2;
+		}
+		
+		if (SwingUtilities.isRightMouseButton(e)) {
+			mouseButton = MouseButtonPacket.BUTTON_3;
+		}
+		
+		if (mouseButton > 0) {	
+			conn.sendMouseButtonUp(mouseButton);
+		}
 	}
 
 	@Override
@@ -70,6 +103,18 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 		conn.sendMouseMove((short)(x - lastX), (short)(y - lastY));
 		lastX = x;
 		lastY = y;
-	}
+		
+		parent.getSize(size);
 
+		if (x < size.width / 2 - 500 || x > size.width / 2 + 500) {
+			robot.mouseMove(size.width / 2, y);
+			lastX = size.width / 2;
+		}
+		if (y < size.height / 2 - 300 || y > size.height / 2 + 300) {
+			robot.mouseMove(x, size.height / 2);
+			lastY = size.height / 2;
+		}
+		
+	}
+	
 }

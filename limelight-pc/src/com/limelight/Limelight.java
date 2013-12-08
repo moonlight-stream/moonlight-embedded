@@ -1,13 +1,7 @@
 package com.limelight;
 
-import java.net.NetworkInterface;
-import java.util.Enumeration;
-
 import javax.swing.JOptionPane;
-import javax.swing.JSpinner;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-
 import com.limelight.binding.PlatformBinding;
 import com.limelight.gui.MainFrame;
 import com.limelight.gui.StreamFrame;
@@ -21,19 +15,19 @@ public class Limelight implements NvConnectionListener {
 	private String host;
 	private StreamFrame streamFrame;
 	private NvConnection conn;
-
+	
 	public Limelight(String host) {
 		this.host = host;
 	}
 
 	private void startUp() {
 		streamFrame = new StreamFrame();
-		streamFrame.build();
 		conn = new NvConnection(host, this);
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
+		streamFrame.build(conn);
 	}
 
 	public static void createInstance(String host) {

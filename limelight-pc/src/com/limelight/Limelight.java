@@ -57,7 +57,7 @@ public class Limelight implements NvConnectionListener {
 				System.out.println("OH Shit...");
 				e.printStackTrace();
 				System.exit(1);
-			} 
+			};
 		}
 
 		MainFrame limeFrame = new MainFrame();

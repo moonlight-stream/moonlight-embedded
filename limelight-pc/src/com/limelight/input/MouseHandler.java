@@ -51,13 +51,11 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 	@Override
 	public void mousePressed(MouseEvent e) {
 		conn.sendMouseButtonDown();
-		e.consume();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		conn.sendMouseButtonUp();
-		e.consume();
 	}
 
 	@Override
@@ -72,7 +70,6 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 		conn.sendMouseMove((short)(x - lastX), (short)(y - lastY));
 		lastX = x;
 		lastY = y;
-		e.consume();
 	}
 
 }

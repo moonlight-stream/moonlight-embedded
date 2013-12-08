@@ -26,6 +26,8 @@ public class StreamFrame extends JFrame {
 		this.addMouseListener(mouse);
 		this.addMouseMotionListener(mouse);
 		
+		this.setFocusTraversalKeysEnabled(false);
+		
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setSize(1280,720);
 		//This might break if the screen res is too small...not sure though

@@ -15,6 +15,7 @@ public class Limelight implements NvConnectionListener {
 	private String host;
 	private StreamFrame streamFrame;
 	private NvConnection conn;
+	private boolean connectionFailed;
 	
 	public Limelight(String host) {
 		this.host = host;
@@ -80,8 +81,11 @@ public class Limelight implements NvConnectionListener {
 	@Override
 	public void connectionTerminated(Exception e) {
 		e.printStackTrace();
-		JOptionPane.showMessageDialog(streamFrame, "The connection failed unexpectedly", "Connection Terminated", JOptionPane.ERROR_MESSAGE);
-		conn.stop();
+		if (!connectionFailed) {
+			connectionFailed = true;
+			JOptionPane.showMessageDialog(streamFrame, "The connection failed unexpectedly", "Connection Terminated", JOptionPane.ERROR_MESSAGE);
+			conn.stop();
+		}
 	}
 
 	@Override

@@ -1,5 +1,8 @@
 *.class
 
+#ignore mac DS_STORE
+.DS_STORE
+
 #temp files
 \#*#
 

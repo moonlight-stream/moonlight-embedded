@@ -1,5 +1,6 @@
 package com.limelight;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import com.limelight.binding.PlatformBinding;
@@ -16,6 +17,7 @@ public class Limelight implements NvConnectionListener {
 	private StreamFrame streamFrame;
 	private NvConnection conn;
 	private boolean connectionFailed;
+	private static JFrame limeFrame;
 	
 	public Limelight(String host) {
 		this.host = host;
@@ -31,6 +33,12 @@ public class Limelight implements NvConnectionListener {
 		streamFrame.build(conn);
 	}
 
+	private static void createFrame() {
+		MainFrame main = new MainFrame();
+		main.build();
+		limeFrame = main.getLimeFrame();
+	}
+	
 	public static void createInstance(String host) {
 		Limelight limelight = new Limelight(host);
 		limelight.startUp();
@@ -54,14 +62,13 @@ public class Limelight implements NvConnectionListener {
 				System.exit(1);
 			};
 		}
-
-		MainFrame limeFrame = new MainFrame();
-		limeFrame.build();
+		createFrame();
 	}
 
 	@Override
 	public void stageStarting(Stage stage) {
 		System.out.println("Starting "+stage.getName());
+		streamFrame.showSpinner(stage);
 	}
 
 	@Override
@@ -70,12 +77,14 @@ public class Limelight implements NvConnectionListener {
 
 	@Override
 	public void stageFailed(Stage stage) {
-		JOptionPane.showMessageDialog(streamFrame, "Starting "+stage.getName()+" failed", "Connection Error", JOptionPane.ERROR_MESSAGE);
+		streamFrame.dispose();
 		conn.stop();
+		displayError("Connection Error", "Starting " + stage.getName() + " failed");
 	}
 
 	@Override
 	public void connectionStarted() {
+		streamFrame.hideSpinner();
 	}
 
 	@Override
@@ -83,14 +92,19 @@ public class Limelight implements NvConnectionListener {
 		e.printStackTrace();
 		if (!connectionFailed) {
 			connectionFailed = true;
-			JOptionPane.showMessageDialog(streamFrame, "The connection failed unexpectedly", "Connection Terminated", JOptionPane.ERROR_MESSAGE);
+			streamFrame.dispose();
+			displayError("Connection Terminated", "The connection failed unexpectedly");
 			conn.stop();
 		}
 	}
 
 	@Override
 	public void displayMessage(String message) {
-		JOptionPane.showMessageDialog(streamFrame, message, "Limelight", JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(limeFrame, message, "Limelight", JOptionPane.INFORMATION_MESSAGE);
+	}	
+	
+	public void displayError(String title, String message) {
+		JOptionPane.showMessageDialog(limeFrame, message, title, JOptionPane.ERROR_MESSAGE);
 	}
 }
 

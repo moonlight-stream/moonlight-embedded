@@ -32,7 +32,8 @@ public class MainFrame {
 	private JButton stream;
 	private JFrame limeFrame;
 	
-	public MainFrame() {
+	public JFrame getLimeFrame() {
+		return limeFrame;
 	}
 	
 	public void build() {

@@ -48,7 +48,7 @@ public class StreamFrame extends JFrame {
 		//This might break if the screen res is too small...not sure though
 		this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
 
-		makeFullScreen();
+		//makeFullScreen();
 		hideCursor();
 
 		this.setVisible(true);

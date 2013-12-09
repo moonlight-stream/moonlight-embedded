@@ -5,5 +5,10 @@
 	<classpathentry kind="lib" path="libs/limelight-common.jar"/>
 	<classpathentry kind="lib" path="libs/xpp3-1.1.4c.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/limelight-common"/>
+	<classpathentry kind="lib" path="/Users/diegowaxemberg/Documents/Repositories/limelight-libs/jinput.jar" sourcepath="/Users/diegowaxemberg/Downloads/openjdk-6-src-b27-26_oct_2012/jdk/test/java">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/Users/diegowaxemberg/Downloads/archive/coreAPI/apidocs/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

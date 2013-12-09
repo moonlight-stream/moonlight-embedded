@@ -3,9 +3,14 @@ package com.limelight;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
+
 import com.limelight.binding.PlatformBinding;
 import com.limelight.gui.MainFrame;
 import com.limelight.gui.StreamFrame;
+import com.limelight.input.GamepadHandler;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
@@ -18,7 +23,7 @@ public class Limelight implements NvConnectionListener {
 	private NvConnection conn;
 	private boolean connectionFailed;
 	private static JFrame limeFrame;
-	
+
 	public Limelight(String host) {
 		this.host = host;
 	}
@@ -31,6 +36,24 @@ public class Limelight implements NvConnectionListener {
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
 		streamFrame.build(conn);
+
+		startControllerListener();
+	}
+
+	private void startControllerListener() {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Controller[] ca = ControllerEnvironment.getDefaultEnvironment().getControllers();
+				System.out.println("found " + ca.length + " controllers");
+				for(int i =0; i < ca.length; i++){
+					if (ca[i].getType() == Controller.Type.GAMEPAD) {
+						System.out.println("found a gamepad: " + ca[i].getName());
+						GamepadHandler.addGamepad(ca[i], conn);
+					}
+				}
+			}
+		}).start();
 	}
 
 	private static void createFrame() {
@@ -38,7 +61,7 @@ public class Limelight implements NvConnectionListener {
 		main.build();
 		limeFrame = main.getLimeFrame();
 	}
-	
+
 	public static void createInstance(String host) {
 		Limelight limelight = new Limelight(host);
 		limelight.startUp();
@@ -102,7 +125,7 @@ public class Limelight implements NvConnectionListener {
 	public void displayMessage(String message) {
 		JOptionPane.showMessageDialog(limeFrame, message, "Limelight", JOptionPane.INFORMATION_MESSAGE);
 	}	
-	
+
 	public void displayError(String title, String message) {
 		JOptionPane.showMessageDialog(limeFrame, message, title, JOptionPane.ERROR_MESSAGE);
 	}

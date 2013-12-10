@@ -62,7 +62,7 @@ public class MainFrame {
 		pair.addActionListener(createPairButtonListener());
 		pair.setToolTipText("Send pair request to GeForce PC");
 		
-		fullscreen = new JCheckBox("Fullscreen");
+		fullscreen = new JCheckBox("Fullscreen", true);
 		
 		Box streamBox = Box.createHorizontalBox();
 		streamBox.add(Box.createHorizontalGlue());
@@ -91,7 +91,6 @@ public class MainFrame {
 		contentBox.add(pairBox);
 		contentBox.add(Box.createVerticalGlue());
 		
-		
 		centerPane.add(contentBox);
 		mainPane.add(centerPane, "Center");
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -101,7 +100,6 @@ public class MainFrame {
 		limeFrame.setLocation(dim.width/2-limeFrame.getSize().width/2, dim.height/2-limeFrame.getSize().height/2);
 		limeFrame.setResizable(false);
 		limeFrame.setVisible(true);
-		
 	}
 	
 	private ActionListener createStreamButtonListener() {

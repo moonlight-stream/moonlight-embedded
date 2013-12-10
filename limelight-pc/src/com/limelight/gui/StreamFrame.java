@@ -32,7 +32,7 @@ public class StreamFrame extends JFrame {
 	private JProgressBar spinner;
 	private JLabel spinnerLabel;
 	
-	public void build(NvConnection conn) {
+	public void build(NvConnection conn, boolean fullscreen) {
 		keyboard = new KeyboardHandler(conn);
 		mouse = new MouseHandler(conn, this);
 
@@ -46,18 +46,24 @@ public class StreamFrame extends JFrame {
 		this.setSize(1280,720);
 		
 		//This might break if the screen res is too small...not sure though
-		this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
+		this.setLocation(dim.width/2-this.getSize().width/2, 0);
 
-		//makeFullScreen();
+		this.setUndecorated(true);
+		this.setBackground(Color.BLACK);
+		
+		if (fullscreen) {
+			makeFullScreen();
+			this.setLocation(getLocation().x, dim.height/2-this.getSize().height/2);
+		}
 		hideCursor();
 
 		this.setVisible(true);
 	}
 
 	private void makeFullScreen() {
-		this.setUndecorated(true);
+		
 		this.setExtendedState(Frame.MAXIMIZED_BOTH);
-		this.setBackground(Color.BLACK);
+		
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		if (gd.isFullScreenSupported()) {
 			gd.setFullScreenWindow(this);

@@ -163,9 +163,9 @@ public class GamepadHandler {
 		} else if (id == Component.Identifier.Axis.Y) {
 			leftStickY = (short)Math.round(-value * 0x7FFF);
 		} else if (id == Component.Identifier.Axis.Z) {
-			leftTrigger = (byte)Math.round((value + 1 / 2) * 0xFF);
+			leftTrigger = (byte)Math.round((value + 1) / 2 * 0xFF);
 		} else if (id == Component.Identifier.Axis.RZ) {
-			rightTrigger = (byte)Math.round((value + 2) / 2 * 0xFF);
+			rightTrigger = (byte)Math.round((value + 1) / 2 * 0xFF);
 		}
 
 	}

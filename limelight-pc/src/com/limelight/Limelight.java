@@ -1,5 +1,8 @@
 package com.limelight;
 
+import java.lang.reflect.Constructor;
+import java.util.LinkedList;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -44,13 +47,44 @@ public class Limelight implements NvConnectionListener {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				Controller[] ca = ControllerEnvironment.getDefaultEnvironment().getControllers();
-				System.out.println("found " + ca.length + " controllers");
-				for(int i =0; i < ca.length; i++){
-					if (ca[i].getType() == Controller.Type.GAMEPAD) {
-						System.out.println("found a gamepad: " + ca[i].getName());
-						GamepadHandler.addGamepad(ca[i], conn);
+				
+				/*
+				 * This is really janky, but it is currently the only way to rescan for controllers.
+				 * The DefaultControllerEnvironment class caches the results of scanning and if a controller is
+				 * unplugged or plugged in, it will not detect it. Since DefaultControllerEnvironment is package-protected
+				 * we have to use reflections in order to manually instantiate a new instance to ensure there is no caching.
+				 * Supposedly Aaron is going to fix JInput and we will have the ability to rescan soon! 
+				 */
+				try {
+					//#allthejank
+					Constructor construct = null;
+
+					Class defEnv = ControllerEnvironment.getDefaultEnvironment().getClass();
+					construct = defEnv.getDeclaredConstructor();
+					construct.setAccessible(true);
+
+					while(true) {
+
+						ControllerEnvironment defaultEnv = null;
+
+						defaultEnv = (ControllerEnvironment)construct.newInstance();
+
+						Controller[] ca = defaultEnv.getControllers();
+						LinkedList<Controller> gamepads = new LinkedList<Controller>();
+						for(int i = 0; i < ca.length; i++){
+							if (ca[i].getType() == Controller.Type.GAMEPAD) {
+								gamepads.add(ca[i]);
+							}
+						}
+						GamepadHandler.addGamepads(gamepads, conn);
+						
+						
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {}
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		}).start();

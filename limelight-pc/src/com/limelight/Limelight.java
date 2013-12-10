@@ -28,14 +28,14 @@ public class Limelight implements NvConnectionListener {
 		this.host = host;
 	}
 
-	private void startUp() {
+	private void startUp(boolean fullscreen) {
 		streamFrame = new StreamFrame();
 		conn = new NvConnection(host, this);
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
-		streamFrame.build(conn);
+		streamFrame.build(conn, fullscreen);
 
 		startControllerListener();
 	}
@@ -62,9 +62,9 @@ public class Limelight implements NvConnectionListener {
 		limeFrame = main.getLimeFrame();
 	}
 
-	public static void createInstance(String host) {
+	public static void createInstance(String host, boolean fullscreen) {
 		Limelight limelight = new Limelight(host);
-		limelight.startUp();
+		limelight.startUp(fullscreen);
 	}
 
 	public static void main(String args[]) {

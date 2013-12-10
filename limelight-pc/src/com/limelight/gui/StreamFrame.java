@@ -56,7 +56,6 @@ public class StreamFrame extends JFrame {
 			this.setLocation(getLocation().x, dim.height/2-this.getSize().height/2);
 		}
 		hideCursor();
-
 		this.setVisible(true);
 	}
 
@@ -80,6 +79,7 @@ public class StreamFrame extends JFrame {
 
 		// Set the blank cursor to the JFrame.
 		this.getContentPane().setCursor(blankCursor);
+		
 	}
 	
 	public void showSpinner(Stage stage) {

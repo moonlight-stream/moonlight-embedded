@@ -57,9 +57,9 @@ public class Limelight implements NvConnectionListener {
 				 */
 				try {
 					//#allthejank
-					Constructor construct = null;
+					Constructor<? extends ControllerEnvironment> construct = null;
 
-					Class defEnv = ControllerEnvironment.getDefaultEnvironment().getClass();
+					Class<? extends ControllerEnvironment> defEnv = ControllerEnvironment.getDefaultEnvironment().getClass();
 					construct = defEnv.getDeclaredConstructor();
 					construct.setAccessible(true);
 
@@ -71,11 +71,20 @@ public class Limelight implements NvConnectionListener {
 
 						Controller[] ca = defaultEnv.getControllers();
 						LinkedList<Controller> gamepads = new LinkedList<Controller>();
+						
+						/*
+						 * iterates through the controllers and adds gamepads and ps3 controller to the list
+						 * NOTE: JInput does not consider a PS3 controller to be a gamepad (it thinks it's a "STICK") so we must use the
+						 * name of it.
+						 */
 						for(int i = 0; i < ca.length; i++){
 							if (ca[i].getType() == Controller.Type.GAMEPAD) {
 								gamepads.add(ca[i]);
+							}	else if (ca[i].getName().contains("PLAYSTATION")) {
+								gamepads.add(ca[i]);
 							}
 						}
+						
 						GamepadHandler.addGamepads(gamepads, conn);
 						
 						

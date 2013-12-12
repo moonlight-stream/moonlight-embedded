@@ -31,9 +31,13 @@ public class StreamFrame extends JFrame {
 	private MouseHandler mouse;
 	private JProgressBar spinner;
 	private JLabel spinnerLabel;
+
+	private NvConnection conn;
 	
 	public void build(NvConnection conn, boolean fullscreen) {
-		keyboard = new KeyboardHandler(conn);
+		this.conn = conn;
+
+		keyboard = new KeyboardHandler(conn, this);
 		mouse = new MouseHandler(conn, this);
 
 		this.addKeyListener(keyboard);
@@ -123,4 +127,9 @@ public class StreamFrame extends JFrame {
 		spinnerLabel.setVisible(false);
 	}
 	
+	public void close() {
+		dispose();
+		conn.stop();
+	}
+
 }

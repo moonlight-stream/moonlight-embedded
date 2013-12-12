@@ -21,7 +21,6 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 	private int lastX = 0;
 	private int lastY = 0;
 
-
 	public MouseHandler(NvConnection conn, JFrame parent) {
 		this.conn = conn;
 		this.parent = parent;
@@ -44,9 +43,9 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 
 	@Override
 	public void mouseExited(MouseEvent e) {
-		robot.mouseMove(size.width / 2, size.height / 2);
-		lastX = size.width / 2;
-		lastY = size.height / 2;
+		parent.getSize(size);
+		moveMouse((int)parent.getLocation().getX() + (size.width/2),
+			      (int)parent.getLocation().getY() + (size.height/2));
 	}
 
 	@Override
@@ -106,15 +105,24 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 		
 		parent.getSize(size);
 
-		if (x < size.width / 2 - 500 || x > size.width / 2 + 500) {
-			robot.mouseMove(size.width / 2, y);
-			lastX = size.width / 2;
+		int leftEdge = (int) parent.getLocation().getX();
+		int rightEdge = leftEdge + size.width;
+		int upperEdge = (int) parent.getLocation().getY();
+		int lowerEdge = upperEdge + size.height;
+
+		if (x < leftEdge + 100 || x > rightEdge - 100) {
+			moveMouse((leftEdge+rightEdge)/2, (upperEdge+lowerEdge)/2);
 		}
-		if (y < size.height / 2 - 300 || y > size.height / 2 + 300) {
-			robot.mouseMove(x, size.height / 2);
-			lastY = size.height / 2;
+		if (y < upperEdge + 100 || y > lowerEdge - 100) {
+			moveMouse((leftEdge+rightEdge)/2, (upperEdge+lowerEdge)/2);
 		}
 		
 	}
 	
+	private void moveMouse(int x, int y) {
+		robot.mouseMove(x, y);
+		lastX = x;
+		lastY = y;
+	}
+
 }

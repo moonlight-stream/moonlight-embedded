@@ -40,7 +40,6 @@ public class KeyboardHandler implements KeyListener {
 			event.getKeyCode() == KeyEvent.VK_Q) {
 			System.out.println("quitting");
 			parent.close();
-			System.exit(0);
 		}
 		
 		translator.sendKeyDown(keyMap, modifier);

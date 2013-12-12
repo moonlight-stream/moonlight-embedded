@@ -72,12 +72,15 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 				{
 					long diff = nextFrameTime - System.currentTimeMillis();
 
-					if (diff > WAIT_CEILING_MS) {
-						try {
-							Thread.sleep(diff);
-						} catch (InterruptedException e) {
-							return;
-						}
+					if (diff < WAIT_CEILING_MS) {
+						// We must call Thread.sleep in order to be interruptable
+						diff = 0;
+					}
+					
+					try {
+						Thread.sleep(diff);
+					} catch (InterruptedException e) {
+						return;
 					}
 					
 					nextFrameTime = computePresentationTimeMs(targetFps);

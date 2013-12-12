@@ -4,6 +4,14 @@
 
 OpusDecoder* decoder;
 
+#ifdef _WIN32
+#pragma comment(lib, "opus.lib")
+#pragma comment(lib, "celt.lib")
+#pragma comment(lib, "silk_common.lib")
+#pragma comment(lib, "silk_float.lib")
+#endif
+
+
 // This function must be called before
 // any other decoding functions
 int nv_opus_init(void) {

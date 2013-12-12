@@ -1,8 +1,22 @@
 #include <stdlib.h>
+
+#ifdef _WIN32
+#define inline __inline
+#endif
+
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <pthread.h>
 
+#ifdef _WIN32
+#pragma comment(lib, "avcodec.lib")
+#pragma comment(lib, "avfilter.lib")
+#pragma comment(lib, "avformat.lib")
+#pragma comment(lib, "avutil.lib")
+#pragma comment(lib, "swresample.lib")
+#pragma comment(lib, "swscale.lib")
+#pragma comment(lib, "pthreadVC2.lib")
+#endif
 
 #include "nv_avc_dec.h"
 

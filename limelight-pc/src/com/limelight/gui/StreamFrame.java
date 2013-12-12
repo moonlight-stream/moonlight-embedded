@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
@@ -16,6 +15,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
@@ -26,13 +26,22 @@ import com.limelight.nvstream.NvConnectionListener.Stage;
 
 public class StreamFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
-
+	
+	private int centerX;
+	private int centerY;
 	private KeyboardHandler keyboard;
 	private MouseHandler mouse;
 	private JProgressBar spinner;
 	private JLabel spinnerLabel;
-
+	
 	private NvConnection conn;
+	
+	public StreamFrame() {
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		this.setSize(1280,720);
+		centerX = dim.width/2-this.getSize().width/2;
+		centerY = dim.height/2-this.getSize().height/2;
+	}
 	
 	public void build(NvConnection conn, boolean fullscreen) {
 		this.conn = conn;
@@ -46,30 +55,31 @@ public class StreamFrame extends JFrame {
 
 		this.setFocusTraversalKeysEnabled(false);
 
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		this.setSize(1280,720);
-		
 		//This might break if the screen res is too small...not sure though
-		this.setLocation(dim.width/2-this.getSize().width/2, 0);
+		this.setLocation(centerX, 0);
 
-		this.setUndecorated(true);
 		this.setBackground(Color.BLACK);
 		
 		if (fullscreen) {
 			makeFullScreen();
-			this.setLocation(getLocation().x, dim.height/2-this.getSize().height/2);
 		}
+		
 		hideCursor();
 		this.setVisible(true);
 	}
 
 	private void makeFullScreen() {
-		
-		this.setExtendedState(Frame.MAXIMIZED_BOTH);
-		
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		if (gd.isFullScreenSupported()) {
+			this.setUndecorated(true);
 			gd.setFullScreenWindow(this);
+			this.setLocation(centerX, centerY);
+		} else {
+			JOptionPane.showMessageDialog(
+					this, 
+					"Your operating system does not support fullscreen.", 
+					"Fullscreen Unsupported",
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

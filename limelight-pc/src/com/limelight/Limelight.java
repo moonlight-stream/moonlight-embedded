@@ -26,6 +26,7 @@ public class Limelight implements NvConnectionListener {
 	private NvConnection conn;
 	private boolean connectionFailed;
 	private static JFrame limeFrame;
+	private Thread controllerListenerThread;
 
 	public Limelight(String host) {
 		this.host = host;
@@ -39,12 +40,10 @@ public class Limelight implements NvConnectionListener {
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
 		streamFrame.build(conn, fullscreen);
-
-		startControllerListener();
 	}
 
 	private void startControllerListener() {
-		new Thread(new Runnable() {
+		controllerListenerThread = new Thread() {
 			@Override
 			public void run() {
 				
@@ -63,7 +62,7 @@ public class Limelight implements NvConnectionListener {
 					construct = defEnv.getDeclaredConstructor();
 					construct.setAccessible(true);
 
-					while(true) {
+					while(!isInterrupted()) {
 
 						ControllerEnvironment defaultEnv = null;
 
@@ -90,13 +89,16 @@ public class Limelight implements NvConnectionListener {
 						
 						try {
 							Thread.sleep(1000);
-						} catch (InterruptedException e) {}
+						} catch (InterruptedException e) {
+							return;
+						}
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
-		}).start();
+		};
+		controllerListenerThread.start();
 	}
 
 	private static void createFrame() {
@@ -151,6 +153,7 @@ public class Limelight implements NvConnectionListener {
 	@Override
 	public void connectionStarted() {
 		streamFrame.hideSpinner();
+		startControllerListener();
 	}
 
 	@Override
@@ -158,9 +161,28 @@ public class Limelight implements NvConnectionListener {
 		e.printStackTrace();
 		if (!connectionFailed) {
 			connectionFailed = true;
-			streamFrame.dispose();
-			displayError("Connection Terminated", "The connection failed unexpectedly");
+			
+			// Kill the connection to the target
 			conn.stop();
+			
+			// Kill the controller rescanning thread
+			if (controllerListenerThread != null) {
+				controllerListenerThread.interrupt();		
+				try {
+					controllerListenerThread.join();
+				} catch (InterruptedException e1) {}
+			}
+
+			// Spin off a new thread to update the UI since
+			// this thread has been interrupted and will terminate
+			// shortly
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					streamFrame.dispose();
+					displayError("Connection Terminated", "The connection failed unexpectedly");
+				}
+			}).start();
 		}
 	}
 

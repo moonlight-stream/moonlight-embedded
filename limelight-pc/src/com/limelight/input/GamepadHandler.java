@@ -44,7 +44,6 @@ public class GamepadHandler {
 				while (true) {
 					for (Gamepad gamepad : gamepads) {
 						if (!gamepad.poll()) {
-							gamepads.remove(gamepad);
 							break;
 						}
 						gamepad.handleEvents();

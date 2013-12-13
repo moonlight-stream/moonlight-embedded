@@ -28,41 +28,22 @@ import com.limelight.nvstream.NvConnectionListener.Stage;
 public class StreamFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
-<<<<<<< HEAD
-=======
-	private int centerX;
-	private int centerY;
->>>>>>> 89e07e63ef3e007caef9aec3334bfc2c75aafd1c
 	private KeyboardHandler keyboard;
 	private MouseHandler mouse;
 	private JProgressBar spinner;
 	private JLabel spinnerLabel;
 	private Cursor noCursor;
 	private NvConnection conn;
-<<<<<<< HEAD
+
 	private static final int WIDTH = 1280;
 	private static final int HEIGHT = 720;
 	
-	public void freeMouse() {
-		mouse.free();
-		showCursor();
-	}
-
-=======
-
-	public StreamFrame() {
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		this.setSize(1280,720);
-		centerX = dim.width/2-this.getSize().width/2;
-		centerY = dim.height/2-this.getSize().height/2;
-	}
 
 	public void freeMouse() {
 		mouse.free();
 		showCursor();
 	}
 
->>>>>>> 89e07e63ef3e007caef9aec3334bfc2c75aafd1c
 	public void captureMouse() {
 		mouse.capture();
 		hideCursor();
@@ -83,13 +64,9 @@ public class StreamFrame extends JFrame {
 		this.setSize(WIDTH, HEIGHT);
 		
 		this.setBackground(Color.BLACK);
-<<<<<<< HEAD
 		this.getContentPane().setBackground(Color.BLACK);
 		this.getRootPane().setBackground(Color.BLACK);
 		
-=======
-
->>>>>>> 89e07e63ef3e007caef9aec3334bfc2c75aafd1c
 		if (fullscreen) {
 			makeFullScreen();
 		}
@@ -129,11 +106,7 @@ public class StreamFrame extends JFrame {
 		}
 	}
 
-<<<<<<< HEAD
 	public void hideCursor() {
-=======
-	private void hideCursor() {
->>>>>>> 89e07e63ef3e007caef9aec3334bfc2c75aafd1c
 		if (noCursor == null) {
 			// Transparent 16 x 16 pixel cursor image.
 			BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
@@ -145,16 +118,9 @@ public class StreamFrame extends JFrame {
 		// Set the blank cursor to the JFrame.
 		this.setCursor(noCursor);
 		this.getContentPane().setCursor(noCursor);
-<<<<<<< HEAD
 	}
 
 	public void showCursor() {
-=======
-
-	}
-
-	private void showCursor() {
->>>>>>> 89e07e63ef3e007caef9aec3334bfc2c75aafd1c
 		this.setCursor(Cursor.getDefaultCursor());
 		this.getContentPane().setCursor(Cursor.getDefaultCursor());
 	}

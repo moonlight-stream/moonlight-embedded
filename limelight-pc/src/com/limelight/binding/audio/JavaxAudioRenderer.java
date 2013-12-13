@@ -20,7 +20,12 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		if (soundLine != null) {
 			byte[] pcmDataBytes = new byte[length * 2];
 			ByteBuffer.wrap(pcmDataBytes).asShortBuffer().put(pcmData, offset, length);
-			soundLine.write(pcmDataBytes, 0, pcmDataBytes.length);	
+			if (soundLine.available() < length) {
+				soundLine.write(pcmDataBytes, 0, soundLine.available());
+			}
+			else {
+				soundLine.write(pcmDataBytes, 0, pcmDataBytes.length);
+			}
 		}
 	}
 
@@ -37,7 +42,7 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat, OpusDecoder.getMaxOutputShorts());
 		try {
 			soundLine = (SourceDataLine) AudioSystem.getLine(info);
-			soundLine.open(audioFormat, 131072);
+			soundLine.open(audioFormat, OpusDecoder.getMaxOutputShorts()*4*2);
 			soundLine.start();
 		} catch (LineUnavailableException e) {
 			soundLine = null;

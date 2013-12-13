@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.DisplayMode;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
@@ -27,22 +28,15 @@ import com.limelight.nvstream.NvConnectionListener.Stage;
 public class StreamFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
-	private int centerX;
-	private int centerY;
 	private KeyboardHandler keyboard;
 	private MouseHandler mouse;
 	private JProgressBar spinner;
 	private JLabel spinnerLabel;
 	private Cursor noCursor;
 	private NvConnection conn;
-
-	public StreamFrame() {
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		this.setSize(1280,720);
-		centerX = dim.width/2-this.getSize().width/2;
-		centerY = dim.height/2-this.getSize().height/2;
-	}
-
+	private static final int WIDTH = 1280;
+	private static final int HEIGHT = 720;
+	
 	public void freeMouse() {
 		mouse.free();
 		showCursor();
@@ -65,11 +59,12 @@ public class StreamFrame extends JFrame {
 
 		this.setFocusTraversalKeysEnabled(false);
 
-		//This might break if the screen res is too small...not sure though
-		this.setLocation(centerX, 0);
-
+		this.setSize(WIDTH, HEIGHT);
+		
 		this.setBackground(Color.BLACK);
-
+		this.getContentPane().setBackground(Color.BLACK);
+		this.getRootPane().setBackground(Color.BLACK);
+		
 		if (fullscreen) {
 			makeFullScreen();
 		}
@@ -83,7 +78,23 @@ public class StreamFrame extends JFrame {
 		if (gd.isFullScreenSupported()) {
 			this.setUndecorated(true);
 			gd.setFullScreenWindow(this);
-			this.setLocation(centerX, centerY);
+			
+			if (gd.isDisplayChangeSupported()) {
+				DisplayMode[] configs = gd.getDisplayModes();
+				for (DisplayMode config : configs) {
+					if (config.getWidth() == 1280 && config.getHeight() == 720 ||
+							config.getWidth() == 1280 && config.getHeight() == 800) {
+						gd.setDisplayMode(config);
+						break;
+					}
+				}
+			} else {
+				JOptionPane.showMessageDialog(
+						this,
+						"Unable to change display resolution. \nThis may not be the correct resolution",
+						"Display Resolution",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
 		} else {
 			JOptionPane.showMessageDialog(
 					this, 
@@ -117,6 +128,7 @@ public class StreamFrame extends JFrame {
 		if (spinner == null) {
 			Container c = this.getContentPane();
 			JPanel panel = new JPanel();
+			panel.setBackground(Color.BLACK);
 			panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
 			spinner = new JProgressBar();
@@ -157,5 +169,4 @@ public class StreamFrame extends JFrame {
 		dispose();
 		conn.stop();
 	}
-
 }

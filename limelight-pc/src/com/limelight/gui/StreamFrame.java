@@ -11,6 +11,8 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -74,6 +76,28 @@ public class StreamFrame extends JFrame {
 		hideCursor();
 		this.setVisible(true);
 	}
+	
+	private DisplayMode getBestDisplay(DisplayMode[] configs) {
+		Arrays.sort(configs, new Comparator<DisplayMode>() {
+			@Override
+			public int compare(DisplayMode o1, DisplayMode o2) {
+				if (o1.getWidth() > o2.getWidth()) {
+					return -1;
+				} else if (o2.getWidth() > o1.getWidth()) {
+					return 1;
+				} else {
+					return 0;
+				}
+			}
+		});
+		DisplayMode bestConfig = null;
+		for (DisplayMode config : configs) {
+			if (config.getWidth() >= 1280 && config.getHeight() >= 720) {
+				bestConfig = config;
+			}
+		}
+		return bestConfig;
+	}
 
 	private void makeFullScreen() {
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
@@ -82,20 +106,22 @@ public class StreamFrame extends JFrame {
 			gd.setFullScreenWindow(this);
 			
 			if (gd.isDisplayChangeSupported()) {
-				DisplayMode[] configs = gd.getDisplayModes();
-				for (DisplayMode config : configs) {
-					if (config.getWidth() == 1280 && config.getHeight() == 720 ||
-							config.getWidth() == 1280 && config.getHeight() == 800) {
-						gd.setDisplayMode(config);
-						break;
-					}
+				DisplayMode config = getBestDisplay(gd.getDisplayModes());
+				if (config != null) {
+					gd.setDisplayMode(config);
+				} else {
+					JOptionPane.showMessageDialog(
+							this,
+							"Your display does not support a resolution greater than 1280x720",
+							"No Supported Resolution",
+							JOptionPane.ERROR_MESSAGE);
 				}
 			} else {
 				JOptionPane.showMessageDialog(
 						this,
 						"Unable to change display resolution. \nThis may not be the correct resolution",
 						"Display Resolution",
-						JOptionPane.INFORMATION_MESSAGE);
+						JOptionPane.ERROR_MESSAGE);
 			}
 		} else {
 			JOptionPane.showMessageDialog(

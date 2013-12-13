@@ -45,6 +45,7 @@ public class KeyboardHandler implements KeyListener {
 				(modifiers & KeyEvent.ALT_DOWN_MASK) != 0 &&
 				(modifiers & KeyEvent.CTRL_DOWN_MASK) != 0) {
 			parent.freeMouse();
+			return;
 		}
 
 

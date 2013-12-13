@@ -35,11 +35,12 @@ public class Limelight implements NvConnectionListener {
 	private void startUp(boolean fullscreen) {
 		streamFrame = new StreamFrame();
 		conn = new NvConnection(host, this);
+		streamFrame.build(conn, fullscreen);
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
-		streamFrame.build(conn, fullscreen);
+		
 	}
 
 	private void startControllerListener() {
@@ -121,14 +122,14 @@ public class Limelight implements NvConnectionListener {
 			// set the name of the application menu item
 			System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Limelight");
 
-			// set the look and feel
+		} else {
 			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+				UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
 			} catch (Exception e) {
-				System.out.println("OH Shit...");
+				System.out.println("Unable to set cross platform look and feel.");
 				e.printStackTrace();
-				System.exit(1);
-			};
+				System.exit(2);
+			}
 		}
 		createFrame();
 	}

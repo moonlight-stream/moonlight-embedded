@@ -96,6 +96,9 @@ public class StreamFrame extends JFrame {
 				bestConfig = config;
 			}
 		}
+		if (bestConfig == null) {
+			return configs[0];
+		}
 		return bestConfig;
 	}
 
@@ -109,12 +112,6 @@ public class StreamFrame extends JFrame {
 				DisplayMode config = getBestDisplay(gd.getDisplayModes());
 				if (config != null) {
 					gd.setDisplayMode(config);
-				} else {
-					JOptionPane.showMessageDialog(
-							this,
-							"Your display does not support a resolution greater than 1280x720",
-							"No Supported Resolution",
-							JOptionPane.ERROR_MESSAGE);
 				}
 			} else {
 				JOptionPane.showMessageDialog(

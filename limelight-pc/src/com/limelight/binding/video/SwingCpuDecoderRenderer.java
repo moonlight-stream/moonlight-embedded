@@ -19,6 +19,7 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 	private int width, height;
 
 	private Graphics graphics;
+	private JFrame frame;
 	private BufferedImage image;
 	
 	private static final int DECODER_BUFFER_SIZE = 92*1024;
@@ -50,7 +51,8 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 			throw new IllegalStateException("AVC decoder initialization failure: "+err);
 		}
 		
-		graphics = ((JFrame)renderTarget).getGraphics();
+		frame = (JFrame)renderTarget;
+		graphics = frame.getGraphics();
 
 		image = new BufferedImage(width, height,
 	            BufferedImage.TYPE_INT_BGR);
@@ -82,10 +84,15 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 					} catch (InterruptedException e) {
 						return;
 					}
+					double widthScale = (double)frame.getWidth() / width;
+					double heightScale = (double)frame.getHeight() / height;
+					double lowerScale = Math.min(widthScale, heightScale);
+					int newWidth = (int)(width * lowerScale);
+					int newHeight = (int)(height * lowerScale);
 					
 					nextFrameTime = computePresentationTimeMs(targetFps);
 					if (AvcDecoder.getRgbFrameInt(imageBuffer, imageBuffer.length)) {
-						graphics.drawImage(image, 0, 0, width, height, null);
+						graphics.drawImage(image, 0, 0, newWidth, newHeight, null);
 					}
 				}
 			}

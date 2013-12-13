@@ -2,12 +2,12 @@ package com.limelight.input;
 
 import java.awt.AWTException;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Robot;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import com.limelight.gui.StreamFrame;
@@ -22,7 +22,9 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 	private int lastX = 0;
 	private int lastY = 0;
 	private boolean captureMouse = true;
-
+	
+	private final double mouseThresh = 0.45;
+	
 	public MouseHandler(NvConnection conn, StreamFrame parent) {
 		this.conn = conn;
 		this.parent = parent;
@@ -32,7 +34,6 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 			e.printStackTrace();
 		}
 		size = new Dimension();
-
 	}
 
 	public void free() {
@@ -59,9 +60,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 	@Override
 	public void mouseExited(MouseEvent e) {
 		if (captureMouse) {
-			parent.getSize(size);
-			moveMouse((int)parent.getLocationOnScreen().getX() + (size.width/2),
-					(int)parent.getLocationOnScreen().getY() + (size.height/2));
+			checkBoundaries(e);
 		}
 	}
 
@@ -121,28 +120,48 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		if (captureMouse) {
-			int x = e.getX();
-			int y = e.getY();
+			Point mouse = e.getLocationOnScreen();
+			int x = (int)mouse.getX();
+			int y = (int)mouse.getY();
 			conn.sendMouseMove((short)(x - lastX), (short)(y - lastY));
 			lastX = x;
 			lastY = y;
-
-			parent.getSize(size);
-
-			int leftEdge = (int) parent.getLocationOnScreen().getX();
-			int rightEdge = leftEdge + size.width;
-			int upperEdge = (int) parent.getLocationOnScreen().getY();
-			int lowerEdge = upperEdge + size.height;
-
-			if (x < leftEdge + 100 || x > rightEdge - 100) {
-				moveMouse((leftEdge+rightEdge)/2, (upperEdge+lowerEdge)/2);
-			}
-			if (y < upperEdge + 100 || y > lowerEdge - 100) {
-				moveMouse((leftEdge+rightEdge)/2, (upperEdge+lowerEdge)/2);
-			}
+			
+			checkBoundaries(e);
 		}
 	}
 
+	private void checkBoundaries(MouseEvent e) {
+		parent.getSize(size);
+		
+		int leftEdge = (int) parent.getLocationOnScreen().getX();
+		int rightEdge = leftEdge + size.width;
+		int upperEdge = (int) parent.getLocationOnScreen().getY();
+		int lowerEdge = upperEdge + size.height;
+		
+		Point mouse = e.getLocationOnScreen();
+		
+		double xThresh = (size.width * mouseThresh);
+		double yThresh = (size.height * mouseThresh);
+		
+		int newX = (int)mouse.getX();
+		int newY = (int)mouse.getY();
+		boolean shouldMoveMouse = false;
+		
+		if (mouse.getX() < leftEdge + xThresh || mouse.getX() > rightEdge - xThresh) {
+			newX = (leftEdge + rightEdge) / 2;
+			shouldMoveMouse = true;
+		}
+		if (mouse.getY() < upperEdge + yThresh || mouse.getY() > lowerEdge - yThresh) {
+			newY = (upperEdge + lowerEdge) / 2;
+			shouldMoveMouse = true;
+		}
+		
+		if (shouldMoveMouse) {
+			moveMouse(newX, newY);
+		}
+	}
+	
 	private void moveMouse(int x, int y) {
 		robot.mouseMove(x, y);
 		lastX = x;

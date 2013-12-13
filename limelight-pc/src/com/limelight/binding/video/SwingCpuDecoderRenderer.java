@@ -84,25 +84,26 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 					} catch (InterruptedException e) {
 						return;
 					}
+					
+					nextFrameTime = computePresentationTimeMs(targetFps);
+					
 					double widthScale = (double)frame.getWidth() / width;
 					double heightScale = (double)frame.getHeight() / height;
 					double lowerScale = Math.min(widthScale, heightScale);
 					int newWidth = (int)(width * lowerScale);
 					int newHeight = (int)(height * lowerScale);
 					
-					nextFrameTime = computePresentationTimeMs(targetFps);
 					int dx1 = 0;
 					int dy1 = 0;
 					if (frame.getWidth() > newWidth) {
-						dx1 = (frame.getWidth()-newWidth)/2;
+						dx1 = (frame.getWidth()-newWidth)/4;
 					}
 					if (frame.getHeight() > newHeight) {
-						dy1 = (frame.getHeight()-newHeight)/2;
+						dy1 = (frame.getHeight()-newHeight)/4;
 					}
 					
 					if (AvcDecoder.getRgbFrameInt(imageBuffer, imageBuffer.length)) {
 						graphics.drawImage(image, dx1, dy1, dx1+newWidth, dy1+newHeight, 0, 0, width, height, null);
-						//graphics.drawImage(image, 0, 0, newWidth, newHeight, null);
 					}
 				}
 			}

@@ -53,7 +53,9 @@ public class MainFrame {
 		hostField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 		hostField.setToolTipText("Enter host name or IP address");
 		hostField.setText("GeForce PC host");
-		
+		hostField.setSelectionStart(0);
+		hostField.setSelectionEnd(hostField.getText().length());
+
 		stream = new JButton("Start Streaming");
 		stream.addActionListener(createStreamButtonListener());
 		stream.setToolTipText("Start the GeForce stream");

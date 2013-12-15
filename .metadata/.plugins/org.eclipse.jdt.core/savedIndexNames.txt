@@ -1,1 +1,0 @@
-INDEX VERSION 1.126+/Users/diegowaxemberg/Documents/Repositories/limelight-pc/.metadata/.plugins/org.eclipse.jdt.core

@@ -1,5 +1,9 @@
 *.class
 
+#ignore builds
+limelight-pc/build/*
+limelight-pc/classes/*
+
 #ignore mac DS_STORE
 .DS_STORE
 

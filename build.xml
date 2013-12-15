@@ -1,4 +1,4 @@
-<?xml version="2.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="all" name="Create Runnable Jar for Limelight">
   <property name="one-jar.dist.dir" value="${basedir}"/>
 

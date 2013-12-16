@@ -96,10 +96,10 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 					int dx1 = 0;
 					int dy1 = 0;
 					if (frame.getWidth() > newWidth) {
-						dx1 = (frame.getWidth()-newWidth)/4;
+						dx1 = (frame.getWidth()-newWidth)/2;
 					}
 					if (frame.getHeight() > newHeight) {
-						dy1 = (frame.getHeight()-newHeight)/4;
+						dy1 = (frame.getHeight()-newHeight)/2;
 					}
 					
 					if (AvcDecoder.getRgbFrameInt(imageBuffer, imageBuffer.length)) {

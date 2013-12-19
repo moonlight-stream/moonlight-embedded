@@ -16,6 +16,7 @@ import com.limelight.gui.StreamFrame;
 import com.limelight.input.GamepadHandler;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
+import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 
 public class Limelight implements NvConnectionListener {
@@ -27,6 +28,7 @@ public class Limelight implements NvConnectionListener {
 	private boolean connectionFailed;
 	private static JFrame limeFrame;
 	private Thread controllerListenerThread;
+	private StreamConfiguration streamConfig = new StreamConfiguration(1280, 720, 30);
 
 	public Limelight(String host) {
 		this.host = host;
@@ -34,8 +36,8 @@ public class Limelight implements NvConnectionListener {
 
 	private void startUp(boolean fullscreen) {
 		streamFrame = new StreamFrame();
-		conn = new NvConnection(host, this);
-		streamFrame.build(conn, fullscreen);
+		conn = new NvConnection(host, this, streamConfig);
+		streamFrame.build(conn, streamConfig, fullscreen);
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),

@@ -26,6 +26,7 @@ import com.limelight.input.KeyboardHandler;
 import com.limelight.input.MouseHandler;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener.Stage;
+import com.limelight.nvstream.StreamConfiguration;
 
 public class StreamFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -37,10 +38,6 @@ public class StreamFrame extends JFrame {
 	private Cursor noCursor;
 	private NvConnection conn;
 
-	private static final int WIDTH = 1280;
-	private static final int HEIGHT = 720;
-	
-
 	public void freeMouse() {
 		mouse.free();
 		showCursor();
@@ -51,7 +48,7 @@ public class StreamFrame extends JFrame {
 		hideCursor();
 	}
 
-	public void build(NvConnection conn, boolean fullscreen) {
+	public void build(NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
 		this.conn = conn;
 
 		keyboard = new KeyboardHandler(conn, this);
@@ -63,7 +60,7 @@ public class StreamFrame extends JFrame {
 
 		this.setFocusTraversalKeysEnabled(false);
 
-		this.setSize(WIDTH, HEIGHT);
+		this.setSize(streamConfig.getWidth(), streamConfig.getHeight());
 		
 		this.setBackground(Color.BLACK);
 		this.getContentPane().setBackground(Color.BLACK);
@@ -92,7 +89,7 @@ public class StreamFrame extends JFrame {
 		});
 		DisplayMode bestConfig = null;
 		for (DisplayMode config : configs) {
-			if (config.getWidth() >= 1280 && config.getHeight() >= 720) {
+			if (config.getWidth() >= getSize().width && config.getHeight() >= getSize().height) {
 				bestConfig = config;
 			}
 		}

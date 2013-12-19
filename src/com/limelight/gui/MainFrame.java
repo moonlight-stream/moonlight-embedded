@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -24,6 +26,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import com.limelight.Limelight;
 import com.limelight.binding.PlatformBinding;
+import com.limelight.input.ControllerListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.http.NvHTTP;
 
@@ -41,7 +44,13 @@ public class MainFrame {
 	public void build() {
 		limeFrame = new JFrame("Limelight");
 		limeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+		limeFrame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				super.windowClosing(e);
+				ControllerListener.stopListening();
+			}
+		});
 		Container mainPane = limeFrame.getContentPane();
 		
 		mainPane.setLayout(new BorderLayout());
@@ -85,12 +94,25 @@ public class MainFrame {
 		Box contentBox = Box.createVerticalBox();
 		contentBox.add(Box.createVerticalStrut(20));
 		contentBox.add(hostBox);
+		JButton settings = new JButton("Settings");
+		settings.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new SettingsFrame().build();
+			}
+		});
+		contentBox.add(settings);
 		contentBox.add(Box.createVerticalStrut(5));
 		contentBox.add(fullscreen);
 		contentBox.add(Box.createVerticalStrut(5));
 		contentBox.add(streamBox);
 		contentBox.add(Box.createVerticalStrut(10));
 		contentBox.add(pairBox);
+		
+		
+		
+		
+		
 		contentBox.add(Box.createVerticalGlue());
 		
 		centerPane.add(contentBox);

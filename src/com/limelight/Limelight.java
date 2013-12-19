@@ -1,19 +1,13 @@
 package com.limelight;
 
-import java.lang.reflect.Constructor;
-import java.util.LinkedList;
-
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import net.java.games.input.Controller;
-import net.java.games.input.ControllerEnvironment;
-
 import com.limelight.binding.PlatformBinding;
 import com.limelight.gui.MainFrame;
 import com.limelight.gui.StreamFrame;
-import com.limelight.input.GamepadHandler;
+import com.limelight.input.ControllerListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
@@ -27,7 +21,6 @@ public class Limelight implements NvConnectionListener {
 	private NvConnection conn;
 	private boolean connectionFailed;
 	private static JFrame limeFrame;
-	private Thread controllerListenerThread;
 	private StreamConfiguration streamConfig = new StreamConfiguration(1280, 720, 30);
 
 	public Limelight(String host) {
@@ -45,69 +38,15 @@ public class Limelight implements NvConnectionListener {
 		
 	}
 
-	private void startControllerListener() {
-		controllerListenerThread = new Thread() {
-			@Override
-			public void run() {
-				
-				/*
-				 * This is really janky, but it is currently the only way to rescan for controllers.
-				 * The DefaultControllerEnvironment class caches the results of scanning and if a controller is
-				 * unplugged or plugged in, it will not detect it. Since DefaultControllerEnvironment is package-protected
-				 * we have to use reflections in order to manually instantiate a new instance to ensure there is no caching.
-				 * Supposedly Aaron is going to fix JInput and we will have the ability to rescan soon! 
-				 */
-				try {
-					//#allthejank
-					Constructor<? extends ControllerEnvironment> construct = null;
-
-					Class<? extends ControllerEnvironment> defEnv = ControllerEnvironment.getDefaultEnvironment().getClass();
-					construct = defEnv.getDeclaredConstructor();
-					construct.setAccessible(true);
-
-					while(!isInterrupted()) {
-
-						ControllerEnvironment defaultEnv = null;
-
-						defaultEnv = (ControllerEnvironment)construct.newInstance();
-
-						Controller[] ca = defaultEnv.getControllers();
-						LinkedList<Controller> gamepads = new LinkedList<Controller>();
-						
-						/*
-						 * iterates through the controllers and adds gamepads and ps3 controller to the list
-						 * NOTE: JInput does not consider a PS3 controller to be a gamepad (it thinks it's a "STICK") so we must use the
-						 * name of it.
-						 */
-						for(int i = 0; i < ca.length; i++){
-							if (ca[i].getType() == Controller.Type.GAMEPAD) {
-								gamepads.add(ca[i]);
-							}	else if (ca[i].getName().contains("PLAYSTATION")) {
-								gamepads.add(ca[i]);
-							}
-						}
-						
-						GamepadHandler.addGamepads(gamepads, conn);
-						
-						
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							return;
-						}
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		};
-		controllerListenerThread.start();
+	private static void startControllerListener() {
+		ControllerListener.startUp();
 	}
 
 	private static void createFrame() {
 		MainFrame main = new MainFrame();
 		main.build();
 		limeFrame = main.getLimeFrame();
+		startControllerListener();
 	}
 
 	public static void createInstance(String host, boolean fullscreen) {
@@ -156,7 +95,7 @@ public class Limelight implements NvConnectionListener {
 	@Override
 	public void connectionStarted() {
 		streamFrame.hideSpinner();
-		startControllerListener();
+		ControllerListener.startSendingInput(conn);
 	}
 
 	@Override
@@ -167,14 +106,6 @@ public class Limelight implements NvConnectionListener {
 			
 			// Kill the connection to the target
 			conn.stop();
-			
-			// Kill the controller rescanning thread
-			if (controllerListenerThread != null) {
-				controllerListenerThread.interrupt();		
-				try {
-					controllerListenerThread.join();
-				} catch (InterruptedException e1) {}
-			}
 
 			// Spin off a new thread to update the UI since
 			// this thread has been interrupted and will terminate

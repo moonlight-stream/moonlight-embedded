@@ -19,6 +19,8 @@ public abstract class Gamepad {
 	protected short leftStickX = 0x0000;
 	protected short leftStickY = 0x0000;
 	
+	protected GamepadSettings configuration;
+	
 	public enum ControllerType { XBOX, PS3 };
 	
 	
@@ -37,12 +39,18 @@ public abstract class Gamepad {
 		this.conn = conn;
 		this.pad = pad;
 		
+		configuration = new GamepadSettings();
+		
 		for (Component comp : pad.getComponents()) {
 			initValue(comp);
 		}
 		
 	}
 		
+	public GamepadSettings getConfiguration() {
+		return configuration;
+	}
+	
 	private void initValue(Component comp) {
 		handleComponent(comp, comp.getPollData());
 	}
@@ -54,6 +62,10 @@ public abstract class Gamepad {
 	public void sendControllerPacket() {
 		conn.sendControllerInput(inputMap, leftTrigger, rightTrigger, 
 				leftStickX, leftStickY, rightStickX, rightStickY);
+	}
+	
+	public EventQueue getEvents() {
+		return pad.getEventQueue();
 	}
 	
 	public void handleEvents() {

@@ -1,8 +1,11 @@
 package com.limelight.input;
 
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.swing.event.ListSelectionEvent;
 
 import com.limelight.input.Gamepad.ControllerType;
 import com.limelight.nvstream.NvConnection;
@@ -35,6 +38,10 @@ public class GamepadHandler {
 			return ControllerType.PS3;
 		}
 		return null;
+	}
+	
+	public static List<Gamepad> getGamepads() {
+		return Collections.unmodifiableList(gamepads);
 	}
 	
 	private void startUp() {

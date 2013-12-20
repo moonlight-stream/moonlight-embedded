@@ -36,6 +36,8 @@ public class Limelight implements NvConnectionListener {
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
 		
+		ControllerListener.startSendingInput(conn);
+		
 	}
 
 	private static void startControllerListener() {

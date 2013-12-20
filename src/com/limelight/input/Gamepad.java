@@ -104,11 +104,13 @@ public class Gamepad {
 	}
 
 	private void handleComponent(Component comp, float value) {
-		ControllerComponent contComp = config.getControllerComponent(comp);
-		if (contComp.isAnalog()) {
-			handleAnalog(contComp, value);
-		} else {
-			handleButtons(contComp, value);
+		if (config != null) {
+			ControllerComponent contComp = config.getControllerComponent(comp);
+			if (contComp.isAnalog()) {
+				handleAnalog(contComp, value);
+			} else {
+				handleButtons(contComp, value);
+			}
 		}
 	}
 
@@ -147,14 +149,14 @@ public class Gamepad {
 			break;
 		}
 	}
-	
+
 	private void handleButtons(ControllerComponent contComp, float value) {
 		boolean press = false;
 
 		if (value > 0.5F) {
 			press = true;
 		}
-		
+
 		switch (contComp) {
 		case BTN_A:
 			toggle(ControllerPacket.A_FLAG, press);

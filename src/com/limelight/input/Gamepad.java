@@ -10,7 +10,7 @@ import net.java.games.input.EventQueue;
 
 public class Gamepad {
 	private Controller pad;
-	private GamepadSettings config;
+	private GamepadMapping config;
 
 	private short inputMap = 0x0000;
 	private byte leftTrigger = 0x00;
@@ -20,7 +20,7 @@ public class Gamepad {
 	private short leftStickX = 0x0000;
 	private short leftStickY = 0x0000;
 
-	public Gamepad(Controller pad, GamepadSettings settings) {
+	public Gamepad(Controller pad, GamepadMapping settings) {
 		this.config = settings;
 		this.pad = pad;
 
@@ -29,7 +29,7 @@ public class Gamepad {
 		}
 	}
 
-	public GamepadSettings getConfiguration() {
+	public GamepadMapping getConfiguration() {
 		return config;
 	}
 
@@ -104,8 +104,8 @@ public class Gamepad {
 	}
 
 	private void handleComponent(Component comp, float value) {
-		if (config != null) {
-			ControllerComponent contComp = config.getControllerComponent(comp);
+		ControllerComponent contComp = config.getControllerComponent(comp);
+		if (contComp != null) {
 			if (contComp.isAnalog()) {
 				handleAnalog(contComp, value);
 			} else {

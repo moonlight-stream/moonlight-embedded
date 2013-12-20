@@ -18,6 +18,7 @@ public class ControllerListener {
 	 */
 	public static boolean startUp() {
 		if (listenerThread == null || !listenerThread.isAlive()) {
+			System.out.println("Controller Listener thread starting up");
 			listenerThread = new Thread() {
 				@Override
 				public void run() {
@@ -36,12 +37,13 @@ public class ControllerListener {
 						Class<? extends ControllerEnvironment> defEnv = ControllerEnvironment.getDefaultEnvironment().getClass();
 						construct = defEnv.getDeclaredConstructor();
 						construct.setAccessible(true);
+						
+						ControllerEnvironment defaultEnv = null;
 
+						//TODO: allow "rescanning" to work again
+						defaultEnv = (ControllerEnvironment)construct.newInstance();
+						
 						while(!isInterrupted()) {
-
-							ControllerEnvironment defaultEnv = null;
-
-							defaultEnv = (ControllerEnvironment)construct.newInstance();
 
 							Controller[] ca = defaultEnv.getControllers();
 							LinkedList<Controller> gamepads = new LinkedList<Controller>();
@@ -60,9 +62,7 @@ public class ControllerListener {
 							}
 
 							GamepadHandler.addGamepads(gamepads);
-							if (conn != null) {
-								GamepadHandler.setConnection(conn);
-							}
+							GamepadHandler.setConnection(conn);
 							
 							try {
 								Thread.sleep(1000);
@@ -83,12 +83,19 @@ public class ControllerListener {
 
 	public static void stopListening() {
 		if (listenerThread != null && listenerThread.isAlive()) {
+			System.out.println("Stopping Controller Listener thread");
 			listenerThread.interrupt();
 		}
 	}
 	
 	public static void startSendingInput(NvConnection connection) {
+		System.out.println("Starting to send controller input");
 		conn = connection;
+	}
+	
+	public static void stopSendingInput() {
+		System.out.println("Stopping sending controller input");
+		conn = null;
 	}
 
 }

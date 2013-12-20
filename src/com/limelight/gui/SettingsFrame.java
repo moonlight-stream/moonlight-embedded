@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -20,9 +22,13 @@ import com.limelight.input.ControllerComponent;
 import com.limelight.input.Gamepad;
 import com.limelight.input.GamepadHandler;
 import com.limelight.input.GamepadSettings;
+import com.limelight.settings.GamepadSettingsManager;
 
 public class SettingsFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
+	
+	private boolean configChanged = false;
+	private GamepadSettings config;
 	
 	public SettingsFrame() {
 		super("Limelight Settings");
@@ -50,11 +56,10 @@ public class SettingsFrame extends JFrame {
 			componentBox.add(Box.createHorizontalStrut(10));
 			componentBox.add(components[i].getLabel());
 			componentBox.add(Box.createHorizontalGlue());
-			componentBox.add(components[i].getTextField());
+			componentBox.add(components[i].getMapButton());
 			componentBox.add(Box.createHorizontalStrut(10));
-			components[i].getTextField().setColumns(10);
-			components[i].getTextField().setMaximumSize(new Dimension(50, 30));
-			components[i].getTextField().addActionListener(createListener());
+			components[i].getMapButton().setMaximumSize(new Dimension(50, 30));
+			components[i].getMapButton().addActionListener(createListener());
 			if (i > components.length / 2) {
 				rightColumn.add(componentBox);
 				if (i < components.length - 1) {
@@ -80,6 +85,16 @@ public class SettingsFrame extends JFrame {
 		
 		c.add(mainPanel);
 		
+		this.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				super.windowClosing(e);
+				if (configChanged) {
+					updateConfigs();
+				}
+			}
+		});
+		
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
 		this.setVisible(true);
@@ -92,7 +107,7 @@ public class SettingsFrame extends JFrame {
 				//#allthejank
 				ControllerComponent contComp = ControllerComponent.valueOf(((JTextField)e.getSource()).getName());
 				
-				contComp.getTextField().setText("Select Input");
+				contComp.getMapButton().setText("Select Input");
 				
 				Gamepad listenPad = GamepadHandler.getGamepads().get(0);
 				listenPad.poll();
@@ -100,14 +115,21 @@ public class SettingsFrame extends JFrame {
 				Event event = new Event();
 				queue.getNextEvent(event);
 				Component comp = event.getComponent();
-				contComp.getTextField().setText(comp.getName());
+				contComp.getMapButton().setText(comp.getName());
 				
-				GamepadSettings config = listenPad.getConfiguration();
+				config = listenPad.getConfiguration();
+				if (config == null) {
+					config = new GamepadSettings();
+				}
 				
 				config.insertSetting(contComp, comp);
 				
+				configChanged = true;
 			}
 		};
 	}
 	
+	private void updateConfigs() {
+		GamepadSettingsManager.writeSettings(config);
+	}
 }

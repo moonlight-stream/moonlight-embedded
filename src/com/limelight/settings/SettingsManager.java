@@ -16,8 +16,8 @@ public class SettingsManager {
 	private static SettingsManager manager;
 	
 	private SettingsManager() {
-		settingsFile = new File(SETTINGS_DIR + "settings");
-		gamepadFile = new File(SETTINGS_DIR + "gamepad");
+		settingsFile = new File(SETTINGS_DIR + File.separator + "settings.lime");
+		gamepadFile = new File(SETTINGS_DIR + File.separator + "gamepad.lime");
 		settingsDir = new File(SETTINGS_DIR);
 	}
 	

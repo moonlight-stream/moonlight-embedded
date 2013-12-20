@@ -18,6 +18,9 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -94,14 +97,6 @@ public class MainFrame {
 		Box contentBox = Box.createVerticalBox();
 		contentBox.add(Box.createVerticalStrut(20));
 		contentBox.add(hostBox);
-		JButton settings = new JButton("Settings");
-		settings.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new SettingsFrame().build();
-			}
-		});
-		contentBox.add(settings);
 		contentBox.add(Box.createVerticalStrut(5));
 		contentBox.add(fullscreen);
 		contentBox.add(Box.createVerticalStrut(5));
@@ -109,21 +104,36 @@ public class MainFrame {
 		contentBox.add(Box.createVerticalStrut(10));
 		contentBox.add(pairBox);
 		
-		
-		
-		
-		
 		contentBox.add(Box.createVerticalGlue());
 		
 		centerPane.add(contentBox);
 		mainPane.add(centerPane, "Center");
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		
+		limeFrame.setJMenuBar(createMenuBar());
 		limeFrame.getRootPane().setDefaultButton(stream);
-		limeFrame.setSize(300, 175);
+		limeFrame.setSize(300, 200);
 		limeFrame.setLocation(dim.width/2-limeFrame.getSize().width/2, dim.height/2-limeFrame.getSize().height/2);
 		limeFrame.setResizable(false);
 		limeFrame.setVisible(true);
+	}
+	
+	private JMenuBar createMenuBar() {
+		JMenuBar menuBar = new JMenuBar();
+		JMenu optionsMenu = new JMenu("Options");
+		JMenuItem settings = new JMenuItem("Gamepad Settings");
+		
+		settings.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new SettingsFrame().build();
+			}
+		});
+		
+		optionsMenu.add(settings);
+		menuBar.add(optionsMenu);
+		
+		return menuBar;
 	}
 	
 	private ActionListener createStreamButtonListener() {

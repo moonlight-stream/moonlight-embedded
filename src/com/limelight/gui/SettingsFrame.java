@@ -7,34 +7,42 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import net.java.games.input.Component;
 import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
 
 import com.limelight.input.ControllerComponent;
+import com.limelight.input.ControllerListener;
 import com.limelight.input.Gamepad;
 import com.limelight.input.GamepadHandler;
-import com.limelight.input.GamepadSettings;
+import com.limelight.input.GamepadMapping;
 import com.limelight.settings.GamepadSettingsManager;
 
 public class SettingsFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 	
 	private boolean configChanged = false;
-	private GamepadSettings config;
+	private boolean shouldStartHandler = false;
+	
+	private GamepadMapping config;
 	
 	public SettingsFrame() {
-		super("Limelight Settings");
-		this.setSize(800, 500);
+		super("Gamepad Settings");
+		System.out.println("Creating Settings Frame");
+		this.setSize(500, 500);
 		this.setResizable(false);
 		this.setAlwaysOnTop(true);
+		config = GamepadSettingsManager.getSettings();
+		
 	}
 	
 	public void build() {
@@ -48,7 +56,6 @@ public class SettingsFrame extends JFrame {
 		leftColumn.add(Box.createVerticalStrut(10));
 		rightColumn.add(Box.createVerticalStrut(10));
 		
-		
 		ControllerComponent[] components = ControllerComponent.values();
 		for (int i = 0; i < components.length; i++) {
 			Box componentBox = Box.createHorizontalBox();
@@ -58,8 +65,14 @@ public class SettingsFrame extends JFrame {
 			componentBox.add(Box.createHorizontalGlue());
 			componentBox.add(components[i].getMapButton());
 			componentBox.add(Box.createHorizontalStrut(10));
-			components[i].getMapButton().setMaximumSize(new Dimension(50, 30));
+			
+			Dimension buttonSize = new Dimension(50,30);
+			components[i].getMapButton().setMaximumSize(buttonSize);
+			components[i].getMapButton().setMinimumSize(buttonSize);
+			components[i].getMapButton().setPreferredSize(buttonSize);
 			components[i].getMapButton().addActionListener(createListener());
+			components[i].getMapButton().setText(config.getMapping(components[i]));
+			
 			if (i > components.length / 2) {
 				rightColumn.add(componentBox);
 				if (i < components.length - 1) {
@@ -91,6 +104,10 @@ public class SettingsFrame extends JFrame {
 				super.windowClosing(e);
 				if (configChanged) {
 					updateConfigs();
+					ControllerListener.startUp();
+				}
+				if (shouldStartHandler) {
+					GamepadHandler.startUp();
 				}
 			}
 		});
@@ -105,25 +122,56 @@ public class SettingsFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//#allthejank
-				ControllerComponent contComp = ControllerComponent.valueOf(((JTextField)e.getSource()).getName());
+				ControllerComponent contComp = ControllerComponent.valueOf(((JButton)e.getSource()).getName());
+				
+				List<Gamepad> gamepads = GamepadHandler.getGamepads();
+				
+				if (gamepads.isEmpty()) {
+					JOptionPane.showMessageDialog(SettingsFrame.this, "No Gamepad Detected");
+					return;
+				}
 				
 				contComp.getMapButton().setText("Select Input");
 				
-				Gamepad listenPad = GamepadHandler.getGamepads().get(0);
-				listenPad.poll();
-				EventQueue queue = listenPad.getEvents();
-				Event event = new Event();
-				queue.getNextEvent(event);
-				Component comp = event.getComponent();
-				contComp.getMapButton().setText(comp.getName());
+				ControllerListener.stopListening();
 				
-				config = listenPad.getConfiguration();
-				if (config == null) {
-					config = new GamepadSettings();
+				if (GamepadHandler.isRunning()) {
+					GamepadHandler.stopHandler();
+					shouldStartHandler = true;
 				}
 				
-				config.insertSetting(contComp, comp);
+				final Gamepad listenPad = gamepads.get(0);
 				
+				Component newMapping = null;
+				
+				while (newMapping == null) {
+					listenPad.poll();
+					EventQueue queue = listenPad.getEvents();
+					Event event = new Event();
+				
+					while (queue.getNextEvent(event)) {
+						if (Math.abs(event.getValue()) > .75F) {
+							newMapping = event.getComponent();
+							break;
+						}
+					}
+				}
+				
+				//spin off a new thread to handle any other events we got
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						listenPad.poll();
+						listenPad.handleEvents(null);
+					}
+				}).start();
+				
+				ControllerComponent oldConfig = config.getControllerComponent(newMapping);
+				if (oldConfig != null) {
+					oldConfig.getMapButton().setText("");
+				}
+				config.insertMapping(contComp, newMapping);
+				contComp.getMapButton().setText(newMapping.getName());
 				configChanged = true;
 			}
 		};

@@ -86,11 +86,17 @@ public class ControllerListener {
 			System.out.println("Stopping Controller Listener thread");
 			listenerThread.interrupt();
 		}
+		if (GamepadHandler.isRunning()) {
+			GamepadHandler.stopHandler();
+		}
 	}
 	
 	public static void startSendingInput(NvConnection connection) {
 		System.out.println("Starting to send controller input");
 		conn = connection;
+		if (!GamepadHandler.isRunning()) {
+			GamepadHandler.startUp();
+		}
 	}
 	
 	public static void stopSendingInput() {

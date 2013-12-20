@@ -8,20 +8,21 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import com.limelight.input.GamepadSettings;
+import com.limelight.input.GamepadMapping;
 
 public class GamepadSettingsManager {
-	private static GamepadSettings cachedSettings;
+	private static GamepadMapping cachedSettings;
 
 
-	public static GamepadSettings getSettings() {
+	public static GamepadMapping getSettings() {
 		if (cachedSettings == null) {
+			System.out.println("Reading Gamepad Settings");
 			File gamepadFile = SettingsManager.getInstance().getGamepadFile();
 			ObjectInputStream ois = null;
 
 			try {
 				ois = new ObjectInputStream(new FileInputStream(gamepadFile));
-				GamepadSettings savedSettings = (GamepadSettings)ois.readObject();
+				GamepadMapping savedSettings = (GamepadMapping)ois.readObject();
 				cachedSettings = savedSettings;
 
 			} catch (ClassNotFoundException e) {
@@ -47,13 +48,20 @@ public class GamepadSettingsManager {
 				}
 			}
 		}
+		if (cachedSettings == null) {
+			System.out.println("Unable to get gamepad settings. Using an empty mapping instead.");
+			cachedSettings = new GamepadMapping();
+			writeSettings(cachedSettings);
+		}
 		return cachedSettings;
 	}
 
-	public static void writeSettings(GamepadSettings settings) {
+	public static void writeSettings(GamepadMapping settings) {
 		cachedSettings = settings;
+		System.out.println("Writing Gamepad Settings");
 		
 		File gamepadFile = SettingsManager.getInstance().getGamepadFile();
+
 		ObjectOutputStream ous = null;
 
 		try {

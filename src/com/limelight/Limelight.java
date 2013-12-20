@@ -48,8 +48,9 @@ public class Limelight implements NvConnectionListener {
 		try {
 			fos = new FileOutputStream(destination);
 			int read;
-			while ((read = resource.read()) != -1) {
-				fos.write(read);
+			byte[] readBuffer = new byte[16384];
+			while ((read = resource.read(readBuffer)) != -1) {
+				fos.write(readBuffer, 0, read);
 			}
 		} finally {
 			if (fos != null) {

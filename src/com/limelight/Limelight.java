@@ -1,5 +1,14 @@
 package com.limelight;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Constructor;
+import java.nio.file.Files;
+import java.util.LinkedList;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -25,6 +34,42 @@ public class Limelight implements NvConnectionListener {
 
 	public Limelight(String host) {
 		this.host = host;
+	}
+	
+	private static void extractNativeLibrary(String libraryName, String targetDirectory) throws IOException {
+		InputStream resource = new Object().getClass().getResourceAsStream("/binlib/"+libraryName);
+		if (resource == null) {
+			throw new FileNotFoundException("Unable to find native library in JAR: "+libraryName);
+		}
+		File destination = new File(targetDirectory+File.separatorChar+libraryName);
+		
+		try {
+			Files.deleteIfExists(destination.toPath());
+		} catch (IOException e) {
+			// Try the copy anyway
+		}
+		
+		Files.copy(resource, destination.toPath());
+	}
+	
+	private static void prepareNativeLibraries() throws IOException {
+		if (!System.getProperty("os.name").contains("Windows")) {
+			// Nothing to do for platforms other than Windows
+			return;
+		}
+		
+		// We need to extract nv_avc_dec's runtime dependencies manually
+		// because the current JRE extracts them with different file names
+		// so they don't load properly.
+		String nativeLibDir = ".";
+		extractNativeLibrary("avfilter-3.dll", nativeLibDir);
+		extractNativeLibrary("avformat-55.dll", nativeLibDir);
+		extractNativeLibrary("avutil-52.dll", nativeLibDir);
+		extractNativeLibrary("postproc-52.dll", nativeLibDir);
+		extractNativeLibrary("pthreadVC2.dll", nativeLibDir);
+		extractNativeLibrary("swresample-0.dll", nativeLibDir);
+		extractNativeLibrary("swscale-2.dll", nativeLibDir);
+		extractNativeLibrary("avcodec-55.dll", nativeLibDir);
 	}
 
 	private void startUp(boolean fullscreen) {
@@ -74,6 +119,13 @@ public class Limelight implements NvConnectionListener {
 				System.exit(2);
 			}
 		}
+		
+		try {
+			prepareNativeLibraries();
+		} catch (IOException e) {
+			// This is expected to fail when not in a JAR
+		}
+		
 		createFrame();
 	}
 

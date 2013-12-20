@@ -121,16 +121,26 @@ public class MainFrame {
 	private JMenuBar createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu optionsMenu = new JMenu("Options");
-		JMenuItem settings = new JMenuItem("Gamepad Settings");
+		JMenuItem gamepadSettings = new JMenuItem("Gamepad Settings");
+		JMenuItem generalSettings = new JMenuItem("Preferences");
 		
-		settings.addActionListener(new ActionListener() {
+		gamepadSettings.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				new SettingsFrame().build();
 			}
 		});
 		
-		optionsMenu.add(settings);
+		generalSettings.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new PreferencesFrame().build();
+			}
+		});
+		
+		optionsMenu.add(gamepadSettings);
+		optionsMenu.add(generalSettings);
+	
 		menuBar.add(optionsMenu);
 		
 		return menuBar;

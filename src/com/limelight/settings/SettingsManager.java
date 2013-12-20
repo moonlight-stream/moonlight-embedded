@@ -1,7 +1,13 @@
 package com.limelight.settings;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 public class SettingsManager {
 	
@@ -62,4 +68,62 @@ public class SettingsManager {
 		return settingsFile;
 	}
 	
+	public static Object readSettings(File file) {
+		ObjectInputStream ois = null;
+		Object settings = null;
+		try {
+			ois = new ObjectInputStream(new FileInputStream(file));
+			Object savedSettings = ois.readObject();
+			settings = savedSettings;
+		} catch (ClassNotFoundException e) {
+			System.out.println("Saved file is not of the correct type. It might have been modified externally.");
+
+		} catch (FileNotFoundException e) {
+			System.out.println("Could not find " + file.getName() + " settings file");
+			e.printStackTrace();
+
+		} catch (IOException e) {
+			System.out.println("Could not read " + file.getName() + " settings file");
+			e.printStackTrace();
+
+		} finally {
+			if (ois != null) {
+				try {
+					ois.close();
+
+				} catch (IOException e) {
+					System.out.println("Could not close gamepad settings file");
+					e.printStackTrace();
+				}
+			}
+		}
+		return settings;
+	}
+	
+	public static void writeSettings(File file, Serializable settings) {
+		ObjectOutputStream ous = null;
+
+		try {
+			ous = new ObjectOutputStream(new FileOutputStream(file));
+			ous.writeObject(settings);
+
+		} catch (FileNotFoundException e) {
+			System.out.println("Could not find " + file.getName() + " settings file");
+			e.printStackTrace();
+
+		} catch (IOException e) {
+			System.out.println("Could not write to " + file.getName() + " settings file");
+			e.printStackTrace();
+
+		} finally {
+			if (ous != null) {
+				try {
+					ous.close();
+				} catch (IOException e) {
+					System.out.println("Unable to close " + file.getName() + " settings file");
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }

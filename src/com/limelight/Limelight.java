@@ -2,13 +2,9 @@ package com.limelight;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.lang.reflect.Constructor;
-import java.nio.file.Files;
-import java.util.LinkedList;
-
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -35,7 +31,7 @@ public class Limelight implements NvConnectionListener {
 	public Limelight(String host) {
 		this.host = host;
 	}
-	
+
 	private static void extractNativeLibrary(String libraryName, String targetDirectory) throws IOException {
 		InputStream resource = new Object().getClass().getResourceAsStream("/binlib/"+libraryName);
 		if (resource == null) {
@@ -43,21 +39,31 @@ public class Limelight implements NvConnectionListener {
 		}
 		File destination = new File(targetDirectory+File.separatorChar+libraryName);
 		
-		try {
-			Files.deleteIfExists(destination.toPath());
-		} catch (IOException e) {
-			// Try the copy anyway
-		}
+		// this will only delete it if it exists, and then create a new file
+		destination.delete();
+		destination.createNewFile();
 		
-		Files.copy(resource, destination.toPath());
+		//this is the janky java 6 way to copy a file
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(destination);
+			int read;
+			while ((read = resource.read()) != -1) {
+				fos.write(read);
+			}
+		} finally {
+			if (fos != null) {
+				fos.close();
+			}
+		}
 	}
-	
+
 	private static void prepareNativeLibraries() throws IOException {
 		if (!System.getProperty("os.name").contains("Windows")) {
 			// Nothing to do for platforms other than Windows
 			return;
 		}
-		
+
 		// We need to extract nv_avc_dec's runtime dependencies manually
 		// because the current JRE extracts them with different file names
 		// so they don't load properly.
@@ -80,9 +86,9 @@ public class Limelight implements NvConnectionListener {
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
-		
+
 		ControllerListener.startSendingInput(conn);
-		
+
 	}
 
 	private static void startControllerListener() {
@@ -119,13 +125,13 @@ public class Limelight implements NvConnectionListener {
 				System.exit(2);
 			}
 		}
-		
+
 		try {
 			prepareNativeLibraries();
 		} catch (IOException e) {
 			// This is expected to fail when not in a JAR
 		}
-		
+
 		createFrame();
 	}
 
@@ -157,7 +163,7 @@ public class Limelight implements NvConnectionListener {
 		e.printStackTrace();
 		if (!connectionFailed) {
 			connectionFailed = true;
-			
+
 			// Kill the connection to the target
 			conn.stop();
 

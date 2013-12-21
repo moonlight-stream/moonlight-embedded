@@ -28,6 +28,7 @@ import com.limelight.input.ControllerListener;
 import com.limelight.input.Gamepad;
 import com.limelight.input.GamepadHandler;
 import com.limelight.input.GamepadMapping;
+import com.limelight.input.GamepadMapping.Mapping;
 import com.limelight.settings.GamepadSettingsManager;
 
 public class SettingsFrame extends JFrame {
@@ -62,42 +63,54 @@ public class SettingsFrame extends JFrame {
 
 		ControllerComponent[] components = ControllerComponent.values();
 		for (int i = 0; i < components.length; i++) {
+			Mapping mapping = config.getMappedComponent(components[i]);
+			ControllerComponent comp = null;
+			if (mapping == null) {
+				comp = components[i];
+			} else {
+				comp = mapping.contComp;
+			}
 			Box componentBox = Box.createHorizontalBox();
 
 			componentBox.add(Box.createHorizontalStrut(10));
-			componentBox.add(components[i].getLabel());
+			componentBox.add(comp.getLabel());
 			componentBox.add(Box.createHorizontalGlue());
-			componentBox.add(components[i].getMapButton());
+			componentBox.add(comp.getMapButton());
 			componentBox.add(Box.createHorizontalStrut(5));
-			componentBox.add(components[i].getInvertBox());
+			componentBox.add(comp.getInvertBox());
 			componentBox.add(Box.createHorizontalStrut(5));
-			componentBox.add(components[i].getTriggerBox());
+			componentBox.add(comp.getTriggerBox());
 			componentBox.add(Box.createHorizontalStrut(10));
 			
 			Dimension buttonSize = new Dimension(110,32);
-			components[i].getMapButton().setMaximumSize(buttonSize);
-			components[i].getMapButton().setMinimumSize(buttonSize);
-			components[i].getMapButton().setPreferredSize(buttonSize);
+			comp.getMapButton().setMaximumSize(buttonSize);
+			comp.getMapButton().setMinimumSize(buttonSize);
+			comp.getMapButton().setPreferredSize(buttonSize);
 			
-			components[i].getMapButton().addActionListener(createListener());
-			components[i].getMapButton().setText(config.getMapping(components[i]));
+			comp.getMapButton().addActionListener(createListener());
+			comp.getMapButton().setText(config.getMapping(comp));
 
-			components[i].getInvertBox().addItemListener(new ItemListener() {
+			if (mapping != null) {
+				comp.getInvertBox().setSelected(mapping.invert);
+				comp.getTriggerBox().setSelected(mapping.trigger);
+			}
+			
+			comp.getInvertBox().addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					JCheckBox clicked = (JCheckBox)e.getItem();
 					ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
-					contComp.invert(e.getStateChange() == ItemEvent.SELECTED);
+					config.getMappedComponent(contComp).invert = (e.getStateChange() == ItemEvent.SELECTED);
 					configChanged = true;
 				}
 			});
 			
-			components[i].getTriggerBox().addItemListener(new ItemListener() {
+			comp.getTriggerBox().addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					JCheckBox clicked = (JCheckBox)e.getItem();
 					ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
-					contComp.trigger(e.getStateChange() == ItemEvent.SELECTED);
+					config.getMappedComponent(contComp).trigger = (e.getStateChange() == ItemEvent.SELECTED);
 					configChanged = true;
 				}
 			});
@@ -140,6 +153,7 @@ public class SettingsFrame extends JFrame {
 				if (shouldStartHandler) {
 					GamepadHandler.startUp();
 				}
+				dispose();
 			}
 		});
 
@@ -215,13 +229,17 @@ public class SettingsFrame extends JFrame {
 					consumeEvents.setName("Consume Events Thread");
 					consumeEvents.start();
 					
-					ControllerComponent oldConfig = config.getControllerComponent(newMapping);
+					Mapping oldConfig = config.getMapping(newMapping);
 					if (oldConfig != null) {
 						config.removeMapping(newMapping);
-						oldConfig.getMapButton().setText("");
+						oldConfig.contComp.getMapButton().setText("");
 					}
-
-					config.insertMapping(contComp, newMapping);
+					
+					Mapping newConfig = config.getMappedComponent(contComp);
+					if (newConfig == null) {
+						newConfig = config.new Mapping(contComp, false, false);
+					}
+					config.insertMapping(newConfig, newMapping);
 					contComp.getMapButton().setText(newMapping.getName());
 					configChanged = true;
 					contComp.getMapButton().setSelected(false);

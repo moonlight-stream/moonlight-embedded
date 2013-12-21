@@ -48,18 +48,27 @@ public abstract class PreferencesManager {
 		
 		private Resolution res;
 		private boolean fullscreen;
+		private String host;
 		
 		/**
 		 * construcs default preferences: 720p 30Hz fullscreen
 		 */
 		public Preferences() {
-			this.res = Resolution.RES_720_30;
-			this.fullscreen = true;
+			this(Resolution.RES_720_30, true);
 		}
 		
 		public Preferences(Resolution res, boolean fullscreen) {
 			this.res = res;
 			this.fullscreen = fullscreen;
+			this.host = "GeForce PC host";
+		}
+		
+		public String getHost() {
+			return host;
+		}
+		
+		public void setHost(String host) {
+			this.host = host;
 		}
 		
 		public Resolution getResolution() {

@@ -31,6 +31,8 @@ import com.limelight.binding.PlatformBinding;
 import com.limelight.input.ControllerListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.http.NvHTTP;
+import com.limelight.settings.PreferencesManager;
+import com.limelight.settings.PreferencesManager.Preferences;
 
 public class MainFrame {
 	private JTextField hostField;
@@ -59,10 +61,12 @@ public class MainFrame {
 		JPanel centerPane = new JPanel();
 		centerPane.setLayout(new BoxLayout(centerPane, BoxLayout.Y_AXIS));
 		
+		Preferences prefs = PreferencesManager.getPreferences();
+		
 		hostField = new JTextField();
 		hostField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 		hostField.setToolTipText("Enter host name or IP address");
-		hostField.setText("GeForce PC host");
+		hostField.setText(prefs.getHost());
 		hostField.setSelectionStart(0);
 		hostField.setSelectionEnd(hostField.getText().length());
 
@@ -144,7 +148,13 @@ public class MainFrame {
 		return new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Limelight.createInstance(hostField.getText());
+				String host = hostField.getText();
+				Preferences prefs = PreferencesManager.getPreferences();
+				if (!host.equals(prefs.getHost())) {
+					prefs.setHost(host);
+					PreferencesManager.writePreferences(prefs);
+				}
+				Limelight.createInstance(host);
 			}
 		};
 	}

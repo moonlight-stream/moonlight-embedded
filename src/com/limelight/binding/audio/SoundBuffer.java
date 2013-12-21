@@ -24,6 +24,14 @@ public class SoundBuffer {
 		bufferList.addLast(buff);
 	}
 	
+	public int size() {
+		int size = 0;
+		for (ShortBufferDescriptor desc : bufferList) {
+			size += desc.length;
+		}
+		return size;
+	}
+	
 	public int fill(byte[] data, int offset, int length) {
 		int filled = 0;
 		

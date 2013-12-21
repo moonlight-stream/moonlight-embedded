@@ -16,7 +16,6 @@ import java.net.UnknownHostException;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -37,7 +36,6 @@ public class MainFrame {
 	private JTextField hostField;
 	private JButton pair;
 	private JButton stream;
-	private JCheckBox fullscreen;
 	private JFrame limeFrame;
 	
 	public JFrame getLimeFrame() {
@@ -76,8 +74,6 @@ public class MainFrame {
 		pair.addActionListener(createPairButtonListener());
 		pair.setToolTipText("Send pair request to GeForce PC");
 		
-		fullscreen = new JCheckBox("Fullscreen", true);
-		
 		Box streamBox = Box.createHorizontalBox();
 		streamBox.add(Box.createHorizontalGlue());
 		streamBox.add(stream);
@@ -97,8 +93,6 @@ public class MainFrame {
 		Box contentBox = Box.createVerticalBox();
 		contentBox.add(Box.createVerticalStrut(20));
 		contentBox.add(hostBox);
-		contentBox.add(Box.createVerticalStrut(5));
-		contentBox.add(fullscreen);
 		contentBox.add(Box.createVerticalStrut(5));
 		contentBox.add(streamBox);
 		contentBox.add(Box.createVerticalStrut(10));
@@ -150,7 +144,7 @@ public class MainFrame {
 		return new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Limelight.createInstance(hostField.getText(), fullscreen.isSelected());
+				Limelight.createInstance(hostField.getText());
 			}
 		};
 	}

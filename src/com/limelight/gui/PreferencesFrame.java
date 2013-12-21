@@ -14,19 +14,20 @@ import javax.swing.JPanel;
 
 import com.limelight.settings.PreferencesManager;
 import com.limelight.settings.PreferencesManager.Preferences;
+import com.limelight.settings.PreferencesManager.Preferences.Resolution;
 
 public class PreferencesFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JComboBox resolution;
 	private JCheckBox fullscreen;
 	private Preferences prefs;
-	private boolean prefsChanged = false;
 	
 	public PreferencesFrame() {
 		super("Preferences");
 		this.setSize(200, 100);
 		this.setResizable(false);
 		this.setAlwaysOnTop(true);
+		prefs = PreferencesManager.getPreferences();
 	}
 	
 	public void build() {
@@ -35,12 +36,15 @@ public class PreferencesFrame extends JFrame {
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		
 		resolution = new JComboBox();
-		resolution.addItem("1080p");
-		resolution.addItem("720p");
+		for (Resolution res : Resolution.values()) {
+			resolution.addItem(res);
+		}
+		
+		resolution.setSelectedItem(prefs.getResolution());
 		
 		fullscreen = new JCheckBox("Fullscreen");
-		
-		
+		fullscreen.setSelected(prefs.getFullscreen());
+	
 		Box resolutionBox = Box.createHorizontalBox();
 		resolutionBox.add(Box.createHorizontalGlue());
 		resolutionBox.add(resolution);
@@ -61,7 +65,7 @@ public class PreferencesFrame extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				super.windowClosing(e);
-				if (prefsChanged) {
+				if (prefsChanged()) {
 					writePreferences();
 				}
 			}
@@ -76,7 +80,14 @@ public class PreferencesFrame extends JFrame {
 		this.setVisible(true);
 	}
 	
+	private boolean prefsChanged() {
+		return (prefs.getResolution() != resolution.getSelectedItem()) ||
+				(prefs.getFullscreen() != fullscreen.isSelected());
+	}
+	
 	private void writePreferences() {
+		prefs.setFullscreen(fullscreen.isSelected());
+		prefs.setResolution((Resolution)resolution.getSelectedItem());
 		PreferencesManager.writePreferences(prefs);
 	}
 	

@@ -17,6 +17,9 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.settings.PreferencesManager;
+import com.limelight.settings.PreferencesManager.Preferences;
+import com.limelight.settings.PreferencesManager.Preferences.Resolution;
 
 public class Limelight implements NvConnectionListener {
 	public static final double VERSION = 1.0;
@@ -26,7 +29,6 @@ public class Limelight implements NvConnectionListener {
 	private NvConnection conn;
 	private boolean connectionFailed;
 	private static JFrame limeFrame;
-	private StreamConfiguration streamConfig = new StreamConfiguration(1280, 720, 30);
 
 	public Limelight(String host) {
 		this.host = host;
@@ -79,10 +81,14 @@ public class Limelight implements NvConnectionListener {
 		extractNativeLibrary("avcodec-55.dll", nativeLibDir);
 	}
 
-	private void startUp(boolean fullscreen) {
+	private void startUp() {
 		streamFrame = new StreamFrame();
+		
+		Preferences prefs = PreferencesManager.getPreferences();
+		StreamConfiguration streamConfig = createConfiguration(prefs.getResolution());
+		
 		conn = new NvConnection(host, this, streamConfig);
-		streamFrame.build(conn, streamConfig, fullscreen);
+		streamFrame.build(conn, streamConfig, prefs.getFullscreen());
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
@@ -92,6 +98,18 @@ public class Limelight implements NvConnectionListener {
 
 	}
 
+	private StreamConfiguration createConfiguration(Resolution res) {
+		switch(res) {
+		case RES_720:
+			return new StreamConfiguration(1280, 720, 30);
+		case RES_1080:
+			return new StreamConfiguration(1920, 1080, 60);
+		default:
+			// this should never happen, if it does we want the NPE to occur so we know something is wrong
+			return null;
+		}
+	}
+	
 	private static void startControllerListener() {
 		ControllerListener.startUp();
 	}
@@ -103,9 +121,9 @@ public class Limelight implements NvConnectionListener {
 		startControllerListener();
 	}
 
-	public static void createInstance(String host, boolean fullscreen) {
+	public static void createInstance(String host) {
 		Limelight limelight = new Limelight(host);
-		limelight.startUp(fullscreen);
+		limelight.startUp();
 	}
 
 	public static void main(String args[]) {

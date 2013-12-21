@@ -75,7 +75,7 @@ public class PreferencesFrame extends JFrame {
 
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		//center on screen
-		this.setLocation((int)dim.getWidth()/2-this.getWidth(), (int)dim.getHeight()/2-this.getHeight());
+		this.setLocation((int)dim.getWidth()/2-this.getWidth()/2, (int)dim.getHeight()/2-this.getHeight()/2);
 		
 		this.setVisible(true);
 	}

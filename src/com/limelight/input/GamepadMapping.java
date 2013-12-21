@@ -23,6 +23,10 @@ public class GamepadMapping implements Serializable {
 		return mapping.get(comp.getIdentifier().getName());
 	}
 	
+	public void removeMapping(Component comp) {
+		mapping.remove(comp.getIdentifier().getName());
+	}
+	
 	/**
 	 * Gets the mapping for the specified component.</br>
 	 * NOTE: Use sparingly takes O(N) time.

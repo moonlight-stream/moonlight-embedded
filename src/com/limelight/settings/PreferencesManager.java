@@ -7,13 +7,16 @@ public abstract class PreferencesManager {
 	private static Preferences cachedPreferences = null;
 	
 	public static void writePreferences(Preferences prefs) {
+		System.out.println("Writing Preferences");
 		File prefFile = SettingsManager.getInstance().getSettingsFile();
 		
 		SettingsManager.writeSettings(prefFile, prefs);
+		cachedPreferences = prefs;
 	}
 	
 	public static Preferences getPreferences() {
 		if (cachedPreferences == null) {
+			System.out.println("Reading Preferences");
 			File prefFile = SettingsManager.getInstance().getSettingsFile();
 			Preferences savedPref = (Preferences)SettingsManager.readSettings(prefFile);
 			cachedPreferences = savedPref;
@@ -29,7 +32,18 @@ public abstract class PreferencesManager {
 	public static class Preferences implements Serializable {
 		private static final long serialVersionUID = -5575445156215348048L;
 
-		public enum Resolution { RES_720, RES_1080 };
+		public enum Resolution { RES_720("1280x720 (720p)"), RES_1080("1920x1080 (1080p)");
+			public String name;
+			
+			private Resolution(String name) {
+				this.name = name;
+			}
+			
+			@Override
+			public String toString() {
+				return name;
+			}
+		};
 		
 		private Resolution res;
 		private boolean fullscreen;

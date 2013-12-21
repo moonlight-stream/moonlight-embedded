@@ -48,7 +48,15 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
 		try {
 			soundLine = (SourceDataLine) AudioSystem.getLine(info);
-			soundLine.open(audioFormat);
+			
+			// Java's OS X mixer performs very badly with the default buffer size
+			if (System.getProperty("os.name").contains("Mac OS X")) {
+				soundLine.open(audioFormat, 16384);
+			}
+			else {
+				soundLine.open(audioFormat);
+			}
+			
 			soundLine.start();
 			
 			lineBuffer = new byte[soundLine.getBufferSize()];

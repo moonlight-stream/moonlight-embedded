@@ -32,7 +32,8 @@ public abstract class PreferencesManager {
 	public static class Preferences implements Serializable {
 		private static final long serialVersionUID = -5575445156215348048L;
 
-		public enum Resolution { RES_720("1280x720 (720p)"), RES_1080("1920x1080 (1080p)");
+		public enum Resolution { RES_720_30("1280x720 (30Hz)"), RES_720_60("1280x720 (60Hz)"), 
+			RES_1080_30("1920x1080 (30Hz)"), RES_1080_60("1920x1080 (60Hz)");
 			public String name;
 			
 			private Resolution(String name) {
@@ -49,10 +50,10 @@ public abstract class PreferencesManager {
 		private boolean fullscreen;
 		
 		/**
-		 * construcs default preferences: 720p fullscreen
+		 * construcs default preferences: 720p 30Hz fullscreen
 		 */
 		public Preferences() {
-			this.res = Resolution.RES_720;
+			this.res = Resolution.RES_720_30;
 			this.fullscreen = true;
 		}
 		

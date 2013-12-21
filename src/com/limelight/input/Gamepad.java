@@ -1,5 +1,6 @@
 package com.limelight.input;
 
+import com.limelight.input.GamepadMapping.Mapping;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.ControllerPacket;
 
@@ -104,22 +105,22 @@ public class Gamepad {
 	}
 
 	private void handleComponent(Component comp, float value) {
-		ControllerComponent contComp = config.getControllerComponent(comp);
-		if (contComp != null) {
-			if (contComp.isAnalog()) {
-				handleAnalog(contComp, sanitizeValue(contComp, value));
+		Mapping mapping = config.getMapping(comp);
+		if (mapping != null) {
+			if (mapping.contComp.isAnalog()) {
+				handleAnalog(mapping.contComp, sanitizeValue(mapping, value));
 			} else {
-				handleButtons(contComp, sanitizeValue(contComp, value));
+				handleButtons(mapping.contComp, sanitizeValue(mapping, value));
 			}
 		}
 	}
 
-	private float sanitizeValue(ControllerComponent contComp, float value) {
+	private float sanitizeValue(Mapping mapping, float value) {
 		float sanitized = value;
-		if (contComp.invert()) {
+		if (mapping.invert) {
 			sanitized = -sanitized;
 		}
-		if (contComp.isTrigger()) {
+		if (mapping.trigger) {
 			sanitized = (sanitized + 1)/2;
 		}
 		return sanitized;

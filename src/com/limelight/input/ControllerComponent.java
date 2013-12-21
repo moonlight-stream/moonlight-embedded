@@ -19,8 +19,6 @@ public enum ControllerComponent implements Serializable {
 	private JCheckBox invertBox;
 	private JCheckBox triggerBox;
 	private boolean analog;
-	private boolean invert;
-	private boolean trigger;
 	
 	private ControllerComponent(String name, boolean analog) {
 		this.label = new JLabel(name);
@@ -32,8 +30,6 @@ public enum ControllerComponent implements Serializable {
 		this.triggerBox.setName(this.name());
 		this.triggerBox.setToolTipText("If this component should act as a trigger.");
 		this.analog = analog;
-		this.invert = false;
-		this.trigger = false;
 	}
 	
 	public JLabel getLabel() {
@@ -56,19 +52,7 @@ public enum ControllerComponent implements Serializable {
 		return analog;
 	}
 	
-	public boolean isTrigger() {
-		return trigger;
-	}
-	
-	public void trigger(boolean isTrigger) {
-		trigger = isTrigger;
-	}
-	
-	public void invert(boolean invert) {
-		this.invert = invert;
-	}
-	
-	public boolean invert() {
-		return invert;
+	public boolean sameAs(ControllerComponent other) {
+		return this.name().equals(other.name());
 	}
 }

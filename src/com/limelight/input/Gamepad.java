@@ -142,7 +142,7 @@ public class Gamepad {
 			leftStickY = (short)Math.round(value * 0x7FFF);
 			break;
 		case RS_X:
-			leftStickX = (short)Math.round(value * 0x7FFF);
+			rightStickX = (short)Math.round(value * 0x7FFF);
 			break;
 		case RS_Y:
 			rightStickY = (short)Math.round(value * 0x7FFF);

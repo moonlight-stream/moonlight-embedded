@@ -3,6 +3,7 @@ package com.limelight.input;
 import java.io.Serializable;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 public enum ControllerComponent implements Serializable {
@@ -15,13 +16,24 @@ public enum ControllerComponent implements Serializable {
 	
 	private JLabel label;
 	private JButton mapButton;
+	private JCheckBox invertBox;
+	private JCheckBox triggerBox;
 	private boolean analog;
+	private boolean invert;
+	private boolean trigger;
 	
 	private ControllerComponent(String name, boolean analog) {
 		this.label = new JLabel(name);
 		this.mapButton = new JButton();
 		this.mapButton.setName(this.name());
+		this.invertBox = new JCheckBox("Invert");
+		this.invertBox.setName(this.name());
+		this.triggerBox = new JCheckBox("Trigger");
+		this.triggerBox.setName(this.name());
+		this.triggerBox.setToolTipText("If this component should act as a trigger.");
 		this.analog = analog;
+		this.invert = false;
+		this.trigger = false;
 	}
 	
 	public JLabel getLabel() {
@@ -32,7 +44,31 @@ public enum ControllerComponent implements Serializable {
 		return mapButton;
 	}
 	
+	public JCheckBox getInvertBox() {
+		return invertBox;
+	}
+	
+	public JCheckBox getTriggerBox() {
+		return triggerBox;
+	}
+	
 	public boolean isAnalog() {
 		return analog;
+	}
+	
+	public boolean isTrigger() {
+		return trigger;
+	}
+	
+	public void trigger(boolean isTrigger) {
+		trigger = isTrigger;
+	}
+	
+	public void invert(boolean invert) {
+		this.invert = invert;
+	}
+	
+	public boolean invert() {
+		return invert;
 	}
 }

@@ -107,13 +107,24 @@ public class Gamepad {
 		ControllerComponent contComp = config.getControllerComponent(comp);
 		if (contComp != null) {
 			if (contComp.isAnalog()) {
-				handleAnalog(contComp, value);
+				handleAnalog(contComp, sanitizeValue(contComp, value));
 			} else {
-				handleButtons(contComp, value);
+				handleButtons(contComp, sanitizeValue(contComp, value));
 			}
 		}
 	}
 
+	private float sanitizeValue(ControllerComponent contComp, float value) {
+		float sanitized = value;
+		if (contComp.invert()) {
+			sanitized = -sanitized;
+		}
+		if (contComp.isTrigger()) {
+			sanitized = (sanitized + 1)/2;
+		}
+		return sanitized;
+	}
+	
 	private void toggle(short button, boolean press) {
 		if (press) {
 			inputMap |= button;
@@ -123,8 +134,6 @@ public class Gamepad {
 	}
 
 	private void handleAnalog(ControllerComponent contComp, float value) {
-
-
 		switch (contComp) {
 		case LS_X:
 			leftStickX = (short)Math.round(value * 0x7FFF);
@@ -139,10 +148,10 @@ public class Gamepad {
 			rightStickY = (short)Math.round(value * 0x7FFF);
 			break;
 		case LT:
-			leftTrigger = (byte)Math.round((value + 1) / 2 * 0xFF);
+			leftTrigger = (byte)Math.round(value * 0xFF);
 			break;
 		case RT:
-			rightTrigger = (byte)Math.round((value + 1) / 2 * 0xFF);
+			rightTrigger = (byte)Math.round(value * 0xFF);
 			break;
 		default:
 			System.out.println("A mapping error has occured. Ignoring: " + contComp.name());

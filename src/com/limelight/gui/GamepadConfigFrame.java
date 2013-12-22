@@ -31,7 +31,7 @@ import com.limelight.input.GamepadMapping;
 import com.limelight.input.GamepadMapping.Mapping;
 import com.limelight.settings.GamepadSettingsManager;
 
-public class SettingsFrame extends JFrame {
+public class GamepadConfigFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	private boolean configChanged = false;
@@ -40,7 +40,7 @@ public class SettingsFrame extends JFrame {
 	private Thread mappingThread;
 	private GamepadMapping config;
 
-	public SettingsFrame() {
+	public GamepadConfigFrame() {
 		super("Gamepad Settings");
 		System.out.println("Creating Settings Frame");
 		this.setSize(900, 500);
@@ -81,12 +81,15 @@ public class SettingsFrame extends JFrame {
 			componentBox.add(Box.createHorizontalStrut(5));
 			componentBox.add(comp.getTriggerBox());
 			componentBox.add(Box.createHorizontalStrut(10));
-			
+
 			Dimension buttonSize = new Dimension(110,32);
 			comp.getMapButton().setMaximumSize(buttonSize);
 			comp.getMapButton().setMinimumSize(buttonSize);
 			comp.getMapButton().setPreferredSize(buttonSize);
-			
+
+			for (ActionListener l : comp.getMapButton().getActionListeners()) {
+				comp.getMapButton().removeActionListener(l);
+			}
 			comp.getMapButton().addActionListener(createListener());
 			comp.getMapButton().setText(config.getMapping(comp));
 
@@ -94,7 +97,7 @@ public class SettingsFrame extends JFrame {
 				comp.getInvertBox().setSelected(mapping.invert);
 				comp.getTriggerBox().setSelected(mapping.trigger);
 			}
-			
+
 			comp.getInvertBox().addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
@@ -104,7 +107,7 @@ public class SettingsFrame extends JFrame {
 					configChanged = true;
 				}
 			});
-			
+
 			comp.getTriggerBox().addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
@@ -114,7 +117,7 @@ public class SettingsFrame extends JFrame {
 					configChanged = true;
 				}
 			});
-			
+
 			if (i > components.length / 2) {
 				rightColumn.add(componentBox);
 				if (i < components.length - 1) {
@@ -172,7 +175,7 @@ public class SettingsFrame extends JFrame {
 				List<Gamepad> gamepads = GamepadHandler.getGamepads();
 
 				if (gamepads.isEmpty()) {
-					JOptionPane.showMessageDialog(SettingsFrame.this, "No Gamepad Detected");
+					JOptionPane.showMessageDialog(GamepadConfigFrame.this, "No Gamepad Detected");
 					return;
 				}
 				map(contComp, gamepads.get(0));
@@ -198,50 +201,63 @@ public class SettingsFrame extends JFrame {
 					Component newMapping = null;
 
 					while (newMapping == null) {
-						pad.poll();
-						EventQueue queue = pad.getEvents();
-						Event event = new Event();
-
-						while (queue.getNextEvent(event)) {
-							if (Math.abs(event.getValue()) > .75F) {
-								newMapping = event.getComponent();
-								break;
-							}
-						}
-						
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {}
-					}
-					
-					// start a new thread to go through all of the remaining events
-					Thread consumeEvents = new Thread(new Runnable() {
-						@Override
-						public void run() {
-							pad.poll();
+						if (pad.poll()) {
 							EventQueue queue = pad.getEvents();
 							Event event = new Event();
 
 							while (queue.getNextEvent(event)) {
+								if (!pad.poll()) {
+									break;
+								}
+								if (Math.abs(event.getValue()) > .75F) {
+									newMapping = event.getComponent();
+									break;
+								}
+							}
+						} else {
+							break;
+						}
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {}
+					}
+
+					// start a new thread to go through all of the remaining events
+					Thread consumeEvents = new Thread(new Runnable() {
+						@Override
+						public void run() {
+							if (pad.poll()) {
+								EventQueue queue = pad.getEvents();
+								Event event = new Event();
+
+								while (queue.getNextEvent(event)) {
+									if (!pad.poll()) {
+										break;
+									}
+								}
 							}
 						}
 					});
 					consumeEvents.setName("Consume Events Thread");
 					consumeEvents.start();
-					
-					Mapping oldConfig = config.getMapping(newMapping);
-					if (oldConfig != null) {
-						config.removeMapping(newMapping);
-						oldConfig.contComp.getMapButton().setText("");
+
+					if (newMapping != null) {
+						Mapping oldConfig = config.getMapping(newMapping);
+						if (oldConfig != null) {
+							config.removeMapping(newMapping);
+							oldConfig.contComp.getMapButton().setText("");
+						}
+
+						Mapping newConfig = config.getMappedComponent(contComp);
+						if (newConfig == null) {
+							newConfig = config.new Mapping(contComp, false, false);
+						}
+						config.insertMapping(newConfig, newMapping);
+						contComp.getMapButton().setText(newMapping.getName());
+						configChanged = true;
+					} else {
+						contComp.getMapButton().setText(config.getMapping(contComp));
 					}
-					
-					Mapping newConfig = config.getMappedComponent(contComp);
-					if (newConfig == null) {
-						newConfig = config.new Mapping(contComp, false, false);
-					}
-					config.insertMapping(newConfig, newMapping);
-					contComp.getMapButton().setText(newMapping.getName());
-					configChanged = true;
 					contComp.getMapButton().setSelected(false);
 				}
 			});

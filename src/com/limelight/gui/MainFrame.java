@@ -125,7 +125,7 @@ public class MainFrame {
 		gamepadSettings.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new SettingsFrame().build();
+				new GamepadConfigFrame().build();
 			}
 		});
 		

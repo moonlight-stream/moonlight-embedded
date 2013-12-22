@@ -39,12 +39,10 @@ public class ControllerListener {
 						construct.setAccessible(true);
 						
 						ControllerEnvironment defaultEnv = null;
-
-						//TODO: allow "rescanning" to work again
-						defaultEnv = (ControllerEnvironment)construct.newInstance();
 						
 						while(!isInterrupted()) {
-
+							
+							defaultEnv = (ControllerEnvironment)construct.newInstance();
 							Controller[] ca = defaultEnv.getControllers();
 							LinkedList<Controller> gamepads = new LinkedList<Controller>();
 

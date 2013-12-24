@@ -2,8 +2,6 @@ package com.limelight.input;
 
 import java.io.Serializable;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 public enum ControllerComponent implements Serializable {
@@ -15,20 +13,10 @@ public enum ControllerComponent implements Serializable {
 	BTN_START("Start Button", false), BTN_BACK("Back Button", false), BTN_SPECIAL("Special Button", false);
 	
 	private JLabel label;
-	private JButton mapButton;
-	private JCheckBox invertBox;
-	private JCheckBox triggerBox;
 	private boolean analog;
 	
 	private ControllerComponent(String name, boolean analog) {
 		this.label = new JLabel(name);
-		this.mapButton = new JButton();
-		this.mapButton.setName(this.name());
-		this.invertBox = new JCheckBox("Invert");
-		this.invertBox.setName(this.name());
-		this.triggerBox = new JCheckBox("Trigger");
-		this.triggerBox.setName(this.name());
-		this.triggerBox.setToolTipText("If this component should act as a trigger.");
 		this.analog = analog;
 	}
 	
@@ -36,22 +24,11 @@ public enum ControllerComponent implements Serializable {
 		return label;
 	}
 	
-	public JButton getMapButton() {
-		return mapButton;
-	}
-	
-	public JCheckBox getInvertBox() {
-		return invertBox;
-	}
-	
-	public JCheckBox getTriggerBox() {
-		return triggerBox;
-	}
-	
 	public boolean isAnalog() {
 		return analog;
 	}
 	
+	@Deprecated
 	public boolean sameAs(ControllerComponent other) {
 		return this.name().equals(other.name());
 	}

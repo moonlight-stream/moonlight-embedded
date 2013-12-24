@@ -19,21 +19,21 @@ public class GamepadMapping implements Serializable {
 		mapping.put(comp.getIdentifier().getName(), toMap);
 	}
 	
-	public Mapping getMapping(Component comp) {
+	public Mapping get(Component comp) {
 		return mapping.get(comp.getIdentifier().getName());
 	}
 	
-	public void removeMapping(Component comp) {
+	public void remove(Component comp) {
 		mapping.remove(comp.getIdentifier().getName());
 	}
 	
 	/**
 	 * Gets the mapped ControllerComponent for the specified ControllerComponent.</br>
-	 * NOTE: Use sparingly takes O(N) time.
 	 * @param contComp the component to get a mapping for
 	 * @return a mapping or an null if there is none
 	 */
-	public Mapping getMappedComponent(ControllerComponent contComp) {
+	public Mapping get(ControllerComponent contComp) {
+		//#allTheJank
 		for (Entry<String, Mapping> entry : mapping.entrySet()) {
 			if (entry.getValue().contComp.sameAs(contComp)) {
 				return entry.getValue();
@@ -44,7 +44,6 @@ public class GamepadMapping implements Serializable {
 	
 	/**
 	 * Gets the mapping for the specified component.</br>
-	 * NOTE: Use sparingly takes O(N) time.
 	 * @param contComp the component to get a mapping for
 	 * @return a mapping or an empty string if there is none
 	 */

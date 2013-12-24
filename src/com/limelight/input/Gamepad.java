@@ -105,7 +105,7 @@ public class Gamepad {
 	}
 
 	private void handleComponent(Component comp, float value) {
-		Mapping mapping = config.getMapping(comp);
+		Mapping mapping = config.get(comp);
 		if (mapping != null) {
 			if (mapping.contComp.isAnalog()) {
 				handleAnalog(mapping.contComp, sanitizeValue(mapping, value));

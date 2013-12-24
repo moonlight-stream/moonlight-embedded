@@ -1,7 +1,9 @@
 package com.limelight.gui;
 
-import java.awt.Container;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,15 +11,19 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 
 import net.java.games.input.Component;
 import net.java.games.input.Event;
@@ -39,11 +45,12 @@ public class GamepadConfigFrame extends JFrame {
 
 	private Thread mappingThread;
 	private GamepadMapping config;
+	private HashMap<Box, Mapping> componentMap;
 
 	public GamepadConfigFrame() {
 		super("Gamepad Settings");
 		System.out.println("Creating Settings Frame");
-		this.setSize(900, 500);
+		this.setSize(850, 550);
 		this.setResizable(false);
 		this.setAlwaysOnTop(true);
 		config = GamepadSettingsManager.getSettings();
@@ -51,101 +58,108 @@ public class GamepadConfigFrame extends JFrame {
 	}
 
 	public void build() {
-		Container c = this.getContentPane();
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
+		componentMap = new HashMap<Box, Mapping>();
 
-		Box leftColumn = Box.createVerticalBox();
-		Box rightColumn = Box.createVerticalBox();
-
-		leftColumn.add(Box.createVerticalStrut(10));
-		rightColumn.add(Box.createVerticalStrut(10));
-
+		GridLayout layout = new GridLayout(ControllerComponent.values().length/2 + 1, 2);
+		layout.setHgap(60);
+		layout.setVgap(3);
+		JPanel mainPanel = new JPanel(layout);
+		
 		ControllerComponent[] components = ControllerComponent.values();
+		
 		for (int i = 0; i < components.length; i++) {
-			Mapping mapping = config.getMappedComponent(components[i]);
-			ControllerComponent comp = null;
-			if (mapping == null) {
-				comp = components[i];
-			} else {
-				comp = mapping.contComp;
-			}
-			Box componentBox = Box.createHorizontalBox();
-
-			componentBox.add(Box.createHorizontalStrut(10));
-			componentBox.add(comp.getLabel());
-			componentBox.add(Box.createHorizontalGlue());
-			componentBox.add(comp.getMapButton());
-			componentBox.add(Box.createHorizontalStrut(5));
-			componentBox.add(comp.getInvertBox());
-			componentBox.add(Box.createHorizontalStrut(5));
-			componentBox.add(comp.getTriggerBox());
-			componentBox.add(Box.createHorizontalStrut(10));
-
-			Dimension buttonSize = new Dimension(110,32);
-			comp.getMapButton().setMaximumSize(buttonSize);
-			comp.getMapButton().setMinimumSize(buttonSize);
-			comp.getMapButton().setPreferredSize(buttonSize);
-
-			for (ActionListener l : comp.getMapButton().getActionListeners()) {
-				comp.getMapButton().removeActionListener(l);
-			}
-			comp.getMapButton().addActionListener(createListener());
-			comp.getMapButton().setText(config.getMapping(comp));
-
-			if (mapping != null) {
-				comp.getInvertBox().setSelected(mapping.invert);
-				comp.getTriggerBox().setSelected(mapping.trigger);
-			}
-
-			comp.getInvertBox().addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent e) {
-					JCheckBox clicked = (JCheckBox)e.getItem();
-					ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
-					config.getMappedComponent(contComp).invert = (e.getStateChange() == ItemEvent.SELECTED);
-					configChanged = true;
-				}
-			});
-
-			comp.getTriggerBox().addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent e) {
-					JCheckBox clicked = (JCheckBox)e.getItem();
-					ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
-					config.getMappedComponent(contComp).trigger = (e.getStateChange() == ItemEvent.SELECTED);
-					configChanged = true;
-				}
-			});
-
-			if (i > components.length / 2) {
-				rightColumn.add(componentBox);
-				if (i < components.length - 1) {
-					rightColumn.add(Box.createVerticalStrut(5));
-				}
-			} else {
-				leftColumn.add(componentBox);
-				if (i < components.length / 2 - 1) {
-					leftColumn.add(Box.createVerticalStrut(5));
-				}
-			}
+			
+			Mapping mapping = config.get(components[i]);
+			Box componentBox = createComponentBox(mapping);
+			
+			mainPanel.add(componentBox);
+			
 		}
 
-		rightColumn.add(Box.createVerticalGlue());
-		leftColumn.add(Box.createVerticalGlue());
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 
-		mainPanel.add(Box.createHorizontalStrut(10));
-		mainPanel.add(leftColumn);
-		mainPanel.add(Box.createHorizontalStrut(75));
-		mainPanel.add(rightColumn);
-		mainPanel.add(Box.createHorizontalStrut(10));
+		this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
+		this.setLayout(new BorderLayout());
 
-		c.add(mainPanel);
+		this.getContentPane().add(mainPanel, "Center");
+		this.getContentPane().add(Box.createVerticalStrut(20), "North");
+		this.getContentPane().add(Box.createVerticalStrut(20), "South");
+		this.getContentPane().add(Box.createHorizontalStrut(20), "East");
+		this.getContentPane().add(Box.createHorizontalStrut(20), "West");
+		
+		this.addWindowListener(createWindowListener());
+		this.setVisible(true);
+	}
 
-		this.addWindowListener(new WindowAdapter() {
+	private Box createComponentBox(Mapping mapping) {
+		Box componentBox = Box.createHorizontalBox();
+		
+		JButton mapButton = new JButton();
+		JCheckBox invertBox = new JCheckBox("Invert");
+		JCheckBox triggerBox = new JCheckBox("Trigger");
+
+		Dimension buttonSize = new Dimension(110, 24);
+		mapButton.setMaximumSize(buttonSize);
+		mapButton.setMinimumSize(buttonSize);
+		mapButton.setPreferredSize(buttonSize);
+		mapButton.addActionListener(createListener());
+		mapButton.setText(config.getMapping(mapping.contComp));
+
+		invertBox.setSelected(mapping.invert);
+		invertBox.addItemListener(createInvertListener());
+
+		triggerBox.setSelected(mapping.trigger);
+		triggerBox.addItemListener(createTriggerListener());
+		triggerBox.setToolTipText("If this component should act as a trigger.");
+		
+		componentBox.add(Box.createHorizontalStrut(5));
+		componentBox.add(mapping.contComp.getLabel());
+		componentBox.add(Box.createHorizontalGlue());
+		componentBox.add(mapButton);
+		componentBox.add(invertBox);
+		componentBox.add(triggerBox);
+		componentBox.add(Box.createHorizontalStrut(5));
+		
+		componentBox.setBorder(createBorder());
+		
+		componentMap.put(componentBox, mapping);
+		
+		return componentBox;
+	}
+
+	private Border createBorder() {
+		return new LineBorder(Color.GRAY, 1, true);
+	}
+	//TODO: make createInvertListener() and createTriggerListener() one method. TOO MUCH COPY PASTA!
+	private ItemListener createInvertListener() {
+		return new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				JCheckBox clicked = (JCheckBox)e.getItem();
+				ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
+				config.get(contComp).invert = (e.getStateChange() == ItemEvent.SELECTED);
+				configChanged = true;
+			}
+		};
+	}
+
+	private ItemListener createTriggerListener() {
+		return new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				JCheckBox clicked = (JCheckBox)e.getItem();
+				ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
+				config.get(contComp).trigger = (e.getStateChange() == ItemEvent.SELECTED);
+				configChanged = true;
+			}
+		};
+	}
+
+
+	private WindowListener createWindowListener() {
+		return new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				super.windowClosing(e);
 				if (mappingThread != null && mappingThread.isAlive()) {
 					mappingThread.interrupt();
 				}
@@ -158,34 +172,36 @@ public class GamepadConfigFrame extends JFrame {
 				}
 				dispose();
 			}
-		});
-
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
-		this.setVisible(true);
+		};
 	}
 
 	private ActionListener createListener() {
 		return new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//#allthejank
-				ControllerComponent contComp = ControllerComponent.valueOf(((JButton)e.getSource()).getName());
-
+				Box toMap = (Box)((JButton)e.getSource()).getParent();
+				
 				List<Gamepad> gamepads = GamepadHandler.getGamepads();
 
 				if (gamepads.isEmpty()) {
 					JOptionPane.showMessageDialog(GamepadConfigFrame.this, "No Gamepad Detected");
 					return;
 				}
-				map(contComp, gamepads.get(0));
+				
+				map(toMap, gamepads.get(0));
 			}
 		};
 	}
 
-	private void map(final ControllerComponent contComp, final Gamepad pad) {
+	private void map(final Box toMap, final Gamepad pad) {
 		if (mappingThread == null || !mappingThread.isAlive()) {
-			contComp.getMapButton().setSelected(true);
+			
+			//a little janky, could probably be fixed up a bit
+			final JButton buttonPressed = getButton(toMap);
+			final Mapping mappingToMap = componentMap.get(toMap);
+			
+			buttonPressed.setSelected(true);
+			
 			ControllerListener.stopListening();
 
 			if (GamepadHandler.isRunning()) {
@@ -193,72 +209,32 @@ public class GamepadConfigFrame extends JFrame {
 				shouldStartHandler = true;
 			}
 
-			contComp.getMapButton().setText("Select Input");
+			buttonPressed.setText("Select Input");
 
 			mappingThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
-					Component newMapping = null;
+					
+					Component newComponent = waitForNewMapping(pad);
+					consumeEvents(pad);
+					
 
-					while (newMapping == null) {
-						if (pad.poll()) {
-							EventQueue queue = pad.getEvents();
-							Event event = new Event();
-
-							while (queue.getNextEvent(event)) {
-								if (!pad.poll()) {
-									break;
-								}
-								if (Math.abs(event.getValue()) > .75F) {
-									newMapping = event.getComponent();
-									break;
-								}
-							}
-						} else {
-							break;
-						}
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {}
-					}
-
-					// start a new thread to go through all of the remaining events
-					Thread consumeEvents = new Thread(new Runnable() {
-						@Override
-						public void run() {
-							if (pad.poll()) {
-								EventQueue queue = pad.getEvents();
-								Event event = new Event();
-
-								while (queue.getNextEvent(event)) {
-									if (!pad.poll()) {
-										break;
-									}
-								}
-							}
-						}
-					});
-					consumeEvents.setName("Consume Events Thread");
-					consumeEvents.start();
-
-					if (newMapping != null) {
-						Mapping oldConfig = config.getMapping(newMapping);
+					if (newComponent != null) {
+						Mapping oldConfig = config.get(newComponent);
 						if (oldConfig != null) {
-							config.removeMapping(newMapping);
-							oldConfig.contComp.getMapButton().setText("");
+							getButton(getBox(oldConfig)).setText("");
 						}
-
-						Mapping newConfig = config.getMappedComponent(contComp);
-						if (newConfig == null) {
-							newConfig = config.new Mapping(contComp, false, false);
-						}
-						config.insertMapping(newConfig, newMapping);
-						contComp.getMapButton().setText(newMapping.getName());
+						
+						config.insertMapping(mappingToMap, newComponent);
+						
+						buttonPressed.setText(newComponent.getName());
 						configChanged = true;
+					
 					} else {
-						contComp.getMapButton().setText(config.getMapping(contComp));
+						buttonPressed.setText(config.getMapping(mappingToMap.contComp));
 					}
-					contComp.getMapButton().setSelected(false);
+					
+					buttonPressed.setSelected(false);
 				}
 			});
 			mappingThread.setName("Gamepad Mapping Thread");
@@ -266,7 +242,72 @@ public class GamepadConfigFrame extends JFrame {
 		}
 
 	}
+	
+	private Component waitForNewMapping(Gamepad pad) {
+		Component newMapping = null;
 
+		while (newMapping == null) {
+			if (pad.poll()) {
+				EventQueue queue = pad.getEvents();
+				Event event = new Event();
+
+				while (queue.getNextEvent(event)) {
+					if (!pad.poll()) {
+						break;
+					}
+					if (Math.abs(event.getValue()) > .75F) {
+						newMapping = event.getComponent();
+						break;
+					}
+				}
+			} else {
+				break;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {}
+		}
+		return newMapping;
+	}
+	
+	private void consumeEvents(final Gamepad pad) {
+		// start a new thread to go through all of the remaining events
+		Thread consumeEvents = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				if (pad.poll()) {
+					EventQueue queue = pad.getEvents();
+					Event event = new Event();
+
+					while (queue.getNextEvent(event)) {
+						if (!pad.poll()) {
+							break;
+						}
+					}
+				}
+			}
+		});
+		consumeEvents.setName("Consume Events Thread");
+		consumeEvents.start();
+	}
+	
+	private Box getBox(Mapping mapping) {
+		for (Entry<Box, Mapping> entry : componentMap.entrySet()) {
+			if (entry.getValue() == mapping) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
+	private JButton getButton(Box componentBox) {
+		for (java.awt.Component comp : componentBox.getComponents()) {
+			if (comp instanceof JButton)
+				return (JButton)comp;
+		}
+		return null;
+	}
+	
 	private void updateConfigs() {
 		GamepadSettingsManager.writeSettings(config);
 	}

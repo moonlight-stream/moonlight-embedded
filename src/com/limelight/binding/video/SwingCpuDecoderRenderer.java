@@ -29,8 +29,8 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 	private static final int WAIT_CEILING_MS = 8;
 	
 	@Override
-	public void setup(int width, int height, Object renderTarget, int drFlags) {
-		this.targetFps = 30;
+	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
+		this.targetFps = redrawRate;
 		this.width = width;
 		this.height = height;
 		

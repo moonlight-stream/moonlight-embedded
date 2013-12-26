@@ -27,7 +27,7 @@ public class Limelight implements NvConnectionListener {
 	private String host;
 	private StreamFrame streamFrame;
 	private NvConnection conn;
-	private boolean connectionFailed;
+	private boolean connectionTerminating;
 	private static JFrame limeFrame;
 
 	public Limelight(String host) {
@@ -88,7 +88,7 @@ public class Limelight implements NvConnectionListener {
 		StreamConfiguration streamConfig = createConfiguration(prefs.getResolution());
 		
 		conn = new NvConnection(host, this, streamConfig);
-		streamFrame.build(conn, streamConfig, prefs.getFullscreen());
+		streamFrame.build(this, conn, streamConfig, prefs.getFullscreen());
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
@@ -157,6 +157,11 @@ public class Limelight implements NvConnectionListener {
 
 		createFrame();
 	}
+	
+	public void stop() {
+		connectionTerminating = true;
+		conn.stop();
+	}
 
 	@Override
 	public void stageStarting(Stage stage) {
@@ -183,9 +188,11 @@ public class Limelight implements NvConnectionListener {
 
 	@Override
 	public void connectionTerminated(Exception e) {
-		e.printStackTrace();
-		if (!connectionFailed) {
-			connectionFailed = true;
+		if (!(e instanceof InterruptedException)) {
+			e.printStackTrace();
+		}
+		if (!connectionTerminating) {
+			connectionTerminating = true;
 
 			// Kill the connection to the target
 			conn.stop();

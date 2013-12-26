@@ -24,6 +24,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
+import com.limelight.Limelight;
 import com.limelight.input.KeyboardHandler;
 import com.limelight.input.MouseHandler;
 import com.limelight.nvstream.NvConnection;
@@ -41,7 +42,7 @@ public class StreamFrame extends JFrame {
 	private JProgressBar spinner;
 	private JLabel spinnerLabel;
 	private Cursor noCursor;
-	private NvConnection conn;
+	private Limelight limelight;
 
 	public void freeMouse() {
 		mouse.free();
@@ -53,8 +54,8 @@ public class StreamFrame extends JFrame {
 		hideCursor();
 	}
 
-	public void build(NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
-		this.conn = conn;
+	public void build(Limelight limelight, NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
+		this.limelight = limelight;
 
 		keyboard = new KeyboardHandler(conn, this);
 		mouse = new MouseHandler(conn, this);
@@ -224,7 +225,7 @@ public class StreamFrame extends JFrame {
 	}
 
 	public void close() {
+		limelight.stop();
 		dispose();
-		conn.stop();
 	}
 }

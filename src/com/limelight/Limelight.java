@@ -21,6 +21,12 @@ import com.limelight.settings.PreferencesManager;
 import com.limelight.settings.PreferencesManager.Preferences;
 import com.limelight.settings.PreferencesManager.Preferences.Resolution;
 
+/**
+ * Main class for Limelight-pc contains methods for starting the application as well
+ * as the stream to the host pc.
+ * @author Diego Waxemberg<br>
+ * Cameron Gutman
+ */
 public class Limelight implements NvConnectionListener {
 	public static final double VERSION = 1.0;
 
@@ -30,10 +36,18 @@ public class Limelight implements NvConnectionListener {
 	private boolean connectionFailed;
 	private static JFrame limeFrame;
 
+	/**
+	 * Constructs a new instance based on the given host
+	 * @param host can be hostname or IP address.
+	 */
 	public Limelight(String host) {
 		this.host = host;
 	}
 
+	/*
+	 * Extracts native library into current directory. This is required in order for the library to
+	 * be found when trying to load it.
+	 */
 	private static void extractNativeLibrary(String libraryName, String targetDirectory) throws IOException {
 		InputStream resource = new Object().getClass().getResourceAsStream("/binlib/"+libraryName);
 		if (resource == null) {
@@ -61,6 +75,9 @@ public class Limelight implements NvConnectionListener {
 		}
 	}
 
+	/*
+	 * Checks the OS and decides which libraries need to be extracted. 
+	 */
 	private static void prepareNativeLibraries() throws IOException {
 		if (!System.getProperty("os.name").contains("Windows")) {
 			// Nothing to do for platforms other than Windows
@@ -81,6 +98,9 @@ public class Limelight implements NvConnectionListener {
 		extractNativeLibrary("avcodec-55.dll", nativeLibDir);
 	}
 
+	/*
+	 * Creates a connection to the host and starts up the stream.
+	 */
 	private void startUp() {
 		streamFrame = new StreamFrame();
 		
@@ -98,6 +118,10 @@ public class Limelight implements NvConnectionListener {
 
 	}
 
+	/*
+	 * Creates a StreamConfiguration given a Resolution. 
+	 * Used to specify what kind of stream will be used.
+	 */
 	private StreamConfiguration createConfiguration(Resolution res) {
 		switch(res) {
 		case RES_720_30:
@@ -114,10 +138,16 @@ public class Limelight implements NvConnectionListener {
 		}
 	}
 	
+	/*
+	 * Starts up a thread that listens for gamepads connected to the system.
+	 */
 	private static void startControllerListener() {
 		GamepadListener.startUp();
 	}
 
+	/*
+	 * Creates the main frame for the application.
+	 */
 	private static void createFrame() {
 		MainFrame main = new MainFrame();
 		main.build();
@@ -125,11 +155,21 @@ public class Limelight implements NvConnectionListener {
 		startControllerListener();
 	}
 
+	/**
+	 * Creates a new instance and starts the stream.
+	 * @param host the host pc to connect to. Can be a hostname or IP address.
+	 */
 	public static void createInstance(String host) {
 		Limelight limelight = new Limelight(host);
 		limelight.startUp();
 	}
 
+	/**
+	 * The entry point for the application. <br>
+	 * Does some initializations and then creates the main frame.
+	 * @param args unused.
+	 */
+	//TODO: We should allow command line args to specify things like debug mode (verbose logging) or even start a stream directly.
 	public static void main(String args[]) {
 		//fix the menu bar if we are running in osx
 		if (System.getProperty("os.name").contains("Mac OS X")) {
@@ -158,16 +198,29 @@ public class Limelight implements NvConnectionListener {
 		createFrame();
 	}
 
+	/**
+	 * Callback to specify which stage is starting. Used to update UI.
+	 * @param stage the Stage that is starting
+	 */
 	@Override
 	public void stageStarting(Stage stage) {
 		System.out.println("Starting "+stage.getName());
 		streamFrame.showSpinner(stage);
 	}
 
+	/**
+	 * Callback that a stage has finished loading.
+	 * <br><b>NOTE: Currently unimplemented.</b>
+	 * @param stage the Stage that has finished.
+	 */
 	@Override
 	public void stageComplete(Stage stage) {
 	}
 
+	/**
+	 * Callback that a stage has failed. Used to inform user that an error occurred.
+	 * @param stage the Stage that was loading when the error occurred
+	 */
 	@Override
 	public void stageFailed(Stage stage) {
 		streamFrame.dispose();
@@ -175,12 +228,20 @@ public class Limelight implements NvConnectionListener {
 		displayError("Connection Error", "Starting " + stage.getName() + " failed");
 	}
 
+	/**
+	 * Callback that the connection has finished loading and is started.
+	 */
 	@Override
 	public void connectionStarted() {
 		streamFrame.hideSpinner();
 		GamepadListener.startSendingInput(conn);
 	}
 
+	/**
+	 * Callback that the connection has been terminated for some reason.
+	 * <br>This is were the stream shutdown procedure takes place.
+	 * @param e the Exception that was thrown- probable cause of termination.
+	 */
 	@Override
 	public void connectionTerminated(Exception e) {
 		e.printStackTrace();
@@ -203,11 +264,20 @@ public class Limelight implements NvConnectionListener {
 		}
 	}
 
+	/**
+	 * Displays a message to the user in the form of an info dialog.
+	 * @param message the message to show the user
+	 */
 	@Override
 	public void displayMessage(String message) {
 		JOptionPane.showMessageDialog(limeFrame, message, "Limelight", JOptionPane.INFORMATION_MESSAGE);
 	}	
 
+	/**
+	 * Displays an error to the user in the form of an error dialog
+	 * @param title the title for the dialog frame
+	 * @param message the message to show the user
+	 */
 	public void displayError(String title, String message) {
 		JOptionPane.showMessageDialog(limeFrame, message, title, JOptionPane.ERROR_MESSAGE);
 	}

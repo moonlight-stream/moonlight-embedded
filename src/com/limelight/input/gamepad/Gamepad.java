@@ -1,6 +1,6 @@
-package com.limelight.input;
+package com.limelight.input.gamepad;
 
-import com.limelight.input.GamepadMapping.Mapping;
+import com.limelight.input.gamepad.GamepadMapping.Mapping;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.ControllerPacket;
 
@@ -134,7 +134,7 @@ public class Gamepad {
 		}
 	}
 
-	private void handleAnalog(ControllerComponent contComp, float value) {
+	private void handleAnalog(GamepadComponent contComp, float value) {
 		switch (contComp) {
 		case LS_X:
 			leftStickX = (short)Math.round(value * 0x7FFF);
@@ -160,7 +160,7 @@ public class Gamepad {
 		}
 	}
 
-	private void handleButtons(ControllerComponent contComp, float value) {
+	private void handleButtons(GamepadComponent contComp, float value) {
 		boolean press = false;
 
 		if (value > 0.5F) {

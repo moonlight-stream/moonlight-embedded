@@ -1,4 +1,4 @@
-package com.limelight.input;
+package com.limelight.input.gamepad;
 
 import java.lang.reflect.Constructor;
 import java.util.LinkedList;
@@ -8,7 +8,7 @@ import com.limelight.nvstream.NvConnection;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 
-public class ControllerListener {
+public class GamepadListener {
 	private static Thread listenerThread;
 	private static NvConnection conn;
 	

@@ -1,4 +1,4 @@
-package com.limelight.input;
+package com.limelight.input.gamepad;
 
 
 import java.util.Collections;

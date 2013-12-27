@@ -2,7 +2,7 @@ package com.limelight.settings;
 
 import java.io.File;
 
-import com.limelight.input.GamepadMapping;
+import com.limelight.input.gamepad.GamepadMapping;
 
 public abstract class GamepadSettingsManager {
 	private static GamepadMapping cachedSettings;

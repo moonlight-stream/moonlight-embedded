@@ -1,8 +1,9 @@
-package com.limelight.input;
+package com.limelight.input.gamepad;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map.Entry;
+
 
 import net.java.games.input.Component;
 
@@ -32,10 +33,10 @@ public class GamepadMapping implements Serializable {
 	 * @param contComp the component to get a mapping for
 	 * @return a mapping or an null if there is none
 	 */
-	public Mapping get(ControllerComponent contComp) {
+	public Mapping get(GamepadComponent contComp) {
 		//#allTheJank
 		for (Entry<String, Mapping> entry : mapping.entrySet()) {
-			if (entry.getValue().contComp.sameAs(contComp)) {
+			if (entry.getValue().contComp == contComp) {
 				return entry.getValue();
 			}
 		}
@@ -47,9 +48,9 @@ public class GamepadMapping implements Serializable {
 	 * @param contComp the component to get a mapping for
 	 * @return a mapping or an empty string if there is none
 	 */
-	public String getMapping(ControllerComponent contComp) {
+	public String getMapping(GamepadComponent contComp) {
 		for (Entry<String, Mapping> entry : mapping.entrySet()) {
-			if (entry.getValue().contComp.sameAs(contComp)) {
+			if (entry.getValue().contComp == contComp) {
 				return entry.getKey();
 			}
 		}
@@ -59,11 +60,11 @@ public class GamepadMapping implements Serializable {
 	public class Mapping implements Serializable {
 		private static final long serialVersionUID = -8407172977953214242L;
 		
-		public ControllerComponent contComp;
+		public GamepadComponent contComp;
 		public boolean invert;
 		public boolean trigger;
 		
-		public Mapping(ControllerComponent contComp, boolean invert, boolean trigger) {
+		public Mapping(GamepadComponent contComp, boolean invert, boolean trigger) {
 			this.contComp = contComp;
 			this.invert = invert;
 			this.trigger = trigger;

@@ -28,7 +28,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import com.limelight.Limelight;
 import com.limelight.binding.PlatformBinding;
-import com.limelight.input.ControllerListener;
+import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.http.NvHTTP;
 import com.limelight.settings.PreferencesManager;
@@ -51,7 +51,7 @@ public class MainFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				super.windowClosing(e);
-				ControllerListener.stopListening();
+				GamepadListener.stopListening();
 			}
 		});
 		Container mainPane = limeFrame.getContentPane();

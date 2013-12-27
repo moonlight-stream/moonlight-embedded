@@ -12,7 +12,7 @@ import javax.swing.UIManager;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.gui.MainFrame;
 import com.limelight.gui.StreamFrame;
-import com.limelight.input.ControllerListener;
+import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
@@ -94,7 +94,7 @@ public class Limelight implements NvConnectionListener {
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
 
-		ControllerListener.startSendingInput(conn);
+		GamepadListener.startSendingInput(conn);
 
 	}
 
@@ -115,7 +115,7 @@ public class Limelight implements NvConnectionListener {
 	}
 	
 	private static void startControllerListener() {
-		ControllerListener.startUp();
+		GamepadListener.startUp();
 	}
 
 	private static void createFrame() {
@@ -178,7 +178,7 @@ public class Limelight implements NvConnectionListener {
 	@Override
 	public void connectionStarted() {
 		streamFrame.hideSpinner();
-		ControllerListener.startSendingInput(conn);
+		GamepadListener.startSendingInput(conn);
 	}
 
 	@Override

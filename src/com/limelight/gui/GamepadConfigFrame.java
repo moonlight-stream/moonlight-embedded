@@ -22,19 +22,18 @@ import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 import net.java.games.input.Component;
 import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
 
-import com.limelight.input.ControllerComponent;
-import com.limelight.input.ControllerListener;
-import com.limelight.input.Gamepad;
-import com.limelight.input.GamepadHandler;
-import com.limelight.input.GamepadMapping;
-import com.limelight.input.GamepadMapping.Mapping;
+import com.limelight.input.gamepad.GamepadComponent;
+import com.limelight.input.gamepad.GamepadListener;
+import com.limelight.input.gamepad.Gamepad;
+import com.limelight.input.gamepad.GamepadHandler;
+import com.limelight.input.gamepad.GamepadMapping;
+import com.limelight.input.gamepad.GamepadMapping.Mapping;
 import com.limelight.settings.GamepadSettingsManager;
 
 public class GamepadConfigFrame extends JFrame {
@@ -60,12 +59,12 @@ public class GamepadConfigFrame extends JFrame {
 	public void build() {
 		componentMap = new HashMap<Box, Mapping>();
 
-		GridLayout layout = new GridLayout(ControllerComponent.values().length/2 + 1, 2);
+		GridLayout layout = new GridLayout(GamepadComponent.values().length/2 + 1, 2);
 		layout.setHgap(60);
 		layout.setVgap(3);
 		JPanel mainPanel = new JPanel(layout);
 		
-		ControllerComponent[] components = ControllerComponent.values();
+		GamepadComponent[] components = GamepadComponent.values();
 		
 		for (int i = 0; i < components.length; i++) {
 			
@@ -102,7 +101,7 @@ public class GamepadConfigFrame extends JFrame {
 		mapButton.setMaximumSize(buttonSize);
 		mapButton.setMinimumSize(buttonSize);
 		mapButton.setPreferredSize(buttonSize);
-		mapButton.addActionListener(createListener());
+		mapButton.addActionListener(createMapListener());
 		mapButton.setText(config.getMapping(mapping.contComp));
 
 		invertBox.setSelected(mapping.invert);
@@ -110,7 +109,7 @@ public class GamepadConfigFrame extends JFrame {
 
 		triggerBox.setSelected(mapping.trigger);
 		triggerBox.addItemListener(createTriggerListener());
-		triggerBox.setToolTipText("If this component should act as a trigger.");
+		triggerBox.setToolTipText("If this component should act as a trigger. (one-way axis)");
 		
 		componentBox.add(Box.createHorizontalStrut(5));
 		componentBox.add(mapping.contComp.getLabel());
@@ -120,23 +119,20 @@ public class GamepadConfigFrame extends JFrame {
 		componentBox.add(triggerBox);
 		componentBox.add(Box.createHorizontalStrut(5));
 		
-		componentBox.setBorder(createBorder());
+		componentBox.setBorder(new LineBorder(Color.GRAY, 1, true));
 		
 		componentMap.put(componentBox, mapping);
 		
 		return componentBox;
 	}
 
-	private Border createBorder() {
-		return new LineBorder(Color.GRAY, 1, true);
-	}
 	//TODO: make createInvertListener() and createTriggerListener() one method. TOO MUCH COPY PASTA!
 	private ItemListener createInvertListener() {
 		return new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				JCheckBox clicked = (JCheckBox)e.getItem();
-				ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
+				GamepadComponent contComp = GamepadComponent.valueOf(clicked.getName());
 				config.get(contComp).invert = (e.getStateChange() == ItemEvent.SELECTED);
 				configChanged = true;
 			}
@@ -148,7 +144,7 @@ public class GamepadConfigFrame extends JFrame {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				JCheckBox clicked = (JCheckBox)e.getItem();
-				ControllerComponent contComp = ControllerComponent.valueOf(clicked.getName());
+				GamepadComponent contComp = GamepadComponent.valueOf(clicked.getName());
 				config.get(contComp).trigger = (e.getStateChange() == ItemEvent.SELECTED);
 				configChanged = true;
 			}
@@ -165,7 +161,7 @@ public class GamepadConfigFrame extends JFrame {
 				}
 				if (configChanged) {
 					updateConfigs();
-					ControllerListener.startUp();
+					GamepadListener.startUp();
 				}
 				if (shouldStartHandler) {
 					GamepadHandler.startUp();
@@ -175,7 +171,7 @@ public class GamepadConfigFrame extends JFrame {
 		};
 	}
 
-	private ActionListener createListener() {
+	private ActionListener createMapListener() {
 		return new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -202,7 +198,7 @@ public class GamepadConfigFrame extends JFrame {
 			
 			buttonPressed.setSelected(true);
 			
-			ControllerListener.stopListening();
+			GamepadListener.stopListening();
 
 			if (GamepadHandler.isRunning()) {
 				GamepadHandler.stopHandler();

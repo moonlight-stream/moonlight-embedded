@@ -67,6 +67,9 @@ public class LibraryHelper {
 		destination.delete();
 		destination.createNewFile();
 		
+		// schedule the temporary file to be deleted when the program exits
+		destination.deleteOnExit();
+		
 		//this is the janky java 6 way to copy a file
 		FileOutputStream fos = null;
 		try {

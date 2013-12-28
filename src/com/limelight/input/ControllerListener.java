@@ -2,6 +2,8 @@ package com.limelight.input;
 
 import java.lang.reflect.Constructor;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.limelight.nvstream.NvConnection;
 
@@ -17,6 +19,9 @@ public class ControllerListener {
 	 * @return true if it started a thread, false if the thread is already running.
 	 */
 	public static boolean startUp() {
+		// Suppress spam from jinput log warnings in DefaultControllerEnvironment
+		Logger.getLogger(ControllerEnvironment.getDefaultEnvironment().getClass().getName()).setLevel(Level.SEVERE);
+		
 		if (listenerThread == null || !listenerThread.isAlive()) {
 			System.out.println("Controller Listener thread starting up");
 			listenerThread = new Thread() {

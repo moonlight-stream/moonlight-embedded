@@ -50,8 +50,6 @@ public class StreamFrame extends JFrame {
 	private Cursor noCursor;
 	private Limelight limelight;
 
-	private NvConnection conn;
-	
 	/**
 	 * Frees the mouse ie. makes it visible and allowed to move outside the frame.
 	 */
@@ -68,17 +66,15 @@ public class StreamFrame extends JFrame {
 		hideCursor();
 	}
 
-	public void build(Limelight limelight, NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
-		this.limelight = limelight;
 	/**
 	 * Builds the components of this frame with the specified configurations.
 	 * @param conn the connection this frame belongs to
 	 * @param streamConfig the configurations for this frame
 	 * @param fullscreen if the frame should be made fullscreen
 	 */
-	public void build(NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
-		this.conn = conn;
-
+	public void build(Limelight limelight, NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
+		this.limelight = limelight;
+		
 		keyboard = new KeyboardHandler(conn, this);
 		mouse = new MouseHandler(conn, this);
 

@@ -80,6 +80,9 @@ public class GamepadConfigFrame extends JFrame {
 		for (int i = 0; i < components.length; i++) {
 			
 			Mapping mapping = config.get(components[i]);
+			if (mapping == null) {
+				mapping = config.new Mapping(components[i], false, false);
+			}
 			Box componentBox = createComponentBox(mapping);
 			
 			mainPanel.add(componentBox);

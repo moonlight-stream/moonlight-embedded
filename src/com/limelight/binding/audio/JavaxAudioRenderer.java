@@ -79,14 +79,6 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		}
 	}
 
-	/**
-	 * The callback for the audio stream being initialized and starting to receive.
-	 * @param channelCount the number of channels in the audio
-	 * @param sampleRate the sample rate for the audio.
-	 */
-	@Override
-	public void streamInitialized(int channelCount, int sampleRate) {
-	
 	private void createSoundLine(int bufferSize) {
 		AudioFormat audioFormat = new AudioFormat(sampleRate, 16, channelCount, true, true);
 		
@@ -117,6 +109,11 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		}
 	}
 
+	/**
+	 * The callback for the audio stream being initialized and starting to receive.
+	 * @param channelCount the number of channels in the audio
+	 * @param sampleRate the sample rate for the audio.
+	 */
 	@Override
 	public void streamInitialized(int channelCount, int sampleRate) {
 		this.channelCount = channelCount;

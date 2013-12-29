@@ -1,7 +1,5 @@
 package com.limelight;
 
-import java.io.IOException;
-
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -43,60 +41,6 @@ public class Limelight implements NvConnectionListener {
 	}
 
 	/*
-	 * Extracts native library into current directory. This is required in order for the library to
-	 * be found when trying to load it.
-	 */
-	private static void extractNativeLibrary(String libraryName, String targetDirectory) throws IOException {
-		InputStream resource = new Object().getClass().getResourceAsStream("/binlib/"+libraryName);
-		if (resource == null) {
-			throw new FileNotFoundException("Unable to find native library in JAR: "+libraryName);
-		}
-		File destination = new File(targetDirectory+File.separatorChar+libraryName);
-		
-		// this will only delete it if it exists, and then create a new file
-		destination.delete();
-		destination.createNewFile();
-		
-		//this is the janky java 6 way to copy a file
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream(destination);
-			int read;
-			byte[] readBuffer = new byte[16384];
-			while ((read = resource.read(readBuffer)) != -1) {
-				fos.write(readBuffer, 0, read);
-			}
-		} finally {
-			if (fos != null) {
-				fos.close();
-			}
-		}
-	}
-
-	/*
-	 * Checks the OS and decides which libraries need to be extracted. 
-	 */
-	private static void prepareNativeLibraries() throws IOException {
-		if (!System.getProperty("os.name").contains("Windows")) {
-			// Nothing to do for platforms other than Windows
-			return;
-		}
-
-		// We need to extract nv_avc_dec's runtime dependencies manually
-		// because the current JRE extracts them with different file names
-		// so they don't load properly.
-		String nativeLibDir = ".";
-		extractNativeLibrary("avfilter-3.dll", nativeLibDir);
-		extractNativeLibrary("avformat-55.dll", nativeLibDir);
-		extractNativeLibrary("avutil-52.dll", nativeLibDir);
-		extractNativeLibrary("postproc-52.dll", nativeLibDir);
-		extractNativeLibrary("pthreadVC2.dll", nativeLibDir);
-		extractNativeLibrary("swresample-0.dll", nativeLibDir);
-		extractNativeLibrary("swscale-2.dll", nativeLibDir);
-		extractNativeLibrary("avcodec-55.dll", nativeLibDir);
-	}
-
-	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
 	private void startUp() {
@@ -106,7 +50,7 @@ public class Limelight implements NvConnectionListener {
 		StreamConfiguration streamConfig = createConfiguration(prefs.getResolution());
 		
 		conn = new NvConnection(host, this, streamConfig);
-		streamFrame.build(conn, streamConfig, prefs.getFullscreen());
+		streamFrame.build(this, conn, streamConfig, prefs.getFullscreen());
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),

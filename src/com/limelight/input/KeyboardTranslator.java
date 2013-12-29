@@ -27,7 +27,7 @@ public class KeyboardTranslator extends KeycodeTranslator {
 	/**
 	 * Translates the given keycode and returns the GFE keycode
 	 * @param keycode the code to be translated
-	 * @returns a GFE keycode for the given keycode
+	 * @return a GFE keycode for the given keycode
 	 */
 	@Override
 	public short translate(int keycode) {

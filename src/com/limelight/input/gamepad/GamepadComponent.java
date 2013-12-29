@@ -29,7 +29,7 @@ public enum GamepadComponent implements Serializable {
 	
 	/**
 	 * Gets the label for this gamepad component
-	 * @returns a label with the name of this component as the text
+	 * @return a label with the name of this component as the text
 	 */
 	public JLabel getLabel() {
 		return label;
@@ -37,7 +37,7 @@ public enum GamepadComponent implements Serializable {
 	
 	/**
 	 * Checks if this component is analog or digital
-	 * @returns whether this component is analog
+	 * @return whether this component is analog
 	 */
 	public boolean isAnalog() {
 		return analog;

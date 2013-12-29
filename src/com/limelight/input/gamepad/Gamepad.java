@@ -9,6 +9,10 @@ import net.java.games.input.Controller;
 import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
 
+/**
+ * Represents a gamepad connected to the system
+ * @author Diego Waxemberg
+ */
 public class Gamepad {
 	private Controller pad;
 	private GamepadMapping config;
@@ -21,6 +25,11 @@ public class Gamepad {
 	private short leftStickX = 0x0000;
 	private short leftStickY = 0x0000;
 
+	/**
+	 * Constructs a new gamepad from the specified controller that has the given mappings
+	 * @param pad the controller to be used as a gamepad
+	 * @param settings the mappings for the gamepad
+	 */
 	public Gamepad(Controller pad, GamepadMapping settings) {
 		this.config = settings;
 		this.pad = pad;
@@ -30,18 +39,24 @@ public class Gamepad {
 		}
 	}
 
-	public GamepadMapping getConfiguration() {
-		return config;
-	}
-
+	/*
+	 * Initializes the value of the given component to its current state
+	 */
 	private void initValue(Component comp) {
 		handleComponent(comp, comp.getPollData());
 	}
 
+	/**
+	 * Polls the gamepad for component values.
+	 * @return true if the gamepad was polled successfully, false otherwise
+	 */
 	public boolean poll() {
 		return pad.poll();
 	}
 
+	/*
+	 * Sends a controller packet to the specified connection containing the current gamepad values
+	 */
 	private void sendControllerPacket(NvConnection conn) {
 		if (conn != null) {
 			conn.sendControllerInput(inputMap, leftTrigger, rightTrigger, 
@@ -49,10 +64,19 @@ public class Gamepad {
 		}
 	}
 
+	/**
+	 * Gets the event queue for this gamepad
+	 * @return this gamepad's event queue
+	 */
 	public EventQueue getEvents() {
 		return pad.getEventQueue();
 	}
 
+	/**
+	 * Handles the events in this gamepad's event queue and sends them
+	 * to the specified connection
+	 * @param conn the connection to the host that will receive the events
+	 */
 	public void handleEvents(NvConnection conn) {
 		EventQueue queue = pad.getEventQueue();
 		Event event = new Event();
@@ -70,6 +94,7 @@ public class Gamepad {
 	}
 
 	/*
+	 * Prints out the specified event information for the given gamepad
 	 * used for debugging, normally unused.
 	 */
 	@SuppressWarnings("unused")
@@ -97,6 +122,9 @@ public class Gamepad {
 		System.out.println(builder.toString());
 	}
 
+	/*
+	 * Handles a given event
+	 */
 	private void handleEvent(Event event) {
 		Component comp = event.getComponent();
 		float value = event.getValue();
@@ -104,6 +132,9 @@ public class Gamepad {
 		handleComponent(comp, value);
 	}
 
+	/*
+	 * Handles the component that an event occurred on
+	 */
 	private void handleComponent(Component comp, float value) {
 		Mapping mapping = config.get(comp);
 		if (mapping != null) {
@@ -115,6 +146,9 @@ public class Gamepad {
 		}
 	}
 
+	/*
+	 * Fixes the value as specified in the mapping, that is inverts if needed, etc.
+	 */
 	private float sanitizeValue(Mapping mapping, float value) {
 		float sanitized = value;
 		if (mapping.invert) {
@@ -126,14 +160,20 @@ public class Gamepad {
 		return sanitized;
 	}
 	
-	private void toggle(short button, boolean press) {
-		if (press) {
+	/*
+	 * Toggles a flag that indicates the specified button was pressed or released
+	 */
+	private void toggle(short button, boolean pressed) {
+		if (pressed) {
 			inputMap |= button;
 		} else {
 			inputMap &= ~button;
 		}
 	}
 
+	/*
+	 * Handles analog component input
+	 */
 	private void handleAnalog(GamepadComponent contComp, float value) {
 		switch (contComp) {
 		case LS_X:
@@ -159,7 +199,10 @@ public class Gamepad {
 			break;
 		}
 	}
-
+	
+	/*
+	 * Handles button input
+	 */
 	private void handleButtons(GamepadComponent contComp, float value) {
 		boolean press = false;
 

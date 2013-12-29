@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 import javax.swing.JLabel;
 
+/**
+ * Enumerator for every gamepad component GFE recognizes
+ * @author Diego Waxemberg
+ */
 public enum GamepadComponent implements Serializable {
 	BTN_A("Button 1 (A)", false), BTN_X("Button 2 (X)", false), BTN_Y("Button 3 (Y)", false), BTN_B("Button 4 (B)", false), 
 	DPAD_UP("D-pad Up", false), DPAD_DOWN("D-pad Down", false), DPAD_LEFT("D-pad Left", false), DPAD_RIGHT("D-pad Right", false),
@@ -15,15 +19,26 @@ public enum GamepadComponent implements Serializable {
 	private JLabel label;
 	private boolean analog;
 	
+	/*
+	 * Constructs the enumerator with the given name for a label and whether it is analog or not
+	 */
 	private GamepadComponent(String name, boolean analog) {
 		this.label = new JLabel(name);
 		this.analog = analog;
 	}
 	
+	/**
+	 * Gets the label for this gamepad component
+	 * @returns a label with the name of this component as the text
+	 */
 	public JLabel getLabel() {
 		return label;
 	}
 	
+	/**
+	 * Checks if this component is analog or digital
+	 * @returns whether this component is analog
+	 */
 	public boolean isAnalog() {
 		return analog;
 	}

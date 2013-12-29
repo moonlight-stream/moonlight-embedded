@@ -12,6 +12,10 @@ import com.limelight.settings.GamepadSettingsManager;
 
 import net.java.games.input.Controller;
 
+/**
+ * A handler for all the gamepads attached to this system
+ * @author Diego Waxemberg
+ */
 public class GamepadHandler {
 	private static LinkedList<Gamepad> gamepads = new LinkedList<Gamepad>();
 	private static Lock gamepadLock = new ReentrantLock();
@@ -19,6 +23,10 @@ public class GamepadHandler {
 	private static Thread handler;
 	private static boolean run = true;
 	
+	/**
+	 * Adds the list of controllers as gamepads to be handled
+	 * @param pads the controllers to be handled as gamepads
+	 */
 	public static void addGamepads(List<Controller> pads) {
 		LinkedList<Gamepad> newPadList = new LinkedList<Gamepad>();
 		
@@ -33,14 +41,25 @@ public class GamepadHandler {
 		gamepadLock.unlock();
 	}
 
+	/**
+	 * Sets the connection to which the handled gamepads should send events
+	 * @param connection the connection to the host
+	 */
 	public static void setConnection(NvConnection connection) {
 		conn = connection;
 	}
 
+	/**
+	 * Gets a list of the currently handled gamepads
+	 * @return an unmodifiable list of gamepads this handler handles
+	 */
 	public static List<Gamepad> getGamepads() {
 		return Collections.unmodifiableList(gamepads);
 	}
 
+	/**
+	 * Starts up a thread that handles the gamepads
+	 */
 	public static void startUp() {
 		if (handler == null || !handler.isAlive()) {
 			run = true;
@@ -73,6 +92,9 @@ public class GamepadHandler {
 		}
 	}
 
+	/**
+	 * Stops handling the gamepads
+	 */
 	public static void stopHandler() {
 		if (handler != null && handler.isAlive()) {
 			System.out.println("Stopping Gamepad Handler thread");
@@ -81,6 +103,10 @@ public class GamepadHandler {
 		}
 	}
 	
+	/**
+	 * Checks if the handler is handling the gamepads.
+	 * @return whether this handler is running
+	 */
 	public static boolean isRunning() {
 		return (handler != null && handler.isAlive());
 	}

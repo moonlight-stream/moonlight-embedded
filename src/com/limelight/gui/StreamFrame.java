@@ -28,6 +28,12 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener.Stage;
 import com.limelight.nvstream.StreamConfiguration;
 
+/**
+ * The frame to which the video is rendered
+ * @author Diego Waxemberg
+ * <br>Cameron Gutman
+ *
+ */
 public class StreamFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
@@ -37,17 +43,29 @@ public class StreamFrame extends JFrame {
 	private JLabel spinnerLabel;
 	private Cursor noCursor;
 	private NvConnection conn;
-
+	
+	/**
+	 * Frees the mouse ie. makes it visible and allowed to move outside the frame.
+	 */
 	public void freeMouse() {
 		mouse.free();
 		showCursor();
 	}
 
+	/**
+	 * Captures the mouse ie. makes it invisible and not allowed to leave the frame
+	 */
 	public void captureMouse() {
 		mouse.capture();
 		hideCursor();
 	}
 
+	/**
+	 * Builds the components of this frame with the specified configurations.
+	 * @param conn the connection this frame belongs to
+	 * @param streamConfig the configurations for this frame
+	 * @param fullscreen if the frame should be made fullscreen
+	 */
 	public void build(NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
 		this.conn = conn;
 
@@ -74,6 +92,9 @@ public class StreamFrame extends JFrame {
 		this.setVisible(true);
 	}
 	
+	/*
+	 * Gets the best display mode for the system and desired configuration
+	 */
 	private DisplayMode getBestDisplay(DisplayMode[] configs) {
 		Arrays.sort(configs, new Comparator<DisplayMode>() {
 			@Override
@@ -99,6 +120,9 @@ public class StreamFrame extends JFrame {
 		return bestConfig;
 	}
 
+	/*
+	 * Tries to make the frame fullscreen
+	 */
 	private void makeFullScreen() {
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		if (gd.isFullScreenSupported()) {
@@ -125,7 +149,10 @@ public class StreamFrame extends JFrame {
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
-
+	
+	/**
+	 * Makes the mouse cursor invisible
+	 */
 	public void hideCursor() {
 		if (noCursor == null) {
 			// Transparent 16 x 16 pixel cursor image.
@@ -140,11 +167,19 @@ public class StreamFrame extends JFrame {
 		this.getContentPane().setCursor(noCursor);
 	}
 
+	/**
+	 * Makes the mouse cursor visible
+	 */
 	public void showCursor() {
 		this.setCursor(Cursor.getDefaultCursor());
 		this.getContentPane().setCursor(Cursor.getDefaultCursor());
 	}
 
+	/**
+	 * Shows a progress bar with a label underneath that tells the user what 
+	 * loading stage the stream is at.
+	 * @param stage the currently loading stage
+	 */
 	public void showSpinner(Stage stage) {
 
 		if (spinner == null) {
@@ -182,11 +217,17 @@ public class StreamFrame extends JFrame {
 		spinnerLabel.setText("Starting " + stage.getName() + "...");
 	}
 
+	/**
+	 * Hides the spinner and the label
+	 */
 	public void hideSpinner() {
 		spinner.setVisible(false);
 		spinnerLabel.setVisible(false);
 	}
 
+	/**
+	 * Stops the stream and destroys the frame
+	 */
 	public void close() {
 		dispose();
 		conn.stop();

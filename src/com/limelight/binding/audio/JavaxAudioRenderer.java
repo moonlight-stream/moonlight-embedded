@@ -11,10 +11,20 @@ import javax.sound.sampled.SourceDataLine;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 import com.limelight.nvstream.av.audio.OpusDecoder;
 
+/**
+ * Audio renderer implementation
+ * @author Cameron Gutman
+ */
 public class JavaxAudioRenderer implements AudioRenderer {
 
 	private SourceDataLine soundLine;
 	
+	/**
+	 * Takes some audio data and writes it out to the renderer.
+	 * @param pcmData the array that contains the audio data
+	 * @param offset the offset at which the data starts in the array
+	 * @param length the length of data to be rendered
+	 */
 	@Override
 	public void playDecodedAudio(short[] pcmData, int offset, int length) {
 		if (soundLine != null) {
@@ -29,6 +39,9 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		}
 	}
 
+	/**
+	 * Callback for when the stream session is closing and the audio renderer should stop.
+	 */
 	@Override
 	public void streamClosing() {
 		if (soundLine != null) {
@@ -36,6 +49,11 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		}
 	}
 
+	/**
+	 * The callback for the audio stream being initialized and starting to receive.
+	 * @param channelCount the number of channels in the audio
+	 * @param sampleRate the sample rate for the audio.
+	 */
 	@Override
 	public void streamInitialized(int channelCount, int sampleRate) {
 		AudioFormat audioFormat = new AudioFormat(sampleRate, 16, channelCount, true, true);

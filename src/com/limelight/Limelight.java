@@ -1,14 +1,12 @@
 package com.limelight;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import com.limelight.binding.LibraryHelper;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.gui.MainFrame;
 import com.limelight.gui.StreamFrame;
@@ -33,7 +31,7 @@ public class Limelight implements NvConnectionListener {
 	private String host;
 	private StreamFrame streamFrame;
 	private NvConnection conn;
-	private boolean connectionFailed;
+	private boolean connectionTerminating;
 	private static JFrame limeFrame;
 
 	/**
@@ -189,13 +187,14 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 
-		try {
-			prepareNativeLibraries();
-		} catch (IOException e) {
-			// This is expected to fail when not in a JAR
-		}
+		LibraryHelper.prepareNativeLibraries();
 
 		createFrame();
+	}
+	
+	public void stop() {
+		connectionTerminating = true;
+		conn.stop();
 	}
 
 	/**
@@ -244,9 +243,11 @@ public class Limelight implements NvConnectionListener {
 	 */
 	@Override
 	public void connectionTerminated(Exception e) {
-		e.printStackTrace();
-		if (!connectionFailed) {
-			connectionFailed = true;
+		if (!(e instanceof InterruptedException)) {
+			e.printStackTrace();
+		}
+		if (!connectionTerminating) {
+			connectionTerminating = true;
 
 			// Kill the connection to the target
 			conn.stop();

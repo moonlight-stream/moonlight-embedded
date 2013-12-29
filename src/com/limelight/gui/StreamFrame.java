@@ -11,7 +11,9 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 
 import javax.swing.Box;
@@ -22,6 +24,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
+import com.limelight.Limelight;
 import com.limelight.input.KeyboardHandler;
 import com.limelight.input.MouseHandler;
 import com.limelight.nvstream.NvConnection;
@@ -36,12 +39,17 @@ import com.limelight.nvstream.StreamConfiguration;
  */
 public class StreamFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
+	
+	private static final double DESIRED_ASPECT_RATIO = 16.0/9.0;
+	private static final double ALTERNATE_ASPECT_RATIO = 16.0/10.0;
 
 	private KeyboardHandler keyboard;
 	private MouseHandler mouse;
 	private JProgressBar spinner;
 	private JLabel spinnerLabel;
 	private Cursor noCursor;
+	private Limelight limelight;
+
 	private NvConnection conn;
 	
 	/**
@@ -60,6 +68,8 @@ public class StreamFrame extends JFrame {
 		hideCursor();
 	}
 
+	public void build(Limelight limelight, NvConnection conn, StreamConfiguration streamConfig, boolean fullscreen) {
+		this.limelight = limelight;
 	/**
 	 * Builds the components of this frame with the specified configurations.
 	 * @param conn the connection this frame belongs to
@@ -85,52 +95,77 @@ public class StreamFrame extends JFrame {
 		this.getRootPane().setBackground(Color.BLACK);
 		
 		if (fullscreen) {
-			makeFullScreen();
+			makeFullScreen(streamConfig);
 		}
 
 		hideCursor();
 		this.setVisible(true);
 	}
 	
-	/*
-	 * Gets the best display mode for the system and desired configuration
-	 */
-	private DisplayMode getBestDisplay(DisplayMode[] configs) {
-		Arrays.sort(configs, new Comparator<DisplayMode>() {
+	private ArrayList<DisplayMode> getDisplayModesByAspectRatio(DisplayMode[] configs, double aspectRatio) {
+		ArrayList<DisplayMode> matchingConfigs = new ArrayList<DisplayMode>();
+		
+		for (DisplayMode config : configs) {
+			if ((double)config.getWidth()/(double)config.getHeight() == aspectRatio) {
+				matchingConfigs.add(config);
+			}
+		}
+		
+		return matchingConfigs;
+	}
+	
+	private DisplayMode getBestDisplay(StreamConfiguration targetConfig, DisplayMode[] configs) {
+		int targetDisplaySize = targetConfig.getWidth()*targetConfig.getHeight();
+		
+		// Try to match the target aspect ratio
+		ArrayList<DisplayMode> aspectMatchingConfigs = getDisplayModesByAspectRatio(configs, DESIRED_ASPECT_RATIO);
+		if (aspectMatchingConfigs.size() == 0) {
+			// No matches for the target, so try the alternate
+			aspectMatchingConfigs = getDisplayModesByAspectRatio(configs, ALTERNATE_ASPECT_RATIO);
+			if (aspectMatchingConfigs.size() == 0) {
+				// No matches for either, so just use all of them
+				aspectMatchingConfigs = new ArrayList<DisplayMode>(Arrays.asList(configs));
+			}
+		}
+		
+		// Sort by display size
+		Collections.sort(aspectMatchingConfigs, new Comparator<DisplayMode>() {
 			@Override
 			public int compare(DisplayMode o1, DisplayMode o2) {
-				if (o1.getWidth() > o2.getWidth()) {
+				if (o1.getWidth()*o1.getHeight() > o2.getWidth()*o2.getHeight()) {
 					return -1;
-				} else if (o2.getWidth() > o1.getWidth()) {
+				} else if (o2.getWidth()*o2.getHeight() > o1.getWidth()*o1.getHeight()) {
 					return 1;
 				} else {
 					return 0;
 				}
 			}
 		});
+
+		// Find the aspect-matching config with the closest matching display size
 		DisplayMode bestConfig = null;
-		for (DisplayMode config : configs) {
-			if (config.getWidth() >= getSize().width && config.getHeight() >= getSize().height) {
+		for (DisplayMode config : aspectMatchingConfigs) {
+			if (config.getWidth()*config.getHeight() >= targetDisplaySize) {
 				bestConfig = config;
 			}
 		}
-		if (bestConfig == null) {
-			return configs[0];
+		
+		if (bestConfig != null) {
+			System.out.println("Using full-screen display mode "+bestConfig.getWidth()+"x"+bestConfig.getHeight()+
+					" for "+targetConfig.getWidth()+"x"+targetConfig.getHeight()+" stream");
 		}
+		
 		return bestConfig;
 	}
 
-	/*
-	 * Tries to make the frame fullscreen
-	 */
-	private void makeFullScreen() {
+	private void makeFullScreen(StreamConfiguration streamConfig) {
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		if (gd.isFullScreenSupported()) {
 			this.setUndecorated(true);
 			gd.setFullScreenWindow(this);
 			
 			if (gd.isDisplayChangeSupported()) {
-				DisplayMode config = getBestDisplay(gd.getDisplayModes());
+				DisplayMode config = getBestDisplay(streamConfig, gd.getDisplayModes());
 				if (config != null) {
 					gd.setDisplayMode(config);
 				}
@@ -229,7 +264,7 @@ public class StreamFrame extends JFrame {
 	 * Stops the stream and destroys the frame
 	 */
 	public void close() {
+		limelight.stop();
 		dispose();
-		conn.stop();
 	}
 }

@@ -53,7 +53,7 @@ public class SettingsManager {
 	 */
 	public File getGamepadFile() {
 		if (!settingsDir.exists()) {
-			settingsFile.mkdirs();
+			settingsDir.mkdirs();
 		}
 		
 		if (!gamepadFile.exists()) {
@@ -74,7 +74,7 @@ public class SettingsManager {
 	 */
 	public File getSettingsFile() {
 		if (!settingsDir.exists()) {
-			settingsFile.mkdirs();
+			settingsDir.mkdirs();
 		}
 		
 		if (!settingsFile.exists()) {

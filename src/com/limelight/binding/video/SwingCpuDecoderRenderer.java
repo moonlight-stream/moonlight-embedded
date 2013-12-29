@@ -40,23 +40,15 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 	 * @param drFlags flags for the decoder and renderer
 	 */
 	@Override
-	public void setup(int width, int height, Object renderTarget, int drFlags) {
-		this.targetFps = 30;
+	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
+		this.targetFps = redrawRate;
 		this.width = width;
 		this.height = height;
 		
 		// Single threaded low latency decode is ideal
 		int avcFlags = AvcDecoder.LOW_LATENCY_DECODE;
 		int threadCount = 1;
-		
-		// Hack to work around the bad Java native library loader
-		// which can't resolve native library dependencies
-		if (System.getProperty("os.name").contains("Windows")) {
-			System.loadLibrary("avutil-52");
-			System.loadLibrary("postproc-52");
-			System.loadLibrary("pthreadVC2");
-		}
-		
+
 		int err = AvcDecoder.init(width, height, avcFlags, threadCount);
 		if (err != 0) {
 			throw new IllegalStateException("AVC decoder initialization failure: "+err);

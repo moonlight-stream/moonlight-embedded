@@ -100,11 +100,7 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 
-		try {
-			LibraryHelper.prepareNativeLibraries();
-		} catch (IOException e) {
-			// This is expected to fail when not in a JAR
-		}
+		LibraryHelper.prepareNativeLibraries();
 
 		createFrame();
 	}

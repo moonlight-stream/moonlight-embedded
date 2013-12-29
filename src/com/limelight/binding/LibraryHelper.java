@@ -11,6 +11,8 @@ public class LibraryHelper {
 	private static final HashSet<String> avcDependencies = new HashSet<String>();
 	private static final boolean needsDependencyExtraction;
 	private static final String libraryExtractionFolder;
+
+	private static boolean librariesExtracted = false;
 	
 	static {
 		needsDependencyExtraction = System.getProperty("os.name", "").contains("Windows");
@@ -35,7 +37,7 @@ public class LibraryHelper {
 	}
 	
 	public static void loadNativeLibrary(String libraryName) {
-		if (needsDependencyExtraction && avcDependencies.contains(libraryName)) {
+		if (librariesExtracted && avcDependencies.contains(libraryName)) {
 			System.load(libraryExtractionFolder + File.separatorChar + System.mapLibraryName(libraryName));
 		}
 		else {
@@ -43,14 +45,21 @@ public class LibraryHelper {
 		}
 	}
 
-	public static void prepareNativeLibraries() throws IOException {
+	public static void prepareNativeLibraries() {
 		if (!needsDependencyExtraction) {
 			return;
 		}
 		
-		for (String dependency : avcDependencies) {
-			extractNativeLibrary(dependency);
+		try {
+			for (String dependency : avcDependencies) {
+				extractNativeLibrary(dependency);
+			}
+		} catch (IOException e) {
+			// This is expected if this code is not running from a JAR
+			return;
 		}
+		
+		librariesExtracted = true;
 	}
 	
 	private static void extractNativeLibrary(String libraryName) throws IOException {

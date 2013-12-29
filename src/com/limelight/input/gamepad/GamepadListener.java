@@ -8,6 +8,10 @@ import com.limelight.nvstream.NvConnection;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 
+/**
+ * Listens to <code>Controller</code>s connected to this computer and gives any gamepad to the gamepad handler
+ * @author Diego Waxemberg
+ */
 public class GamepadListener {
 	private static Thread listenerThread;
 	private static NvConnection conn;
@@ -79,6 +83,9 @@ public class GamepadListener {
 		return false;
 	}
 
+	/**
+	 * Stops listening for controllers, ie. stops the thread if it is running
+	 */
 	public static void stopListening() {
 		if (listenerThread != null && listenerThread.isAlive()) {
 			System.out.println("Stopping Controller Listener thread");
@@ -89,6 +96,10 @@ public class GamepadListener {
 		}
 	}
 	
+	/**
+	 * Tells the handler to start sending gamepad events to the specified connection
+	 * @param connection the connection to the host that will receive gamepad events
+	 */
 	public static void startSendingInput(NvConnection connection) {
 		System.out.println("Starting to send controller input");
 		conn = connection;
@@ -97,6 +108,9 @@ public class GamepadListener {
 		}
 	}
 	
+	/**
+	 * Tells the handler to stop sending events to the host
+	 */
 	public static void stopSendingInput() {
 		System.out.println("Stopping sending controller input");
 		conn = null;

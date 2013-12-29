@@ -12,6 +12,10 @@ import com.limelight.nvstream.av.DecodeUnit;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.av.video.cpu.AvcDecoder;
 
+/**
+ * Implementation of a video decoder and renderer.
+ * @author Cameron Gutman
+ */
 public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 
 	private Thread rendererThread;
@@ -28,6 +32,13 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 	// Only sleep if the difference is above this value
 	private static final int WAIT_CEILING_MS = 8;
 	
+	/**
+	 * Sets up the decoder and renderer to render video at the specified dimensions
+	 * @param width the width of the video to render
+	 * @param height the height of the video to render
+	 * @param renderTarget what to render the video onto
+	 * @param drFlags flags for the decoder and renderer
+	 */
 	@Override
 	public void setup(int width, int height, Object renderTarget, int drFlags) {
 		this.targetFps = 30;
@@ -62,6 +73,9 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 		System.out.println("Using software decoding");
 	}
 
+	/**
+	 * Starts the decoding and rendering of the video stream on a new thread
+	 */
 	@Override
 	public void start() {
 		rendererThread = new Thread() {
@@ -112,10 +126,16 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 		rendererThread.start();
 	}
 	
+	/*
+	 * Computes the amount of time to display a certain frame
+	 */
 	private long computePresentationTimeMs(int frameRate) {
 		return System.currentTimeMillis() + (1000 / frameRate);
 	}
 
+	/**
+	 * Stops the decoding and rendering of the video stream.
+	 */
 	@Override
 	public void stop() {
 		rendererThread.interrupt();
@@ -125,11 +145,19 @@ public class SwingCpuDecoderRenderer implements VideoDecoderRenderer {
 		} catch (InterruptedException e) { }
 	}
 
+	/**
+	 * Releases resources held by the decoder.
+	 */
 	@Override
 	public void release() {
 		AvcDecoder.destroy();
 	}
 
+	/**
+	 * Give a unit to be decoded to the decoder.
+	 * @param decodeUnit the unit to be decoded
+	 * @return true if the unit was decoded successfully, false otherwise
+	 */
 	@Override
 	public boolean submitDecodeUnit(DecodeUnit decodeUnit) {
 		byte[] data;

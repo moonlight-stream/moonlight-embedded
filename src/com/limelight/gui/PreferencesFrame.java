@@ -16,12 +16,20 @@ import com.limelight.settings.PreferencesManager;
 import com.limelight.settings.PreferencesManager.Preferences;
 import com.limelight.settings.PreferencesManager.Preferences.Resolution;
 
+/**
+ * A frame that holds user preferences such as streaming resolution
+ * @author Diego Waxemberg
+ */
 public class PreferencesFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JComboBox resolution;
 	private JCheckBox fullscreen;
 	private Preferences prefs;
 	
+	/**
+	 * Construcs a new frame and loads the saved preferences.
+	 * <br>The frame is not made visible until a call to <br>build()</br> is made.
+	 */
 	public PreferencesFrame() {
 		super("Preferences");
 		this.setSize(200, 100);
@@ -30,6 +38,9 @@ public class PreferencesFrame extends JFrame {
 		prefs = PreferencesManager.getPreferences();
 	}
 	
+	/**
+	 * Constructs all components of the frame and makes the frame visible to the user.
+	 */
 	public void build() {
 		
 		JPanel mainPanel = new JPanel();
@@ -80,11 +91,17 @@ public class PreferencesFrame extends JFrame {
 		this.setVisible(true);
 	}
 	
+	/*
+	 * Checks if the preferences have changed from the cached preferences.
+	 */
 	private boolean prefsChanged() {
 		return (prefs.getResolution() != resolution.getSelectedItem()) ||
 				(prefs.getFullscreen() != fullscreen.isSelected());
 	}
 	
+	/*
+	 * Writes the preferences to the disk.
+	 */
 	private void writePreferences() {
 		prefs.setFullscreen(fullscreen.isSelected());
 		prefs.setResolution((Resolution)resolution.getSelectedItem());

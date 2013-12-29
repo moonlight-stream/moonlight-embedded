@@ -34,16 +34,28 @@ import com.limelight.nvstream.http.NvHTTP;
 import com.limelight.settings.PreferencesManager;
 import com.limelight.settings.PreferencesManager.Preferences;
 
+/**
+ * The main frame of Limelight that allows the user to specify the host and begin the stream.
+ * @author Diego Waxemberg
+ * <br>Cameron Gutman
+ */
 public class MainFrame {
 	private JTextField hostField;
 	private JButton pair;
 	private JButton stream;
 	private JFrame limeFrame;
 	
+	/**
+	 * Gets the actual JFrame this class creates
+	 * @return the JFrame that is the main frame
+	 */
 	public JFrame getLimeFrame() {
 		return limeFrame;
 	}
 	
+	/**
+	 * Builds all components of the frame, including the frame itself and displays it to the user.
+	 */
 	public void build() {
 		limeFrame = new JFrame("Limelight");
 		limeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -116,6 +128,9 @@ public class MainFrame {
 		limeFrame.setVisible(true);
 	}
 	
+	/*
+	 * Creates the menu bar for the user to go to preferences, mappings, etc.
+	 */
 	private JMenuBar createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu optionsMenu = new JMenu("Options");
@@ -144,6 +159,9 @@ public class MainFrame {
 		return menuBar;
 	}
 	
+	/*
+	 * Creates the listener for the stream button- starts the stream process
+	 */
 	private ActionListener createStreamButtonListener() {
 		return new ActionListener() {
 			@Override
@@ -159,6 +177,9 @@ public class MainFrame {
 		};
 	}
 	
+	/*
+	 * Creates the listener for the pair button- requests a pairing with the specified host
+	 */
 	private ActionListener createPairButtonListener() {
 		return new ActionListener() {
 			@Override

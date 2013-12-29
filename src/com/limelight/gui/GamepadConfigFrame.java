@@ -36,6 +36,10 @@ import com.limelight.input.gamepad.GamepadMapping;
 import com.limelight.input.gamepad.GamepadMapping.Mapping;
 import com.limelight.settings.GamepadSettingsManager;
 
+/**
+ * A frame used to configure the gamepad mappings.
+ * @author Diego Waxemberg
+ */
 public class GamepadConfigFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
@@ -46,6 +50,10 @@ public class GamepadConfigFrame extends JFrame {
 	private GamepadMapping config;
 	private HashMap<Box, Mapping> componentMap;
 
+	/**
+	 * Constructs a new config frame. The frame is initially invisible and will <br>
+	 * be made visible after all components are built by calling <code>build()</code>
+	 */
 	public GamepadConfigFrame() {
 		super("Gamepad Settings");
 		System.out.println("Creating Settings Frame");
@@ -56,6 +64,9 @@ public class GamepadConfigFrame extends JFrame {
 
 	}
 
+	/**
+	 * Builds all components of the config frame and sets the frame visible.
+	 */
 	public void build() {
 		componentMap = new HashMap<Box, Mapping>();
 
@@ -90,6 +101,9 @@ public class GamepadConfigFrame extends JFrame {
 		this.setVisible(true);
 	}
 
+	/*
+	 * Creates the box that holds the button and checkboxes
+	 */
 	private Box createComponentBox(Mapping mapping) {
 		Box componentBox = Box.createHorizontalBox();
 		
@@ -127,6 +141,9 @@ public class GamepadConfigFrame extends JFrame {
 	}
 
 	//TODO: make createInvertListener() and createTriggerListener() one method. TOO MUCH COPY PASTA!
+	/*
+	 * Creates the listener for the invert checkbox
+	 */
 	private ItemListener createInvertListener() {
 		return new ItemListener() {
 			@Override
@@ -139,6 +156,9 @@ public class GamepadConfigFrame extends JFrame {
 		};
 	}
 
+	/*
+	 * Creates the listener for the trigger checkbox
+	 */
 	private ItemListener createTriggerListener() {
 		return new ItemListener() {
 			@Override
@@ -152,6 +172,10 @@ public class GamepadConfigFrame extends JFrame {
 	}
 
 
+	/*
+	 * Creates the listener for the window.
+	 * It will save configs on exit and restart controller threads
+	 */
 	private WindowListener createWindowListener() {
 		return new WindowAdapter() {
 			@Override
@@ -171,6 +195,9 @@ public class GamepadConfigFrame extends JFrame {
 		};
 	}
 
+	/*
+	 * Creates the listener for the map button
+	 */
 	private ActionListener createMapListener() {
 		return new ActionListener() {
 			@Override
@@ -189,6 +216,9 @@ public class GamepadConfigFrame extends JFrame {
 		};
 	}
 
+	/*
+	 * Maps a gamepad component to the clicked component
+	 */
 	private void map(final Box toMap, final Gamepad pad) {
 		if (mappingThread == null || !mappingThread.isAlive()) {
 			
@@ -239,6 +269,9 @@ public class GamepadConfigFrame extends JFrame {
 
 	}
 	
+	/*
+	 * Waits until the user chooses what to map to the clicked component
+	 */
 	private Component waitForNewMapping(Gamepad pad) {
 		Component newMapping = null;
 
@@ -266,6 +299,9 @@ public class GamepadConfigFrame extends JFrame {
 		return newMapping;
 	}
 	
+	/*
+	 * Consumes any events left in the queue after the mapping has been made
+	 */
 	private void consumeEvents(final Gamepad pad) {
 		// start a new thread to go through all of the remaining events
 		Thread consumeEvents = new Thread(new Runnable() {
@@ -287,6 +323,9 @@ public class GamepadConfigFrame extends JFrame {
 		consumeEvents.start();
 	}
 	
+	/*
+	 * Helper method to get the box component that contains the given a mapping
+	 */
 	private Box getBox(Mapping mapping) {
 		for (Entry<Box, Mapping> entry : componentMap.entrySet()) {
 			if (entry.getValue() == mapping) {
@@ -296,6 +335,9 @@ public class GamepadConfigFrame extends JFrame {
 		return null;
 	}
 
+	/*
+	 * Helper method to get the button out of the box component
+	 */
 	private JButton getButton(Box componentBox) {
 		for (java.awt.Component comp : componentBox.getComponents()) {
 			if (comp instanceof JButton)
@@ -304,6 +346,9 @@ public class GamepadConfigFrame extends JFrame {
 		return null;
 	}
 	
+	/*
+	 * Writes the current cofig to the configs on disk.
+	 */
 	private void updateConfigs() {
 		GamepadSettingsManager.writeSettings(config);
 	}

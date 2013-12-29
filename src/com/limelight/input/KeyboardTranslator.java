@@ -5,14 +5,30 @@ import java.awt.event.KeyEvent;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.KeycodeTranslator;
 
+/**
+ * Class to translate a java key code into the codes GFE is expecting
+ * @author Diego Waxemberg
+ */
 public class KeyboardTranslator extends KeycodeTranslator {
-
+	
+	/**
+	 * GFE's prefix for every key code
+	 */
 	public static final short KEY_PREFIX = (short) 0x80;
 	
+	/**
+	 * Constructs a new translator for the specified connection
+	 * @param conn the connection to which the translated codes are sent
+	 */
 	public KeyboardTranslator(NvConnection conn) {
 		super(conn);
 	}
 	
+	/**
+	 * Translates the given keycode and returns the GFE keycode
+	 * @param keycode the code to be translated
+	 * @returns a GFE keycode for the given keycode
+	 */
 	@Override
 	public short translate(int keycode) {
 		// change newline to carriage return

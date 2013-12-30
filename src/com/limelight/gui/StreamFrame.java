@@ -30,8 +30,6 @@ import javax.swing.JProgressBar;
 import com.limelight.Limelight;
 import com.limelight.input.KeyboardHandler;
 import com.limelight.input.MouseHandler;
-import com.limelight.input.gamepad.GamepadHandler;
-import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener.Stage;
 import com.limelight.nvstream.StreamConfiguration;

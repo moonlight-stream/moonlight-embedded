@@ -74,19 +74,19 @@ public class GamepadConfigFrame extends JFrame {
 		layout.setHgap(60);
 		layout.setVgap(3);
 		JPanel mainPanel = new JPanel(layout);
-		
+
 		GamepadComponent[] components = GamepadComponent.values();
-		
+
 		for (int i = 0; i < components.length; i++) {
-			
+
 			Mapping mapping = config.get(components[i]);
 			if (mapping == null) {
 				mapping = config.new Mapping(components[i], false, false);
 			}
 			Box componentBox = createComponentBox(mapping);
-			
+
 			mainPanel.add(componentBox);
-			
+
 		}
 
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -99,7 +99,7 @@ public class GamepadConfigFrame extends JFrame {
 		this.getContentPane().add(Box.createVerticalStrut(20), "South");
 		this.getContentPane().add(Box.createHorizontalStrut(20), "East");
 		this.getContentPane().add(Box.createHorizontalStrut(20), "West");
-		
+
 		this.addWindowListener(createWindowListener());
 		this.setVisible(true);
 	}
@@ -109,7 +109,7 @@ public class GamepadConfigFrame extends JFrame {
 	 */
 	private Box createComponentBox(Mapping mapping) {
 		Box componentBox = Box.createHorizontalBox();
-		
+
 		JButton mapButton = new JButton();
 		JCheckBox invertBox = new JCheckBox("Invert");
 		JCheckBox triggerBox = new JCheckBox("Trigger");
@@ -127,7 +127,7 @@ public class GamepadConfigFrame extends JFrame {
 		triggerBox.setSelected(mapping.trigger);
 		triggerBox.addItemListener(createTriggerListener());
 		triggerBox.setToolTipText("If this component should act as a trigger. (one-way axis)");
-		
+
 		componentBox.add(Box.createHorizontalStrut(5));
 		componentBox.add(mapping.contComp.getLabel());
 		componentBox.add(Box.createHorizontalGlue());
@@ -135,11 +135,11 @@ public class GamepadConfigFrame extends JFrame {
 		componentBox.add(invertBox);
 		componentBox.add(triggerBox);
 		componentBox.add(Box.createHorizontalStrut(5));
-		
+
 		componentBox.setBorder(new LineBorder(Color.GRAY, 1, true));
-		
+
 		componentMap.put(componentBox, mapping);
-		
+
 		return componentBox;
 	}
 
@@ -206,14 +206,14 @@ public class GamepadConfigFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Box toMap = (Box)((JButton)e.getSource()).getParent();
-				
+
 				List<Gamepad> gamepads = GamepadHandler.getGamepads();
 
 				if (gamepads.isEmpty()) {
 					JOptionPane.showMessageDialog(GamepadConfigFrame.this, "No Gamepad Detected");
 					return;
 				}
-				
+
 				map(toMap, gamepads.get(0));
 			}
 		};
@@ -224,13 +224,13 @@ public class GamepadConfigFrame extends JFrame {
 	 */
 	private void map(final Box toMap, final Gamepad pad) {
 		if (mappingThread == null || !mappingThread.isAlive()) {
-			
+
 			//a little janky, could probably be fixed up a bit
 			final JButton buttonPressed = getButton(toMap);
 			final Mapping mappingToMap = componentMap.get(toMap);
-			
+
 			buttonPressed.setSelected(true);
-			
+
 			GamepadListener.stopListening();
 
 			if (GamepadHandler.isRunning()) {
@@ -243,26 +243,26 @@ public class GamepadConfigFrame extends JFrame {
 			mappingThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
-					
+
 					Component newComponent = waitForNewMapping(pad);
 					consumeEvents(pad);
-					
+
 
 					if (newComponent != null) {
 						Mapping oldConfig = config.get(newComponent);
 						if (oldConfig != null) {
 							getButton(getBox(oldConfig)).setText("");
 						}
-						
+
 						config.insertMapping(mappingToMap, newComponent);
-						
+
 						buttonPressed.setText(newComponent.getName());
 						configChanged = true;
-					
+
 					} else {
 						buttonPressed.setText(config.getMapping(mappingToMap.contComp));
 					}
-					
+
 					buttonPressed.setSelected(false);
 				}
 			});
@@ -271,7 +271,7 @@ public class GamepadConfigFrame extends JFrame {
 		}
 
 	}
-	
+
 	/*
 	 * Waits until the user chooses what to map to the clicked component
 	 */
@@ -301,31 +301,29 @@ public class GamepadConfigFrame extends JFrame {
 		}
 		return newMapping;
 	}
-	
+
 	/*
 	 * Consumes any events left in the queue after the mapping has been made
 	 */
 	private void consumeEvents(final Gamepad pad) {
-		// start a new thread to go through all of the remaining events
-		Thread consumeEvents = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				if (pad.poll()) {
-					EventQueue queue = pad.getEvents();
-					Event event = new Event();
-
-					while (queue.getNextEvent(event)) {
-						if (!pad.poll()) {
-							break;
-						}
-					}
-				}
+		EventQueue queue = pad.getEvents();
+		Event event = new Event();
+		
+		for (int i = 0; i < 5; i++) {
+			if (!pad.poll()) {
+				break;
 			}
-		});
-		consumeEvents.setName("Consume Events Thread");
-		consumeEvents.start();
+			
+			// Drop all events currently in the queue
+			while (queue.getNextEvent(event) && pad.poll());
+			
+			// Give the queue a bit of time to fill again
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {}
+		}
 	}
-	
+
 	/*
 	 * Helper method to get the box component that contains the given a mapping
 	 */
@@ -348,7 +346,7 @@ public class GamepadConfigFrame extends JFrame {
 		}
 		return null;
 	}
-	
+
 	/*
 	 * Writes the current cofig to the configs on disk.
 	 */

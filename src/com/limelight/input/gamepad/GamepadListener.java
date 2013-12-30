@@ -1,6 +1,9 @@
 package com.limelight.input.gamepad;
 
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,6 +20,8 @@ import net.java.games.input.ControllerEnvironment;
 public class GamepadListener {
 	private static Thread listenerThread;
 	private static NvConnection conn;
+	private static Field controllers;
+	private static Method scan;
 	
 	/**
 	 * starts a thread to listen to controllers
@@ -36,22 +41,26 @@ public class GamepadListener {
 					 * This is really janky, but it is currently the only way to rescan for controllers.
 					 * The DefaultControllerEnvironment class caches the results of scanning and if a controller is
 					 * unplugged or plugged in, it will not detect it. Since DefaultControllerEnvironment is package-protected
-					 * we have to use reflections in order to manually instantiate a new instance to ensure there is no caching.
-					 * Supposedly Aaron is going to fix JInput and we will have the ability to rescan soon! 
+					 * we have to use reflections in order to manually get access to the private field caching the controllers 
+					 * and the method to scan for controllers
 					 */
 					try {
 						//#allthejank
-						Constructor<? extends ControllerEnvironment> construct = null;
-
-						Class<? extends ControllerEnvironment> defEnv = ControllerEnvironment.getDefaultEnvironment().getClass();
-						construct = defEnv.getDeclaredConstructor();
-						construct.setAccessible(true);
 						
-						ControllerEnvironment defaultEnv = null;
+						ControllerEnvironment defaultEnv = ControllerEnvironment.getDefaultEnvironment();
+						//must be called so the controllers array list will not be null
+						defaultEnv.getControllers();
+						
+						controllers = defaultEnv.getClass().getDeclaredField("controllers");
+						controllers.setAccessible(true);
+						
+						scan = defaultEnv.getClass().getDeclaredMethod("scanControllers", (Class[])null);
+						scan.setAccessible(true);
 						
 						while(!isInterrupted()) {
 							
-							defaultEnv = (ControllerEnvironment)construct.newInstance();
+							rescanControllers(defaultEnv);
+							
 							Controller[] ca = defaultEnv.getControllers();
 							LinkedList<Controller> gamepads = new LinkedList<Controller>();
 
@@ -88,6 +97,30 @@ public class GamepadListener {
 		return false;
 	}
 
+	/*
+	 * Janky method that clears the controller environment's list of controllers and tells it to scan for new ones.
+	 * #allthejank
+	 */
+	@SuppressWarnings("rawtypes")
+	private static void rescanControllers(ControllerEnvironment defaultEnv) {
+		try {
+			((ArrayList)controllers.get(defaultEnv)).clear();
+			scan.invoke(defaultEnv, (Object[])null);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Stops listening for controllers, ie. stops the thread if it is running
 	 */

@@ -1,9 +1,7 @@
 package com.limelight.input.gamepad;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,8 +18,7 @@ import net.java.games.input.ControllerEnvironment;
 public class GamepadListener {
 	private static Thread listenerThread;
 	private static NvConnection conn;
-	private static Field controllers;
-	private static Method scan;
+	private static ControllerEnvironment defaultEnv;
 	
 	/**
 	 * starts a thread to listen to controllers
@@ -36,30 +33,11 @@ public class GamepadListener {
 			listenerThread = new Thread() {
 				@Override
 				public void run() {
-
-					/*
-					 * This is really janky, but it is currently the only way to rescan for controllers.
-					 * The DefaultControllerEnvironment class caches the results of scanning and if a controller is
-					 * unplugged or plugged in, it will not detect it. Since DefaultControllerEnvironment is package-protected
-					 * we have to use reflections in order to manually get access to the private field caching the controllers 
-					 * and the method to scan for controllers
-					 */
 					try {
-						//#allthejank
 						
-						ControllerEnvironment defaultEnv = ControllerEnvironment.getDefaultEnvironment();
-						//must be called so the controllers array list will not be null
-						defaultEnv.getControllers();
-						
-						controllers = defaultEnv.getClass().getDeclaredField("controllers");
-						controllers.setAccessible(true);
-						
-						scan = defaultEnv.getClass().getDeclaredMethod("scanControllers", (Class[])null);
-						scan.setAccessible(true);
+						defaultEnv = ControllerEnvironment.getDefaultEnvironment();
 						
 						while(!isInterrupted()) {
-							
-							rescanControllers(defaultEnv);
 							
 							Controller[] ca = defaultEnv.getControllers();
 							LinkedList<Controller> gamepads = new LinkedList<Controller>();
@@ -96,29 +74,39 @@ public class GamepadListener {
 		}
 		return false;
 	}
-
-	/*
-	 * Janky method that clears the controller environment's list of controllers and tells it to scan for new ones.
-	 * #allthejank
+	
+	/**
+	 * This is really janky, but it is currently the only way to rescan for controllers.
+	 * The DefaultControllerEnvironment class caches the results of scanning and if a controller is
+	 * unplugged or plugged in, it will not detect it. Since DefaultControllerEnvironment is package-protected
+	 * we have to use reflections in order to create a new instance to scan for controllers
 	 */
-	@SuppressWarnings("rawtypes")
-	private static void rescanControllers(ControllerEnvironment defaultEnv) {
-		try {
-			((ArrayList)controllers.get(defaultEnv)).clear();
-			scan.invoke(defaultEnv, (Object[])null);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public static void rescanControllers() {
+	try {
+		System.out.println("Rescanning for controllers...");
+		Constructor<? extends ControllerEnvironment> envConst = ControllerEnvironment.getDefaultEnvironment().getClass().getDeclaredConstructor((Class[])null);
+		envConst.setAccessible(true);
+		defaultEnv = (ControllerEnvironment) envConst.newInstance((Object[])null);
+	} catch (SecurityException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (NoSuchMethodException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IllegalArgumentException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (InstantiationException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IllegalAccessException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (InvocationTargetException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	
 	}
 	
 	/**

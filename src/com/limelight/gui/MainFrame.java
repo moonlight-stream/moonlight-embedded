@@ -136,6 +136,7 @@ public class MainFrame {
 		JMenu optionsMenu = new JMenu("Options");
 		JMenuItem gamepadSettings = new JMenuItem("Gamepad Settings");
 		JMenuItem generalSettings = new JMenuItem("Preferences");
+		JMenuItem scanForGamepads = new JMenuItem("Scan for Gamepads");
 		
 		gamepadSettings.addActionListener(new ActionListener() {
 			@Override
@@ -151,9 +152,17 @@ public class MainFrame {
 			}
 		});
 		
+		scanForGamepads.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				GamepadListener.rescanControllers();
+			}
+		});
+		
 		optionsMenu.add(gamepadSettings);
 		optionsMenu.add(generalSettings);
-	
+		optionsMenu.add(scanForGamepads);
+		
 		menuBar.add(optionsMenu);
 		
 		return menuBar;

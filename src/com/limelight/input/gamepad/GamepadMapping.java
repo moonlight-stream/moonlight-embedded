@@ -28,8 +28,12 @@ public class GamepadMapping implements Serializable {
 	 * @param toMap a <code>Mapping</code> that will be mapped to the specified gamepad component
 	 * @param comp the gamepad component to map to.
 	 */
-	public void insertMapping(Mapping toMap, Component comp) {
-		mapping.put(comp.getIdentifier().getName(), toMap);
+	public void insertMapping(Mapping toMap, SourceComponent comp) {
+		// This is the base mapping for components with multiple "buttons"
+		mapping.put(comp.getComponentId(), toMap);
+		
+		// This is the more-specific mapping for the specific buttons
+		mapping.put(comp.getFullUniqueId(), toMap);
 	}
 	
 	/**
@@ -42,11 +46,30 @@ public class GamepadMapping implements Serializable {
 	}
 	
 	/**
+	 * Gets the mapping for the specified source component
+	 * @param comp the source component to get a mapping for
+	 * @return a mapping for the requested component
+	 */
+	public Mapping get(SourceComponent comp) {
+		return mapping.get(comp.getFullUniqueId());
+	}
+	
+	/**
 	 * Removes the mapping to the specified component
 	 * @param comp the component to no longer be mapped.
 	 */
-	public void remove(Component comp) {
-		mapping.remove(comp.getIdentifier().getName());
+	public void remove(SourceComponent comp) {
+		// Remove the most specific mapping
+		mapping.remove(comp.getFullUniqueId());
+		
+		for (Entry<String, Mapping> entry : mapping.entrySet()) {
+			if (entry.getKey().startsWith(comp.getComponentId())) {
+				return;
+			}
+		}
+		
+		// Remove the common mapping if no more specific mappings remain
+		mapping.remove(comp.getComponentId());
 	}
 	
 	/**

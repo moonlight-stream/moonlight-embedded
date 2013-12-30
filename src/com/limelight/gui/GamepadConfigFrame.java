@@ -34,6 +34,7 @@ import com.limelight.input.gamepad.Gamepad;
 import com.limelight.input.gamepad.GamepadHandler;
 import com.limelight.input.gamepad.GamepadMapping;
 import com.limelight.input.gamepad.GamepadMapping.Mapping;
+import com.limelight.input.gamepad.SourceComponent;
 import com.limelight.settings.GamepadSettingsManager;
 
 /**
@@ -244,9 +245,8 @@ public class GamepadConfigFrame extends JFrame {
 				@Override
 				public void run() {
 
-					Component newComponent = waitForNewMapping(pad);
+					SourceComponent newComponent = waitForNewMapping(pad);
 					consumeEvents(pad);
-
 
 					if (newComponent != null) {
 						Mapping oldConfig = config.get(newComponent);
@@ -256,7 +256,7 @@ public class GamepadConfigFrame extends JFrame {
 
 						config.insertMapping(mappingToMap, newComponent);
 
-						buttonPressed.setText(newComponent.getName());
+						buttonPressed.setText(newComponent.getComponent().getName());
 						configChanged = true;
 
 					} else {
@@ -275,8 +275,8 @@ public class GamepadConfigFrame extends JFrame {
 	/*
 	 * Waits until the user chooses what to map to the clicked component
 	 */
-	private Component waitForNewMapping(Gamepad pad) {
-		Component newMapping = null;
+	private SourceComponent waitForNewMapping(Gamepad pad) {
+		SourceComponent newMapping = null;
 
 		while (newMapping == null) {
 			if (pad.poll()) {
@@ -287,8 +287,13 @@ public class GamepadConfigFrame extends JFrame {
 					if (!pad.poll()) {
 						break;
 					}
-					if (Math.abs(event.getValue()) > .75F) {
-						newMapping = event.getComponent();
+					
+					if (event.getComponent().getIdentifier() == Component.Identifier.Axis.POV) {
+						newMapping = new SourceComponent(event.getComponent(), ""+event.getValue());
+						break;
+					}
+					else if (!event.getComponent().isAnalog() || Math.abs(event.getValue()) > .75F) {
+						newMapping = new SourceComponent(event.getComponent(), "");
 						break;
 					}
 				}

@@ -5,6 +5,7 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.ControllerPacket;
 
 import net.java.games.input.Component;
+import net.java.games.input.Component.Identifier;
 import net.java.games.input.Controller;
 import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
@@ -97,8 +98,7 @@ public class Gamepad {
 	 * Prints out the specified event information for the given gamepad
 	 * used for debugging, normally unused.
 	 */
-	@SuppressWarnings("unused")
-	private void printInfo(Controller gamepad, Event event) {
+	public static void printInfo(Controller gamepad, Event event) {
 		Component comp = event.getComponent();
 
 		StringBuilder builder = new StringBuilder(gamepad.getName());
@@ -108,9 +108,40 @@ public class Gamepad {
 		builder.append(comp.getName()).append(" changed to ");
 
 
-		float value = event.getValue(); 
+		float value = event.getValue();
 		if(comp.isAnalog()) {
 			builder.append(value);
+		} else if (comp.getIdentifier() == Identifier.Axis.POV) {
+			if (value == Component.POV.DOWN) {
+				builder.append("Down");
+			}
+			else if (value == Component.POV.UP) {
+				builder.append("Up");
+			}
+			else if (value == Component.POV.LEFT) {
+				builder.append("Left");
+			}
+			else if (value == Component.POV.RIGHT) {
+				builder.append("Right");
+			}
+			else if (value == Component.POV.CENTER) {
+				builder.append("Center");
+			}
+			else if (value == Component.POV.DOWN_LEFT) {
+				builder.append("Down-left");
+			}
+			else if (value == Component.POV.DOWN_RIGHT) {
+				builder.append("Down-right");
+			}
+			else if (value == Component.POV.UP_LEFT) {
+				builder.append("Up-left");
+			}
+			else if (value == Component.POV.UP_RIGHT) {
+				builder.append("Up-right");
+			}
+			else {
+				builder.append("Unknown");
+			}
 		} else {
 			if(value==1.0f) {
 				builder.append("On");
@@ -140,6 +171,9 @@ public class Gamepad {
 		if (mapping != null) {
 			if (mapping.contComp.isAnalog()) {
 				handleAnalog(mapping.contComp, sanitizeValue(mapping, value));
+			} else if (comp.getIdentifier() == Component.Identifier.Axis.POV) {
+				// The values are directional constants so they cannot be sanitized
+				handlePOV(value);
 			} else {
 				handleButtons(mapping.contComp, sanitizeValue(mapping, value));
 			}
@@ -171,6 +205,47 @@ public class Gamepad {
 		}
 	}
 
+	/*
+	 * Handles POV component input
+	 */
+	private void handlePOV(float value) {
+		if (value == Component.POV.UP ||
+				value == Component.POV.UP_LEFT ||
+				value == Component.POV.UP_RIGHT) {
+			toggle(ControllerPacket.UP_FLAG, true);
+		}
+		else {
+			toggle(ControllerPacket.UP_FLAG, false);
+		}
+
+		if (value == Component.POV.DOWN ||
+				value == Component.POV.DOWN_LEFT ||
+				value == Component.POV.DOWN_RIGHT) {
+			toggle(ControllerPacket.DOWN_FLAG, true);
+		}
+		else {
+			toggle(ControllerPacket.DOWN_FLAG, false);
+		}
+
+		if (value == Component.POV.LEFT ||
+				value == Component.POV.DOWN_LEFT ||
+				value == Component.POV.UP_LEFT) {
+			toggle(ControllerPacket.LEFT_FLAG, true);
+		}
+		else {
+			toggle(ControllerPacket.LEFT_FLAG, false);
+		}
+
+		if (value == Component.POV.RIGHT ||
+				value == Component.POV.UP_RIGHT ||
+				value == Component.POV.DOWN_RIGHT) {
+			toggle(ControllerPacket.RIGHT_FLAG, true);
+		}
+		else {
+			toggle(ControllerPacket.RIGHT_FLAG, false);
+		}
+	}
+	
 	/*
 	 * Handles analog component input
 	 */

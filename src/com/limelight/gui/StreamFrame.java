@@ -10,6 +10,9 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,6 +92,8 @@ public class StreamFrame extends JFrame {
 		this.setBackground(Color.BLACK);
 		this.getContentPane().setBackground(Color.BLACK);
 		this.getRootPane().setBackground(Color.BLACK);
+		
+		this.addWindowListener(createWindowListener());
 		
 		if (fullscreen) {
 			makeFullScreen(streamConfig);
@@ -246,6 +251,19 @@ public class StreamFrame extends JFrame {
 			c.add(panel, "Center");
 		}
 		spinnerLabel.setText("Starting " + stage.getName() + "...");
+	}
+	
+	/**
+	 * Creates the listener for the window.
+	 * It terminates the connection when the window is closed
+	 */
+	private WindowListener createWindowListener() {
+		return new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				close();
+			}
+		};
 	}
 
 	/**

@@ -1,6 +1,10 @@
 package com.limelight.input.gamepad;
 
-public class SourceComponent {
+import java.io.Serializable;
+
+public class SourceComponent implements Serializable {
+	private static final long serialVersionUID = 2366409458045238273L;
+
 	public enum Type { AXIS, BUTTON }
 	private Type type;
 	private int id;

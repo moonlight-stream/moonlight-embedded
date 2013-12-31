@@ -9,6 +9,7 @@ public class NativeGamepad {
 	private static ArrayList<NativeGamepadListener> listenerList =
 			new ArrayList<NativeGamepadListener>();
 	private static boolean running = false;
+	private static boolean initialized = false;
 	private static Thread deviceThread = null;
 	private static Thread eventThread = null;
 	private static int devicePollingIntervalMs = DEFAULT_DEVICE_POLLING_INTERVAL;
@@ -16,8 +17,6 @@ public class NativeGamepad {
 
 	static {
 		System.loadLibrary("gamepad_jni");
-		
-		NativeGamepad.init();
 	}
 	
 	private static native void init();
@@ -55,6 +54,10 @@ public class NativeGamepad {
 	}
 	
 	public static void start() {
+		if (!initialized) {
+			NativeGamepad.init();
+			initialized = true;
+		}
 		if (!running) {
 			startDevicePolling();
 			startEventPolling();
@@ -75,7 +78,10 @@ public class NativeGamepad {
 			throw new IllegalStateException("Cannot release running NativeGamepad");
 		}
 		
-		NativeGamepad.shutdown();
+		if (initialized) {
+			NativeGamepad.shutdown();
+			initialized = false;
+		}
 	}
 	
 	public static int getDeviceCount() {

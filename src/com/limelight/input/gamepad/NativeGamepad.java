@@ -71,6 +71,10 @@ public class NativeGamepad {
 	}
 	
 	public static void release() {
+		if (running) {
+			throw new IllegalStateException("Cannot release running NativeGamepad");
+		}
+		
 		NativeGamepad.shutdown();
 	}
 	

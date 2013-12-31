@@ -49,13 +49,13 @@ public class GamepadMapping implements Serializable {
 	/**
 	 * Gets the mapped ControllerComponent for the specified ControllerComponent.</br>
 	 * <b>NOTE: Iterates a hashmap, use sparingly</b>
-	 * @param contComp the component to get a mapping for
+	 * @param padComp the component to get a mapping for
 	 * @return a mapping or an null if there is none
 	 */
-	public Mapping get(GamepadComponent contComp) {
+	public Mapping get(GamepadComponent padComp) {
 		//#allTheJank
 		for (Entry<SourceComponent, Mapping> entry : mapping.entrySet()) {
-			if (entry.getValue().contComp == contComp) {
+			if (entry.getValue().padComp == padComp) {
 				return entry.getValue();
 			}
 		}
@@ -65,12 +65,12 @@ public class GamepadMapping implements Serializable {
 	/**
 	 * Gets the mapping for the specified component.</br>
 	 * <b>NOTE: Iterates a hashmap, use sparingly</b>
-	 * @param contComp the component to get a mapping for
+	 * @param padComp the component to get a mapping for
 	 * @return a mapping or an empty string if there is none
 	 */
-	public SourceComponent getMapping(GamepadComponent contComp) {
+	public SourceComponent getMapping(GamepadComponent padComp) {
 		for (Entry<SourceComponent, Mapping> entry : mapping.entrySet()) {
-			if (entry.getValue().contComp == contComp) {
+			if (entry.getValue().padComp == padComp) {
 				return entry.getKey();
 			}
 		}
@@ -87,7 +87,7 @@ public class GamepadMapping implements Serializable {
 		/**
 		 * The component this mapping belongs to
 		 */
-		public GamepadComponent contComp;
+		public GamepadComponent padComp;
 		
 		/**
 		 * Whether the value of this component should be inverted
@@ -101,12 +101,12 @@ public class GamepadMapping implements Serializable {
 		
 		/**
 		 * Constructs a new mapping with the specified configuration
-		 * @param contComp the component this mapping belongs to
+		 * @param padComp the component this mapping belongs to
 		 * @param invert whether the value should be inverted
 		 * @param trigger whether this component should be treated as a trigger
 		 */
-		public Mapping(GamepadComponent contComp, boolean invert, boolean trigger) {
-			this.contComp = contComp;
+		public Mapping(GamepadComponent padComp, boolean invert, boolean trigger) {
+			this.padComp = padComp;
 			this.invert = invert;
 			this.trigger = trigger;
 		}

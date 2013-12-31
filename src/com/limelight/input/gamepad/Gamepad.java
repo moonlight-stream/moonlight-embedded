@@ -46,13 +46,13 @@ public class Gamepad implements DeviceListener {
 			return;
 		}
 		
-		if (!mapped.contComp.isAnalog()) {
+		if (!mapped.padComp.isAnalog()) {
 			handleDigitalComponent(mapped, pressed);
 		} else {
-			handleAnalogComponent(mapped.contComp, sanitizeValue(mapped, pressed));
+			handleAnalogComponent(mapped.padComp, sanitizeValue(mapped, pressed));
 		}
 		
-		//printInfo(device, new SourceComponent(Type.BUTTON, buttonId), mapped.contComp, pressed ? 1F : 0F);
+		//printInfo(device, new SourceComponent(Type.BUTTON, buttonId), mapped.padComp, pressed ? 1F : 0F);
 	}
 	
 	@Override
@@ -67,13 +67,13 @@ public class Gamepad implements DeviceListener {
 		
 		float value =  sanitizeValue(mapped, newValue);
 		
-		if (mapped.contComp.isAnalog()) {
-			handleAnalogComponent(mapped.contComp, value);
+		if (mapped.padComp.isAnalog()) {
+			handleAnalogComponent(mapped.padComp, value);
 		} else {
 			handleDigitalComponent(mapped, (value > 0.5));
 		}
 		
-		//printInfo(device, new SourceComponent(Type.AXIS, axisId), mapped.contComp, newValue);
+		//printInfo(device, new SourceComponent(Type.AXIS, axisId), mapped.padComp, newValue);
 	}
 	
 	private float sanitizeValue(Mapping mapped, boolean value) {
@@ -123,7 +123,7 @@ public class Gamepad implements DeviceListener {
 	
 	
 	private void handleDigitalComponent(Mapping mapped, boolean pressed) {
-		switch (mapped.contComp) {
+		switch (mapped.padComp) {
 		case BTN_A:
 			toggle(ControllerPacket.A_FLAG, pressed);
 			break;
@@ -170,7 +170,7 @@ public class Gamepad implements DeviceListener {
 			toggle(ControllerPacket.SPECIAL_BUTTON_FLAG, pressed);
 			break;
 		default:
-			System.out.println("A mapping error has occured. Ignoring: " + mapped.contComp.name());
+			System.out.println("A mapping error has occured. Ignoring: " + mapped.padComp.name());
 			return;
 		}
 		if (conn != null) {

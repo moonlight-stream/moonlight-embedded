@@ -128,8 +128,8 @@ public class Limelight implements NvConnectionListener {
 
 		createFrame();
 		
-		NativeGamepad.start();
 		NativeGamepad.addListener(GamepadListener.getInstance());
+		NativeGamepad.start();
 	}
 	
 	public void stop() {

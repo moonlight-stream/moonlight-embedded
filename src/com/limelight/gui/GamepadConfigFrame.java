@@ -263,7 +263,11 @@ public class GamepadConfigFrame extends JFrame {
 	}
 	
 	private void setButtonText(JButton button, SourceComponent comp) {
-		button.setText(comp.getType().name() + " " + comp.getId());
+		if (comp == null) {
+			button.setText("");
+		} else {
+			button.setText(comp.getType().name() + " " + comp.getId());
+		}
 	}
 	
 	private class MappingThread extends Thread implements DeviceListener {

@@ -8,6 +8,7 @@ import com.limelight.binding.LibraryHelper;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.gui.MainFrame;
 import com.limelight.gui.StreamFrame;
+import com.limelight.input.gamepad.Gamepad;
 import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
@@ -55,9 +56,7 @@ public class Limelight implements NvConnectionListener {
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
-
-		GamepadListener.startSendingInput(conn);
-
+		GamepadListener.getInstance().addDeviceListener(new Gamepad(conn));
 	}
 
 	/*
@@ -81,20 +80,12 @@ public class Limelight implements NvConnectionListener {
 	}
 	
 	/*
-	 * Starts up a thread that listens for gamepads connected to the system.
-	 */
-	private static void startControllerListener() {
-		GamepadListener.startUp();
-	}
-
-	/*
 	 * Creates the main frame for the application.
 	 */
 	private static void createFrame() {
 		MainFrame main = new MainFrame();
 		main.build();
 		limeFrame = main.getLimeFrame();
-		startControllerListener();
 	}
 
 	/**
@@ -177,7 +168,6 @@ public class Limelight implements NvConnectionListener {
 	@Override
 	public void connectionStarted() {
 		streamFrame.hideSpinner();
-		GamepadListener.startSendingInput(conn);
 	}
 
 	/**

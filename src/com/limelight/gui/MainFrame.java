@@ -28,7 +28,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import com.limelight.Limelight;
 import com.limelight.binding.PlatformBinding;
-import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.http.NvHTTP;
 import com.limelight.settings.PreferencesManager;
@@ -63,7 +62,6 @@ public class MainFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				super.windowClosing(e);
-				GamepadListener.stopListening();
 			}
 		});
 		Container mainPane = limeFrame.getContentPane();
@@ -136,7 +134,6 @@ public class MainFrame {
 		JMenu optionsMenu = new JMenu("Options");
 		JMenuItem gamepadSettings = new JMenuItem("Gamepad Settings");
 		JMenuItem generalSettings = new JMenuItem("Preferences");
-		JMenuItem scanForGamepads = new JMenuItem("Scan for Gamepads");
 		
 		gamepadSettings.addActionListener(new ActionListener() {
 			@Override
@@ -152,16 +149,8 @@ public class MainFrame {
 			}
 		});
 		
-		scanForGamepads.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				GamepadListener.rescanControllers();
-			}
-		});
-		
 		optionsMenu.add(gamepadSettings);
 		optionsMenu.add(generalSettings);
-		optionsMenu.add(scanForGamepads);
 		
 		menuBar.add(optionsMenu);
 		

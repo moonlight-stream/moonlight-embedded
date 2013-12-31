@@ -13,7 +13,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.Box;
@@ -24,17 +23,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
-import net.java.games.input.Component;
-import net.java.games.input.Event;
-import net.java.games.input.EventQueue;
-
+import com.limelight.input.Device;
+import com.limelight.input.DeviceListener;
 import com.limelight.input.gamepad.GamepadComponent;
 import com.limelight.input.gamepad.GamepadListener;
-import com.limelight.input.gamepad.Gamepad;
-import com.limelight.input.gamepad.GamepadHandler;
 import com.limelight.input.gamepad.GamepadMapping;
 import com.limelight.input.gamepad.GamepadMapping.Mapping;
 import com.limelight.input.gamepad.SourceComponent;
+import com.limelight.input.gamepad.SourceComponent.Type;
 import com.limelight.settings.GamepadSettingsManager;
 
 /**
@@ -45,9 +41,8 @@ public class GamepadConfigFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	private boolean configChanged = false;
-	private boolean shouldStartHandler = false;
 
-	private Thread mappingThread;
+	private MappingThread mappingThread;
 	private GamepadMapping config;
 	private HashMap<Box, Mapping> componentMap;
 
@@ -120,7 +115,8 @@ public class GamepadConfigFrame extends JFrame {
 		mapButton.setMinimumSize(buttonSize);
 		mapButton.setPreferredSize(buttonSize);
 		mapButton.addActionListener(createMapListener());
-		mapButton.setText(config.getMapping(mapping.contComp));
+		
+		setButtonText(mapButton, config.getMapping(mapping.contComp));
 
 		invertBox.setSelected(mapping.invert);
 		invertBox.addItemListener(createInvertListener());
@@ -189,10 +185,6 @@ public class GamepadConfigFrame extends JFrame {
 				}
 				if (configChanged) {
 					updateConfigs();
-					GamepadListener.startUp();
-				}
-				if (shouldStartHandler) {
-					GamepadHandler.startUp();
 				}
 				dispose();
 			}
@@ -208,14 +200,12 @@ public class GamepadConfigFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				Box toMap = (Box)((JButton)e.getSource()).getParent();
 
-				List<Gamepad> gamepads = GamepadHandler.getGamepads();
-
-				if (gamepads.isEmpty()) {
+				if (GamepadListener.getInstance().deviceCount() == 0) {
 					JOptionPane.showMessageDialog(GamepadConfigFrame.this, "No Gamepad Detected");
 					return;
 				}
 
-				map(toMap, gamepads.get(0));
+				map(toMap);
 			}
 		};
 	}
@@ -223,110 +213,23 @@ public class GamepadConfigFrame extends JFrame {
 	/*
 	 * Maps a gamepad component to the clicked component
 	 */
-	private void map(final Box toMap, final Gamepad pad) {
+	private void map(final Box toMap) {
 		if (mappingThread == null || !mappingThread.isAlive()) {
-
+			
 			//a little janky, could probably be fixed up a bit
 			final JButton buttonPressed = getButton(toMap);
 			final Mapping mappingToMap = componentMap.get(toMap);
 
 			buttonPressed.setSelected(true);
 
-			GamepadListener.stopListening();
-
-			if (GamepadHandler.isRunning()) {
-				GamepadHandler.stopHandler();
-				shouldStartHandler = true;
-			}
-
 			buttonPressed.setText("Select Input");
 
-			mappingThread = new Thread(new Runnable() {
-				@Override
-				public void run() {
-
-					SourceComponent newComponent = waitForNewMapping(pad);
-					consumeEvents(pad);
-
-					if (newComponent != null) {
-						Mapping oldConfig = config.get(newComponent);
-						if (oldConfig != null) {
-							getButton(getBox(oldConfig)).setText("");
-						}
-
-						config.insertMapping(mappingToMap, newComponent);
-
-						buttonPressed.setText(newComponent.getComponent().getName());
-						configChanged = true;
-
-					} else {
-						buttonPressed.setText(config.getMapping(mappingToMap.contComp));
-					}
-
-					buttonPressed.setSelected(false);
-				}
-			});
-			mappingThread.setName("Gamepad Mapping Thread");
+			mappingThread = new MappingThread(buttonPressed, mappingToMap);
 			mappingThread.start();
-		}
-
-	}
-
-	/*
-	 * Waits until the user chooses what to map to the clicked component
-	 */
-	private SourceComponent waitForNewMapping(Gamepad pad) {
-		SourceComponent newMapping = null;
-
-		while (newMapping == null) {
-			if (pad.poll()) {
-				EventQueue queue = pad.getEvents();
-				Event event = new Event();
-
-				while (queue.getNextEvent(event)) {
-					if (!pad.poll()) {
-						break;
-					}
-					
-					if (event.getComponent().getIdentifier() == Component.Identifier.Axis.POV) {
-						newMapping = new SourceComponent(event.getComponent(), ""+event.getValue());
-						break;
-					}
-					else if (!event.getComponent().isAnalog() || Math.abs(event.getValue()) > .75F) {
-						newMapping = new SourceComponent(event.getComponent(), "");
-						break;
-					}
-				}
-			} else {
-				break;
-			}
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {}
-		}
-		return newMapping;
-	}
-
-	/*
-	 * Consumes any events left in the queue after the mapping has been made
-	 */
-	private void consumeEvents(final Gamepad pad) {
-		EventQueue queue = pad.getEvents();
-		Event event = new Event();
-		
-		for (int i = 0; i < 5; i++) {
-			if (!pad.poll()) {
-				break;
-			}
 			
-			// Drop all events currently in the queue
-			while (queue.getNextEvent(event) && pad.poll());
-			
-			// Give the queue a bit of time to fill again
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {}
+			GamepadListener.getInstance().addDeviceListener(mappingThread);
 		}
+
 	}
 
 	/*
@@ -357,5 +260,64 @@ public class GamepadConfigFrame extends JFrame {
 	 */
 	private void updateConfigs() {
 		GamepadSettingsManager.writeSettings(config);
+	}
+	
+	private void setButtonText(JButton button, SourceComponent comp) {
+		button.setText(comp.getType().name() + " " + comp.getId());
+	}
+	
+	private class MappingThread extends Thread implements DeviceListener {
+		private SourceComponent newMapping = null;
+		private JButton buttonPressed;
+		private Mapping mappingToMap; 
+		
+		public MappingThread(JButton buttonPressed, Mapping mappingToMap) {
+			super("Gamepad Mapping Thread");
+			this.buttonPressed = buttonPressed;
+			this.mappingToMap = mappingToMap;
+		}
+		
+		@Override
+		public void run() {
+			
+			while (newMapping == null) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					setButtonText(buttonPressed, config.getMapping(mappingToMap.contComp));
+					GamepadListener.getInstance().removeListener(this);
+					return;
+				}
+			}
+			
+			Mapping oldConfig = config.get(newMapping);
+			if (oldConfig != null) {
+				getButton(getBox(oldConfig)).setText("");
+			}
+
+			config.insertMapping(mappingToMap, newMapping);
+
+			setButtonText(buttonPressed, newMapping);
+			configChanged = true;
+			
+			GamepadListener.getInstance().removeListener(this);
+			
+		}
+		
+		@Override
+		public void handleButton(Device device, int buttonId, boolean pressed) {
+			if (pressed) {
+				newMapping = new SourceComponent(Type.BUTTON, buttonId);
+			}
+		}
+
+		@Override
+		public void handleAxis(Device device, int axisId, float newValue,
+				float lastValue) {
+			if (newValue > 0.75) {
+				newMapping = new SourceComponent(Type.AXIS, axisId);
+			}
+		}
+		
 	}
 }

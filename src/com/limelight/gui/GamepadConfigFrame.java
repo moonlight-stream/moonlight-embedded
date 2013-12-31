@@ -30,7 +30,6 @@ import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.input.gamepad.GamepadMapping;
 import com.limelight.input.gamepad.GamepadMapping.Mapping;
 import com.limelight.input.gamepad.SourceComponent;
-import com.limelight.input.gamepad.SourceComponent.Type;
 import com.limelight.settings.GamepadSettingsManager;
 
 /**
@@ -311,15 +310,15 @@ public class GamepadConfigFrame extends JFrame {
 		@Override
 		public void handleButton(Device device, int buttonId, boolean pressed) {
 			if (pressed) {
-				newMapping = new SourceComponent(Type.BUTTON, buttonId);
+				newMapping = new SourceComponent(SourceComponent.Type.BUTTON, buttonId);
 			}
 		}
 
 		@Override
 		public void handleAxis(Device device, int axisId, float newValue,
 				float lastValue) {
-			if (newValue > 0.75) {
-				newMapping = new SourceComponent(Type.AXIS, axisId);
+			if (Math.abs(newValue) > 0.75) {
+				newMapping = new SourceComponent(SourceComponent.Type.AXIS, axisId);
 			}
 		}
 		

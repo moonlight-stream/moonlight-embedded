@@ -29,7 +29,7 @@
     <delete dir="${classes.dir}"/>
   </target>
 
-  <target name="all" depends="limelight-osx,limelight-lin32,limelight-lin64,limelight-win32,limelight-win64"/>
+  <target name="all" depends="limelight-osx,limelight-lin64,limelight-win32,limelight-win64"/>
 
   <target name="limelight-osx" depends="init">
     <!-- compile limelight -->

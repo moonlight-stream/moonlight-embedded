@@ -8,6 +8,5 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="libs/limelight-common.jar"/>
 	<classpathentry kind="lib" path="libs/xpp3-1.1.4c.jar"/>
-	<classpathentry kind="lib" path="libs/jinput.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

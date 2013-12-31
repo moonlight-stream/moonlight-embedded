@@ -1,29 +1,42 @@
 package com.limelight.input.gamepad;
 
-import net.java.games.input.Component;
-
 public class SourceComponent {
-	private Component component;
-	private String id;
+	public enum Type { AXIS, BUTTON }
+	private Type type;
+	private int id;
 	
-	public SourceComponent(Component component, String id) {
-		this.component = component;
+	public SourceComponent(Type type, int id) {
+		this.type = type;
 		this.id = id;
 	}
 	
-	public Component getComponent() {
-		return component;
+	public Type getType() {
+		return type;
 	}
 	
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 	
-	public String getFullUniqueId() {
-		return getComponentId() + " " + getId();
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		return result;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || !(obj instanceof SourceComponent)) {
+			return false;
+		}
+		SourceComponent other = (SourceComponent) obj;
 	
-	public String getComponentId() {
-		return component.getIdentifier().getName();
+		return id == other.id && type == other.type;
 	}
 }

@@ -4,9 +4,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-
-import net.java.games.input.Component;
-
 /**
  * Mappings for gamepad components
  * @author Diego Waxemberg
@@ -14,13 +11,13 @@ import net.java.games.input.Component;
 public class GamepadMapping implements Serializable {
 	private static final long serialVersionUID = -185035113915743149L;
 	
-	private HashMap<String, Mapping> mapping;
+	private HashMap<SourceComponent, Mapping> mapping;
 
 	/**
 	 * Constructs a new mapping that has nothing mapped.
 	 */
 	public GamepadMapping() {
-		mapping = new HashMap<String, Mapping>();
+		mapping = new HashMap<SourceComponent, Mapping>();
 	}
 	
 	/**
@@ -29,11 +26,7 @@ public class GamepadMapping implements Serializable {
 	 * @param comp the gamepad component to map to.
 	 */
 	public void insertMapping(Mapping toMap, SourceComponent comp) {
-		// This is the base mapping for components with multiple "buttons"
-		mapping.put(comp.getComponentId(), toMap);
-		
-		// This is the more-specific mapping for the specific buttons
-		mapping.put(comp.getFullUniqueId(), toMap);
+		mapping.put(comp, toMap);
 	}
 	
 	/**
@@ -41,17 +34,8 @@ public class GamepadMapping implements Serializable {
 	 * @param comp the gamepad component to get a mapping for
 	 * @return a mapping for the requested component
 	 */
-	public Mapping get(Component comp) {
-		return mapping.get(comp.getIdentifier().getName());
-	}
-	
-	/**
-	 * Gets the mapping for the specified source component
-	 * @param comp the source component to get a mapping for
-	 * @return a mapping for the requested component
-	 */
 	public Mapping get(SourceComponent comp) {
-		return mapping.get(comp.getFullUniqueId());
+		return mapping.get(comp);
 	}
 	
 	/**
@@ -59,27 +43,18 @@ public class GamepadMapping implements Serializable {
 	 * @param comp the component to no longer be mapped.
 	 */
 	public void remove(SourceComponent comp) {
-		// Remove the most specific mapping
-		mapping.remove(comp.getFullUniqueId());
-		
-		for (Entry<String, Mapping> entry : mapping.entrySet()) {
-			if (entry.getKey().startsWith(comp.getComponentId())) {
-				return;
-			}
-		}
-		
-		// Remove the common mapping if no more specific mappings remain
-		mapping.remove(comp.getComponentId());
+		mapping.remove(comp);
 	}
 	
 	/**
 	 * Gets the mapped ControllerComponent for the specified ControllerComponent.</br>
+	 * <b>NOTE: Iterates a hashmap, use sparingly</b>
 	 * @param contComp the component to get a mapping for
 	 * @return a mapping or an null if there is none
 	 */
 	public Mapping get(GamepadComponent contComp) {
 		//#allTheJank
-		for (Entry<String, Mapping> entry : mapping.entrySet()) {
+		for (Entry<SourceComponent, Mapping> entry : mapping.entrySet()) {
 			if (entry.getValue().contComp == contComp) {
 				return entry.getValue();
 			}
@@ -89,16 +64,17 @@ public class GamepadMapping implements Serializable {
 	
 	/**
 	 * Gets the mapping for the specified component.</br>
+	 * <b>NOTE: Iterates a hashmap, use sparingly</b>
 	 * @param contComp the component to get a mapping for
 	 * @return a mapping or an empty string if there is none
 	 */
-	public String getMapping(GamepadComponent contComp) {
-		for (Entry<String, Mapping> entry : mapping.entrySet()) {
+	public SourceComponent getMapping(GamepadComponent contComp) {
+		for (Entry<SourceComponent, Mapping> entry : mapping.entrySet()) {
 			if (entry.getValue().contComp == contComp) {
 				return entry.getKey();
 			}
 		}
-		return "";
+		return null;
 	}
 	
 	/**

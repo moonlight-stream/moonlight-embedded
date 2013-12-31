@@ -116,7 +116,7 @@ public class GamepadConfigFrame extends JFrame {
 		mapButton.setPreferredSize(buttonSize);
 		mapButton.addActionListener(createMapListener());
 		
-		setButtonText(mapButton, config.getMapping(mapping.contComp));
+		setButtonText(mapButton, config.getMapping(mapping.padComp));
 
 		invertBox.setSelected(mapping.invert);
 		invertBox.addItemListener(createInvertListener());
@@ -126,7 +126,7 @@ public class GamepadConfigFrame extends JFrame {
 		triggerBox.setToolTipText("If this component should act as a trigger. (one-way axis)");
 
 		componentBox.add(Box.createHorizontalStrut(5));
-		componentBox.add(mapping.contComp.getLabel());
+		componentBox.add(mapping.padComp.getLabel());
 		componentBox.add(Box.createHorizontalGlue());
 		componentBox.add(mapButton);
 		componentBox.add(invertBox);
@@ -149,8 +149,8 @@ public class GamepadConfigFrame extends JFrame {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				JCheckBox clicked = (JCheckBox)e.getItem();
-				GamepadComponent contComp = GamepadComponent.valueOf(clicked.getName());
-				config.get(contComp).invert = (e.getStateChange() == ItemEvent.SELECTED);
+				GamepadComponent padComp = GamepadComponent.valueOf(clicked.getName());
+				config.get(padComp).invert = (e.getStateChange() == ItemEvent.SELECTED);
 				configChanged = true;
 			}
 		};
@@ -164,8 +164,8 @@ public class GamepadConfigFrame extends JFrame {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				JCheckBox clicked = (JCheckBox)e.getItem();
-				GamepadComponent contComp = GamepadComponent.valueOf(clicked.getName());
-				config.get(contComp).trigger = (e.getStateChange() == ItemEvent.SELECTED);
+				GamepadComponent padComp = GamepadComponent.valueOf(clicked.getName());
+				config.get(padComp).trigger = (e.getStateChange() == ItemEvent.SELECTED);
 				configChanged = true;
 			}
 		};
@@ -284,7 +284,7 @@ public class GamepadConfigFrame extends JFrame {
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
-					setButtonText(buttonPressed, config.getMapping(mappingToMap.contComp));
+					setButtonText(buttonPressed, config.getMapping(mappingToMap.padComp));
 					GamepadListener.getInstance().removeListener(this);
 					return;
 				}

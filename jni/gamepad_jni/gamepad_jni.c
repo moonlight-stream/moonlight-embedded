@@ -79,7 +79,7 @@ Java_com_limelight_input_gamepad_NativeGamepad_detectDevices(JNIEnv *env, jobjec
 }
 
 // This polls for events and calls the appropriate callbacks
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_com_limelight_input_gamepad_NativeGamepad_processEvents(JNIEnv *env, jobject this) {
 	Gamepad_processEvents();
 }

@@ -77,6 +77,7 @@ public class GamepadConfigFrame extends JFrame {
 			Mapping mapping = config.get(components[i]);
 			if (mapping == null) {
 				mapping = config.new Mapping(components[i], false, false);
+				config.insertMapping(mapping, null);
 			}
 			Box componentBox = createComponentBox(mapping);
 
@@ -118,12 +119,14 @@ public class GamepadConfigFrame extends JFrame {
 		setButtonText(mapButton, config.getMapping(mapping.padComp));
 
 		invertBox.setSelected(mapping.invert);
-		invertBox.addItemListener(createInvertListener());
-
+		invertBox.addActionListener(createInvertListener());
+		invertBox.setName(mapping.padComp.name());
+		
 		triggerBox.setSelected(mapping.trigger);
-		triggerBox.addItemListener(createTriggerListener());
+		triggerBox.addActionListener(createTriggerListener());
+		triggerBox.setName(mapping.padComp.name());
 		triggerBox.setToolTipText("If this component should act as a trigger. (one-way axis)");
-
+		
 		componentBox.add(Box.createHorizontalStrut(5));
 		componentBox.add(mapping.padComp.getLabel());
 		componentBox.add(Box.createHorizontalGlue());
@@ -143,14 +146,20 @@ public class GamepadConfigFrame extends JFrame {
 	/*
 	 * Creates the listener for the invert checkbox
 	 */
-	private ItemListener createInvertListener() {
-		return new ItemListener() {
+	private ActionListener createInvertListener() {
+		return new ActionListener() {
 			@Override
-			public void itemStateChanged(ItemEvent e) {
-				JCheckBox clicked = (JCheckBox)e.getItem();
+			public void actionPerformed(ActionEvent e) {
+				JCheckBox clicked = (JCheckBox)e.getSource();
 				GamepadComponent padComp = GamepadComponent.valueOf(clicked.getName());
-				config.get(padComp).invert = (e.getStateChange() == ItemEvent.SELECTED);
-				configChanged = true;
+				Mapping currentMapping = config.get(padComp);
+				if (currentMapping == null) {
+					//this makes more semantic sense to me than using !=
+					clicked.setSelected(!(clicked.isSelected()));
+				} else {
+					currentMapping.invert = (clicked.isSelected());
+					configChanged = true;
+				}
 			}
 		};
 	}
@@ -158,14 +167,20 @@ public class GamepadConfigFrame extends JFrame {
 	/*
 	 * Creates the listener for the trigger checkbox
 	 */
-	private ItemListener createTriggerListener() {
-		return new ItemListener() {
+	private ActionListener createTriggerListener() {
+		return new ActionListener() {
 			@Override
-			public void itemStateChanged(ItemEvent e) {
-				JCheckBox clicked = (JCheckBox)e.getItem();
+			public void actionPerformed(ActionEvent e) {
+				JCheckBox clicked = (JCheckBox)e.getSource();
 				GamepadComponent padComp = GamepadComponent.valueOf(clicked.getName());
-				config.get(padComp).trigger = (e.getStateChange() == ItemEvent.SELECTED);
-				configChanged = true;
+				Mapping currentMapping = config.get(padComp);
+				if (currentMapping == null) {
+					//this makes more semantic sense to me than using !=
+					clicked.setSelected(!(clicked.isSelected()));
+				} else {
+					currentMapping.trigger = (clicked.isSelected());
+					configChanged = true;
+				}
 			}
 		};
 	}

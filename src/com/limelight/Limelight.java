@@ -45,14 +45,11 @@ public class Limelight implements NvConnectionListener {
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
-	private void startUp() {
+	private void startUp(StreamConfiguration streamConfig, boolean fullscreen) {
 		streamFrame = new StreamFrame();
 		
-		Preferences prefs = PreferencesManager.getPreferences();
-		StreamConfiguration streamConfig = createConfiguration(prefs.getResolution());
-		
 		conn = new NvConnection(host, this, streamConfig);
-		streamFrame.build(this, conn, streamConfig, prefs.getFullscreen());
+		streamFrame.build(this, conn, streamConfig, fullscreen);
 		conn.start(PlatformBinding.getDeviceName(), streamFrame,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
@@ -60,12 +57,12 @@ public class Limelight implements NvConnectionListener {
 		
 		GamepadListener.getInstance().addDeviceListener(new Gamepad(conn));
 	}
-
+	
 	/*
 	 * Creates a StreamConfiguration given a Resolution. 
 	 * Used to specify what kind of stream will be used.
 	 */
-	private StreamConfiguration createConfiguration(Resolution res) {
+	private static StreamConfiguration createConfiguration(Resolution res) {
 		switch(res) {
 		case RES_720_30:
 			return new StreamConfiguration(1280, 720, 30);
@@ -96,7 +93,11 @@ public class Limelight implements NvConnectionListener {
 	 */
 	public static void createInstance(String host) {
 		Limelight limelight = new Limelight(host);
-		limelight.startUp();
+		
+		Preferences prefs = PreferencesManager.getPreferences();
+		StreamConfiguration streamConfig = createConfiguration(prefs.getResolution());
+	
+		limelight.startUp(streamConfig, prefs.getFullscreen());
 	}
 
 	/**
@@ -104,7 +105,6 @@ public class Limelight implements NvConnectionListener {
 	 * Does some initializations and then creates the main frame.
 	 * @param args unused.
 	 */
-	//TODO: We should allow command line args to specify things like debug mode (verbose logging) or even start a stream directly.
 	public static void main(String args[]) {
 		//fix the menu bar if we are running in osx
 		if (System.getProperty("os.name").contains("Mac OS X")) {
@@ -126,11 +126,71 @@ public class Limelight implements NvConnectionListener {
 
 		LibraryHelper.prepareNativeLibraries();
 
-		createFrame();
-		
 		NativeGamepad.addListener(GamepadListener.getInstance());
 		NativeGamepad.start();
+		
+		// launching with command line arguments
+		if (args.length > 0) {
+			parseCommandLine(args);
+		} else {
+			createFrame();
+		}
 	}
+	
+	//TODO: make this less jank
+	private static void parseCommandLine(String[] args) {
+		String host = null;
+		boolean fullscreen = false;
+		int resolution = 720;
+		int refresh = 30;
+		
+		for (int i = 0; i < args.length; i++) {
+			if (args[i].equals("-host")) {
+				if (i + 1 < args.length) {
+					host = args[i+1];
+					i++;
+				} else {
+					System.out.println("Syntax error: hostname or ip address expected after -host");
+					System.exit(3);
+				}
+			} else if (args[i].equals("-fs")) {
+				fullscreen = true;
+			} else if (args[i].equals("-720")) {
+				resolution = 720;
+			} else if (args[i].equals("-1080")) {
+				resolution = 1080;
+			} else if (args[i].equals("-30fps")) {
+				refresh = 30;
+			} else if (args[i].equals("-60fps")) {
+				refresh = 60;
+			} else {
+				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
+			}
+		}
+		
+		if (host == null) {
+			System.out.println("Syntax Error: You must include a host. Use -host to specifiy a hostname or ip address.");
+			System.exit(5);
+		}
+		
+		Resolution streamRes = null;
+		
+		if (resolution == 720 && refresh == 30) {
+			streamRes = Resolution.RES_720_30;
+		} else if (resolution == 720 && refresh == 60) {
+			streamRes = Resolution.RES_720_60;
+		} else if (resolution == 1080 && refresh == 30) {
+			streamRes = Resolution.RES_1080_30;
+		} else if (resolution == 1080 && refresh == 60) {
+			streamRes = Resolution.RES_1080_60;
+		}
+		
+		StreamConfiguration streamConfig = createConfiguration(streamRes);
+		
+		Limelight limelight = new Limelight(host);
+		limelight.startUp(streamConfig, fullscreen);
+	}
+	
 	
 	public void stop() {
 		connectionTerminating = true;

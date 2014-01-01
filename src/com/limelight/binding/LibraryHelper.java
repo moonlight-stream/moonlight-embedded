@@ -94,4 +94,9 @@ public class LibraryHelper {
 			}
 		}
 	}
+	
+	public static boolean isRunningFromJar() {
+		String classPath = LibraryHelper.class.getResource("LibraryHelper.class").toString();
+		return classPath.startsWith("jar:");
+	}
 }

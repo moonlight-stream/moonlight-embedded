@@ -1,5 +1,9 @@
 package com.limelight;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -106,6 +110,15 @@ public class Limelight implements NvConnectionListener {
 	 */
 	//TODO: We should allow command line args to specify things like debug mode (verbose logging) or even start a stream directly.
 	public static void main(String args[]) {
+		// Redirect logging to a file if we're running from a JAR
+		if (LibraryHelper.isRunningFromJar()) {
+			try {
+				System.setErr(new PrintStream(new File("error.log")));
+				System.setOut(new PrintStream(new File("output.log")));
+			} catch (IOException e) {
+			}
+		}
+		
 		//fix the menu bar if we are running in osx
 		if (System.getProperty("os.name").contains("Mac OS X")) {
 			// take the menu bar off the jframe

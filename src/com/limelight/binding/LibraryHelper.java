@@ -15,7 +15,8 @@ public class LibraryHelper {
 	private static boolean librariesExtracted = false;
 	
 	static {
-		needsDependencyExtraction = System.getProperty("os.name", "").contains("Windows");
+		// Windows and OS X need this, but we might as well do it for everybody
+		needsDependencyExtraction = true;
 		libraryExtractionFolder = System.getProperty("java.io.tmpdir", ".");
 		
 		// FFMPEG libraries

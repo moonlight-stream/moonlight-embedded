@@ -280,5 +280,8 @@ public class StreamFrame extends JFrame {
 	public void close() {
 		limelight.stop();
 		dispose();
+		if (Limelight.COMMAND_LINE_LAUNCH) {
+			System.exit(0);
+		}
 	}
 }

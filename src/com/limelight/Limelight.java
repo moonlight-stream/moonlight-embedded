@@ -27,7 +27,8 @@ import com.limelight.settings.PreferencesManager.Preferences.Resolution;
  */
 public class Limelight implements NvConnectionListener {
 	public static final double VERSION = 1.0;
-
+	public static boolean COMMAND_LINE_LAUNCH = false;
+	
 	private String host;
 	private StreamFrame streamFrame;
 	private NvConnection conn;
@@ -189,6 +190,7 @@ public class Limelight implements NvConnectionListener {
 		
 		Limelight limelight = new Limelight(host);
 		limelight.startUp(streamConfig, fullscreen);
+		COMMAND_LINE_LAUNCH = true;
 	}
 	
 	

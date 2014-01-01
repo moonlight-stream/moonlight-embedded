@@ -59,16 +59,6 @@ public class MainFrame {
 	public void build() {
 		limeFrame = new JFrame("Limelight");
 		limeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		limeFrame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				super.windowClosing(e);
-				if (NativeGamepad.isRunning()) {
-					NativeGamepad.stop();
-				}
-				
-			}
-		});
 		Container mainPane = limeFrame.getContentPane();
 		
 		mainPane.setLayout(new BorderLayout());

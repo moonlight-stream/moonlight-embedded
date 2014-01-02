@@ -7,8 +7,6 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -107,26 +105,26 @@ public class GamepadConfigFrame extends JFrame {
 		Box componentBox = Box.createHorizontalBox();
 
 		JButton mapButton = new JButton();
-		JCheckBox invertBox = new JCheckBox("Invert");
-		JCheckBox triggerBox = new JCheckBox("Trigger");
+		JCheckBox invertBox = new GamepadCheckBox("Invert", GamepadCheckBox.Type.INVERT);
+		JCheckBox triggerBox = new GamepadCheckBox("Trigger", GamepadCheckBox.Type.TRIGGER);
 
 		Dimension buttonSize = new Dimension(110, 24);
 		mapButton.setMaximumSize(buttonSize);
 		mapButton.setMinimumSize(buttonSize);
 		mapButton.setPreferredSize(buttonSize);
 		mapButton.addActionListener(createMapListener());
-		
+
 		setButtonText(mapButton, config.getMapping(mapping.padComp));
 
 		invertBox.setSelected(mapping.invert);
-		invertBox.addActionListener(createInvertListener());
+		invertBox.addActionListener(createCheckboxListener());
 		invertBox.setName(mapping.padComp.name());
-		
+
 		triggerBox.setSelected(mapping.trigger);
-		triggerBox.addActionListener(createTriggerListener());
+		triggerBox.addActionListener(createCheckboxListener());
 		triggerBox.setName(mapping.padComp.name());
 		triggerBox.setToolTipText("If this component should act as a trigger. (one-way axis)");
-		
+
 		componentBox.add(Box.createHorizontalStrut(5));
 		componentBox.add(mapping.padComp.getLabel());
 		componentBox.add(Box.createHorizontalGlue());
@@ -142,11 +140,10 @@ public class GamepadConfigFrame extends JFrame {
 		return componentBox;
 	}
 
-	//TODO: make createInvertListener() and createTriggerListener() one method. TOO MUCH COPY PASTA!
 	/*
-	 * Creates the listener for the invert checkbox
+	 * Creates the listener for the checkbox
 	 */
-	private ActionListener createInvertListener() {
+	private ActionListener createCheckboxListener() {
 		return new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -157,34 +154,12 @@ public class GamepadConfigFrame extends JFrame {
 					//this makes more semantic sense to me than using !=
 					clicked.setSelected(!(clicked.isSelected()));
 				} else {
-					currentMapping.invert = (clicked.isSelected());
+					((GamepadCheckBox)clicked).setValue(currentMapping, clicked.isSelected());
 					configChanged = true;
 				}
 			}
 		};
 	}
-
-	/*
-	 * Creates the listener for the trigger checkbox
-	 */
-	private ActionListener createTriggerListener() {
-		return new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JCheckBox clicked = (JCheckBox)e.getSource();
-				GamepadComponent padComp = GamepadComponent.valueOf(clicked.getName());
-				Mapping currentMapping = config.get(padComp);
-				if (currentMapping == null) {
-					//this makes more semantic sense to me than using !=
-					clicked.setSelected(!(clicked.isSelected()));
-				} else {
-					currentMapping.trigger = (clicked.isSelected());
-					configChanged = true;
-				}
-			}
-		};
-	}
-
 
 	/*
 	 * Creates the listener for the window.
@@ -229,7 +204,7 @@ public class GamepadConfigFrame extends JFrame {
 	 */
 	private void map(final Box toMap) {
 		if (mappingThread == null || !mappingThread.isAlive()) {
-			
+
 			//a little janky, could probably be fixed up a bit
 			final JButton buttonPressed = getButton(toMap);
 			final Mapping mappingToMap = componentMap.get(toMap);
@@ -240,7 +215,7 @@ public class GamepadConfigFrame extends JFrame {
 
 			mappingThread = new MappingThread(buttonPressed, mappingToMap);
 			mappingThread.start();
-			
+
 			GamepadListener.getInstance().addDeviceListener(mappingThread);
 		}
 
@@ -275,7 +250,7 @@ public class GamepadConfigFrame extends JFrame {
 	private void updateConfigs() {
 		GamepadSettingsManager.writeSettings(config);
 	}
-	
+
 	private void setButtonText(JButton button, SourceComponent comp) {
 		if (comp == null) {
 			button.setText("");
@@ -283,21 +258,21 @@ public class GamepadConfigFrame extends JFrame {
 			button.setText(comp.getType().name() + " " + comp.getId());
 		}
 	}
-	
+
 	private class MappingThread extends Thread implements DeviceListener {
 		private SourceComponent newMapping = null;
 		private JButton buttonPressed;
 		private Mapping mappingToMap; 
-		
+
 		public MappingThread(JButton buttonPressed, Mapping mappingToMap) {
 			super("Gamepad Mapping Thread");
 			this.buttonPressed = buttonPressed;
 			this.mappingToMap = mappingToMap;
 		}
-		
+
 		@Override
 		public void run() {
-			
+
 			while (newMapping == null) {
 				try {
 					Thread.sleep(100);
@@ -307,7 +282,7 @@ public class GamepadConfigFrame extends JFrame {
 					return;
 				}
 			}
-			
+
 			Mapping oldConfig = config.get(newMapping);
 			if (oldConfig != null) {
 				getButton(getBox(oldConfig)).setText("");
@@ -317,11 +292,11 @@ public class GamepadConfigFrame extends JFrame {
 
 			setButtonText(buttonPressed, newMapping);
 			configChanged = true;
-			
+
 			GamepadListener.getInstance().removeListener(this);
-			
+
 		}
-		
+
 		@Override
 		public void handleButton(Device device, int buttonId, boolean pressed) {
 			if (pressed) {
@@ -336,6 +311,32 @@ public class GamepadConfigFrame extends JFrame {
 				newMapping = new SourceComponent(SourceComponent.Type.AXIS, axisId);
 			}
 		}
-		
+
+	}
+
+	private static class GamepadCheckBox extends JCheckBox {
+		private static final long serialVersionUID = 1L;
+		private enum Type { TRIGGER, INVERT }
+		private Type type;
+
+		public GamepadCheckBox(String text, Type type) {
+			super(text);
+			this.type = type;
+		}
+
+		public void setValue(Mapping mapping, boolean value) {
+			switch (type) {
+			case TRIGGER:
+				mapping.trigger = value;
+				break;
+			case INVERT:
+				mapping.invert = value;
+				break;
+			default:
+				System.out.println("You did something terrible and should feel terrible.");
+				System.out.println("Fix it or the checkbox gods will smite you!");
+				break;
+			}
+		}
 	}
 }

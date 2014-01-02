@@ -85,13 +85,16 @@ public class Gamepad implements DeviceListener {
 	}
 
 	private float sanitizeValue(Mapping mapped, float value) {
+		float retVal = value;
 		if (mapped.invert) {
-			return -value;
-		} else {
-			return value;
+			retVal = -retVal;
 		}
+		if (mapped.trigger) {
+			retVal = (retVal + 1) / 2;
+		}
+		return retVal;
 	}
-
+	
 	private void handleAnalogComponent(GamepadComponent padComp, float value) {
 		switch (padComp) {
 		case LS_X:

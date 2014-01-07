@@ -143,7 +143,7 @@ public class EvdevHandler implements Runnable {
 		0, //KeyEvent.VK_SCALE, /* AL Compiz Scale (Expose) */
 	};
 
-	private static final int STRUCT_SIZE_BYTES = 24;
+	private static final int MAX_STRUCT_SIZE_BYTES = 24;
 	
 	/* GFE's prefix for every key code */
 	public static final short KEY_PREFIX = (short) 0x80;
@@ -171,7 +171,7 @@ public class EvdevHandler implements Runnable {
 		this.conn = conn;
 		FileInputStream in = new FileInputStream(device);
         deviceInput = in.getChannel();
-		inputBuffer = ByteBuffer.allocate(STRUCT_SIZE_BYTES);
+		inputBuffer = ByteBuffer.allocate(MAX_STRUCT_SIZE_BYTES);
 		inputBuffer.order(ByteOrder.nativeOrder());
 		
 		translator = new KeyboardTranslator(conn);
@@ -185,8 +185,13 @@ public class EvdevHandler implements Runnable {
 	}
 	
 	private void parseEvent(ByteBuffer buffer) {
-		long time_sec = buffer.getLong();
-		long time_usec = buffer.getLong();
+		if (buffer.limit()==MAX_STRUCT_SIZE_BYTES) {
+			long time_sec = buffer.getLong();
+			long time_usec = buffer.getLong();
+		} else {
+			int time_sec = buffer.getInt();
+			int time_usec = buffer.getInt();
+		}
 		short type = buffer.getShort();
 		short code = buffer.getShort();
 		int value = buffer.getInt();
@@ -237,7 +242,7 @@ public class EvdevHandler implements Runnable {
 	public void run() {
 		try {
 			while (true) {
-				while(inputBuffer.hasRemaining())
+				while(inputBuffer.remaining()==MAX_STRUCT_SIZE_BYTES)
 					deviceInput.read(inputBuffer);
 
 				inputBuffer.flip();

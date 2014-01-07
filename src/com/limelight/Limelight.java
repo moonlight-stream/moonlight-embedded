@@ -4,14 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.UIManager;
-
 import com.limelight.binding.LibraryHelper;
 import com.limelight.binding.PlatformBinding;
-import com.limelight.gui.MainFrame;
-import com.limelight.gui.StreamFrame;
 import com.limelight.input.gamepad.Gamepad;
 import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.input.gamepad.NativeGamepad;
@@ -19,9 +13,14 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.nvstream.http.NvHTTP;
 import com.limelight.settings.PreferencesManager;
 import com.limelight.settings.PreferencesManager.Preferences;
 import com.limelight.settings.PreferencesManager.Preferences.Resolution;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Main class for Limelight-pc contains methods for starting the application as well
@@ -31,13 +30,10 @@ import com.limelight.settings.PreferencesManager.Preferences.Resolution;
  */
 public class Limelight implements NvConnectionListener {
 	public static final double VERSION = 1.0;
-	public static boolean COMMAND_LINE_LAUNCH = false;
 	
 	private String host;
-	private StreamFrame streamFrame;
 	private NvConnection conn;
 	private boolean connectionTerminating;
-	private static JFrame limeFrame;
 
 	/**
 	 * Constructs a new instance based on the given host
@@ -51,16 +47,53 @@ public class Limelight implements NvConnectionListener {
 	 * Creates a connection to the host and starts up the stream.
 	 */
 	private void startUp(StreamConfiguration streamConfig, boolean fullscreen) {
-		streamFrame = new StreamFrame();
-		
 		conn = new NvConnection(host, this, streamConfig);
-		streamFrame.build(this, conn, streamConfig, fullscreen);
-		conn.start(PlatformBinding.getDeviceName(), streamFrame,
+		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
 		
 		GamepadListener.getInstance().addDeviceListener(new Gamepad(conn));
+	}
+	
+	private void pair() {
+		String macAddress;
+		try {
+			macAddress = NvConnection.getMacAddressString();
+		} catch (SocketException e) {
+			e.printStackTrace();
+			return;
+		}
+
+		if (macAddress == null) {
+			displayError("Pair", "Couldn't find a MAC address");
+			return;
+		}
+
+		NvHTTP httpConn;
+	
+		try {
+			httpConn = new NvHTTP(InetAddress.getByName(host),
+				macAddress, PlatformBinding.getDeviceName());
+			try {
+				if (httpConn.getPairState()) {
+					displayError("Pair", "Already paired");
+				} else {
+					int session = httpConn.getSessionId();
+					if (session == 0) {
+						displayError("Pair", "Pairing was declined by the target");
+					} else {
+						displayMessage("Pairing was successful");
+					}
+				}
+			} catch (IOException e) {
+				displayError("Pair", e.getMessage());
+			} catch (XmlPullParserException e) {
+				displayError("Pair", e.getMessage());
+			}
+		} catch (UnknownHostException e1) {
+			displayError("Pair", "Failed to resolve host");
+		}
 	}
 	
 	/*
@@ -82,15 +115,6 @@ public class Limelight implements NvConnectionListener {
 			return null;
 		}
 	}
-	
-	/*
-	 * Creates the main frame for the application.
-	 */
-	private static void createFrame() {
-		MainFrame main = new MainFrame();
-		main.build();
-		limeFrame = main.getLimeFrame();
-	}
 
 	/**
 	 * Creates a new instance and starts the stream.
@@ -111,50 +135,16 @@ public class Limelight implements NvConnectionListener {
 	 * @param args unused.
 	 */
 	public static void main(String args[]) {
-		// Redirect logging to a file if we're running from a JAR
-		if (LibraryHelper.isRunningFromJar()) {
-			try {
-				System.setErr(new PrintStream(new File("error.log")));
-				System.setOut(new PrintStream(new File("output.log")));
-			} catch (IOException e) {
-			}
-		}
-		
-		//fix the menu bar if we are running in osx
-		if (System.getProperty("os.name").contains("Mac OS X")) {
-			// take the menu bar off the jframe
-			System.setProperty("apple.laf.useScreenMenuBar", "true");
-
-			// set the name of the application menu item
-			System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Limelight");
-
-		} else {
-			try {
-				UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-			} catch (Exception e) {
-				System.out.println("Unable to set cross platform look and feel.");
-				e.printStackTrace();
-				System.exit(2);
-			}
-		}
-
 		LibraryHelper.prepareNativeLibraries();
 
-		NativeGamepad.addListener(GamepadListener.getInstance());
-		NativeGamepad.start();
-		
-		// launching with command line arguments
-		if (args.length > 0) {
-			parseCommandLine(args);
-		} else {
-			createFrame();
-		}
+		parseCommandLine(args);
 	}
 	
 	//TODO: make this less jank
 	private static void parseCommandLine(String[] args) {
 		String host = null;
 		boolean fullscreen = false;
+		boolean pair = false;
 		int resolution = 720;
 		int refresh = 30;
 		
@@ -167,6 +157,8 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: hostname or ip address expected after -host");
 					System.exit(3);
 				}
+			} else if (args[i].equals("-pair")) {
+				pair = true;
 			} else if (args[i].equals("-fs")) {
 				fullscreen = true;
 			} else if (args[i].equals("-720")) {
@@ -187,7 +179,7 @@ public class Limelight implements NvConnectionListener {
 			System.exit(5);
 		}
 		
-		Resolution streamRes = null;
+		Resolution streamRes = Resolution.RES_720_30;
 		
 		if (resolution == 720 && refresh == 30) {
 			streamRes = Resolution.RES_720_30;
@@ -202,8 +194,10 @@ public class Limelight implements NvConnectionListener {
 		StreamConfiguration streamConfig = createConfiguration(streamRes);
 		
 		Limelight limelight = new Limelight(host);
-		limelight.startUp(streamConfig, fullscreen);
-		COMMAND_LINE_LAUNCH = true;
+		if (!pair)
+			limelight.startUp(streamConfig, fullscreen);
+		else
+			limelight.pair();
 	}
 	
 	
@@ -219,7 +213,6 @@ public class Limelight implements NvConnectionListener {
 	@Override
 	public void stageStarting(Stage stage) {
 		System.out.println("Starting "+stage.getName());
-		streamFrame.showSpinner(stage);
 	}
 
 	/**
@@ -237,7 +230,6 @@ public class Limelight implements NvConnectionListener {
 	 */
 	@Override
 	public void stageFailed(Stage stage) {
-		streamFrame.dispose();
 		conn.stop();
 		displayError("Connection Error", "Starting " + stage.getName() + " failed");
 	}
@@ -247,7 +239,6 @@ public class Limelight implements NvConnectionListener {
 	 */
 	@Override
 	public void connectionStarted() {
-		streamFrame.hideSpinner();
 	}
 
 	/**
@@ -272,7 +263,6 @@ public class Limelight implements NvConnectionListener {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					streamFrame.dispose();
 					displayError("Connection Terminated", "The connection failed unexpectedly");
 				}
 			}).start();
@@ -285,7 +275,7 @@ public class Limelight implements NvConnectionListener {
 	 */
 	@Override
 	public void displayMessage(String message) {
-		JOptionPane.showMessageDialog(limeFrame, message, "Limelight", JOptionPane.INFORMATION_MESSAGE);
+		System.out.println(message);
 	}	
 
 	/**
@@ -294,7 +284,7 @@ public class Limelight implements NvConnectionListener {
 	 * @param message the message to show the user
 	 */
 	public void displayError(String title, String message) {
-		JOptionPane.showMessageDialog(limeFrame, message, title, JOptionPane.ERROR_MESSAGE);
+		System.err.println(title + " " + message);
 	}
 }
 

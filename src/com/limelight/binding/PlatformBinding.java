@@ -4,7 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import com.limelight.binding.audio.JavaxAudioRenderer;
-import com.limelight.binding.video.SwingCpuDecoderRenderer;
+import com.limelight.binding.video.OmxDecoderRenderer;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 
@@ -18,7 +18,7 @@ public class PlatformBinding {
 	 * @return a video decoder and renderer
 	 */
 	public static VideoDecoderRenderer getVideoDecoderRenderer() {
-		return new SwingCpuDecoderRenderer();
+		return new OmxDecoderRenderer();
 	}
 	
 	/**
@@ -30,7 +30,7 @@ public class PlatformBinding {
 		try {
 			return InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
-			return "LimelightPC";
+			return "LimelightPi";
 		}
 	}
 	

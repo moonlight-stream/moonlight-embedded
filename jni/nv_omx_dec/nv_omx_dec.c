@@ -144,6 +144,14 @@ int nv_omx_decode(const unsigned char* indata, int data_len, int last) {
 	dest += data_len;
 
 	if (last) {
+		if (buf->nFilledLen == 26) {
+			buf->nFilledLen += 2;
+			buf->pBuffer[24] = 0x11;
+			buf->pBuffer[25] = 0xe3;
+			buf->pBuffer[26] = 0x06;
+			buf->pBuffer[27] = 0x50;
+		}
+
 		if(port_settings_changed == 0 &&
 			((data_len > 0 && ilclient_remove_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1) == 0) ||
 			(data_len == 0 && ilclient_wait_for_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1,

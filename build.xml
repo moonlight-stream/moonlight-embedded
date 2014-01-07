@@ -4,12 +4,9 @@
 
   <property name="src.dir" location="${basedir}/src"/>
   <property name="libs.dir" location="${basedir}/libs"/>
-  <property name="libs.osx64.dir" location="${libs.dir}/osx"/>
-  <property name="libs.lin32.dir" location="${libs.dir}/lin32"/>
-  <property name="libs.lin64.dir" location="${libs.dir}/lin64"/>
-  <property name="libs.win32.dir" location="${libs.dir}/win32"/>
-  <property name="libs.win64.dir" location="${libs.dir}/win64"/>
 
+  <property name="libs.pi.dir" location="${libs.dir}/pi"/>
+  
   <property name="lib.dir" location="${basedir}/lib"/>
   <property name="build.dir" location="${basedir}/build"/>
 
@@ -29,9 +26,9 @@
     <delete dir="${classes.dir}"/>
   </target>
 
-  <target name="all" depends="limelight-osx,limelight-lin64,limelight-win32,limelight-win64"/>
+  <target name="all" depends="limelight-pi"/>
 
-  <target name="limelight-osx" depends="init">
+  <target name="limelight-pi" depends="init">
     <!-- compile limelight -->
     <javac includeantruntime="false" destdir="${classes.dir}/src">
       <src path="${src.dir}"/>
@@ -42,7 +39,7 @@
     </javac>
 
     <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-osx64.jar">
+    <one-jar destfile="${build.dir}/limelight-pi.jar">
       <manifest>
         <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
       </manifest>
@@ -57,133 +54,9 @@
       </lib>
 
       <binlib>
-        <fileset dir="${libs.osx64.dir}" includes="*"/>
+        <fileset dir="${libs.pi.dir}" includes="*"/>
       </binlib>
     </one-jar>
   </target>
-  <target name="limelight-lin32" depends="init">
-    <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/src">
-      <src path="${src.dir}"/>
-      <classpath path="${build.dir}"/>
-      <classpath>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </classpath>
-    </javac>
-
-    <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-lin32.jar">
-      <manifest>
-        <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
-      </manifest>
-
-      <main>
-        <!-- construct limelight.jar -->
-        <fileset dir="${classes.dir}/src"/>
-      </main>
-
-      <lib>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </lib>
-
-      <binlib>
-        <fileset dir="${libs.lin32.dir}" includes="*"/>
-      </binlib>
-    </one-jar>
-  </target>
-
-  <target name="limelight-lin64" depends="init">
-    <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/src">
-      <src path="${src.dir}"/>
-      <classpath path="${build.dir}"/>
-      <classpath>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </classpath>
-    </javac>
-
-    <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-lin64.jar">
-      <manifest>
-        <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
-      </manifest>
-
-      <main>
-        <!-- construct limelight.jar -->
-        <fileset dir="${classes.dir}/src"/>
-      </main>
-
-      <lib>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </lib>
-
-      <binlib>
-        <fileset dir="${libs.lin64.dir}" includes="*"/>
-      </binlib>
-    </one-jar>
-  </target>
-
-  <target name="limelight-win32" depends="init">
-    <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/src">
-      <src path="${src.dir}"/>
-      <classpath path="${build.dir}"/>
-      <classpath>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </classpath>
-    </javac>
-
-    <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-win32.jar">
-      <manifest>
-        <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
-      </manifest>
-
-      <main>
-        <!-- construct limelight.jar -->
-        <fileset dir="${classes.dir}/src"/>
-      </main>
-
-      <lib>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </lib>
-
-      <binlib>
-        <fileset dir="${libs.win32.dir}" includes="*"/>
-      </binlib>
-    </one-jar>
-  </target>
-
-  <target name="limelight-win64" depends="init">
-    <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/src">
-      <src path="${src.dir}"/>
-      <classpath path="${build.dir}"/>
-      <classpath>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </classpath>
-    </javac>
-
-    <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-win64.jar">
-      <manifest>
-        <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
-      </manifest>
-
-      <main>
-        <!-- construct limelight.jar -->
-        <fileset dir="${classes.dir}/src"/>
-      </main>
-
-      <lib>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
-      </lib>
-
-      <binlib>
-        <fileset dir="${libs.win64.dir}" includes="*"/>
-      </binlib>
-    </one-jar>
-  </target>
-
 
 </project>

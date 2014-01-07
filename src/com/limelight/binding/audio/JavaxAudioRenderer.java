@@ -6,8 +6,10 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-import com.limelight.nvstream.av.ShortBufferDescriptor;
+import com.limelight.nvstream.av.ByteBufferDescriptor;
 import com.limelight.nvstream.av.audio.AudioRenderer;
+import java.nio.ByteOrder;
+import java.util.LinkedList;
 
 /**
  * Audio renderer implementation
@@ -16,7 +18,7 @@ import com.limelight.nvstream.av.audio.AudioRenderer;
 public class JavaxAudioRenderer implements AudioRenderer {
 
 	private SourceDataLine soundLine;
-	private SoundBuffer soundBuffer;
+	private LinkedList<ByteBufferDescriptor> soundBuffer;
 	private byte[] lineBuffer;
 	private int channelCount;
 	private int sampleRate;
@@ -33,16 +35,25 @@ public class JavaxAudioRenderer implements AudioRenderer {
 	 * @param length the length of data to be rendered
 	 */
 	@Override
-	public void playDecodedAudio(short[] pcmData, int offset, int length) {
+	public void playDecodedAudio(byte[] pcmData, int offset, int length) {
 		if (soundLine != null) {
 			// Queue the decoded samples into the staging sound buffer
-			soundBuffer.queue(new ShortBufferDescriptor(pcmData, offset, length));
+			if (soundBuffer.size() > STAGING_BUFFERS) {
+				soundBuffer.removeFirst();
+			}
+		
+			soundBuffer.addLast(new ByteBufferDescriptor(pcmData, offset, length));
 			
 			int available = soundLine.available();
 			if (reallocateLines) {
 				// Kinda jank. If the queued is larger than available, we are going to have a delay
 				// so we increase the buffer size
-				if (available < soundBuffer.size()) {
+				int size = 0;
+				for (ByteBufferDescriptor desc : soundBuffer) {
+					size += desc.length;
+				}
+				
+				if (available < size) {
 					System.out.println("buffer too full, buffer size: " + soundLine.getBufferSize());
 					int currentBuffer = soundLine.getBufferSize();
 					soundLine.close();
@@ -60,11 +71,16 @@ public class JavaxAudioRenderer implements AudioRenderer {
 			
 			// If there's space available in the sound line, pull some data out
 			// of the staging buffer and write it to the sound line
-			if (available > 0) {
-				int written = soundBuffer.fill(lineBuffer, 0, available);
-				if (written > 0) {
-					soundLine.write(lineBuffer, 0, written);
+			
+			while (available > 0 && !soundBuffer.isEmpty()) {
+				ByteBufferDescriptor buff = soundBuffer.peek();
+				if (buff.length > available) {
+					break;
 				}
+				
+				available -= soundLine.write(buff.data, buff.offset, buff.length);
+				
+				soundBuffer.remove();
 			}
 		}
 	}
@@ -80,7 +96,7 @@ public class JavaxAudioRenderer implements AudioRenderer {
 	}
 
 	private void createSoundLine(int bufferSize) {
-		AudioFormat audioFormat = new AudioFormat(sampleRate, 16, channelCount, true, true);
+		AudioFormat audioFormat = new AudioFormat(sampleRate, 16, channelCount, true, ByteOrder.nativeOrder()==ByteOrder.BIG_ENDIAN);
 		
 		DataLine.Info info;
 		
@@ -103,7 +119,7 @@ public class JavaxAudioRenderer implements AudioRenderer {
 			
 			soundLine.start();
 			lineBuffer = new byte[soundLine.getBufferSize()];
-			soundBuffer = new SoundBuffer(STAGING_BUFFERS);
+			soundBuffer = new LinkedList<ByteBufferDescriptor>();
 		} catch (LineUnavailableException e) {
 			soundLine = null;
 		}

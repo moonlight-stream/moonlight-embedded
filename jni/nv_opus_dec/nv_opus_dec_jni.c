@@ -25,8 +25,8 @@ Java_com_limelight_nvstream_av_audio_OpusDecoder_getChannelCount(JNIEnv *env, jo
 
 // This number assumes 2 channels at 48 KHz
 JNIEXPORT jint JNICALL
-Java_com_limelight_nvstream_av_audio_OpusDecoder_getMaxOutputShorts(JNIEnv *env, jobject this) {
-	return nv_opus_get_max_out_shorts();
+Java_com_limelight_nvstream_av_audio_OpusDecoder_getMaxOutputBytes(JNIEnv *env, jobject this) {
+	return nv_opus_get_max_out_bytes();
 }
 
 // The Opus stream is 48 KHz
@@ -43,13 +43,13 @@ JNIEXPORT jint JNICALL
 Java_com_limelight_nvstream_av_audio_OpusDecoder_decode(
 	JNIEnv *env, jobject this, // JNI parameters
 	jbyteArray indata, jint inoff, jint inlen, // Input parameters
-	jshortArray outpcmdata) // Output parameter
+	jbyteArray outpcmdata) // Output parameter
 {
 	jint ret;
 	jbyte* jni_input_data;
-	jshort* jni_pcm_data;
+	jbyte* jni_pcm_data;
 
-	jni_pcm_data = (*env)->GetShortArrayElements(env, outpcmdata, 0);
+	jni_pcm_data = (*env)->GetByteArrayElements(env, outpcmdata, 0);
 	if (indata != NULL) {
 		jni_input_data = (*env)->GetByteArrayElements(env, indata, 0);
 
@@ -62,7 +62,7 @@ Java_com_limelight_nvstream_av_audio_OpusDecoder_decode(
 		ret = nv_opus_decode(NULL, 0, jni_pcm_data);
 	}
 
-	(*env)->ReleaseShortArrayElements(env, outpcmdata, jni_pcm_data, 0);
+	(*env)->ReleaseByteArrayElements(env, outpcmdata, jni_pcm_data, 0);
 
 	return ret;
 }

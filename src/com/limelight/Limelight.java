@@ -1,21 +1,16 @@
 package com.limelight;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 
 import com.limelight.binding.LibraryHelper;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.input.gamepad.Gamepad;
 import com.limelight.input.gamepad.GamepadListener;
-import com.limelight.input.gamepad.NativeGamepad;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.NvHTTP;
-import com.limelight.settings.PreferencesManager;
-import com.limelight.settings.PreferencesManager.Preferences;
 import com.limelight.settings.PreferencesManager.Preferences.Resolution;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -116,19 +111,6 @@ public class Limelight implements NvConnectionListener {
 			// this should never happen, if it does we want the NPE to occur so we know something is wrong
 			return null;
 		}
-	}
-
-	/**
-	 * Creates a new instance and starts the stream.
-	 * @param host the host pc to connect to. Can be a hostname or IP address.
-	 */
-	public static void createInstance(String host) {
-		Limelight limelight = new Limelight(host);
-		
-		Preferences prefs = PreferencesManager.getPreferences();
-		StreamConfiguration streamConfig = createConfiguration(prefs.getResolution());
-	
-		limelight.startUp(streamConfig, prefs.getFullscreen());
 	}
 
 	/**

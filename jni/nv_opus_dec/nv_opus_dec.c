@@ -2,6 +2,8 @@
 #include <opus.h>
 #include "nv_opus_dec.h"
 
+#include <stdio.h>
+
 OpusDecoder* decoder;
 
 #ifdef _WIN32
@@ -37,8 +39,8 @@ int nv_opus_get_channel_count(void) {
 }
 
 // This number assumes 2 channels at 48 KHz
-int nv_opus_get_max_out_bytes(void) {
-	return 1024*nv_opus_get_channel_count();
+int nv_opus_get_max_out_shorts(void) {
+	return 512*nv_opus_get_channel_count();
 }
 
 // The Opus stream is 48 KHz
@@ -46,20 +48,17 @@ int nv_opus_get_sample_rate(void) {
 	return 48000;
 }
 
-// outpcmdata must be 11520*2 bytes in length
+// outpcmdata must be 5760*2 shorts in length
 // packets must be decoded in order
 // a packet loss must call this function with NULL indata and 0 inlen
 // returns the number of decoded samples
-int nv_opus_decode(unsigned char* indata, int inlen, unsigned char* outpcmdata) {
+int nv_opus_decode(unsigned char* indata, int inlen, short* outpcmdata) {
 	int err;
 
 	// Decoding to 16-bit PCM with FEC off
 	// Maximum length assuming 48KHz sample rate
 	err = opus_decode(decoder, indata, inlen,
-		(opus_int16*) outpcmdata, 512, 0);
+		outpcmdata, 512, 0);
 
-	if (err>0)
-		err = err * 2;
-		
 	return err;
 }

@@ -17,19 +17,7 @@ public class LibraryHelper {
 	static {
 		needsDependencyExtraction = System.getProperty("os.name").contains("Windows");
 		libraryExtractionFolder = System.getProperty("java.io.tmpdir", ".");
-		
-		// AVC dependencies
-		if (System.getProperty("os.name").contains("Windows")) {
-			avcDependencies.add("avutil-52");
-			avcDependencies.add("swresample-0");
-			avcDependencies.add("swscale-2");
-			avcDependencies.add("avcodec-55");
-			avcDependencies.add("avformat-55");
-			avcDependencies.add("avfilter-3");
-			avcDependencies.add("postproc-52");
-			avcDependencies.add("pthreadVC2");
-		}
-		
+
 		// The AVC JNI library itself
 		avcDependencies.add("nv_avc_dec");
 	}

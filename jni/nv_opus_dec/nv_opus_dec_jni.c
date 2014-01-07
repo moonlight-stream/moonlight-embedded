@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <jni.h>
 
+#include <stdio.h>
+
 // This function must be called before
 // any other decoding functions
 JNIEXPORT jint JNICALL
@@ -25,8 +27,8 @@ Java_com_limelight_nvstream_av_audio_OpusDecoder_getChannelCount(JNIEnv *env, jo
 
 // This number assumes 2 channels at 48 KHz
 JNIEXPORT jint JNICALL
-Java_com_limelight_nvstream_av_audio_OpusDecoder_getMaxOutputBytes(JNIEnv *env, jobject this) {
-	return nv_opus_get_max_out_bytes();
+Java_com_limelight_nvstream_av_audio_OpusDecoder_getMaxOutputShorts(JNIEnv *env, jobject this) {
+	return nv_opus_get_max_out_shorts();
 }
 
 // The Opus stream is 48 KHz
@@ -52,14 +54,14 @@ Java_com_limelight_nvstream_av_audio_OpusDecoder_decode(
 	jni_pcm_data = (*env)->GetByteArrayElements(env, outpcmdata, 0);
 	if (indata != NULL) {
 		jni_input_data = (*env)->GetByteArrayElements(env, indata, 0);
-
-		ret = nv_opus_decode(&jni_input_data[inoff], inlen, jni_pcm_data);
+		
+		ret = nv_opus_decode(&jni_input_data[inoff], inlen, (jshort*) jni_pcm_data);
 
 		// The input data isn't changed so it can be safely aborted
 		(*env)->ReleaseByteArrayElements(env, indata, jni_input_data, JNI_ABORT);
 	}
 	else {
-		ret = nv_opus_decode(NULL, 0, jni_pcm_data);
+		ret = nv_opus_decode(NULL, 0, (jshort*) jni_pcm_data);
 	}
 
 	(*env)->ReleaseByteArrayElements(env, outpcmdata, jni_pcm_data, 0);

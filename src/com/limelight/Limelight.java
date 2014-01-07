@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.limelight.binding.LibraryHelper;
 import com.limelight.binding.PlatformBinding;
+import com.limelight.input.EvdevHandler;
 import com.limelight.input.gamepad.Gamepad;
 import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.nvstream.NvConnection;
@@ -12,6 +13,7 @@ import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.NvHTTP;
 import com.limelight.settings.PreferencesManager.Preferences.Resolution;
+import java.io.FileNotFoundException;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -49,6 +51,14 @@ public class Limelight implements NvConnectionListener {
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(),
 				PlatformBinding.getVideoDecoderRenderer());
+		
+		for (String input:inputs) {
+			try {
+				new EvdevHandler(conn, input).start();
+			} catch (FileNotFoundException ex) {
+				displayError("Input", "Input (" + input + ") could not be found");
+			}
+		}
 		
 		GamepadListener.getInstance().addDeviceListener(new Gamepad(conn));
 	}

@@ -20,6 +20,8 @@ import com.limelight.settings.PreferencesManager.Preferences.Resolution;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import org.xmlpull.v1.XmlPullParserException;
 
 /**
@@ -46,7 +48,7 @@ public class Limelight implements NvConnectionListener {
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
-	private void startUp(StreamConfiguration streamConfig, boolean fullscreen) {
+	private void startUp(StreamConfiguration streamConfig, List<String> inputs) {
 		conn = new NvConnection(host, this, streamConfig);
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
@@ -143,7 +145,7 @@ public class Limelight implements NvConnectionListener {
 	//TODO: make this less jank
 	private static void parseCommandLine(String[] args) {
 		String host = null;
-		boolean fullscreen = false;
+		List<String> inputs = new ArrayList<String>();
 		boolean pair = false;
 		int resolution = 720;
 		int refresh = 30;
@@ -157,10 +159,16 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: hostname or ip address expected after -host");
 					System.exit(3);
 				}
+			} else if (args[i].equals("-input")) {
+				if (i + 1 < args.length) {
+					inputs.add(args[i+1]);
+					i++;
+				} else {
+					System.out.println("Syntax error: input device expected after -input");
+					System.exit(3);
+				}
 			} else if (args[i].equals("-pair")) {
 				pair = true;
-			} else if (args[i].equals("-fs")) {
-				fullscreen = true;
 			} else if (args[i].equals("-720")) {
 				resolution = 720;
 			} else if (args[i].equals("-1080")) {
@@ -195,7 +203,7 @@ public class Limelight implements NvConnectionListener {
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)
-			limelight.startUp(streamConfig, fullscreen);
+			limelight.startUp(streamConfig, inputs);
 		else
 			limelight.pair();
 	}

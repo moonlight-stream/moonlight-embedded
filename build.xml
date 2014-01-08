@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="all" name="Create Runnable Jar for Limelight">
-  <property name="one-jar.dist.dir" value="${basedir}"/>
-
   <property name="src.dir" location="${basedir}/src"/>
   <property name="libs.dir" location="${basedir}/libs"/>
 
@@ -10,6 +8,8 @@
   
   <property name="lib.dir" location="${basedir}/lib"/>
   <property name="build.dir" location="${basedir}/build"/>
+  
+  <property name="one-jar.dist.dir" value="${libs.dir}/build"/>
 
   <property name="classes.dir" location="${basedir}/classes"/>
 
@@ -20,7 +20,7 @@
     <mkdir dir="${build.dir}"/>
   </target>
 
-  <import file="one-jar-ant-task.xml"/>
+  <import file="${one-jar.dist.dir}/one-jar-ant-task.xml"/>
 
   <target name="clean">
     <delete dir="${build.dir}"/>

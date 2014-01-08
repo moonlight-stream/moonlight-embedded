@@ -3,8 +3,13 @@
 Limelight is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield,
 but built for Linux/OSX/Windows.
 
-Limelight-pc allows you to stream your full collection of Steam games from
-your powerful Windows desktop to another PC or laptop running Linux/OSX/Windows.
+Limelight-pi allows you to stream your full collection of Steam games from
+your powerful Windows desktop to your Raspberry Pi.
+
+[Limelight-common](https://github.com/limelight-stream/limelight-common) is the shared codebase between
+different implementations
+
+[Limelight-common](https://github.com/irtimmer/limelight-common) is the forked code used by Limelight-pi
 
 [Limelight](https://github.com/cgutman/limelight) also has an Android
 implementation.
@@ -14,12 +19,12 @@ implementation.
 
 ##Features
 
-* Streams Steam and all of your games from your PC to your Raspberry PI.
+* Streams Steam and all of your games from your PC to your Raspberry Pi.
 
 ##Installation
 
 * Download [GeForce Experience](http://www.geforce.com/geforce-experience) and install on your Windows PC
-* Download the appropriate jar from the [GitHub releases page](https://github.com/irtimmer/limelight-pi/releases) (currently unavailable)
+* Download the appropriate jar from the [GitHub releases page](https://github.com/irtimmer/limelight-pi/releases)
 
 ##Requirements
 
@@ -28,11 +33,11 @@ implementation.
 
 ##Usage
 
-* Ensure your machines are on the same network
+* Ensure your machine and Raspberry Pi are on the same network
 * Turn on Shield Streaming in the GFE settings
-* Start Limelight with --pair option
+* Start Limelight-pi with -pair option
 * Accept the pairing confirmation on your PC
-* Start Limelight normally
+* Start Limelight-pi normally
 * Play games!
 
 ##Contribute

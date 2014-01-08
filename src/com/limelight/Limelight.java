@@ -45,18 +45,24 @@ public class Limelight implements NvConnectionListener {
 	 */
 	private void startUp(StreamConfiguration streamConfig, List<String> inputs) {
 		conn = new NvConnection(host, this, streamConfig);
-		conn.start(PlatformBinding.getDeviceName(), null,
-				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
-				PlatformBinding.getAudioRenderer(),
-				PlatformBinding.getVideoDecoderRenderer());
-		
+
 		for (String input:inputs) {
 			try {
 				new EvdevHandler(conn, input).start();
 			} catch (FileNotFoundException ex) {
 				displayError("Input", "Input (" + input + ") could not be found");
+				return;
+			} catch (IOException ex) {
+				displayError("Input", "Input (" + input + ") could not be read");
+				displayError("Input", "Are you running as root?");
+				return;
 			}
-		}
+		}		
+		
+		conn.start(PlatformBinding.getDeviceName(), null,
+				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
+				PlatformBinding.getAudioRenderer(),
+				PlatformBinding.getVideoDecoderRenderer());
 	}
 	
 	private void pair() {

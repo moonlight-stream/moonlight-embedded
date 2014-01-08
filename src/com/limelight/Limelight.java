@@ -171,7 +171,7 @@ public class Limelight implements NvConnectionListener {
 		}
 		
 		if (args.length == 0 || !parse) {
-			System.out.println("Usage: java-embedded -jar limelight-pi.jar [options] host");
+			System.out.println("Usage: java -jar limelight-pi.jar [options] host");
 			System.out.println("\t-720\t\tUse 1280x720 resolution [default]");
 			System.out.println("\t-1080\t\tUse 1920x1080 resolution");
 			System.out.println("\t-30fps\t\tUse 30fps [default]");

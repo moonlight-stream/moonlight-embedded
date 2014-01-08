@@ -5,7 +5,8 @@
   <property name="src.dir" location="${basedir}/src"/>
   <property name="libs.dir" location="${basedir}/libs"/>
 
-  <property name="libs.pi.dir" location="${libs.dir}/pi"/>
+  <property name="libs.opus.dir" location="${basedir}/jni/nv_opus_dec/"/>
+  <property name="libs.omx.dir" location="${basedir}/jni/nv_omx_dec/"/>
   
   <property name="lib.dir" location="${basedir}/lib"/>
   <property name="build.dir" location="${basedir}/build"/>
@@ -26,9 +27,16 @@
     <delete dir="${classes.dir}"/>
   </target>
 
-  <target name="all" depends="limelight-pi"/>
-
-  <target name="limelight-pi" depends="init">
+  <target name="all" depends="clean, dist"/>
+  
+  <target name="build" depends="compile-native, compile-java"/>
+  
+  <target name="compile-native">
+	  <exec executable="./build.sh" dir="/home/iwan/Development/limelight/limelight-pi/jni/nv_omx_dec/"/>
+	  <exec executable="./build.sh" dir="/home/iwan/Development/limelight/limelight-pi/jni/nv_opus_dec/"/>
+  </target>
+  
+  <target name="compile-java" depends="init">
     <!-- compile limelight -->
     <javac includeantruntime="false" destdir="${classes.dir}/src">
       <src path="${src.dir}"/>
@@ -37,7 +45,9 @@
         <fileset dir="${libs.dir}" includes="*.jar"/>
       </classpath>
     </javac>
+  </target>
 
+  <target name="dist" depends="build">
     <!-- construct one-jar file -->
     <one-jar destfile="${build.dir}/limelight-pi.jar">
       <manifest>
@@ -54,7 +64,8 @@
       </lib>
 
       <binlib>
-        <fileset dir="${libs.pi.dir}" includes="*"/>
+        <fileset dir="${libs.opus.dir}" includes="*.so"/>
+		<fileset dir="${libs.omx.dir}" includes="*.so"/>
       </binlib>
     </one-jar>
   </target>

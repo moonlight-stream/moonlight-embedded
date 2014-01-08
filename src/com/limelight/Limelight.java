@@ -5,8 +5,6 @@ import java.io.IOException;
 import com.limelight.binding.LibraryHelper;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.input.EvdevHandler;
-import com.limelight.input.gamepad.Gamepad;
-import com.limelight.input.gamepad.GamepadListener;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
@@ -59,8 +57,6 @@ public class Limelight implements NvConnectionListener {
 				displayError("Input", "Input (" + input + ") could not be found");
 			}
 		}
-		
-		GamepadListener.getInstance().addDeviceListener(new Gamepad(conn));
 	}
 	
 	private void pair() {

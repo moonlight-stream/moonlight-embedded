@@ -4,6 +4,7 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.KeyboardPacket;
 import com.limelight.nvstream.input.MouseButtonPacket;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -167,9 +168,15 @@ public class EvdevHandler implements Runnable {
 	private FileChannel deviceInput;
 	private ByteBuffer inputBuffer;
 	
-	public EvdevHandler(NvConnection conn, String device) throws FileNotFoundException {
+	public EvdevHandler(NvConnection conn, String device) throws FileNotFoundException, IOException {
 		this.conn = conn;
-		FileInputStream in = new FileInputStream(device);
+		File file = new File(device);
+		if (!file.exists())
+			throw new FileNotFoundException("File " + device + " not found");
+		if (!file.canRead())
+			throw new IOException("Can't read from " + device);
+			
+		FileInputStream in = new FileInputStream(file);
         deviceInput = in.getChannel();
 		inputBuffer = ByteBuffer.allocate(MAX_STRUCT_SIZE_BYTES);
 		inputBuffer.order(ByteOrder.nativeOrder());

@@ -137,17 +137,10 @@ public class Limelight implements NvConnectionListener {
 		boolean pair = false;
 		int resolution = 720;
 		int refresh = 30;
+		boolean parse = true;
 		
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].equals("-host")) {
-				if (i + 1 < args.length) {
-					host = args[i+1];
-					i++;
-				} else {
-					System.out.println("Syntax error: hostname or ip address expected after -host");
-					System.exit(3);
-				}
-			} else if (args[i].equals("-input")) {
+		for (int i = 0; i < args.length - 1; i++) {
+			if (args[i].equals("-input")) {
 				if (i + 1 < args.length) {
 					inputs.add(args[i+1]);
 					i++;
@@ -167,13 +160,23 @@ public class Limelight implements NvConnectionListener {
 				refresh = 60;
 			} else {
 				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
+				parse = false;
 			}
 		}
 		
-		if (host == null) {
-			System.out.println("Syntax Error: You must include a host. Use -host to specifiy a hostname or ip address.");
+		if (args.length == 0 || !parse) {
+			System.out.println("Usage: java-embedded -jar limelight-pi.jar [options] host");
+			System.out.println("\t-720\t\tUse 1280x720 resolution [default]");
+			System.out.println("\t-1080\t\tUse 1920x1080 resolution");
+			System.out.println("\t-30fps\t\tUse 30fps [default]");
+			System.out.println("\t-60fps\t\tUse 60fps");
+			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
+			System.out.println("\t-pair\t\tPair with host");
+			System.out.println();
+			System.out.println("Use ctrl-c to exit application");
 			System.exit(5);
-		}
+		} else
+			host = args[args.length-1];
 		
 		Resolution streamRes = Resolution.RES_720_30;
 		

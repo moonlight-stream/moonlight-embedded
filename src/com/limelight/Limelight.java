@@ -121,7 +121,7 @@ public class Limelight implements NvConnectionListener {
 		List<String> inputs = new ArrayList<String>();
 		boolean pair = false;
 		int resolution = 720;
-		int refresh = 30;
+		int refresh = 60;
 		boolean parse = true;
 		
 		for (int i = 0; i < args.length - 1; i++) {

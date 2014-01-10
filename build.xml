@@ -3,6 +3,10 @@
   <property name="src.dir" location="${basedir}/src"/>
   <property name="libs.dir" location="${basedir}/libs"/>
 
+  <property name="common.dir" location="${libs.dir}/common"/>
+  <property name="common.src.dir" location="${common.dir}/src"/>
+  <property name="common.libs.dir" location="${common.dir}/libs"/>
+  
   <property name="libs.opus.dir" location="${basedir}/jni/nv_opus_dec/"/>
   <property name="libs.omx.dir" location="${basedir}/jni/nv_omx_dec/"/>
   
@@ -15,7 +19,7 @@
 
   <target name="init">
     <mkdir dir="${classes.dir}"/>
-    <mkdir dir="${classes.dir}/lib"/>
+    <mkdir dir="${classes.dir}/common"/>
     <mkdir dir="${classes.dir}/src"/>
     <mkdir dir="${build.dir}"/>
   </target>
@@ -29,7 +33,7 @@
 
   <target name="all" depends="clean, dist"/>
   
-  <target name="build" depends="compile-native, compile-java"/>
+  <target name="build" depends="compile-native, compile-common, compile-java"/>
   
   <target name="compile-native">
 	  <exec executable="./build.sh" dir="/home/iwan/Development/limelight/limelight-pi/jni/nv_omx_dec/"/>
@@ -40,9 +44,19 @@
     <!-- compile limelight -->
     <javac includeantruntime="false" destdir="${classes.dir}/src">
       <src path="${src.dir}"/>
-      <classpath path="${build.dir}"/>
+	  <classpath path="${classes.dir}/common"/>
       <classpath>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
+        <fileset dir="${common.libs.dir}" includes="*.jar"/>
+      </classpath>
+    </javac>
+  </target>
+  
+  <target name="compile-common" depends="init">
+    <!-- compile limelight -->
+    <javac includeantruntime="false" destdir="${classes.dir}/common">
+      <src path="${common.src.dir}"/>
+      <classpath>
+        <fileset dir="${common.libs.dir}" includes="*.jar"/>
       </classpath>
     </javac>
   </target>
@@ -60,7 +74,7 @@
       </main>
 
       <lib>
-        <fileset dir="${libs.dir}" includes="*.jar"/>
+        <fileset dir="${common.libs.dir}" includes="*.jar"/>
       </lib>
 
       <binlib>

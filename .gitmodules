@@ -1,0 +1,3 @@
+[submodule "libs/common"]
+	path = libs/common
+	url = https://github.com/irtimmer/limelight-common.git

@@ -10,7 +10,6 @@ import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.NvHTTP;
-import com.limelight.settings.PreferencesManager.Preferences.Resolution;
 import java.io.FileNotFoundException;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -105,26 +104,6 @@ public class Limelight implements NvConnectionListener {
 		}
 	}
 	
-	/*
-	 * Creates a StreamConfiguration given a Resolution. 
-	 * Used to specify what kind of stream will be used.
-	 */
-	private static StreamConfiguration createConfiguration(Resolution res) {
-		switch(res) {
-		case RES_720_30:
-			return new StreamConfiguration(1280, 720, 30);
-		case RES_720_60:
-			return new StreamConfiguration(1280, 720, 60);
-		case RES_1080_30:
-			return new StreamConfiguration(1920, 1080, 30);
-		case RES_1080_60:
-			return new StreamConfiguration(1920, 1080, 60);
-		default:
-			// this should never happen, if it does we want the NPE to occur so we know something is wrong
-			return null;
-		}
-	}
-
 	/**
 	 * The entry point for the application. <br>
 	 * Does some initializations and then creates the main frame.
@@ -184,19 +163,7 @@ public class Limelight implements NvConnectionListener {
 		} else
 			host = args[args.length-1];
 		
-		Resolution streamRes = Resolution.RES_720_30;
-		
-		if (resolution == 720 && refresh == 30) {
-			streamRes = Resolution.RES_720_30;
-		} else if (resolution == 720 && refresh == 60) {
-			streamRes = Resolution.RES_720_60;
-		} else if (resolution == 1080 && refresh == 30) {
-			streamRes = Resolution.RES_1080_30;
-		} else if (resolution == 1080 && refresh == 60) {
-			streamRes = Resolution.RES_1080_60;
-		}
-		
-		StreamConfiguration streamConfig = createConfiguration(streamRes);
+		StreamConfiguration streamConfig = new StreamConfiguration((resolution/9)*16, resolution, refresh);
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)

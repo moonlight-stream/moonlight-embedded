@@ -10,7 +10,8 @@ import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 
 /**
  * Used for platform-specific video/audio bindings.
- * @author Cameron Gutman
+ * @author Cameron Gutman<br>
+ * Iwan Timmer
  */
 public class PlatformBinding {
 	/**

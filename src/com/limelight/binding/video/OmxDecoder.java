@@ -1,10 +1,12 @@
 package com.limelight.binding.video;
 
-import com.limelight.binding.LibraryHelper;
-
+/**
+ * JNI Decoder bindings
+ * @author Iwan Timmer
+ */
 public class OmxDecoder {
 	static {
-		LibraryHelper.loadNativeLibrary("nv_omx_dec");
+		System.loadLibrary("nv_omx_dec");
 	}
 	
 	public static native int init();

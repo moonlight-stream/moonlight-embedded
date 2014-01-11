@@ -13,7 +13,8 @@ import java.util.LinkedList;
 
 /**
  * Audio renderer implementation
- * @author Cameron Gutman
+ * @author Cameron Gutman<br>
+ * Iwan Timmer
  */
 public class JavaxAudioRenderer implements AudioRenderer {
 

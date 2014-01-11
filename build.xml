@@ -36,8 +36,8 @@
   <target name="build" depends="compile-native, compile-common, compile-java"/>
   
   <target name="compile-native">
-	  <exec executable="./build.sh" dir="/home/iwan/Development/limelight/limelight-pi/jni/nv_omx_dec/"/>
-	  <exec executable="./build.sh" dir="/home/iwan/Development/limelight/limelight-pi/jni/nv_opus_dec/"/>
+	  <exec executable="./build.sh" dir="${libs.omx.dir}"/>
+	  <exec executable="./build.sh" dir="${libs.opus.dir}"/>
   </target>
   
   <target name="compile-java" depends="init">

@@ -2,7 +2,6 @@ package com.limelight;
 
 import java.io.IOException;
 
-import com.limelight.binding.LibraryHelper;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.input.EvdevHandler;
 import com.limelight.nvstream.NvConnection;
@@ -19,10 +18,10 @@ import java.util.List;
 import org.xmlpull.v1.XmlPullParserException;
 
 /**
- * Main class for Limelight-pc contains methods for starting the application as well
- * as the stream to the host pc.
+ * Main class for Limelight-pi
  * @author Diego Waxemberg<br>
  * Cameron Gutman
+ * Iwan Timmer
  */
 public class Limelight implements NvConnectionListener {
 	public static final double VERSION = 1.0;
@@ -64,6 +63,9 @@ public class Limelight implements NvConnectionListener {
 				PlatformBinding.getVideoDecoderRenderer());
 	}
 	
+	/**
+	 * Pair the device with the host
+	 */
 	private void pair() {
 		String macAddress;
 		try {
@@ -110,13 +112,6 @@ public class Limelight implements NvConnectionListener {
 	 * @param args unused.
 	 */
 	public static void main(String args[]) {
-		LibraryHelper.prepareNativeLibraries();
-
-		parseCommandLine(args);
-	}
-	
-	//TODO: make this less jank
-	private static void parseCommandLine(String[] args) {
 		String host = null;
 		List<String> inputs = new ArrayList<String>();
 		boolean pair = false;

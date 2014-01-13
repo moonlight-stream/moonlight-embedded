@@ -136,15 +136,8 @@ public class JavaxAudioRenderer implements AudioRenderer {
 		this.channelCount = channelCount;
 		this.sampleRate = sampleRate;
 		
-		// Workaround OS X's bad Java mixer
-		if (System.getProperty("os.name").contains("Mac OS X")) {
-			createSoundLine(STARING_BUFFER_SIZE);
-			reallocateLines = true;
-		}
-		else {
-			createSoundLine(DEFAULT_BUFFER_SIZE);
-			reallocateLines = false;
-		}
+		createSoundLine(STARING_BUFFER_SIZE);
+		reallocateLines = true;
 	}
 
 }

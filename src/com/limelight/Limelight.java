@@ -49,12 +49,15 @@ public class Limelight implements NvConnectionListener {
 		
 		if (inputs.isEmpty()) {
 			File input = new File("/dev/input");
-			inputs.addAll(Arrays.asList(input.list(new FilenameFilter() {
+			String[] events = input.list(new FilenameFilter() {
 				@Override
 				public boolean accept(File dir, String name) {
 					return name.startsWith("event");
 				}
-			})));
+			});
+			
+			for (String event:events)
+				inputs.add(new File(input, event).getAbsolutePath());
 		}
 
 		for (String input:inputs) {

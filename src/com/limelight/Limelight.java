@@ -9,11 +9,14 @@ import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.NvHTTP;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -43,6 +46,16 @@ public class Limelight implements NvConnectionListener {
 	 */
 	private void startUp(StreamConfiguration streamConfig, List<String> inputs) {
 		conn = new NvConnection(host, this, streamConfig);
+		
+		if (inputs.isEmpty()) {
+			File input = new File("/dev/input");
+			inputs.addAll(Arrays.asList(input.list(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.startsWith("event");
+				}
+			})));
+		}
 
 		for (String input:inputs) {
 			try {
@@ -148,9 +161,10 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("Usage: java -jar limelight-pi.jar [options] host");
 			System.out.println("\t-720\t\tUse 1280x720 resolution [default]");
 			System.out.println("\t-1080\t\tUse 1920x1080 resolution");
-			System.out.println("\t-30fps\t\tUse 30fps [default]");
-			System.out.println("\t-60fps\t\tUse 60fps");
+			System.out.println("\t-30fps\t\tUse 30fps");
+			System.out.println("\t-60fps\t\tUse 60fps [default]");
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
+			System.out.println("\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-pair\t\tPair with host");
 			System.out.println();
 			System.out.println("Use ctrl-c to exit application");

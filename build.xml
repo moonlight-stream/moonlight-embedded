@@ -70,7 +70,7 @@
 
       <main>
         <!-- construct limelight.jar -->
-		<fileset dir="${classes.dir}/common"/>
+        <fileset dir="${classes.dir}/common"/>
         <fileset dir="${classes.dir}/src"/>
       </main>
 
@@ -80,7 +80,7 @@
 
       <binlib>
         <fileset dir="${libs.opus.dir}" includes="*.so"/>
-		<fileset dir="${libs.omx.dir}" includes="*.so"/>
+        <fileset dir="${libs.omx.dir}" includes="*.so"/>
       </binlib>
     </one-jar>
   </target>

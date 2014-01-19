@@ -27,8 +27,7 @@ import org.xmlpull.v1.XmlPullParserException;
  * Iwan Timmer
  */
 public class Limelight implements NvConnectionListener {
-	public static final double VERSION = 1.0;
-	
+
 	private String host;
 	private NvConnection conn;
 	private boolean connectionTerminating;

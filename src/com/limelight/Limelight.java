@@ -17,7 +17,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -45,7 +44,7 @@ public class Limelight implements NvConnectionListener {
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
-	private void startUp(StreamConfiguration streamConfig, List<String> inputs) {
+	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile) {
 		conn = new NvConnection(host, this, streamConfig);
 		
 		if (inputs.isEmpty()) {
@@ -61,7 +60,16 @@ public class Limelight implements NvConnectionListener {
 				inputs.add(new File(input, event).getAbsolutePath());
 		}
 		
-		GamepadMapping mapping = new GamepadMapping();
+		GamepadMapping mapping = null;
+		if (mappingFile!=null) {
+			try {
+				mapping = new GamepadMapping(new File(mappingFile));
+			} catch (IOException e) {
+				displayError("Mapping", "Can't load gamepad mapping from " + mappingFile);
+				System.exit(3);
+			}
+		} else
+			mapping = new GamepadMapping();
 
 		for (String input:inputs) {
 			try {
@@ -137,6 +145,7 @@ public class Limelight implements NvConnectionListener {
 		int resolution = 720;
 		int refresh = 60;
 		boolean parse = true;
+		String mapping = null;
 		
 		for (int i = 0; i < args.length - 1; i++) {
 			if (args[i].equals("-input")) {
@@ -145,6 +154,14 @@ public class Limelight implements NvConnectionListener {
 					i++;
 				} else {
 					System.out.println("Syntax error: input device expected after -input");
+					System.exit(3);
+				}
+			} else if (args[i].equals("-mapping")) {
+				if (i + 1 < args.length) {
+					mapping = args[i+1];
+					i++;
+				} else {
+					System.out.println("Syntax error: mapping file expected after -mapping");
 					System.exit(3);
 				}
 			} else if (args[i].equals("-pair")) {
@@ -171,6 +188,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-60fps\t\tUse 60fps [default]");
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
+			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
 			System.out.println("\t-pair\t\tPair with host");
 			System.out.println();
 			System.out.println("Use ctrl-c to exit application");
@@ -182,7 +200,7 @@ public class Limelight implements NvConnectionListener {
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)
-			limelight.startUp(streamConfig, inputs);
+			limelight.startUp(streamConfig, inputs, mapping);
 		else
 			limelight.pair();
 	}

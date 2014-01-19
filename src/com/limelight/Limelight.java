@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.limelight.binding.PlatformBinding;
 import com.limelight.input.EvdevHandler;
+import com.limelight.input.GamepadMapping;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
@@ -59,10 +60,12 @@ public class Limelight implements NvConnectionListener {
 			for (String event:events)
 				inputs.add(new File(input, event).getAbsolutePath());
 		}
+		
+		GamepadMapping mapping = new GamepadMapping();
 
 		for (String input:inputs) {
 			try {
-				new EvdevHandler(conn, input).start();
+				new EvdevHandler(conn, input, mapping).start();
 			} catch (FileNotFoundException ex) {
 				displayError("Input", "Input (" + input + ") could not be found");
 				return;

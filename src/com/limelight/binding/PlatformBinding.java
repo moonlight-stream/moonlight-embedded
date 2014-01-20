@@ -3,7 +3,7 @@ package com.limelight.binding;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import com.limelight.binding.audio.JavaxAudioRenderer;
+import com.limelight.binding.audio.AlsaAudioRenderer;
 import com.limelight.binding.video.OmxDecoderRenderer;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
@@ -40,6 +40,6 @@ public class PlatformBinding {
 	 * @return an audio decoder and renderer
 	 */
 	public static AudioRenderer getAudioRenderer() {
-		return new JavaxAudioRenderer();
+		return new AlsaAudioRenderer();
 	}
 }

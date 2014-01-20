@@ -9,6 +9,7 @@
   
   <property name="libs.opus.dir" location="${basedir}/jni/nv_opus_dec/"/>
   <property name="libs.omx.dir" location="${basedir}/jni/nv_omx_dec/"/>
+  <property name="libs.alsa.dir" location="${basedir}/jni/nv_alsa/"/>
   
   <property name="lib.dir" location="${basedir}/lib"/>
   <property name="build.dir" location="${basedir}/build"/>
@@ -38,6 +39,7 @@
   <target name="compile-native">
 	  <exec executable="./build.sh" dir="${libs.omx.dir}"/>
 	  <exec executable="./build.sh" dir="${libs.opus.dir}"/>
+	  <exec executable="./build.sh" dir="${libs.alsa.dir}"/>
   </target>
   
   <target name="compile-java" depends="init">
@@ -81,6 +83,7 @@
       <binlib>
         <fileset dir="${libs.opus.dir}" includes="*.so"/>
         <fileset dir="${libs.omx.dir}" includes="*.so"/>
+		<fileset dir="${libs.alsa.dir}" includes="*.so"/>
       </binlib>
     </one-jar>
   </target>

@@ -36,6 +36,7 @@ public class EvdevHandler implements Runnable {
 	
 	public EvdevHandler(NvConnection conn, String device, GamepadMapping mapping) throws FileNotFoundException, IOException {
 		this.conn = conn;
+		this.mapping = mapping;
 		File file = new File(device);
 		if (!file.exists())
 			throw new FileNotFoundException("File " + device + " not found");

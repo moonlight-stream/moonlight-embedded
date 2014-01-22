@@ -22,7 +22,7 @@ public class GamepadMapping {
 	public short abs_rudder = EvdevConstants.ABS_RUDDER;
 	
 	public short btn_south = EvdevConstants.BTN_SOUTH;
-	public short btn_easth = EvdevConstants.BTN_EAST;
+	public short btn_east = EvdevConstants.BTN_EAST;
 	public short btn_north = EvdevConstants.BTN_NORTH;
 	public short btn_west = EvdevConstants.BTN_WEST;
 	

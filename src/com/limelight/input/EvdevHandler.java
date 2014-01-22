@@ -94,7 +94,7 @@ public class EvdevHandler implements Runnable {
 					gamepadButton = ControllerPacket.X_FLAG;
 				else if (code==mapping.btn_north)
 					gamepadButton = ControllerPacket.Y_FLAG;
-				else if (code==mapping.btn_easth)
+				else if (code==mapping.btn_east)
 					gamepadButton = ControllerPacket.B_FLAG;
 				else if (code==mapping.btn_dpad_up)
 					gamepadButton = ControllerPacket.UP_FLAG;

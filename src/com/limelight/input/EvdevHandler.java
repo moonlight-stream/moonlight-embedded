@@ -28,6 +28,8 @@ public class EvdevHandler implements Runnable {
 	private byte leftTrigger, rightTrigger;
 	private short leftStickX, leftStickY, rightStickX, rightStickY;
 	
+	private EvdevAbsolute absLX, absLY, absRX, absRY, absLT, absRT;
+	
 	private NvConnection conn;
 	private FileChannel deviceInput;
 	private ByteBuffer inputBuffer;
@@ -47,6 +49,13 @@ public class EvdevHandler implements Runnable {
         deviceInput = in.getChannel();
 		inputBuffer = ByteBuffer.allocate(EvdevConstants.MAX_STRUCT_SIZE_BYTES);
 		inputBuffer.order(ByteOrder.nativeOrder());
+		
+		absLX = new EvdevAbsolute(device, mapping.abs_x);
+		absLY = new EvdevAbsolute(device, mapping.abs_y);
+		absRX = new EvdevAbsolute(device, mapping.abs_rx);
+		absRY = new EvdevAbsolute(device, mapping.abs_ry);
+		absLT = new EvdevAbsolute(device, mapping.abs_rudder);
+		absRT = new EvdevAbsolute(device, mapping.abs_throttle);
 		
 		translator = new KeyboardTranslator(conn);
 	}
@@ -140,17 +149,17 @@ public class EvdevHandler implements Runnable {
 				conn.sendMouseMove((short) 0, (short) value);
 		} else if (type==EvdevConstants.EV_ABS) {
 			if (code==mapping.abs_x)
-				leftStickX = (short) value;
+				leftStickX = absLX.getShort(value);
 			else if (code==mapping.abs_y)
-				leftStickY = (short) value;
+				leftStickY = absLY.getShort(value);
 			else if (code==mapping.abs_rx)
-				rightStickX = (short) value;
+				rightStickX = absRX.getShort(value);
 			else if (code==mapping.abs_ry)
-				rightStickY = (short) value;
+				rightStickY = absRY.getShort(value);
 			else if (code==mapping.abs_throttle)
-				leftTrigger = (byte) value;
+				leftTrigger = absLT.getByte(value);
 			else if (code==mapping.abs_rudder)
-				rightTrigger = (byte) value;
+				rightTrigger = absRT.getByte(value);
 
 			conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
 		}

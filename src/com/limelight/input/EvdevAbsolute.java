@@ -18,7 +18,9 @@ public class EvdevAbsolute {
 	private int avg;
 	private int range;
 	
-	public EvdevAbsolute(String filename, int axis) {
+	private boolean reverse;
+	
+	public EvdevAbsolute(String filename, int axis, boolean reverse) {
 		ByteBuffer buffer = ByteBuffer.allocate(6*4);
 		buffer.order(ByteOrder.nativeOrder());
 		byte[] data = buffer.array();
@@ -30,6 +32,8 @@ public class EvdevAbsolute {
 		int max = buffer.getInt();
 		avg = (min+max)/2;
 		range = max-avg;
+		
+		this.reverse = reverse;
 	}
 	
 	private int getRequest(int dir, int type, int nr, int size) {
@@ -42,7 +46,7 @@ public class EvdevAbsolute {
 	 * @return input value as short
 	 */
 	public short getShort(int value) {
-		return (short) ((value-avg) * range / Short.MAX_VALUE);
+		return (short) ((value-avg) * (reverse?-range:range) / Short.MAX_VALUE);
 	}
 	
 	/**
@@ -51,7 +55,7 @@ public class EvdevAbsolute {
 	 * @return input value as byte
 	 */
 	public byte getByte(int value) {
-		return (byte) ((value-avg) * range / Byte.MAX_VALUE);
+		return (byte) ((value-avg) * (reverse?-range:range) / Byte.MAX_VALUE);
 	}
 	
 	/**
@@ -59,11 +63,11 @@ public class EvdevAbsolute {
 	 * @param value received input
 	 * @return input value as direction
 	 */
-	public byte getDirection(int value) {
+	public int getDirection(int value) {
 		if (value>(avg+range/4))
-			return UP;
+			return (reverse?DOWN:UP);
 		else if (value<(avg-range/4))
-			return DOWN;
+			return (reverse?UP:DOWN);
 		else
 			return NONE;
 	}

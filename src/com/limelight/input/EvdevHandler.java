@@ -50,14 +50,14 @@ public class EvdevHandler implements Runnable {
 		inputBuffer = ByteBuffer.allocate(EvdevConstants.MAX_STRUCT_SIZE_BYTES);
 		inputBuffer.order(ByteOrder.nativeOrder());
 		
-		absLX = new EvdevAbsolute(device, mapping.abs_x);
-		absLY = new EvdevAbsolute(device, mapping.abs_y);
-		absRX = new EvdevAbsolute(device, mapping.abs_rx);
-		absRY = new EvdevAbsolute(device, mapping.abs_ry);
-		absLT = new EvdevAbsolute(device, mapping.abs_rudder);
-		absRT = new EvdevAbsolute(device, mapping.abs_throttle);
-		absDX = new EvdevAbsolute(device, mapping.abs_dpad_x);
-		absDY = new EvdevAbsolute(device, mapping.abs_dpad_y);
+		absLX = new EvdevAbsolute(device, mapping.abs_x, mapping.reverse_x);
+		absLY = new EvdevAbsolute(device, mapping.abs_y, mapping.reverse_y);
+		absRX = new EvdevAbsolute(device, mapping.abs_rx, mapping.reverse_rx);
+		absRY = new EvdevAbsolute(device, mapping.abs_ry, mapping.reverse_ry);
+		absLT = new EvdevAbsolute(device, mapping.abs_rudder, mapping.reverse_rudder);
+		absRT = new EvdevAbsolute(device, mapping.abs_throttle, mapping.reverse_throttle);
+		absDX = new EvdevAbsolute(device, mapping.abs_dpad_x, mapping.reverse_dpad_x);
+		absDY = new EvdevAbsolute(device, mapping.abs_dpad_y, mapping.reverse_dpad_y);
 		
 		translator = new KeyboardTranslator(conn);
 	}

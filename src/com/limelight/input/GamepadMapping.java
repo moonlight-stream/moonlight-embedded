@@ -24,6 +24,11 @@ public class GamepadMapping {
 	public short abs_throttle = EvdevConstants.ABS_THROTTLE;
 	public short abs_rudder = EvdevConstants.ABS_RUDDER;
 	
+	public boolean reverse_x, reverse_y;
+	public boolean reverse_rx, reverse_ry;
+	public boolean reverse_dpad_y, reverse_dpad_x;
+	public boolean reverse_throttle, reverse_rudder;
+	
 	public short btn_south = EvdevConstants.BTN_SOUTH;
 	public short btn_east = EvdevConstants.BTN_EAST;
 	public short btn_north = EvdevConstants.BTN_NORTH;
@@ -48,8 +53,12 @@ public class GamepadMapping {
 		
 		for (Map.Entry entry:props.entrySet()) {
 			try {
-				Field field = this.getClass().getField(entry.getKey().toString());
-				field.setShort(this, Short.parseShort(entry.getValue().toString()));
+				String key = entry.getKey().toString();
+				Field field = this.getClass().getField(key);
+				if (key.startsWith("reverse_"))
+					field.setBoolean(this, Boolean.parseBoolean(entry.getValue().toString()));
+				else
+					field.setShort(this, Short.parseShort(entry.getValue().toString()));
 			} catch (NoSuchFieldException e) {
 				System.err.println("No mapping found named " + entry.getKey());
 			} catch (NumberFormatException e) {

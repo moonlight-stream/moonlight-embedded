@@ -9,6 +9,8 @@ import java.nio.ByteOrder;
  */
 public class EvdevAbsolute {
 	
+	public final static int UP = 1, DOWN = -1, NONE = 0;
+	
 	private final static int ABS_OFFSET = 0x40;
 	private final static int READ_ONLY = 2;
 	private final static char EVDEV_TYPE = 'E';
@@ -50,6 +52,20 @@ public class EvdevAbsolute {
 	 */
 	public byte getByte(int value) {
 		return (byte) ((value-avg) * range / Byte.MAX_VALUE);
+	}
+	
+	/**
+	 * Convert input value to direction
+	 * @param value received input
+	 * @return input value as direction
+	 */
+	public byte getDirection(int value) {
+		if (value>(avg+range/4))
+			return UP;
+		else if (value<(avg-range/4))
+			return DOWN;
+		else
+			return NONE;
 	}
 	
 }

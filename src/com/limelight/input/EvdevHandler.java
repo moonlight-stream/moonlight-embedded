@@ -28,7 +28,7 @@ public class EvdevHandler implements Runnable {
 	private byte leftTrigger, rightTrigger;
 	private short leftStickX, leftStickY, rightStickX, rightStickY;
 	
-	private EvdevAbsolute absLX, absLY, absRX, absRY, absLT, absRT;
+	private EvdevAbsolute absLX, absLY, absRX, absRY, absLT, absRT, absDX, absDY;
 	
 	private NvConnection conn;
 	private FileChannel deviceInput;
@@ -56,6 +56,8 @@ public class EvdevHandler implements Runnable {
 		absRY = new EvdevAbsolute(device, mapping.abs_ry);
 		absLT = new EvdevAbsolute(device, mapping.abs_rudder);
 		absRT = new EvdevAbsolute(device, mapping.abs_throttle);
+		absDX = new EvdevAbsolute(device, mapping.abs_dpad_x);
+		absDY = new EvdevAbsolute(device, mapping.abs_dpad_y);
 		
 		translator = new KeyboardTranslator(conn);
 	}
@@ -160,6 +162,31 @@ public class EvdevHandler implements Runnable {
 				leftTrigger = absLT.getByte(value);
 			else if (code==mapping.abs_rudder)
 				rightTrigger = absRT.getByte(value);
+			else if (code==mapping.abs_dpad_x) {
+				int dir = absRT.getDirection(value);
+				if (dir==EvdevAbsolute.UP) {
+					buttonFlags |= ControllerPacket.RIGHT_FLAG;
+					buttonFlags &= ~ControllerPacket.LEFT_FLAG;
+				} else if (dir==EvdevAbsolute.NONE) {
+					buttonFlags &= ~ControllerPacket.LEFT_FLAG;
+					buttonFlags &= ~ControllerPacket.RIGHT_FLAG;
+				} else if (dir==EvdevAbsolute.DOWN) {
+					buttonFlags |= ControllerPacket.LEFT_FLAG;
+					buttonFlags &= ~ControllerPacket.RIGHT_FLAG;
+				}
+			} else if (code==mapping.abs_dpad_y) {
+				int dir = absRT.getDirection(value);
+				if (dir==EvdevAbsolute.UP) {
+					buttonFlags |= ControllerPacket.UP_FLAG;
+					buttonFlags &= ~ControllerPacket.DOWN_FLAG;
+				} else if (dir==EvdevAbsolute.NONE) {
+					buttonFlags &= ~ControllerPacket.DOWN_FLAG;
+					buttonFlags &= ~ControllerPacket.UP_FLAG;
+				} else if (dir==EvdevAbsolute.DOWN) {
+					buttonFlags |= ControllerPacket.DOWN_FLAG;
+					buttonFlags &= ~ControllerPacket.UP_FLAG;
+				}
+			} 
 
 			conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
 		}

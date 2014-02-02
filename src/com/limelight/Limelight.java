@@ -44,6 +44,12 @@ public class Limelight implements NvConnectionListener {
 	 * Creates a connection to the host and starts up the stream.
 	 */
 	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile) {
+		String vm = System.getProperties().getProperty("java.vm.name");
+		if (!vm.contains("HotSpot")) {
+			System.err.println("You are using a unsupported VM: " + vm);
+			System.err.println("Please update to Oracle Java (Embedded) for better performances");
+		}
+	
 		conn = new NvConnection(host, this, streamConfig);
 		
 		if (inputs.isEmpty()) {

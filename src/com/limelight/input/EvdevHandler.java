@@ -51,9 +51,9 @@ public class EvdevHandler implements Runnable {
 		inputBuffer.order(ByteOrder.nativeOrder());
 		
 		absLX = new EvdevAbsolute(device, mapping.abs_x, mapping.reverse_x);
-		absLY = new EvdevAbsolute(device, mapping.abs_y, mapping.reverse_y);
+		absLY = new EvdevAbsolute(device, mapping.abs_y, !mapping.reverse_y);
 		absRX = new EvdevAbsolute(device, mapping.abs_rx, mapping.reverse_rx);
-		absRY = new EvdevAbsolute(device, mapping.abs_ry, mapping.reverse_ry);
+		absRY = new EvdevAbsolute(device, mapping.abs_ry, !mapping.reverse_ry);
 		absLT = new EvdevAbsolute(device, mapping.abs_rudder, mapping.reverse_rudder);
 		absRT = new EvdevAbsolute(device, mapping.abs_throttle, mapping.reverse_throttle);
 		absDX = new EvdevAbsolute(device, mapping.abs_dpad_x, mapping.reverse_dpad_x);
@@ -176,17 +176,17 @@ public class EvdevHandler implements Runnable {
 				}
 			} else if (code==mapping.abs_dpad_y) {
 				int dir = absRT.getDirection(value);
-				if (dir==EvdevAbsolute.UP) {
+				if (dir==EvdevAbsolute.DOWN) {
 					buttonFlags |= ControllerPacket.UP_FLAG;
 					buttonFlags &= ~ControllerPacket.DOWN_FLAG;
 				} else if (dir==EvdevAbsolute.NONE) {
 					buttonFlags &= ~ControllerPacket.DOWN_FLAG;
 					buttonFlags &= ~ControllerPacket.UP_FLAG;
-				} else if (dir==EvdevAbsolute.DOWN) {
+				} else if (dir==EvdevAbsolute.UP) {
 					buttonFlags |= ControllerPacket.DOWN_FLAG;
 					buttonFlags &= ~ControllerPacket.UP_FLAG;
 				}
-			} 
+			}
 
 			conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
 		}

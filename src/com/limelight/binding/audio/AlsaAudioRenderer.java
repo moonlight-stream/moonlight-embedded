@@ -7,10 +7,16 @@ import com.limelight.nvstream.av.audio.AudioRenderer;
  * @author Iwan Timmer
  */
 public class AlsaAudioRenderer implements AudioRenderer {
+	
+	private String device;
+	
+	public AlsaAudioRenderer(String device) {
+		this.device = device;
+	}
 
 	@Override
 	public void streamInitialized(int channelCount, int sampleRate) {
-		int ret = AlsaAudio.init(channelCount, sampleRate);
+		int ret = AlsaAudio.init(channelCount, sampleRate, device.getBytes());
 		if (ret != 0)
 			throw new IllegalStateException("AVC decoder initialization failure: "+ret);
 	}

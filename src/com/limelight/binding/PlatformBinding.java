@@ -39,7 +39,7 @@ public class PlatformBinding {
 	 * Gets an instance of an audio decoder/renderer.
 	 * @return an audio decoder and renderer
 	 */
-	public static AudioRenderer getAudioRenderer() {
-		return new AlsaAudioRenderer();
+	public static AudioRenderer getAudioRenderer(String device) {
+		return new AlsaAudioRenderer(device);
 	}
 }

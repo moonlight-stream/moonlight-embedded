@@ -9,7 +9,7 @@ public class AlsaAudio {
 		System.loadLibrary("nv_alsa");
 	}
 	
-	public static native int init(int channelCount, int sampleRate);
+	public static native int init(int channelCount, int sampleRate, byte[] device);
 	
 	public static native void close();
 	

@@ -43,7 +43,7 @@ public class Limelight implements NvConnectionListener {
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
-	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile) {
+	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile, String audioDevice) {
 		String vm = System.getProperties().getProperty("java.vm.name");
 		if (!vm.contains("HotSpot")) {
 			System.err.println("You are using a unsupported VM: " + vm);
@@ -87,11 +87,11 @@ public class Limelight implements NvConnectionListener {
 				displayError("Input", "Are you running as root?");
 				return;
 			}
-		}		
+		}
 		
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
-				PlatformBinding.getAudioRenderer(),
+				PlatformBinding.getAudioRenderer(audioDevice),
 				PlatformBinding.getVideoDecoderRenderer());
 	}
 	
@@ -151,6 +151,7 @@ public class Limelight implements NvConnectionListener {
 		int refresh = 60;
 		boolean parse = true;
 		String mapping = null;
+		String audio = "hw:0";
 		
 		for (int i = 0; i < args.length - 1; i++) {
 			if (args[i].equals("-input")) {
@@ -167,6 +168,14 @@ public class Limelight implements NvConnectionListener {
 					i++;
 				} else {
 					System.out.println("Syntax error: mapping file expected after -mapping");
+					System.exit(3);
+				}
+			} else if (args[i].equals("-audio")) {
+				if (i + 1 < args.length) {
+					audio = args[i+1];
+					i++;
+				} else {
+					System.out.println("Syntax error: audio device expected after -audio");
 					System.exit(3);
 				}
 			} else if (args[i].equals("-pair")) {
@@ -194,6 +203,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
+			System.out.println("\t-audio <device>\tUse <device> as ALSA audio output device (default hw:0)");
 			System.out.println("\t-pair\t\tPair with host");
 			System.out.println();
 			System.out.println("Use ctrl-c to exit application");
@@ -205,7 +215,7 @@ public class Limelight implements NvConnectionListener {
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)
-			limelight.startUp(streamConfig, inputs, mapping);
+			limelight.startUp(streamConfig, inputs, mapping, audio);
 		else
 			limelight.pair();
 	}

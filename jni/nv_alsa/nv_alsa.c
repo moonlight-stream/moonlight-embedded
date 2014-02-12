@@ -7,13 +7,13 @@
 
 snd_pcm_t *handle;
 
-int nv_alsa_init(unsigned int channelCount, unsigned int sampleRate) {
+int nv_alsa_init(unsigned int channelCount, unsigned int sampleRate, unsigned char* device) {
 	int rc;
 	snd_pcm_hw_params_t *params;
 	int dir;
 	
 	/* Open PCM device for playback. */
-	if ((rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) != 0)
+	if ((rc = snd_pcm_open(&handle, device, SND_PCM_STREAM_PLAYBACK, 0)) != 0)
 		return rc;
 	
 	snd_pcm_hw_params_alloca(&params);

@@ -19,13 +19,21 @@ int nv_alsa_init(unsigned int channelCount, unsigned int sampleRate) {
 	snd_pcm_hw_params_alloca(&params);
 	snd_pcm_hw_params_any(handle, params);
 	
-	snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE);
-	snd_pcm_hw_params_set_channels(handle, params, channelCount);
-	snd_pcm_hw_params_set_rate_near(handle, params, &sampleRate, &dir);
+	if ((rc = snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED)) != 0)
+                return rc;
+
+	if ((rc = snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE)) != 0)
+                return rc;
+
+	if ((rc = snd_pcm_hw_params_set_channels(handle, params, channelCount)) != 0)
+                return rc;
+
+	if ((rc = snd_pcm_hw_params_set_rate_near(handle, params, &sampleRate, &dir)) != 0)
+                return rc;
 	
 	snd_pcm_uframes_t frames = 32;
-	snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
+	if ((rc = snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir)) != 0)
+		return rc;
 	
 	if ((rc = snd_pcm_hw_params(handle, params)) != 0)
 		return rc;

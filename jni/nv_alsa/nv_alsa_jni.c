@@ -6,17 +6,16 @@
 // This function must be called before
 // any other decoding functions
 JNIEXPORT jint JNICALL
-Java_com_limelight_binding_audio_AlsaAudio_init(JNIEnv *env, jobject this, jint channelCount, jint sampleRate, jbyteArray device)
+Java_com_limelight_binding_audio_AlsaAudio_init(JNIEnv *env, jobject this, jint channelCount, jint sampleRate, jstring device)
 {
 	jint ret;
-	jbyte* jni_device;
+	char* jni_device;
 	
-	jni_device = (*env)->GetByteArrayElements(env, device, 0);
+	jni_device = (*env)->GetStringUTFChars(env, device, 0);
 	
 	ret = nv_alsa_init(channelCount, sampleRate, jni_device);
 	
-	// The input data isn't changed so it can be safely aborted
-	(*env)->ReleaseByteArrayElements(env, device, jni_device, JNI_ABORT);
+	(*env)->ReleaseStringUTFChars(env, device, jni_device);
 	
 	return ret;
 }

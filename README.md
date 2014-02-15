@@ -26,7 +26,7 @@ implementation.
 * Download [GeForce Experience](http://www.geforce.com/geforce-experience) and install on your Windows PC
 * Download the appropriate jar from the [GitHub releases page](https://github.com/irtimmer/limelight-pi/releases)
 * Install libopus0 (Debian/Raspbian) or opus (ArchLinux/Fedora/Pidora)
-* [Configure Alsa](http://blog.scphillips.com/2013/01/sound-configuration-on-raspberry-pi-with-alsa/)
+* [Configure sound](http://elinux.org/R-Pi_Troubleshooting#Sound)
 
 ##Requirements
 
@@ -41,6 +41,12 @@ implementation.
 * Accept the pairing confirmation on your PC
 * Start Limelight-pi normally
 * Play games!
+
+##Compile
+
+* Install ant
+* Install libopus-dev and libasound2-dev (Debian/Raspbian) or opus-devel and alsa-lib-devel (Fedora/Pidora)
+* Build using Ant ``ant``
 
 ##Contribute
 

@@ -16,7 +16,7 @@ public class AlsaAudioRenderer implements AudioRenderer {
 
 	@Override
 	public void streamInitialized(int channelCount, int sampleRate) {
-		int ret = AlsaAudio.init(channelCount, sampleRate, device.getBytes());
+		int ret = AlsaAudio.init(channelCount, sampleRate, device);
 		if (ret != 0)
 			throw new IllegalStateException("AVC decoder initialization failure: "+ret);
 	}

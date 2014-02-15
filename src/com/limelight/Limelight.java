@@ -151,7 +151,7 @@ public class Limelight implements NvConnectionListener {
 		int refresh = 60;
 		boolean parse = true;
 		String mapping = null;
-		String audio = "hw:0";
+		String audio = "hw:0,0";
 		
 		for (int i = 0; i < args.length - 1; i++) {
 			if (args[i].equals("-input")) {

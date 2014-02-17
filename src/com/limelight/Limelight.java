@@ -3,6 +3,8 @@ package com.limelight;
 import java.io.IOException;
 
 import com.limelight.binding.PlatformBinding;
+import com.limelight.binding.audio.FakeAudioRenderer;
+import com.limelight.binding.video.FakeVideoRenderer;
 import com.limelight.input.EvdevHandler;
 import com.limelight.input.GamepadMapping;
 import com.limelight.nvstream.NvConnection;
@@ -95,6 +97,17 @@ public class Limelight implements NvConnectionListener {
 				PlatformBinding.getVideoDecoderRenderer());
 	}
 	
+	/*
+	 * Creates a connection to the host and starts up the stream.
+	 */
+	private void startUpFake(StreamConfiguration streamConfig) {
+		conn = new NvConnection(host, this, streamConfig);
+		conn.start(PlatformBinding.getDeviceName(), null,
+				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
+				new FakeAudioRenderer(),
+				new FakeVideoRenderer());
+	}
+	
 	/**
 	 * Pair the device with the host
 	 */
@@ -150,6 +163,7 @@ public class Limelight implements NvConnectionListener {
 		int resolution = 720;
 		int refresh = 60;
 		boolean parse = true;
+		boolean fake = false;
 		String mapping = null;
 		String audio = "hw:0,0";
 		
@@ -188,6 +202,8 @@ public class Limelight implements NvConnectionListener {
 				refresh = 30;
 			} else if (args[i].equals("-60fps")) {
 				refresh = 60;
+			} else if (args[i].equals("-fake")) {
+				fake = true;
 			} else {
 				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
 				parse = false;
@@ -215,7 +231,10 @@ public class Limelight implements NvConnectionListener {
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)
-			limelight.startUp(streamConfig, inputs, mapping, audio);
+			if (fake)
+				limelight.startUpFake(streamConfig);
+			else
+				limelight.startUp(streamConfig, inputs, mapping, audio);
 		else
 			limelight.pair();
 	}

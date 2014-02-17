@@ -20,6 +20,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.xmlpull.v1.XmlPullParserException;
 
 /**
@@ -166,6 +168,7 @@ public class Limelight implements NvConnectionListener {
 		boolean fake = false;
 		String mapping = null;
 		String audio = "hw:0,0";
+		Level debug = Level.SEVERE;
 		
 		for (int i = 0; i < args.length - 1; i++) {
 			if (args[i].equals("-input")) {
@@ -204,6 +207,10 @@ public class Limelight implements NvConnectionListener {
 				refresh = 60;
 			} else if (args[i].equals("-fake")) {
 				fake = true;
+			} else if (args[i].equals("-v")) {
+				debug = Level.WARNING;
+			} else if (args[i].equals("-vv")) {
+				debug = Level.ALL;
 			} else {
 				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
 				parse = false;
@@ -226,6 +233,9 @@ public class Limelight implements NvConnectionListener {
 			System.exit(5);
 		} else
 			host = args[args.length-1];
+		
+		//Set debugging level
+		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);
 		
 		StreamConfiguration streamConfig = new StreamConfiguration((resolution/9)*16, resolution, refresh);
 		

@@ -43,8 +43,6 @@ int nv_alsa_play(const unsigned char* indata, int data_len) {
 	int frames = data_len/4; /* 2 bytes/sample, 2 channels */
 	int rc = snd_pcm_writei(handle, indata, frames);
 	if (rc == -EPIPE) {
-		/* EPIPE means underrun */
-		fprintf(stderr, "underrun occurred\n");
 		snd_pcm_prepare(handle);
 	} else if (rc < 0) {
 		fprintf(stderr,
@@ -53,7 +51,9 @@ int nv_alsa_play(const unsigned char* indata, int data_len) {
 	} else if (rc != (int) frames) {
 		fprintf(stderr,
 			"short write, write %d frames\n", rc);
-	}	
+	}
+	
+	return rc;
 }
 
 int nv_alsa_close(void) {

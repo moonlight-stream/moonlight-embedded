@@ -1,5 +1,6 @@
 package com.limelight.binding.audio;
 
+import com.limelight.LimeLog;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 
 /**
@@ -23,7 +24,12 @@ public class AlsaAudioRenderer implements AudioRenderer {
 
 	@Override
 	public void playDecodedAudio(byte[] bytes, int offset, int length) {
-		AlsaAudio.play(bytes, offset, length);
+		int rc = AlsaAudio.play(bytes, offset, length);
+		
+		if (rc<0)
+			LimeLog.warning("Alsa error from writei: "+rc);
+		else if (rc!=length/4)
+			LimeLog.warning("Alsa short write, write "+rc+" frames");
 	}
 
 	@Override

@@ -17,16 +17,12 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 	@Override
 	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
 		int err = OmxDecoder.init();
-		if (err != 0) {
+		if (err != 0)
 			throw new IllegalStateException("AVC decoder initialization failure: "+err);
-		}
-		
-		System.out.println("Using omx decoding");
 	}
 
 	@Override
 	public void start() {
-		System.out.println("Start omx rendering");
 	}
 
 	@Override

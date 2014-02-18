@@ -47,16 +47,26 @@ public class Limelight implements NvConnectionListener {
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
-	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile, String audioDevice) {
-		String vm = System.getProperties().getProperty("java.vm.name");
-		if (!vm.contains("HotSpot")) {
-			System.err.println("You are using a unsupported VM: " + vm);
-			System.err.println("Please update to Oracle Java (Embedded) for better performances");
-		}
-		String display = System.getenv("DISPLAY");
-		if (display!=null) {
-			System.err.println("X server is propably running");
-			System.err.println("Please exit the X server for a lower latency");
+	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile, String audioDevice, boolean tests) {
+		if (tests) {
+			boolean test = true;
+			String vm = System.getProperties().getProperty("java.vm.name");
+			if (!vm.contains("HotSpot")) {
+				System.err.println("You are using a unsupported VM: " + vm);
+				System.err.println("Please update to Oracle Java (Embedded) for better performances");
+				test = false;
+			}
+			String display = System.getenv("DISPLAY");
+			if (display!=null) {
+				System.err.println("X server is propably running");
+				System.err.println("Please exit the X server for a lower latency");
+				test = false;
+			}
+			
+			if (!test) {
+				System.err.println("Fix problems or start application with parameter -notest");
+				return;
+			}
 		}
 	
 		conn = new NvConnection(host, this, streamConfig);
@@ -171,6 +181,7 @@ public class Limelight implements NvConnectionListener {
 		int refresh = 60;
 		boolean parse = true;
 		boolean fake = false;
+		boolean tests = true;
 		String mapping = null;
 		String audio = "hw:0,0";
 		Level debug = Level.SEVERE;
@@ -212,6 +223,8 @@ public class Limelight implements NvConnectionListener {
 				refresh = 60;
 			} else if (args[i].equals("-fake")) {
 				fake = true;
+			} else if (args[i].equals("-notest")) {
+				tests = false;
 			} else if (args[i].equals("-v")) {
 				debug = Level.WARNING;
 			} else if (args[i].equals("-vv")) {
@@ -249,7 +262,7 @@ public class Limelight implements NvConnectionListener {
 			if (fake)
 				limelight.startUpFake(streamConfig);
 			else
-				limelight.startUp(streamConfig, inputs, mapping, audio);
+				limelight.startUp(streamConfig, inputs, mapping, audio, tests);
 		else
 			limelight.pair();
 	}

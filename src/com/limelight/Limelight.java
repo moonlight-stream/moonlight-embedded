@@ -53,6 +53,11 @@ public class Limelight implements NvConnectionListener {
 			System.err.println("You are using a unsupported VM: " + vm);
 			System.err.println("Please update to Oracle Java (Embedded) for better performances");
 		}
+		String display = System.getenv("DISPLAY");
+		if (display!=null) {
+			System.err.println("X server is propably running");
+			System.err.println("Please exit the X server for a lower latency");
+		}
 	
 		conn = new NvConnection(host, this, streamConfig);
 		

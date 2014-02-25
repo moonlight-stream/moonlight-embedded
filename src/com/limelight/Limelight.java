@@ -353,5 +353,10 @@ public class Limelight implements NvConnectionListener {
 	public void displayError(String title, String message) {
 		System.err.println(title + " " + message);
 	}
+
+	@Override
+	public void displayTransientMessage(String message) {
+		displayMessage(message);
+	}
 }
 

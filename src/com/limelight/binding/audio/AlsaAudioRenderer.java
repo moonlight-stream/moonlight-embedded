@@ -36,5 +36,10 @@ public class AlsaAudioRenderer implements AudioRenderer {
 	public void streamClosing() {
 		AlsaAudio.close();
 	}
+
+	@Override
+	public int getCapabilities() {
+		return CAPABILITY_DIRECT_SUBMIT;
+	}
 	
 }

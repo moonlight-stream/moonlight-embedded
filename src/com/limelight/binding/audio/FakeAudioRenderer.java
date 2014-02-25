@@ -20,4 +20,9 @@ public class FakeAudioRenderer implements AudioRenderer {
 	public void streamClosing() {
 	}
 	
+	@Override
+	public int getCapabilities() {
+		return CAPABILITY_DIRECT_SUBMIT;
+	}
+	
 }

@@ -1,5 +1,6 @@
 package com.limelight;
 
+
 import java.io.IOException;
 
 import com.limelight.binding.PlatformBinding;
@@ -71,6 +72,18 @@ public class Limelight implements NvConnectionListener {
 	
 		conn = new NvConnection(host, this, streamConfig);
 		
+		boolean success = setupInput(inputs, mappingFile, false);
+		if (!success) {
+			return;
+		}
+
+		conn.start(PlatformBinding.getDeviceName(), null,
+				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
+				PlatformBinding.getAudioRenderer(audioDevice),
+				PlatformBinding.getVideoDecoderRenderer());
+	}
+
+	private boolean setupInput(List<String> inputs, String mappingFile, boolean logInput) {
 		if (inputs.isEmpty()) {
 			File input = new File("/dev/input");
 			String[] events = input.list(new FilenameFilter() {
@@ -97,21 +110,17 @@ public class Limelight implements NvConnectionListener {
 
 		for (String input:inputs) {
 			try {
-				new EvdevHandler(conn, input, mapping).start();
+				new EvdevHandler(conn, input, mapping, logInput).start();
 			} catch (FileNotFoundException ex) {
 				displayError("Input", "Input (" + input + ") could not be found");
-				return;
+				return false;
 			} catch (IOException ex) {
 				displayError("Input", "Input (" + input + ") could not be read");
 				displayError("Input", "Are you running as root?");
-				return;
+				return false;
 			}
 		}
-		
-		conn.start(PlatformBinding.getDeviceName(), null,
-				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
-				PlatformBinding.getAudioRenderer(audioDevice),
-				PlatformBinding.getVideoDecoderRenderer());
+		return true;
 	}
 	
 	/*
@@ -125,6 +134,19 @@ public class Limelight implements NvConnectionListener {
 				new FakeVideoRenderer());
 	}
 	
+	private void startUpMappingTest(List<String> inputs, String mappingFile) {
+		conn = new NvConnection(null, this, null);
+		setupInput(inputs, mappingFile, true);
+		System.out.println("Beginning Input Test. Press Ctrl+C to exit.");
+		while (true) {
+			try {
+				Thread.sleep(60000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	/**
 	 * Pair the device with the host
 	 */
@@ -182,11 +204,12 @@ public class Limelight implements NvConnectionListener {
 		boolean parse = true;
 		boolean fake = false;
 		boolean tests = true;
+		boolean testMapping = false;
 		String mapping = null;
 		String audio = "hw:0,0";
 		Level debug = Level.SEVERE;
 		
-		for (int i = 0; i < args.length - 1; i++) {
+		for (int i = 0; i < args.length; i++) {
 			if (args[i].equals("-input")) {
 				if (i + 1 < args.length) {
 					inputs.add(args[i+1]);
@@ -225,32 +248,40 @@ public class Limelight implements NvConnectionListener {
 				fake = true;
 			} else if (args[i].equals("-notest")) {
 				tests = false;
+			} else if (args[i].equals("--test-mapping") || args[i].equals("-tm")) {
+				testMapping = true;
 			} else if (args[i].equals("-v")) {
 				debug = Level.WARNING;
 			} else if (args[i].equals("-vv")) {
 				debug = Level.ALL;
+			} else if (i == args.length - 1) {
+				host = args[i];
 			} else {
 				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
 				parse = false;
 			}
 		}
 		
+		if (!testMapping && host == null) {
+			parse = false;
+		}
+
 		if (args.length == 0 || !parse) {
 			System.out.println("Usage: java -jar limelight-pi.jar [options] host");
-			System.out.println("\t-720\t\tUse 1280x720 resolution [default]");
-			System.out.println("\t-1080\t\tUse 1920x1080 resolution");
-			System.out.println("\t-30fps\t\tUse 30fps");
-			System.out.println("\t-60fps\t\tUse 60fps [default]");
-			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
-			System.out.println("\t\t\t[default uses all devices in /dev/input]");
-			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
-			System.out.println("\t-audio <device>\tUse <device> as ALSA audio output device (default hw:0)");
-			System.out.println("\t-pair\t\tPair with host");
+			System.out.println("\t-720\t\t\tUse 1280x720 resolution [default]");
+			System.out.println("\t-1080\t\t\tUse 1920x1080 resolution");
+			System.out.println("\t-30fps\t\t\tUse 30fps");
+			System.out.println("\t-60fps\t\t\tUse 60fps [default]");
+			System.out.println("\t-input <device>\t\tUse <device> as input. Can be used multiple times");
+			System.out.println("\t\t\t\t[default uses all devices in /dev/input]");
+			System.out.println("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file");
+			System.out.println("\t-tm, --test-mapping \tTest mapping without connecting to host");
+			System.out.println("\t-audio <device>\t\tUse <device> as ALSA audio output device (default hw:0)");
+			System.out.println("\t-pair\t\t\tPair with host");
 			System.out.println();
 			System.out.println("Use ctrl-c to exit application");
 			System.exit(5);
-		} else
-			host = args[args.length-1];
+		}
 		
 		//Set debugging level
 		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);
@@ -261,6 +292,8 @@ public class Limelight implements NvConnectionListener {
 		if (!pair)
 			if (fake)
 				limelight.startUpFake(streamConfig);
+			else if (testMapping)
+				limelight.startUpMappingTest(inputs, mapping);
 			else
 				limelight.startUp(streamConfig, inputs, mapping, audio, tests);
 		else

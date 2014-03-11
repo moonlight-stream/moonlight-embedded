@@ -23,6 +23,8 @@ public class GamepadMapping {
 	
 	public short abs_throttle = EvdevConstants.ABS_THROTTLE;
 	public short abs_rudder = EvdevConstants.ABS_RUDDER;
+	public short btn_throttle = EvdevConstants.BTN_THROTTLE;
+	public short btn_rudder = EvdevConstants.BTN_RUDDER;
 	
 	public boolean reverse_x, reverse_y;
 	public boolean reverse_rx, reverse_ry;

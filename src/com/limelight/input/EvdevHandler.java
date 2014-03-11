@@ -157,13 +157,13 @@ public class EvdevHandler implements Runnable {
 				conn.sendMouseMove((short) 0, (short) value);
 		} else if (type==EvdevConstants.EV_ABS) {
 			if (code==mapping.abs_x)
-				leftStickX = absLX.getShort(value);
+				leftStickX = accountForDeadzone(absLX.getShort(value));
 			else if (code==mapping.abs_y)
-				leftStickY = absLY.getShort(value);
+				leftStickY = accountForDeadzone(absLY.getShort(value));
 			else if (code==mapping.abs_rx)
-				rightStickX = absRX.getShort(value);
+				rightStickX = accountForDeadzone(absRX.getShort(value));
 			else if (code==mapping.abs_ry)
-				rightStickY = absRY.getShort(value);
+				rightStickY = accountForDeadzone(absRY.getShort(value));
 			else if (code==mapping.abs_throttle)
 				leftTrigger = absLT.getByte(value);
 			else if (code==mapping.abs_rudder)
@@ -195,6 +195,14 @@ public class EvdevHandler implements Runnable {
 			}
 
 			conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+		}
+	}
+
+	private short accountForDeadzone(short value) {
+		if (Math.abs(value) > mapping.abs_deadzone) {
+			return value;
+		} else {
+			return 0;
 		}
 	}
 

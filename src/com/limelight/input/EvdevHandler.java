@@ -17,6 +17,7 @@ import java.nio.channels.FileChannel;
  * @author Iwan Timmer
  */
 public class EvdevHandler implements Runnable {
+
 	
 	private static KeyboardTranslator translator;
 	
@@ -33,12 +34,13 @@ public class EvdevHandler implements Runnable {
 	private NvConnection conn;
 	private FileChannel deviceInput;
 	private ByteBuffer inputBuffer;
-	
+	private boolean loggingInput;
 	private GamepadMapping mapping;
 	
-	public EvdevHandler(NvConnection conn, String device, GamepadMapping mapping) throws FileNotFoundException, IOException {
+	public EvdevHandler(NvConnection conn, String device, GamepadMapping mapping, boolean loggingInput) throws FileNotFoundException, IOException {
 		this.conn = conn;
 		this.mapping = mapping;
+		this.loggingInput = loggingInput;
 		File file = new File(device);
 		if (!file.exists())
 			throw new FileNotFoundException("File " + device + " not found");
@@ -61,7 +63,12 @@ public class EvdevHandler implements Runnable {
 		
 		translator = new KeyboardTranslator(conn);
 	}
-	
+
+	private void logInput(String msg) {
+		if (loggingInput)
+			System.out.println(msg);
+	}
+
 	public void start() {
 		Thread thread = new Thread(this);
 		thread.setDaemon(true);
@@ -99,47 +106,74 @@ public class EvdevHandler implements Runnable {
 					mouseButton = MouseButtonPacket.BUTTON_2;
 				else if (code==EvdevConstants.BTN_RIGHT)
 					mouseButton = MouseButtonPacket.BUTTON_3;
-				else if (code==mapping.btn_south)
+				else if (code==mapping.btn_south) {
 					gamepadButton = ControllerPacket.A_FLAG;
-				else if (code==mapping.btn_west)
+					logInput("A(South)");
+				} else if (code==mapping.btn_west) {
 					gamepadButton = ControllerPacket.X_FLAG;
-				else if (code==mapping.btn_north)
+					logInput("X(West)");
+				} else if (code==mapping.btn_north) {
 					gamepadButton = ControllerPacket.Y_FLAG;
-				else if (code==mapping.btn_east)
+					logInput("Y(North)");
+				} else if (code==mapping.btn_east) {
 					gamepadButton = ControllerPacket.B_FLAG;
-				else if (code==mapping.btn_dpad_up)
+					logInput("B(East)");
+				} else if (code==mapping.btn_dpad_up) {
 					gamepadButton = ControllerPacket.UP_FLAG;
-				else if (code==mapping.btn_dpad_down)
+					logInput("D-UP");
+				} else if (code==mapping.btn_dpad_down) {
 					gamepadButton = ControllerPacket.DOWN_FLAG;
-				else if (code==mapping.btn_dpad_left)
+					logInput("D-DOWN");
+				} else if (code==mapping.btn_dpad_left) {
 					gamepadButton = ControllerPacket.LEFT_FLAG;
-				else if (code==mapping.btn_dpad_right)
+					logInput("D-LEFT");
+				} else if (code==mapping.btn_dpad_right) {
 					gamepadButton = ControllerPacket.RIGHT_FLAG;
-				else if (code==mapping.btn_thumbl)
+					logInput("D-RIGHT");
+				} else if (code==mapping.btn_thumbl) {
 					gamepadButton = ControllerPacket.LS_CLK_FLAG;
-				else if (code==mapping.btn_thumbr)
+					logInput("Left Thumb");
+				} else if (code==mapping.btn_thumbr) {
 					gamepadButton = ControllerPacket.RS_CLK_FLAG;
-				else if (code==mapping.btn_tl)
+					logInput("Right Thumb");
+				} else if (code==mapping.btn_tl) {
 					gamepadButton = ControllerPacket.LB_FLAG;
-				else if (code==mapping.btn_tr)
+					logInput("Left Shoulder");
+				} else if (code==mapping.btn_tr) {
 					gamepadButton = ControllerPacket.RB_FLAG;
-				else if (code==mapping.btn_start)
+					logInput("Right Shoulder");
+				} else if (code==mapping.btn_start) {
 					gamepadButton = ControllerPacket.PLAY_FLAG;
-				else if (code==mapping.btn_select)
+					logInput("Play");
+				} else if (code==mapping.btn_select) {
 					gamepadButton = ControllerPacket.BACK_FLAG;
-				else if (code==mapping.btn_mode)
+					logInput("Back");
+				} else if (code==mapping.btn_mode) {
 					gamepadButton = ControllerPacket.SPECIAL_BUTTON_FLAG;
+					logInput("Mode");
+				}
 			
 				if (mouseButton>0) {
 					if (value==EvdevConstants.KEY_PRESSED)
 						conn.sendMouseButtonDown(mouseButton);
 					else if (value==EvdevConstants.KEY_RELEASED)
-						conn.sendMouseButtonUp(mouseButton);						
-				} else if (gamepadButton>0) {
-					if (value==EvdevConstants.KEY_PRESSED) {
-						buttonFlags |= gamepadButton;
-					} else  if (value==EvdevConstants.KEY_RELEASED){
-						buttonFlags &= ~gamepadButton;
+						conn.sendMouseButtonUp(mouseButton);
+				} else {
+					if (gamepadButton != 0) {
+						if (value==EvdevConstants.KEY_PRESSED) {
+							buttonFlags |= gamepadButton;
+						} else  if (value==EvdevConstants.KEY_RELEASED){
+							buttonFlags &= ~gamepadButton;
+						}
+					} else if (code==mapping.btn_throttle) {
+						leftTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
+						logInput("LeftTrigger-As-Button (Throttle): " + leftTrigger);
+					} else if (code==mapping.btn_rudder) {
+						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
+						logInput("RightTrigger-As-Button (Rudder): " + rightTrigger);
+					} else {
+						logInput("Unrecognized Code: " + code);
+						return;
 					}
 					conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
 				}
@@ -150,45 +184,67 @@ public class EvdevHandler implements Runnable {
 			else if (code==EvdevConstants.REL_Y)
 				conn.sendMouseMove((short) 0, (short) value);
 		} else if (type==EvdevConstants.EV_ABS) {
-			if (code==mapping.abs_x)
-				leftStickX = absLX.getShort(value);
-			else if (code==mapping.abs_y)
-				leftStickY = absLY.getShort(value);
-			else if (code==mapping.abs_rx)
-				rightStickX = absRX.getShort(value);
-			else if (code==mapping.abs_ry)
-				rightStickY = absRY.getShort(value);
-			else if (code==mapping.abs_throttle)
+			if (code==mapping.abs_x) {
+				leftStickX = accountForDeadzone(absLX.getShort(value));
+				logInput("Left Stick X:" + leftStickX);
+			} else if (code==mapping.abs_y) {
+				leftStickY = accountForDeadzone(absLY.getShort(value));
+				logInput("Left Stick Y:" + leftStickY);
+			} else if (code==mapping.abs_rx) {
+				rightStickX = accountForDeadzone(absRX.getShort(value));
+				logInput("Right Stick X:" + rightStickX);
+			} else if (code==mapping.abs_ry) {
+				rightStickY = accountForDeadzone(absRY.getShort(value));
+				logInput("Right Stick Y:" + rightStickY);
+			} else if (code==mapping.abs_throttle) {
 				leftTrigger = absLT.getByte(value);
-			else if (code==mapping.abs_rudder)
+				logInput("LeftTrigger (Throttle): " + leftTrigger);
+			} else if (code==mapping.abs_rudder) {
 				rightTrigger = absRT.getByte(value);
-			else if (code==mapping.abs_dpad_x) {
+				logInput("RightTrigger (Rudder): " + rightTrigger);
+			} else if (code==mapping.abs_dpad_x) {
 				int dir = absRT.getDirection(value);
 				if (dir==EvdevAbsolute.UP) {
+					logInput("D-Pad X UP");
 					buttonFlags |= ControllerPacket.RIGHT_FLAG;
 					buttonFlags &= ~ControllerPacket.LEFT_FLAG;
 				} else if (dir==EvdevAbsolute.NONE) {
+					logInput("D-Pad X NONE");
 					buttonFlags &= ~ControllerPacket.LEFT_FLAG;
 					buttonFlags &= ~ControllerPacket.RIGHT_FLAG;
 				} else if (dir==EvdevAbsolute.DOWN) {
+					logInput("D-Pad X DOWN");
 					buttonFlags |= ControllerPacket.LEFT_FLAG;
 					buttonFlags &= ~ControllerPacket.RIGHT_FLAG;
 				}
 			} else if (code==mapping.abs_dpad_y) {
 				int dir = absRT.getDirection(value);
 				if (dir==EvdevAbsolute.DOWN) {
+					logInput("D-Pad Y DOWN");
 					buttonFlags |= ControllerPacket.UP_FLAG;
 					buttonFlags &= ~ControllerPacket.DOWN_FLAG;
 				} else if (dir==EvdevAbsolute.NONE) {
+					logInput("D-Pad Y NONE");
 					buttonFlags &= ~ControllerPacket.DOWN_FLAG;
 					buttonFlags &= ~ControllerPacket.UP_FLAG;
 				} else if (dir==EvdevAbsolute.UP) {
+					logInput("D-Pad Y UP");
 					buttonFlags |= ControllerPacket.DOWN_FLAG;
 					buttonFlags &= ~ControllerPacket.UP_FLAG;
 				}
+			} else {
+				logInput("Unrecognized [Code,Value]: [" + code + "," + value + "]");
 			}
 
 			conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+		}
+	}
+
+	private short accountForDeadzone(short value) {
+		if (Math.abs(value) > mapping.abs_deadzone) {
+			return value;
+		} else {
+			return 0;
 		}
 	}
 

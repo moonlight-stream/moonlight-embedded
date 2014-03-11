@@ -75,13 +75,21 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 	public void replace(ByteBufferDescriptor source, int srcOffset, int srcLength, byte[] data, int dataLength) {
 		//Add 7 to always round up
 		int length = (source.length*8-srcLength+dataLength+7)/8;
-		byte dest[] = new byte[length];
-		
+
 		int bitOffset = srcOffset%8;
 		int byteOffset = srcOffset/8;
 		
-		//Copy the first bytes
-		System.arraycopy(source.data, source.offset, dest, 0, byteOffset);
+		byte dest[] = null;
+		int offset = 0;
+		if (length>source.length) {
+			dest = new byte[length];
+			
+			//Copy the first bytes
+			System.arraycopy(source.data, source.offset, dest, offset, byteOffset);
+		} else {
+			dest = source.data;
+			offset = source.offset;
+		}
 		
 		int byteLength = (bitOffset+dataLength+7)/8;
 		int bitTrailing = 8 - (srcOffset+dataLength) % 8;
@@ -109,7 +117,7 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 				}
 			}
 			
-			dest[i+byteOffset] = result;
+			dest[i+byteOffset+offset] = result;
 		}
 		
 		//Source offset
@@ -120,16 +128,18 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 		int destOffset = (srcOffset+dataLength)/8;
 		
 		for (int i=1;i<source.length-byteOffset;i++) {
-			byte result = 0;
-			result = (byte) (source.data[byteOffset+i-1+source.offset] << 8-bitOffset);
-			byte moved = (byte) ((source.data[byteOffset+i+source.offset]&0xFF) >>> bitOffset);
-			result ^= moved;
+			int diff = destOffset >= byteOffset-1?i:source.length-byteOffset-i;
 			
-			dest[i+destOffset] = result;
+			byte result = 0;
+			result = (byte) (source.data[byteOffset+diff-1+source.offset] << 8-bitOffset);
+			byte moved = (byte) ((source.data[byteOffset+diff+source.offset]&0xFF) >>> bitOffset);
+			result ^= moved;
+
+			dest[diff+destOffset+offset] = result;
 		}
 		
 		source.data = dest;
-		source.offset = 0;
+		source.offset = offset;
 		source.length = length;
 	}
 	

@@ -135,11 +135,17 @@ public class EvdevHandler implements Runnable {
 						conn.sendMouseButtonDown(mouseButton);
 					else if (value==EvdevConstants.KEY_RELEASED)
 						conn.sendMouseButtonUp(mouseButton);						
-				} else if (gamepadButton>0) {
-					if (value==EvdevConstants.KEY_PRESSED) {
-						buttonFlags |= gamepadButton;
-					} else  if (value==EvdevConstants.KEY_RELEASED){
-						buttonFlags &= ~gamepadButton;
+				} else {
+					if (gamepadButton != 0) {
+						if (value==EvdevConstants.KEY_PRESSED) {
+							buttonFlags |= gamepadButton;
+						} else  if (value==EvdevConstants.KEY_RELEASED){
+							buttonFlags &= ~gamepadButton;
+						}
+					} else if (code==mapping.btn_throttle) {
+						leftTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
+					} else if (code==mapping.btn_rudder) {
+						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
 					}
 					conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
 				}

@@ -150,6 +150,8 @@ public class EvdevConstants {
 	
 	public static final short ABS_THROTTLE = 0x06;
 	public static final short ABS_RUDDER = 0x07;
+	public static final short BTN_THROTTLE = 311;
+	public static final short BTN_RUDDER = 312;
 	
 	public static final short BTN_SOUTH = 0x130;
 	public static final short BTN_EAST = 0x131;

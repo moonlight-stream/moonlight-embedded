@@ -44,13 +44,6 @@ int nv_alsa_play(const unsigned char* indata, int data_len) {
 	int rc = snd_pcm_writei(handle, indata, frames);
 	if (rc == -EPIPE) {
 		snd_pcm_prepare(handle);
-	} else if (rc < 0) {
-		fprintf(stderr,
-			"error from writei: %s\n",
-			snd_strerror(rc));
-	} else if (rc != (int) frames) {
-		fprintf(stderr,
-			"short write, write %d frames\n", rc);
 	}
 	
 	return rc;

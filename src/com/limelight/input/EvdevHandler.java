@@ -1,5 +1,6 @@
 package com.limelight.input;
 
+import com.limelight.LimeLog;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.ControllerPacket;
 import com.limelight.nvstream.input.KeyboardPacket;
@@ -218,7 +219,7 @@ public class EvdevHandler implements Runnable {
 				inputBuffer.clear();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			LimeLog.warning("Input device removed");
 		}
 	}
 	

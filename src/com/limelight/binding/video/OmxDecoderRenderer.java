@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class OmxDecoderRenderer implements VideoDecoderRenderer {
 	
-	private final static byte[] BITSTREAM_RESTRICTIONS = new byte[] {(byte) 0xF1, (byte) 0x83, 0x2C, 0x00};
+	private final static byte[] BITSTREAM_RESTRICTIONS = new byte[] {(byte) 0xF1, (byte) 0x83, 0x2A, 0x00};
 
 	@Override
 	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {

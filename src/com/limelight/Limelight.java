@@ -5,7 +5,7 @@ import java.io.IOException;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.FakeAudioRenderer;
 import com.limelight.binding.video.FakeVideoRenderer;
-import com.limelight.input.EvdevHandler;
+import com.limelight.input.EvdevLoader;
 import com.limelight.input.GamepadMapping;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
@@ -14,7 +14,6 @@ import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.NvHTTP;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -71,19 +70,6 @@ public class Limelight implements NvConnectionListener {
 	
 		conn = new NvConnection(host, this, streamConfig);
 		
-		if (inputs.isEmpty()) {
-			File input = new File("/dev/input");
-			String[] events = input.list(new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.startsWith("event");
-				}
-			});
-			
-			for (String event:events)
-				inputs.add(new File(input, event).getAbsolutePath());
-		}
-		
 		GamepadMapping mapping = null;
 		if (mappingFile!=null) {
 			try {
@@ -94,20 +80,18 @@ public class Limelight implements NvConnectionListener {
 			}
 		} else
 			mapping = new GamepadMapping();
-
-		for (String input:inputs) {
-			try {
-				new EvdevHandler(conn, input, mapping).start();
-			} catch (FileNotFoundException ex) {
-				displayError("Input", "Input (" + input + ") could not be found");
-				return;
-			} catch (IOException ex) {
-				displayError("Input", "Input (" + input + ") could not be read");
-				displayError("Input", "Are you running as root?");
-				return;
-			}
-		}
 		
+		try {
+			new EvdevLoader(conn, mapping, inputs).start();
+		} catch (FileNotFoundException ex) {
+			displayError("Input", "Input could not be found");
+			return;
+		} catch (IOException ex) {
+			displayError("Input", "Input could not be read");
+			displayError("Input", "Are you running as root?");
+			return;
+		}
+
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(audioDevice),

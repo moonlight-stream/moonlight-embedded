@@ -31,19 +31,44 @@ public class KeyboardTranslator extends KeycodeTranslator {
 	 */
 	@Override
 	public short translate(int keycode) {
-		// change newline to carriage return
-		if (keycode == KeyEvent.VK_ENTER) {
+		
+		switch (keycode) {
+		case KeyEvent.VK_DELETE:
+			keycode = 0x2e;
+			break;
+		case KeyEvent.VK_MINUS:
+			keycode = 0xbd;
+			break;
+		case KeyEvent.VK_EQUALS:
+			keycode = 0xbb;
+			break;
+		case KeyEvent.VK_OPEN_BRACKET:
+			keycode = 0xdb;
+			break;
+		case KeyEvent.VK_CLOSE_BRACKET:
+			keycode = 0xdd;
+			break;
+		case KeyEvent.VK_BACK_SLASH:
+			keycode = 0xdc;
+			break;
+		case KeyEvent.VK_SEMICOLON:
+			keycode = 0xba;
+			break;
+		case KeyEvent.VK_QUOTE:
+			keycode = 0xde;
+			break;
+		case KeyEvent.VK_ENTER:
 			keycode = 0x0d;
-		}
-		
-		// period maps to delete by default so we remap it
-		if (keycode == KeyEvent.VK_PERIOD) {
+			break;
+		case KeyEvent.VK_COMMA:
+			keycode = 0xbc;
+			break;
+		case KeyEvent.VK_PERIOD:
 			keycode = 0xbe;
-		}
-		
-		// Nvidia maps period to delete
-		if (keycode == KeyEvent.VK_DELETE) {
-			keycode = KeyEvent.VK_PERIOD;
+			break;
+		case KeyEvent.VK_SLASH:
+			keycode = 0xbf;
+			break;
 		}
 		
 		return (short) ((KEY_PREFIX << 8) | keycode);

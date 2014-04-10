@@ -37,8 +37,8 @@ public class EvdevConstants {
 		KeyEvent.VK_I,
 		KeyEvent.VK_O,
 		KeyEvent.VK_P,
-		0, //KeyEvent.VK_LEFTBRACE,
-		0, //KeyEvent.VK_RIGHTBRACE,
+		KeyEvent.VK_BRACELEFT,
+		KeyEvent.VK_BRACERIGHT,
 		KeyEvent.VK_ENTER,
 		KeyEvent.VK_CONTROL, // Left control */
 		KeyEvent.VK_A,
@@ -53,8 +53,8 @@ public class EvdevConstants {
 		KeyEvent.VK_SEMICOLON,
 		0, //KeyEvent.VK_APOSTROPHE,
 		0, //KeyEvent.VK_GRAVE,
-		0, //KeyEvent.VK_LEFTSHIFT,
-		0, //KeyEvent.VK_BACKSLASH,
+		KeyEvent.VK_SHIFT, // Left shift
+		KeyEvent.VK_BACK_SLASH,
 		KeyEvent.VK_Z,
 		KeyEvent.VK_X,
 		KeyEvent.VK_C,
@@ -65,11 +65,11 @@ public class EvdevConstants {
 		KeyEvent.VK_COMMA,
 		0, //KeyEvent.VK_DOT,
 		KeyEvent.VK_SLASH,
-		0, //KeyEvent.VK_RIGHTSHIFT,
+		KeyEvent.VK_SHIFT, // Right shift
 		0, //KeyEvent.VK_KPASTERISK,
-		0, //KeyEvent.VK_LEFTALT,
+		KeyEvent.VK_ALT, // Left alt
 		KeyEvent.VK_SPACE,
-		0, //KeyEvent.VK_CAPSLOCK,
+		KeyEvent.VK_CAPS_LOCK,
 		KeyEvent.VK_F1,
 		KeyEvent.VK_F2,
 		KeyEvent.VK_F3,
@@ -108,10 +108,10 @@ public class EvdevConstants {
 		0, //KeyEvent.VK_MUHENKAN,
 		0, //KeyEvent.VK_KPJPCOMMA,
 		0, //KeyEvent.VK_KPENTER,
-		0, //KeyEvent.VK_RIGHTCTRL,
+		KeyEvent.VK_CONTROL, // Right ctrl
 		0, //KeyEvent.VK_KPSLASH,
 		0, //KeyEvent.VK_SYSRQ,
-		0, //KeyEvent.VK_RIGHTALT,
+		KeyEvent.VK_ALT, // Right alt
 		0, //KeyEvent.VK_LINEFEED,
 		KeyEvent.VK_HOME,
 		KeyEvent.VK_UP,

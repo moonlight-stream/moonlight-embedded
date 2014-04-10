@@ -20,8 +20,8 @@ public class GamepadMapping {
 	
 	public short abs_deadzone = 0;
 
-	public short abs_dpad_y = -1;
-	public short abs_dpad_x = -1;
+	public short abs_dpad_y = EvdevConstants.ABS_HAT0X;
+	public short abs_dpad_x = EvdevConstants.ABS_HAT0Y;
 	
 	public short abs_throttle = EvdevConstants.ABS_THROTTLE;
 	public short abs_rudder = EvdevConstants.ABS_RUDDER;

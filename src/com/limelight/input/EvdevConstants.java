@@ -148,6 +148,9 @@ public class EvdevConstants {
 	public static final short ABS_RX = 0x03;
 	public static final short ABS_RY = 0x04;
 	
+	public static final short ABS_HAT0X = 0x10;
+	public static final short ABS_HAT0Y = 0x11;
+	
 	public static final short ABS_THROTTLE = 0x06;
 	public static final short ABS_RUDDER = 0x07;
 	

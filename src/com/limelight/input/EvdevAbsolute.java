@@ -31,6 +31,8 @@ public class EvdevAbsolute {
 		buffer.getInt(); //Skip current value
 		int min = buffer.getInt();
 		int max = buffer.getInt();
+		buffer.getInt(); //Skip fuzz
+		flat = buffer.getInt();
 		avg = (min+max)/2;
 		range = max-avg;
 		
@@ -47,7 +49,9 @@ public class EvdevAbsolute {
 	 * @return input value as short
 	 */
 	public short getShort(int value) {
-		if (value>range+avg)
+		if (Math.abs(value-avg)<flat)
+			return 0;
+		else if (value>range+avg)
 			return reverse?Short.MIN_VALUE:Short.MAX_VALUE;
 		else if (value<range-avg)
 			return reverse?Short.MAX_VALUE:Short.MIN_VALUE;
@@ -61,7 +65,9 @@ public class EvdevAbsolute {
 	 * @return input value as byte
 	 */
 	public byte getByte(int value) {
-		if (value>range+avg)
+		if (Math.abs(value-avg)<flat)
+			return 0;
+		else if (value>range+avg)
 			return reverse?Byte.MIN_VALUE:Byte.MAX_VALUE;
 		else if (value<range-avg)
 			return reverse?Byte.MAX_VALUE:Byte.MIN_VALUE;

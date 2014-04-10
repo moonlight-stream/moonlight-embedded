@@ -145,22 +145,18 @@ public class EvdevConstants {
 	/* Gamepad constants */
 	public static final short ABS_X = 0x00;
 	public static final short ABS_Y = 0x01;
+	public static final short ABS_Z = 0x02;
 	public static final short ABS_RX = 0x03;
 	public static final short ABS_RY = 0x04;
+	public static final short ABS_RZ = 0x05;
 	
 	public static final short ABS_HAT0X = 0x10;
 	public static final short ABS_HAT0Y = 0x11;
-	
-	public static final short ABS_THROTTLE = 0x06;
-	public static final short ABS_RUDDER = 0x07;
 	
 	public static final short BTN_SOUTH = 0x130;
 	public static final short BTN_EAST = 0x131;
 	public static final short BTN_NORTH = 0x133;
 	public static final short BTN_WEST = 0x134;
-	
-	public static final short BTN_THROTTLE = 0x137;
-	public static final short BTN_RUDDER = 0x138;
 	
 	public static final short BTN_SELECT = 0x13a;
 	public static final short BTN_START = 0x13b;
@@ -169,6 +165,8 @@ public class EvdevConstants {
 	public static final short BTN_THUMBR = 0x13e;
 	public static final short BTN_TL = 0x136;
 	public static final short BTN_TR = 0x137;
+	public static final short BTN_TL2 = 0x138;
+	public static final short BTN_TR2 = 0x139;
 	
 	public static final short BTN_DPAD_UP = 0x220;
 	public static final short BTN_DPAD_DOWN = 0x221;

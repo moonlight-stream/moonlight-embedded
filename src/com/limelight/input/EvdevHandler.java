@@ -55,8 +55,8 @@ public class EvdevHandler implements Runnable {
 		absLY = new EvdevAbsolute(device, mapping.abs_y, !mapping.reverse_y);
 		absRX = new EvdevAbsolute(device, mapping.abs_rx, mapping.reverse_rx);
 		absRY = new EvdevAbsolute(device, mapping.abs_ry, !mapping.reverse_ry);
-		absLT = new EvdevAbsolute(device, mapping.abs_rudder, mapping.reverse_rudder);
-		absRT = new EvdevAbsolute(device, mapping.abs_throttle, mapping.reverse_throttle);
+		absLT = new EvdevAbsolute(device, mapping.abs_z, mapping.reverse_z);
+		absRT = new EvdevAbsolute(device, mapping.abs_rz, mapping.reverse_rz);
 		absDX = new EvdevAbsolute(device, mapping.abs_dpad_x, mapping.reverse_dpad_x);
 		absDY = new EvdevAbsolute(device, mapping.abs_dpad_y, mapping.reverse_dpad_y);
 		
@@ -143,9 +143,9 @@ public class EvdevHandler implements Runnable {
 						} else  if (value==EvdevConstants.KEY_RELEASED){
 							buttonFlags &= ~gamepadButton;
 						}
-					} else if (code==mapping.btn_throttle) {
+					} else if (code==mapping.btn_tl2) {
 						leftTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
-					} else if (code==mapping.btn_rudder) {
+					} else if (code==mapping.btn_tr2) {
 						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
 					}
 					conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
@@ -165,9 +165,9 @@ public class EvdevHandler implements Runnable {
 				rightStickX = accountForDeadzone(absRX.getShort(value));
 			else if (code==mapping.abs_ry)
 				rightStickY = accountForDeadzone(absRY.getShort(value));
-			else if (code==mapping.abs_throttle)
+			else if (code==mapping.abs_z)
 				leftTrigger = absLT.getByte(value);
-			else if (code==mapping.abs_rudder)
+			else if (code==mapping.abs_rz)
 				rightTrigger = absRT.getByte(value);
 			else if (code==mapping.abs_dpad_x) {
 				int dir = absRT.getDirection(value);

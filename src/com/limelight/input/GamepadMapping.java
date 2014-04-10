@@ -15,23 +15,20 @@ public class GamepadMapping {
 	
 	public short abs_x = EvdevConstants.ABS_X;
 	public short abs_y = EvdevConstants.ABS_Y;
+	public short abs_z = EvdevConstants.ABS_Z;
 	public short abs_rx = EvdevConstants.ABS_RX;
 	public short abs_ry = EvdevConstants.ABS_RY;
+	public short abs_rz = EvdevConstants.ABS_RZ;
 	
 	public short abs_deadzone = 0;
 
 	public short abs_dpad_y = EvdevConstants.ABS_HAT0X;
 	public short abs_dpad_x = EvdevConstants.ABS_HAT0Y;
 	
-	public short abs_throttle = EvdevConstants.ABS_THROTTLE;
-	public short abs_rudder = EvdevConstants.ABS_RUDDER;
-	public short btn_throttle = EvdevConstants.BTN_THROTTLE;
-	public short btn_rudder = EvdevConstants.BTN_RUDDER;
-	
 	public boolean reverse_x, reverse_y;
 	public boolean reverse_rx, reverse_ry;
 	public boolean reverse_dpad_y, reverse_dpad_x;
-	public boolean reverse_throttle, reverse_rudder;
+	public boolean reverse_z, reverse_rz;
 	
 	public short btn_south = EvdevConstants.BTN_SOUTH;
 	public short btn_east = EvdevConstants.BTN_EAST;
@@ -45,6 +42,8 @@ public class GamepadMapping {
 	public short btn_thumbr = EvdevConstants.BTN_THUMBR;
 	public short btn_tl = EvdevConstants.BTN_TL;
 	public short btn_tr = EvdevConstants.BTN_TR;
+	public short btn_tl2 = EvdevConstants.BTN_TL2;
+	public short btn_tr2 = EvdevConstants.BTN_TR2;
 	
 	public short btn_dpad_up = EvdevConstants.BTN_DPAD_UP;
 	public short btn_dpad_down = EvdevConstants.BTN_DPAD_DOWN;

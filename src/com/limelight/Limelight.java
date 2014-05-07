@@ -163,6 +163,7 @@ public class Limelight implements NvConnectionListener {
 		boolean pair = false;
 		int resolution = 720;
 		int refresh = 60;
+		int bitrate = 0;
 		boolean parse = true;
 		boolean fake = false;
 		boolean tests = true;
@@ -205,6 +206,20 @@ public class Limelight implements NvConnectionListener {
 				refresh = 30;
 			} else if (args[i].equals("-60fps")) {
 				refresh = 60;
+			} else if (args[i].equals("-bitrate")) {
+				if (i + 1 < args.length) {
+					try {
+						bitrate = Integer.parseInt(args[i+1]);
+					} catch (NumberFormatException e) {
+						System.out.println("Syntax error: bitrate must be a number");
+						System.exit(3);
+					}
+					i++;
+				} else {
+					System.out.println("Syntax error: bitrate expected after -bitrate");
+					System.exit(3);
+				}
+				refresh = 30;
 			} else if (args[i].equals("-fake")) {
 				fake = true;
 			} else if (args[i].equals("-notest")) {
@@ -225,6 +240,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-1080\t\tUse 1920x1080 resolution");
 			System.out.println("\t-30fps\t\tUse 30fps");
 			System.out.println("\t-60fps\t\tUse 60fps [default]");
+			System.out.println("\t-bitrate <bitrate>\t\tSpecify the bitrate in Kbps");
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
@@ -236,10 +252,19 @@ public class Limelight implements NvConnectionListener {
 		} else
 			host = args[args.length-1];
 		
+		if (bitrate == 0) {
+			if (resolution==720)
+				bitrate = 10000;
+			else if (refresh==30)
+				bitrate = 15000;
+			else
+				bitrate = 25000;
+		}			
+		
 		//Set debugging level
 		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);
 		
-		StreamConfiguration streamConfig = new StreamConfiguration((resolution/9)*16, resolution, refresh);
+		StreamConfiguration streamConfig = new StreamConfiguration((resolution/9)*16, resolution, refresh, bitrate);
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)

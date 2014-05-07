@@ -38,10 +38,10 @@
   <target name="build" depends="compile-native, compile-common, compile-java"/>
   
   <target name="compile-native">
-	  <exec executable="./build.sh" dir="${libs.omx.dir}"/>
-	  <exec executable="./build.sh" dir="${libs.opus.dir}"/>
-	  <exec executable="./build.sh" dir="${libs.alsa.dir}"/>
-	  <exec executable="./build.sh" dir="${libs.io.dir}"/>
+	  <exec executable="make" dir="${libs.omx.dir}"/>
+	  <exec executable="make" dir="${libs.opus.dir}"/>
+	  <exec executable="make" dir="${libs.alsa.dir}"/>
+	  <exec executable="make" dir="${libs.io.dir}"/>
   </target>
   
   <target name="compile-java" depends="init">

@@ -31,6 +31,10 @@
   <target name="clean">
     <delete dir="${build.dir}"/>
     <delete dir="${classes.dir}"/>
+	<exec executable="make clean" dir="${libs.omx.dir}"/>
+	<exec executable="make clean" dir="${libs.opus.dir}"/>
+	<exec executable="make clean" dir="${libs.alsa.dir}"/>
+	<exec executable="make clean" dir="${libs.io.dir}"/>
   </target>
 
   <target name="all" depends="clean, dist"/>

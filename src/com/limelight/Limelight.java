@@ -248,7 +248,6 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: bitrate expected after -bitrate");
 					System.exit(3);
 				}
-				refresh = 30;
 			} else if (args[i].equals("-fake")) {
 				fake = true;
 			} else if (args[i].equals("-notest")) {

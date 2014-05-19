@@ -161,7 +161,8 @@ public class Limelight implements NvConnectionListener {
 		String host = null;
 		List<String> inputs = new ArrayList<String>();
 		boolean pair = false;
-		int resolution = 720;
+		int width = 1280;
+		int height = 720;
 		int refresh = 60;
 		int bitrate = 0;
 		boolean parse = true;
@@ -199,9 +200,37 @@ public class Limelight implements NvConnectionListener {
 			} else if (args[i].equals("-pair")) {
 				pair = true;
 			} else if (args[i].equals("-720")) {
-				resolution = 720;
+				height = 720;
+				width = 1280;
 			} else if (args[i].equals("-1080")) {
-				resolution = 1080;
+				height = 1080;
+				width = 1920;
+			} else if (args[i].equals("-width")) {
+				if (i + 1 < args.length) {
+					try {
+						width = Integer.parseInt(args[i+1]);
+					} catch (NumberFormatException e) {
+						System.out.println("Syntax error: width must be a number");
+						System.exit(3);
+					}
+					i++;
+				} else {
+					System.out.println("Syntax error: width expected after -width");
+					System.exit(3);
+				}
+			} else if (args[i].equals("-height")) {
+				if (i + 1 < args.length) {
+					try {
+						height = Integer.parseInt(args[i+1]);
+					} catch (NumberFormatException e) {
+						System.out.println("Syntax error: height must be a number");
+						System.exit(3);
+					}
+					i++;
+				} else {
+					System.out.println("Syntax error: height expected after -height");
+					System.exit(3);
+				}
 			} else if (args[i].equals("-30fps")) {
 				refresh = 30;
 			} else if (args[i].equals("-60fps")) {
@@ -238,6 +267,8 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("Usage: java -jar limelight-pi.jar [options] host");
 			System.out.println("\t-720\t\tUse 1280x720 resolution [default]");
 			System.out.println("\t-1080\t\tUse 1920x1080 resolution");
+			System.out.println("\t-width <width>\tHorizontal resolution (default 1280)");
+			System.out.println("\t-height <height>\tVertical resolution (default 720)");
 			System.out.println("\t-30fps\t\tUse 30fps");
 			System.out.println("\t-60fps\t\tUse 60fps [default]");
 			System.out.println("\t-bitrate <bitrate>\t\tSpecify the bitrate in Kbps");
@@ -253,7 +284,7 @@ public class Limelight implements NvConnectionListener {
 			host = args[args.length-1];
 		
 		if (bitrate == 0) {
-			if (resolution==720)
+			if (height<=720)
 				bitrate = 10000;
 			else if (refresh==30)
 				bitrate = 15000;
@@ -264,7 +295,7 @@ public class Limelight implements NvConnectionListener {
 		//Set debugging level
 		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);
 		
-		StreamConfiguration streamConfig = new StreamConfiguration((resolution/9)*16, resolution, refresh, bitrate);
+		StreamConfiguration streamConfig = new StreamConfiguration(width, height, refresh, bitrate);
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)

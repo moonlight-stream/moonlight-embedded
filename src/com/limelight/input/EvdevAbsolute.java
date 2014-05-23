@@ -51,12 +51,12 @@ public class EvdevAbsolute {
 	public short getShort(int value) {
 		if (Math.abs(value-avg)<flat)
 			return 0;
-		else if (value>range+avg)
+		else if (value>avg+range)
 			return reverse?Short.MIN_VALUE:Short.MAX_VALUE;
-		else if (value<range-avg)
+		else if (value<avg-range)
 			return reverse?Short.MAX_VALUE:Short.MIN_VALUE;
 		else
-			return (short) ((value-avg) * (reverse?-range:range) / Short.MAX_VALUE);
+			return (short) ((value-avg) * Short.MAX_VALUE / (reverse?-range:range));
 	}
 	
 	/**
@@ -67,12 +67,12 @@ public class EvdevAbsolute {
 	public byte getByte(int value) {
 		if (Math.abs(value-avg)<flat)
 			return 0;
-		else if (value>range+avg)
+		else if (value>avg+range)
 			return reverse?Byte.MIN_VALUE:Byte.MAX_VALUE;
-		else if (value<range-avg)
+		else if (value<avg-range)
 			return reverse?Byte.MAX_VALUE:Byte.MIN_VALUE;
 		else
-			return (byte) ((value-avg) * (reverse?-range:range) / Byte.MAX_VALUE);
+			return (byte) ((value-avg) * Byte.MAX_VALUE / (reverse?-range:range));
 	}
 	
 	/**

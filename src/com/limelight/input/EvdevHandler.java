@@ -170,7 +170,7 @@ public class EvdevHandler implements Runnable {
 			else if (code==mapping.abs_rz)
 				rightTrigger = absRT.getByte(value);
 			else if (code==mapping.abs_dpad_x) {
-				int dir = absRT.getDirection(value);
+				int dir = absDX.getDirection(value);
 				if (dir==EvdevAbsolute.UP) {
 					buttonFlags |= ControllerPacket.RIGHT_FLAG;
 					buttonFlags &= ~ControllerPacket.LEFT_FLAG;
@@ -182,7 +182,7 @@ public class EvdevHandler implements Runnable {
 					buttonFlags &= ~ControllerPacket.RIGHT_FLAG;
 				}
 			} else if (code==mapping.abs_dpad_y) {
-				int dir = absRT.getDirection(value);
+				int dir = absDY.getDirection(value);
 				if (dir==EvdevAbsolute.DOWN) {
 					buttonFlags |= ControllerPacket.UP_FLAG;
 					buttonFlags &= ~ControllerPacket.DOWN_FLAG;

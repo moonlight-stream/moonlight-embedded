@@ -169,7 +169,7 @@ public class Limelight implements NvConnectionListener {
 		boolean fake = false;
 		boolean tests = true;
 		String mapping = null;
-		String audio = "hw:0,0";
+		String audio = "default";
 		Level debug = Level.SEVERE;
 		
 		for (int i = 0; i < args.length - 1; i++) {

@@ -43,21 +43,38 @@ public class EvdevLoader implements Runnable {
 	}
 	
 	public void start() throws FileNotFoundException, IOException {
-		boolean watcher = false;
+		boolean allInputs = inputs.isEmpty();
 		
-		if (inputs.isEmpty()) {
-			watcher = true;
-			
+		if (allInputs) {
 			String[] events = input.list(filter);
 			
 			for (String event:events)
 				inputs.add(new File(input, event).getAbsolutePath());
 		}
 		
-		for (String input:inputs)
-			new EvdevHandler(conn, input, mapping).start();
+		boolean hasInput = false;
+		IOException ex = null;
+		for (String input:inputs) {
+			try {
+				EvdevHandler handler = new EvdevHandler(conn, input, mapping);
+				handler.start();
+				hasInput = true;
+			} catch (FileNotFoundException e) {
+				throw e;
+			} catch (IOException e) {
+				//Throw always exception for explicitly loaded inputs
+				if (!allInputs)
+					throw e;
+				else
+					ex = e;
+			}
+		}
 		
-		if (watcher) {
+		//Only throw exception when no input get loaded
+		if (!hasInput && ex != null)
+			throw ex;
+		
+		if (allInputs) {
 			Thread thread = new Thread(this);
 			thread.setDaemon(true);
 			thread.setName("Input - Search");

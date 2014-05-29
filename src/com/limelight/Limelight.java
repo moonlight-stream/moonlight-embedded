@@ -87,8 +87,8 @@ public class Limelight implements NvConnectionListener {
 			displayError("Input", "Input could not be found");
 			return;
 		} catch (IOException ex) {
-			displayError("Input", "Input could not be read");
-			displayError("Input", "Are you running as root?");
+			displayError("Input", "No input could be readed");
+			displayError("Input", "Try to run as root");
 			return;
 		}
 

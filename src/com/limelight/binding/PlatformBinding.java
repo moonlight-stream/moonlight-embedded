@@ -5,8 +5,10 @@ import java.net.UnknownHostException;
 
 import com.limelight.binding.audio.AlsaAudioRenderer;
 import com.limelight.binding.video.OmxDecoderRenderer;
+import com.limelight.binding.crypto.PcCryptoProvider;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.nvstream.http.LimelightCryptoProvider;
 
 /**
  * Used for platform-specific video/audio bindings.
@@ -41,5 +43,13 @@ public class PlatformBinding {
 	 */
 	public static AudioRenderer getAudioRenderer(String device) {
 		return new AlsaAudioRenderer(device);
+	}
+	
+	/**
+	 * Gets an instance of a crypto provider
+	 * @return a PcCryptoProvider object
+	 */
+	public static LimelightCryptoProvider getCryptoProvider() {
+		return new PcCryptoProvider();
 	}
 }

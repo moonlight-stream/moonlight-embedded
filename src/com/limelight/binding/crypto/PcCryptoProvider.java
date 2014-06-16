@@ -32,13 +32,12 @@ import org.bouncycastle.x509.X509V3CertificateGenerator;
 
 import com.limelight.LimeLog;
 import com.limelight.nvstream.http.LimelightCryptoProvider;
-import com.limelight.settings.SettingsManager;
 
 @SuppressWarnings("deprecation")
 public class PcCryptoProvider implements LimelightCryptoProvider {
 
-	private File certFile = new File(SettingsManager.SETTINGS_DIR + File.separator + "client.crt");
-	private File keyFile = new File(SettingsManager.SETTINGS_DIR + File.separator + "client.key");
+	private File certFile = new File("client.crt");
+	private File keyFile = new File("client.key");
 	
 	private X509Certificate cert;
 	private RSAPrivateKey key;

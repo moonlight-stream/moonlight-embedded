@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.xmlpull.v1.XmlPullParserException;
+import com.limelight.nvstream.http.PairingManager;
 
 /**
  * Main class for Limelight-pi
@@ -68,7 +68,7 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 	
-		conn = new NvConnection(host, this, streamConfig);
+		conn = new NvConnection(host, this, streamConfig, PlatformBinding.getCryptoProvider());
 		
 		GamepadMapping mapping = null;
 		if (mappingFile!=null) {
@@ -102,7 +102,7 @@ public class Limelight implements NvConnectionListener {
 	 * Creates a connection to the host and starts up the stream.
 	 */
 	private void startUpFake(StreamConfiguration streamConfig) {
-		conn = new NvConnection(host, this, streamConfig);
+		conn = new NvConnection(host, this, streamConfig, PlatformBinding.getCryptoProvider());
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				new FakeAudioRenderer(),
@@ -130,21 +130,27 @@ public class Limelight implements NvConnectionListener {
 	
 		try {
 			httpConn = new NvHTTP(InetAddress.getByName(host),
-				macAddress, PlatformBinding.getDeviceName());
+				macAddress, PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
 			try {
-				if (httpConn.getPairState()) {
-					displayError("Pair", "Already paired");
+				if (httpConn.getPairState() == PairingManager.PairState.PAIRED) {
+					displayError("pair", "Already paired");
 				} else {
-					int session = httpConn.getSessionId();
-					if (session == 0) {
-						displayError("Pair", "Pairing was declined by the target");
-					} else {
-						displayMessage("Pairing was successful");
+					final String pinStr = PairingManager.generatePinString();
+					
+					displayMessage("Please enter the following PIN on the target PC: "+pinStr);
+					
+					PairingManager.PairState pairState = httpConn.pair(pinStr);
+					if (pairState == PairingManager.PairState.PIN_WRONG) {
+						displayError("pair", "Incorrect PIN");
+					}
+					else if (pairState == PairingManager.PairState.FAILED) {
+						displayError("pair", "Pairing failed");
+					}
+					else if (pairState == PairingManager.PairState.PAIRED) {
+						displayError("pair", "Paired successfully");
 					}
 				}
-			} catch (IOException e) {
-				displayError("Pair", e.getMessage());
-			} catch (XmlPullParserException e) {
+			} catch (Exception e) {
 				displayError("Pair", e.getMessage());
 			}
 		} catch (UnknownHostException e1) {

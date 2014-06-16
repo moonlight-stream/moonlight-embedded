@@ -58,18 +58,19 @@
   
   <target name="compile-java" depends="init">
     <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/src">
+    <javac includeantruntime="false" destdir="${classes.dir}/src" debug="true">
       <src path="${src.dir}"/>
 	  <classpath path="${classes.dir}/common"/>
       <classpath>
         <fileset dir="${common.libs.dir}" includes="*.jar"/>
+		<fileset dir="${libs.dir}" includes="*.jar"/>
       </classpath>
     </javac>
   </target>
   
   <target name="compile-common" depends="init">
     <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/common">
+    <javac includeantruntime="false" destdir="${classes.dir}/common" debug="true">
       <src path="${common.src.dir}"/>
       <classpath>
         <fileset dir="${common.libs.dir}" includes="*.jar"/>
@@ -92,6 +93,7 @@
 
       <lib>
         <fileset dir="${common.libs.dir}" includes="*.jar"/>
+		<fileset dir="${libs.dir}" includes="*.jar"/>
       </lib>
 
       <binlib>

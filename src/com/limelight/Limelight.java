@@ -178,7 +178,7 @@ public class Limelight implements NvConnectionListener {
 		String audio = "default";
 		Level debug = Level.SEVERE;
 		
-		for (int i = 0; i < args.length - 1; i++) {
+		for (int i = 0; i < args.length; i++) {
 			if (args[i].equals("-input")) {
 				if (i + 1 < args.length) {
 					inputs.add(args[i+1]);
@@ -262,6 +262,11 @@ public class Limelight implements NvConnectionListener {
 				debug = Level.WARNING;
 			} else if (args[i].equals("-vv")) {
 				debug = Level.ALL;
+			} else if (args[i].startsWith("-")) {
+				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
+				parse = false;
+			} else if (host == null) {
+				host = args[i];
 			} else {
 				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
 				parse = false;
@@ -285,8 +290,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println();
 			System.out.println("Use ctrl-c to exit application");
 			System.exit(5);
-		} else
-			host = args[args.length-1];
+		}
 		
 		if (bitrate == 0) {
 			if (height<=720)

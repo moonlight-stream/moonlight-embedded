@@ -273,6 +273,11 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 		
+		if (host == null) {
+			System.out.println("Syntax Error: Missing required host argument");
+			parse = false;
+		}
+		
 		if (args.length == 0 || !parse) {
 			System.out.println("Usage: java -jar limelight-pi.jar [options] host");
 			System.out.println("\t-720\t\tUse 1280x720 resolution [default]");

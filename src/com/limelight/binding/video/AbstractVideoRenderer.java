@@ -32,7 +32,8 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 						
 						if (System.currentTimeMillis()>last+2000) {
 							int bitrate = (dataSize/2)/1024;
-							System.out.println("Video " + bitrate + "kB/s");
+							long latency = System.currentTimeMillis()-decodeUnit.getReceiveTimestamp();
+							System.out.println("Video " + bitrate + "kB/s " + latency + "ms");
 							dataSize = 0;
 							last = System.currentTimeMillis();
 						}

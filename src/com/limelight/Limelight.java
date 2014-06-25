@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 import com.limelight.nvstream.http.PairingManager;
 
 /**
- * Main class for Limelight-pi
+ * Main class for Limelight Pi
  * @author Diego Waxemberg<br>
  * Cameron Gutman
  * Iwan Timmer

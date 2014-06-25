@@ -7,13 +7,25 @@ import com.limelight.nvstream.av.audio.AudioRenderer;
  * @author Iwan Timmer
  */
 public class FakeAudioRenderer implements AudioRenderer {
+	
+	private int dataSize;
+	private long last;
 
 	@Override
 	public void streamInitialized(int channelCount, int sampleRate) {
+		System.out.println("Fake " + channelCount + " channel " + sampleRate + " samplerate audio output");
+		last = System.currentTimeMillis();
 	}
 
 	@Override
 	public void playDecodedAudio(byte[] audioData, int offset, int length) {
+		if (System.currentTimeMillis()>last+2000) {
+			int bitrate = (dataSize/2)/1024;
+			System.out.println("Audio " + bitrate + "kB/s");
+			dataSize = 0;
+			last = System.currentTimeMillis();
+		}
+		dataSize += length;
 	}
 
 	@Override

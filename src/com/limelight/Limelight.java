@@ -101,12 +101,12 @@ public class Limelight implements NvConnectionListener {
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
-	private void startUpFake(StreamConfiguration streamConfig) {
+	private void startUpFake(StreamConfiguration streamConfig, String videoFile) {
 		conn = new NvConnection(host, this, streamConfig, PlatformBinding.getCryptoProvider());
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				new FakeAudioRenderer(),
-				new FakeVideoRenderer());
+				new FakeVideoRenderer(videoFile));
 	}
 	
 	/**
@@ -176,6 +176,7 @@ public class Limelight implements NvConnectionListener {
 		boolean tests = true;
 		String mapping = null;
 		String audio = "default";
+		String video = null;
 		Level debug = Level.SEVERE;
 		
 		for (int i = 0; i < args.length; i++) {
@@ -256,6 +257,14 @@ public class Limelight implements NvConnectionListener {
 				}
 			} else if (args[i].equals("-fake")) {
 				fake = true;
+			} else if (args[i].equals("-out")) {
+				if (i + 1 < args.length) {
+					video = args[i+1];
+					i++;
+				} else {
+					System.out.println("Syntax error: output file expected after -out");
+					System.exit(3);
+				}
 			} else if (args[i].equals("-notest")) {
 				tests = false;
 			} else if (args[i].equals("-v")) {
@@ -314,7 +323,7 @@ public class Limelight implements NvConnectionListener {
 		Limelight limelight = new Limelight(host);
 		if (!pair)
 			if (fake)
-				limelight.startUpFake(streamConfig);
+				limelight.startUpFake(streamConfig, video);
 			else
 				limelight.startUp(streamConfig, inputs, mapping, audio, tests);
 		else

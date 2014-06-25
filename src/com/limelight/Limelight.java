@@ -171,6 +171,7 @@ public class Limelight implements NvConnectionListener {
 		int height = 720;
 		int refresh = 60;
 		int bitrate = 0;
+		int packetSize = 1024;
 		boolean parse = true;
 		boolean fake = false;
 		boolean tests = true;
@@ -255,6 +256,19 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: bitrate expected after -bitrate");
 					System.exit(3);
 				}
+			} else if (args[i].equals("-packetsize")) {
+				if (i + 1 < args.length) {
+					try {
+						bitrate = Integer.parseInt(args[i+1]);
+					} catch (NumberFormatException e) {
+						System.out.println("Syntax error: packetsize must be a number");
+						System.exit(3);
+					}
+					i++;
+				} else {
+					System.out.println("Syntax error: packetsize expected after -packetsize");
+					System.exit(3);
+				}
 			} else if (args[i].equals("-fake")) {
 				fake = true;
 			} else if (args[i].equals("-out")) {
@@ -296,6 +310,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-30fps\t\tUse 30fps");
 			System.out.println("\t-60fps\t\tUse 60fps [default]");
 			System.out.println("\t-bitrate <bitrate>\t\tSpecify the bitrate in Kbps");
+			System.out.println("\t-packetsize <size>\t\tSpecify the packetsize in bytes");
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
@@ -318,7 +333,7 @@ public class Limelight implements NvConnectionListener {
 		//Set debugging level
 		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);
 		
-		StreamConfiguration streamConfig = new StreamConfiguration(width, height, refresh, bitrate);
+		StreamConfiguration streamConfig = new StreamConfiguration(width, height, refresh, bitrate, packetSize);
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)

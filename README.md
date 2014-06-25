@@ -7,9 +7,7 @@ Limelight-pi allows you to stream your full collection of Steam games from
 your powerful Windows desktop to your Raspberry Pi.
 
 [Limelight-common](https://github.com/limelight-stream/limelight-common) is the shared codebase between
-different implementations
-
-[Limelight-common](https://github.com/irtimmer/limelight-common) is the forked code used by Limelight-pi
+different implementations of Limelight
 
 [Limelight](https://github.com/cgutman/limelight) also has an Android
 implementation.

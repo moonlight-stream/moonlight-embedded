@@ -28,6 +28,8 @@
 
   <import file="${one-jar.dist.dir}/one-jar-ant-task.xml"/>
 
+  <taskdef resource="proguard/ant/task.properties" classpath="${one-jar.dist.dir}/proguard.jar" />
+  
   <target name="clean">
     <delete dir="${build.dir}"/>
     <delete dir="${classes.dir}"/>
@@ -58,7 +60,7 @@
   
   <target name="compile-java" depends="init">
     <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/src" debug="true">
+    <javac includeantruntime="false" destdir="${classes.dir}/src">
       <src path="${src.dir}"/>
 	  <classpath path="${classes.dir}/common"/>
       <classpath>
@@ -70,7 +72,7 @@
   
   <target name="compile-common" depends="init">
     <!-- compile limelight -->
-    <javac includeantruntime="false" destdir="${classes.dir}/common" debug="true">
+    <javac includeantruntime="false" destdir="${classes.dir}/common">
       <src path="${common.src.dir}"/>
       <classpath>
         <fileset dir="${common.libs.dir}" includes="*.jar"/>
@@ -78,9 +80,9 @@
     </javac>
   </target>
 
-  <target name="dist" depends="build">
+  <target name="package" depends="build">
     <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-pi.jar">
+    <one-jar destfile="${build.dir}/limelight-pi-in.jar">
       <manifest>
         <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
       </manifest>
@@ -103,6 +105,18 @@
 		<fileset dir="${libs.io.dir}" includes="*.so"/>
       </binlib>
     </one-jar>
+  </target>
+	
+  <target name="dist" depends="package">
+	<proguard>
+      -libraryjars ${java.home}/lib/rt.jar
+      -injars      ${build.dir}/limelight-pi-in.jar
+      -outjars     ${build.dir}/limelight-pi.jar
+
+      -keepclasseswithmembers public class * {
+          public static void main(java.lang.String[]);
+      }
+    </proguard>
   </target>
 
 </project>

@@ -2,8 +2,6 @@ package com.limelight.binding.video;
 
 import com.limelight.nvstream.av.ByteBufferDescriptor;
 import com.limelight.nvstream.av.DecodeUnit;
-import com.limelight.nvstream.av.video.VideoDecoderRenderer;
-import com.limelight.nvstream.av.video.VideoDepacketizer;
 
 import java.util.List;
 
@@ -11,12 +9,9 @@ import java.util.List;
  * Implementation of a video decoder and renderer.
  * @author Iwan Timmer
  */
-public class OmxDecoderRenderer implements VideoDecoderRenderer {
+public class OmxDecoderRenderer extends AbstractVideoRenderer {
 	
 	private final static byte[] BITSTREAM_RESTRICTIONS = new byte[] {(byte) 0xF1, (byte) 0x83, 0x2A, 0x00};
-	
-	private Thread thread;
-	private boolean running;
 
 	@Override
 	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
@@ -26,23 +21,8 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 	}
 
 	@Override
-	public void start(final VideoDepacketizer depacketizer) {
-		thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (running) {
-					try {
-						decodeUnit(depacketizer.takeNextDecodeUnit());
-					} catch (InterruptedException ex) {	}
-				}
-			}
-		});
-		running = true;
-		thread.start();		
-	}
-
-	@Override
 	public void stop() {
+		super.stop();
 		OmxDecoder.stop();
 	}
 
@@ -51,6 +31,7 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 		OmxDecoder.destroy();
 	}
 
+	@Override
 	public void decodeUnit(DecodeUnit decodeUnit) {
 		List<ByteBufferDescriptor> units = decodeUnit.getBufferList();
 		
@@ -70,11 +51,6 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 			if (ok)
 				ok = (OmxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1)) == 0);
 		}
-	}
-	
-	@Override
-	public int getCapabilities() {
-		return 0;
 	}
 	
 	/**

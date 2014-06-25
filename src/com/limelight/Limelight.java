@@ -259,7 +259,7 @@ public class Limelight implements NvConnectionListener {
 			} else if (args[i].equals("-packetsize")) {
 				if (i + 1 < args.length) {
 					try {
-						bitrate = Integer.parseInt(args[i+1]);
+						packetSize = Integer.parseInt(args[i+1]);
 					} catch (NumberFormatException e) {
 						System.out.println("Syntax error: packetsize must be a number");
 						System.exit(3);

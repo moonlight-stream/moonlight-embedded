@@ -3,6 +3,7 @@ package com.limelight.binding.video;
 import com.limelight.nvstream.av.ByteBufferDescriptor;
 import com.limelight.nvstream.av.DecodeUnit;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.nvstream.av.video.VideoDepacketizer;
 
 import java.util.List;
 
@@ -13,6 +14,9 @@ import java.util.List;
 public class OmxDecoderRenderer implements VideoDecoderRenderer {
 	
 	private final static byte[] BITSTREAM_RESTRICTIONS = new byte[] {(byte) 0xF1, (byte) 0x83, 0x2A, 0x00};
+	
+	private Thread thread;
+	private boolean running;
 
 	@Override
 	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
@@ -22,7 +26,19 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 	}
 
 	@Override
-	public void start() {
+	public void start(final VideoDepacketizer depacketizer) {
+		thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (running) {
+					try {
+						decodeUnit(depacketizer.takeNextDecodeUnit());
+					} catch (InterruptedException ex) {	}
+				}
+			}
+		});
+		running = true;
+		thread.start();		
 	}
 
 	@Override
@@ -35,9 +51,7 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 		OmxDecoder.destroy();
 	}
 
-	@Override
-	public boolean submitDecodeUnit(DecodeUnit decodeUnit) {
-		boolean ok = true;
+	public void decodeUnit(DecodeUnit decodeUnit) {
 		List<ByteBufferDescriptor> units = decodeUnit.getBufferList();
 		
 		ByteBufferDescriptor header = units.get(0);
@@ -50,18 +64,17 @@ public class OmxDecoderRenderer implements VideoDecoderRenderer {
 			this.replace(header, header.length*8+Integer.numberOfLeadingZeros(last & - last)%8-9, 2, BITSTREAM_RESTRICTIONS, 3*8);
 		}
 		
+		boolean ok = true;
 		for (int i=0;i<units.size();i++) {
 			ByteBufferDescriptor bbd = units.get(i);
 			if (ok)
 				ok = (OmxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1)) == 0);
 		}
-		
-		return ok;
 	}
 	
 	@Override
 	public int getCapabilities() {
-		return CAPABILITY_DIRECT_SUBMIT;
+		return 0;
 	}
 	
 	/**

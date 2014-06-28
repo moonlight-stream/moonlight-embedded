@@ -170,7 +170,7 @@ public class Limelight implements NvConnectionListener {
 		int width = 1280;
 		int height = 720;
 		int refresh = 60;
-		int bitrate = 0;
+		int bitrate = 10000;
 		int packetSize = 1024;
 		boolean parse = true;
 		boolean fake = false;
@@ -320,15 +320,6 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("Use ctrl-c to exit application");
 			System.exit(5);
 		}
-		
-		if (bitrate == 0) {
-			if (height<=720)
-				bitrate = 10000;
-			else if (refresh==30)
-				bitrate = 15000;
-			else
-				bitrate = 25000;
-		}			
 		
 		//Set debugging level
 		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);

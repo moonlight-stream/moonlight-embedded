@@ -37,12 +37,13 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 		
 		ByteBufferDescriptor header = units.get(0);
 		if (header.data[header.offset+4] == 0x67) {
+			byte last = header.data[header.length+header.offset-1];
+		
 			//Set number of reference frames back to 1 as it's the minimum for bitstream restrictions
 			this.replace(header, 80, 9, new byte[] {0x40}, 3);
 
-			//Set bitstream restrictions to only buffer single frame
-			byte last = header.data[header.length+header.offset-1];
-			this.replace(header, header.length*8+Integer.numberOfLeadingZeros(last & - last)%8-9, 2, BITSTREAM_RESTRICTIONS, 3*8);
+			//Set bitstream restrictions to only buffer single frame (starts 9 bits before stop bit and 6 bits earlier because of the shortening above)
+			this.replace(header, header.length*8+Integer.numberOfLeadingZeros(last & - last)%8-9-6, 2, BITSTREAM_RESTRICTIONS, 3*8);
 		}
 		
 		boolean ok = true;

@@ -80,9 +80,9 @@
     </javac>
   </target>
 
-  <target name="package" depends="build">
+  <target name="dist" depends="build">
     <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-pi-in.jar">
+    <one-jar destfile="${build.dir}/limelight-pi.jar">
       <manifest>
         <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
       </manifest>
@@ -107,11 +107,11 @@
     </one-jar>
   </target>
 	
-  <target name="dist" depends="package">
+  <target name="proguard">
 	<proguard>
       -libraryjars ${java.home}/lib/rt.jar
-      -injars      ${build.dir}/limelight-pi-in.jar
-      -outjars     ${build.dir}/limelight-pi.jar
+      -injars      ${build.dir}/limelight-pi.jar
+      -outjars     ${build.dir}/limelight-pi-dist.jar
 
       -keepclasseswithmembers public class * {
           public static void main(java.lang.String[]);

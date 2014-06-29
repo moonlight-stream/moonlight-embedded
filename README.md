@@ -22,6 +22,7 @@ implementation.
 ##Installation
 
 * Download [GeForce Experience](http://www.geforce.com/geforce-experience) and install on your Windows PC
+* Install oracle-java8-jdk (Raspbian) or download and install [Oracle Java SE (ARM v6 Hard Float)](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-arm-downloads-2187472.html)
 * Download the appropriate jar from the [GitHub releases page](https://github.com/irtimmer/limelight-pi/releases)
 * Install libopus0 (Debian/Raspbian) or opus (ArchLinux/Fedora/Pidora)
 * [Configure sound](http://elinux.org/R-Pi_Troubleshooting#Sound)
@@ -42,8 +43,10 @@ implementation.
 
 ##Compile
 
-* Install ant
-* Install libopus-dev and libasound2-dev (Debian/Raspbian) or opus-devel and alsa-lib-devel (Fedora/Pidora)
+* Install ant (Debian/Raspbian/Fedora/Pidora) or apache-ant (Archlinux)
+* Install audio libraries libopus-dev and libasound2-dev (Debian/Raspbian) or opus-devel and alsa-lib-devel (Fedora/Pidora) or opus and alsa-lib (Archlinux)
+* Install Raspberry Pi development libraries libraspberrypi-dev (Debian/Raspbian) or raspberrypi-vc-libs-devel (Fedora/Pidora) or raspberrypi-firmware-tools (Archlinux)
+* Set JAVA_HOME to your JDK installation directory for example ``export JAVA_HOME=/usr/lib/jvm/jdk-7-oracle-armhf``
 * Build using Ant ``ant``
 
 ##Contribute

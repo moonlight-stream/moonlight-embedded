@@ -14,10 +14,8 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 	private final static byte[] BITSTREAM_RESTRICTIONS = new byte[] {(byte) 0xF1, (byte) 0x83, 0x2A, 0x00};
 
 	@Override
-	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
-		int err = OmxDecoder.init();
-		if (err != 0)
-			throw new IllegalStateException("AVC decoder initialization failure: "+err);
+	public boolean setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
+		return OmxDecoder.init() == 0;
 	}
 
 	@Override
@@ -132,5 +130,5 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 		source.offset = offset;
 		source.length = length;
 	}
-	
+
 }

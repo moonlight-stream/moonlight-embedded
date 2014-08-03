@@ -15,7 +15,6 @@ import com.limelight.nvstream.http.NvHTTP;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +67,7 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 	
-		conn = new NvConnection(host, this, streamConfig, PlatformBinding.getCryptoProvider());
+		conn = new NvConnection(host, "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
 		
 		GamepadMapping mapping = null;
 		if (mappingFile!=null) {
@@ -102,7 +101,7 @@ public class Limelight implements NvConnectionListener {
 	 * Creates a connection to the host and starts up the stream.
 	 */
 	private void startUpFake(StreamConfiguration streamConfig, String videoFile) {
-		conn = new NvConnection(host, this, streamConfig, PlatformBinding.getCryptoProvider());
+		conn = new NvConnection(host, "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				new FakeAudioRenderer(),
@@ -113,24 +112,11 @@ public class Limelight implements NvConnectionListener {
 	 * Pair the device with the host
 	 */
 	private void pair() {
-		String macAddress;
-		try {
-			macAddress = NvConnection.getMacAddressString();
-		} catch (SocketException e) {
-			e.printStackTrace();
-			return;
-		}
-
-		if (macAddress == null) {
-			displayError("Pair", "Couldn't find a MAC address");
-			return;
-		}
-
 		NvHTTP httpConn;
 	
 		try {
 			httpConn = new NvHTTP(InetAddress.getByName(host),
-				macAddress, PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
+				"Pi", PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
 			try {
 				if (httpConn.getPairState() == PairingManager.PairState.PAIRED) {
 					displayError("pair", "Already paired");
@@ -171,7 +157,6 @@ public class Limelight implements NvConnectionListener {
 		int height = 720;
 		int refresh = 60;
 		int bitrate = 10000;
-		int packetSize = 1024;
 		boolean parse = true;
 		boolean fake = false;
 		boolean tests = true;
@@ -256,19 +241,6 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: bitrate expected after -bitrate");
 					System.exit(3);
 				}
-			} else if (args[i].equals("-packetsize")) {
-				if (i + 1 < args.length) {
-					try {
-						packetSize = Integer.parseInt(args[i+1]);
-					} catch (NumberFormatException e) {
-						System.out.println("Syntax error: packetsize must be a number");
-						System.exit(3);
-					}
-					i++;
-				} else {
-					System.out.println("Syntax error: packetsize expected after -packetsize");
-					System.exit(3);
-				}
 			} else if (args[i].equals("-fake")) {
 				fake = true;
 			} else if (args[i].equals("-out")) {
@@ -310,7 +282,6 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-30fps\t\tUse 30fps");
 			System.out.println("\t-60fps\t\tUse 60fps [default]");
 			System.out.println("\t-bitrate <bitrate>\t\tSpecify the bitrate in Kbps");
-			System.out.println("\t-packetsize <size>\t\tSpecify the packetsize in bytes");
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
@@ -324,7 +295,7 @@ public class Limelight implements NvConnectionListener {
 		//Set debugging level
 		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);
 		
-		StreamConfiguration streamConfig = new StreamConfiguration(width, height, refresh, bitrate, packetSize);
+		StreamConfiguration streamConfig = new StreamConfiguration("Steam", width, height, refresh, bitrate);
 		
 		Limelight limelight = new Limelight(host);
 		if (!pair)

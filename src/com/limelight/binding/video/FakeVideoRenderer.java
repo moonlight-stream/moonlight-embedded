@@ -26,8 +26,9 @@ public class FakeVideoRenderer extends AbstractVideoRenderer {
 	}
 	
 	@Override
- 	public void setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
+ 	public boolean setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
 		System.out.println("Fake " + width + "x" + height + " " + redrawRate + "fps video output");
+		return true;
  	}
 
 	@Override

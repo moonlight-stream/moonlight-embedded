@@ -17,8 +17,12 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 	private int dataSize;
 	private long last;
 	
+	private long endToEndLatency;
+	private long decodeLatency;
+	private long packets;
+	
 	@Override
-	public void start(final VideoDepacketizer depacketizer) {
+	public boolean start(final VideoDepacketizer depacketizer) {
 		last = System.currentTimeMillis();
 		thread = new Thread(new Runnable() {
 			@Override
@@ -26,14 +30,17 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 				while (running) {
 					try {
 						DecodeUnit decodeUnit = depacketizer.takeNextDecodeUnit();
+						long latency = System.currentTimeMillis()-decodeUnit.getReceiveTimestamp();
+						endToEndLatency += latency;
 						
 						dataSize += decodeUnit.getDataLength();
 						decodeUnit(decodeUnit);
 						
 						if (System.currentTimeMillis()>last+2000) {
 							int bitrate = (dataSize/2)/1024;
-							long latency = System.currentTimeMillis()-decodeUnit.getReceiveTimestamp();
-							System.out.println("Video " + bitrate + "kB/s " + latency + "ms");
+							latency = System.currentTimeMillis()-decodeUnit.getReceiveTimestamp();
+							decodeLatency += latency;
+							System.out.println("Video " + bitrate + "kB/s " + latency);
 							dataSize = 0;
 							last = System.currentTimeMillis();
 						}
@@ -43,6 +50,7 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 		});
 		running = true;
 		thread.start();
+		return true;
 	}
 
 	@Override
@@ -61,6 +69,16 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 	@Override
 	public int getCapabilities() {
 		return 0;
+	}
+	
+	@Override
+	public int getAverageEndToEndLatency() {
+		return (int) (endToEndLatency / packets);
+	}
+
+	@Override
+	public int getAverageDecoderLatency() {
+		return (int) (decodeLatency / packets);
 	}
 
 }

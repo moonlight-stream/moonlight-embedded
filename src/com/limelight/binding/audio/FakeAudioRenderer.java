@@ -12,9 +12,10 @@ public class FakeAudioRenderer implements AudioRenderer {
 	private long last;
 
 	@Override
-	public void streamInitialized(int channelCount, int sampleRate) {
+	public boolean streamInitialized(int channelCount, int sampleRate) {
 		System.out.println("Fake " + channelCount + " channel " + sampleRate + " samplerate audio output");
 		last = System.currentTimeMillis();
+		return true;
 	}
 
 	@Override

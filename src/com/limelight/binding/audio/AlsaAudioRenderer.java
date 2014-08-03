@@ -16,10 +16,8 @@ public class AlsaAudioRenderer implements AudioRenderer {
 	}
 
 	@Override
-	public void streamInitialized(int channelCount, int sampleRate) {
-		int ret = AlsaAudio.init(channelCount, sampleRate, device);
-		if (ret != 0)
-			throw new IllegalStateException("Alsa renderer initialization failure: "+ret);
+	public boolean streamInitialized(int channelCount, int sampleRate) {
+		return AlsaAudio.init(channelCount, sampleRate, device) == 0;
 	}
 
 	@Override

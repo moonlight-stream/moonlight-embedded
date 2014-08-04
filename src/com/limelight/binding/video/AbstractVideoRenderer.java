@@ -44,6 +44,7 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 							dataSize = 0;
 							last = System.currentTimeMillis();
 						}
+						depacketizer.freeDecodeUnit(decodeUnit);
 					} catch (InterruptedException ex) {	}
 				}
 			}

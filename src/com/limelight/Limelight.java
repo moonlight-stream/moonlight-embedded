@@ -33,6 +33,7 @@ public class Limelight implements NvConnectionListener {
 	private String host;
 	private NvConnection conn;
 	private boolean connectionTerminating;
+	private Logger logger;
 
 	/**
 	 * Constructs a new instance based on the given host
@@ -292,12 +293,13 @@ public class Limelight implements NvConnectionListener {
 			System.exit(5);
 		}
 		
-		//Set debugging level
-		Logger.getLogger(LimeLog.class.getName()).setLevel(debug);
-		
 		StreamConfiguration streamConfig = new StreamConfiguration("Steam", width, height, refresh, bitrate);
 		
 		Limelight limelight = new Limelight(host);
+
+		//Set debugging level
+		limelight.setLevel(debug);
+
 		if (!pair)
 			if (fake)
 				limelight.startUpFake(streamConfig, video);
@@ -306,8 +308,14 @@ public class Limelight implements NvConnectionListener {
 		else
 			limelight.pair();
 	}
-	
-	
+
+	public void setLevel(Level level) {
+		if (logger==null)
+			logger = Logger.getLogger(LimeLog.class.getName());
+
+		logger.setLevel(level);
+	}
+
 	public void stop() {
 		connectionTerminating = true;
 		conn.stop();

@@ -37,7 +37,7 @@ public class AlsaAudioRenderer implements AudioRenderer {
 
 	@Override
 	public int getCapabilities() {
-		return CAPABILITY_DIRECT_SUBMIT;
+		return 0;
 	}
 	
 }

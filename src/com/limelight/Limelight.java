@@ -162,7 +162,7 @@ public class Limelight implements NvConnectionListener {
 		boolean fake = false;
 		boolean tests = true;
 		String mapping = null;
-		String audio = "default";
+		String audio = "sysdefault";
 		String video = null;
 		Level debug = Level.SEVERE;
 		

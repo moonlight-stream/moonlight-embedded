@@ -153,19 +153,18 @@ public class Limelight implements NvConnectionListener {
 	public static void main(String args[]) {
 		String host = null;
 		List<String> inputs = new ArrayList<String>();
-		boolean pair = false;
 		int width = 1280;
 		int height = 720;
 		int refresh = 60;
 		int bitrate = 10000;
 		boolean parse = true;
-		boolean fake = false;
 		boolean tests = true;
 		boolean sops = true;
 		String mapping = null;
 		String app = "Steam";
 		String audio = "sysdefault";
 		String video = null;
+		String action = null;
 		Level debug = Level.SEVERE;
 		
 		for (int i = 0; i < args.length; i++) {
@@ -193,8 +192,6 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: audio device expected after -audio");
 					System.exit(3);
 				}
-			} else if (args[i].equals("-pair")) {
-				pair = true;
 			} else if (args[i].equals("-720")) {
 				height = 720;
 				width = 1280;
@@ -244,8 +241,6 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: bitrate expected after -bitrate");
 					System.exit(3);
 				}
-			} else if (args[i].equals("-fake")) {
-				fake = true;
 			} else if (args[i].equals("-out")) {
 				if (i + 1 < args.length) {
 					video = args[i+1];
@@ -273,6 +268,12 @@ public class Limelight implements NvConnectionListener {
 			} else if (args[i].startsWith("-")) {
 				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
 				parse = false;
+			} else if (action == null) {
+				action = args[i].toLowerCase();
+				if (!action.equals("stream") || !action.equals("pair") || !action.equals("fake") || !action.equals("help")) {
+					System.out.println("Syntax error: invalid action specified");
+					System.exit(3);
+				}
 			} else if (host == null) {
 				host = args[i];
 			} else {
@@ -281,13 +282,23 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 		
-		if (host == null) {
-			System.out.println("Syntax Error: Missing required host argument");
+		if (action == null) {
+			System.out.println("Syntax Error: Missing required action argument");
 			parse = false;
-		}
+		} else if (action == "help")
+			parse = false;
 		
 		if (args.length == 0 || !parse) {
 			System.out.println("Usage: java -jar limelight-pi.jar [options] host");
+			System.out.println();
+			System.out.println(" Actions:");
+			System.out.println();
+			System.out.println("\tpair\t\t\tPair device with computer");
+			System.out.println("\tstream\t\t\tStream computer to device");
+			System.out.println("\thelp\t\t\tShow this help");
+			System.out.println();
+			System.out.println(" Streaming options:");
+			System.out.println();
 			System.out.println("\t-720\t\tUse 1280x720 resolution [default]");
 			System.out.println("\t-1080\t\tUse 1920x1080 resolution");
 			System.out.println("\t-width <width>\tHorizontal resolution (default 1280)");
@@ -301,25 +312,29 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
 			System.out.println("\t-audio <device>\tUse <device> as ALSA audio output device (default hw:0)");
-			System.out.println("\t-pair\t\tPair with host");
 			System.out.println();
 			System.out.println("Use ctrl-c to exit application");
 			System.exit(5);
 		}
-		
-		StreamConfiguration streamConfig = new StreamConfiguration(app, width, height, refresh, bitrate, sops);
+
+		if (host == null) {
+			System.out.println("Syntax Error: Missing required host argument");
+			System.exit(3);
+		}
 		
 		Limelight limelight = new Limelight(host);
-
+		
 		//Set debugging level
 		limelight.setLevel(debug);
-
-		if (!pair)
-			if (fake)
+		
+		if (action.equals("stream") || action.equals("fake")) {
+			StreamConfiguration streamConfig = new StreamConfiguration(app, width, height, refresh, bitrate, sops);
+			
+			if (action.equals("fake"))
 				limelight.startUpFake(streamConfig, video);
 			else
 				limelight.startUp(streamConfig, inputs, mapping, audio, tests);
-		else
+		} else if (action.equals("pair"))
 			limelight.pair();
 	}
 

@@ -25,7 +25,7 @@ implementation.
 
 * Download [GeForce Experience](http://www.geforce.com/geforce-experience) and install on your Windows PC
 * Install oracle-java8-jdk (Raspbian) or download and install [Oracle Java SE (ARM v6 Hard Float)](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-arm-downloads-2187472.html)
-* Download the appropriate jar from the [GitHub releases page](https://github.com/irtimmer/limelight-pi/releases)
+* Download the compiled jar from the [GitHub releases page](https://github.com/irtimmer/limelight-pi/releases)
 * Install libopus0 (Debian/Raspbian) or opus (ArchLinux/Fedora/Pidora)
 * [Configure sound](http://elinux.org/R-Pi_Troubleshooting#Sound)
 
@@ -33,15 +33,45 @@ implementation.
 
 * [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GTX 600/700 series GPU (for the PC you're streaming from)
 * High-end wireless router (802.11n dual-band recommended) or Wired network
+* Geforce Experience 2.1.1 or higher
 
-##Usage
+##Quick Start
 
 * Ensure your machine and Raspberry Pi are on the same network
 * Turn on Shield Streaming in the GFE settings
-* Start Limelight Pi with -pair option
+* Start Limelight Pi with pair
 * Accept the pairing confirmation on your PC
-* Start Limelight Pi normally
+* Start Limelight Pi with stream
 * Play games!
+
+##Usage
+	Usage: java -jar limelight-pi.jar [options] host
+
+	Actions:
+
+	pair Pair device with computer
+	stream Stream computer to device
+	discover List available computers
+	list List available games and applications
+	help Show this help
+
+	Streaming options:
+
+	-720 Use 1280x720 resolution (default)
+	-1080 Use 1920x1080 resolution
+	-width <width> Horizontal resolution (default 1280)
+	-height <height>Vertical resolution (default 720)
+	-30fps Use 30fps
+	-60fps Use 60fps (default)
+	-bitrate <bitrate>Specify the bitrate in Kbps
+	-app <app> Name of app to stream
+	-nosops Don't allow GFE to modify game settings
+	-input <device> Use <device> as input. Can be used multiple times
+	(default uses all devices in /dev/input)
+	-mapping <file> Use <file> as gamepad mapping configuration file
+	-audio <device> Use <device> as ALSA audio output device (default sysdefault)
+
+	Use ctrl-c to exit application
 
 ##Compile
 

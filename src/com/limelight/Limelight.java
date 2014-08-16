@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.limelight.nvstream.http.PairingManager;
+import com.limelight.nvstream.mdns.MdnsComputer;
+import com.limelight.nvstream.mdns.MdnsDiscoveryAgent;
+import com.limelight.nvstream.mdns.MdnsDiscoveryListener;
 
 /**
  * Main class for Limelight Pi
@@ -30,19 +33,22 @@ import com.limelight.nvstream.http.PairingManager;
  */
 public class Limelight implements NvConnectionListener {
 
-	private String host;
+	private InetAddress host;
 	private NvConnection conn;
 	private boolean connectionTerminating;
 	private Logger logger;
 
+	public Limelight() {
+	}
+	
 	/**
 	 * Constructs a new instance based on the given host
 	 * @param host can be hostname or IP address.
 	 */
-	public Limelight(String host) {
+	public Limelight(InetAddress host) {
 		this.host = host;
 	}
-
+	
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
@@ -68,7 +74,7 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 	
-		conn = new NvConnection(host, "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
+		conn = new NvConnection(host.getHostAddress(), "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
 		
 		GamepadMapping mapping = null;
 		if (mappingFile!=null) {
@@ -102,7 +108,7 @@ public class Limelight implements NvConnectionListener {
 	 * Creates a connection to the host and starts up the stream.
 	 */
 	private void startUpFake(StreamConfiguration streamConfig, String videoFile) {
-		conn = new NvConnection(host, "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
+		conn = new NvConnection(host.getHostAddress(), "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				new FakeAudioRenderer(),
@@ -115,33 +121,29 @@ public class Limelight implements NvConnectionListener {
 	private void pair() {
 		NvHTTP httpConn;
 	
+		httpConn = new NvHTTP(host,
+			"Pi", PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
 		try {
-			httpConn = new NvHTTP(InetAddress.getByName(host),
-				"Pi", PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
-			try {
-				if (httpConn.getPairState() == PairingManager.PairState.PAIRED) {
-					displayError("pair", "Already paired");
-				} else {
-					final String pinStr = PairingManager.generatePinString();
-					
-					displayMessage("Please enter the following PIN on the target PC: "+pinStr);
-					
-					PairingManager.PairState pairState = httpConn.pair(pinStr);
-					if (pairState == PairingManager.PairState.PIN_WRONG) {
-						displayError("pair", "Incorrect PIN");
-					}
-					else if (pairState == PairingManager.PairState.FAILED) {
-						displayError("pair", "Pairing failed");
-					}
-					else if (pairState == PairingManager.PairState.PAIRED) {
-						displayError("pair", "Paired successfully");
-					}
+			if (httpConn.getPairState() == PairingManager.PairState.PAIRED) {
+				displayError("pair", "Already paired");
+			} else {
+				final String pinStr = PairingManager.generatePinString();
+
+				displayMessage("Please enter the following PIN on the target PC: "+pinStr);
+
+				PairingManager.PairState pairState = httpConn.pair(pinStr);
+				if (pairState == PairingManager.PairState.PIN_WRONG) {
+					displayError("pair", "Incorrect PIN");
 				}
-			} catch (Exception e) {
-				displayError("Pair", e.getMessage());
+				else if (pairState == PairingManager.PairState.FAILED) {
+					displayError("pair", "Pairing failed");
+				}
+				else if (pairState == PairingManager.PairState.PAIRED) {
+					displayError("pair", "Paired successfully");
+				}
 			}
-		} catch (UnknownHostException e1) {
-			displayError("Pair", "Failed to resolve host");
+		} catch (Exception e) {
+			displayError("Pair", e.getMessage());
 		}
 	}
 	
@@ -151,7 +153,7 @@ public class Limelight implements NvConnectionListener {
 	 * @param args unused.
 	 */
 	public static void main(String args[]) {
-		String host = null;
+		InetAddress host = null;
 		List<String> inputs = new ArrayList<String>();
 		int width = 1280;
 		int height = 720;
@@ -270,12 +272,17 @@ public class Limelight implements NvConnectionListener {
 				parse = false;
 			} else if (action == null) {
 				action = args[i].toLowerCase();
-				if (!action.equals("stream") || !action.equals("pair") || !action.equals("fake") || !action.equals("help")) {
+				if (!action.equals("stream") && !action.equals("pair") && !action.equals("fake") && !action.equals("help") && !action.equals("discover")) {
 					System.out.println("Syntax error: invalid action specified");
 					System.exit(3);
 				}
 			} else if (host == null) {
-				host = args[i];
+				try {
+					host = InetAddress.getByName(args[i]);
+				} catch (UnknownHostException ex) {
+					System.out.println("Failed to resolve host");
+					System.exit(3);
+				}
 			} else {
 				System.out.println("Syntax Error: Unrecognized argument: " + args[i]);
 				parse = false;
@@ -285,7 +292,7 @@ public class Limelight implements NvConnectionListener {
 		if (action == null) {
 			System.out.println("Syntax Error: Missing required action argument");
 			parse = false;
-		} else if (action == "help")
+		} else if (action.equals("help"))
 			parse = false;
 		
 		if (args.length == 0 || !parse) {
@@ -295,6 +302,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println();
 			System.out.println("\tpair\t\t\tPair device with computer");
 			System.out.println("\tstream\t\t\tStream computer to device");
+			System.out.println("\tdiscover\t\tList available computers");
 			System.out.println("\thelp\t\t\tShow this help");
 			System.out.println();
 			System.out.println(" Streaming options:");
@@ -316,13 +324,13 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("Use ctrl-c to exit application");
 			System.exit(5);
 		}
-
-		if (host == null) {
-			System.out.println("Syntax Error: Missing required host argument");
-			System.exit(3);
-		}
 		
-		Limelight limelight = new Limelight(host);
+		Limelight limelight;
+		if (host == null || action.equals("discover")) {
+			limelight = new Limelight();
+			limelight.discover(!action.equals("discover"));
+		} else
+			limelight = new Limelight(host);
 		
 		//Set debugging level
 		limelight.setLevel(debug);
@@ -336,6 +344,34 @@ public class Limelight implements NvConnectionListener {
 				limelight.startUp(streamConfig, inputs, mapping, audio, tests);
 		} else if (action.equals("pair"))
 			limelight.pair();
+	}
+	
+	public void discover(final boolean first) {
+		final Object mutex = new Object();
+		new MdnsDiscoveryAgent(new MdnsDiscoveryListener() {
+			@Override
+			public void notifyComputerAdded(MdnsComputer computer) {
+				displayMessage("Discovered " + computer.getName() + " " + computer.getAddress().getHostAddress());
+				host = computer.getAddress();
+				if (first)
+					synchronized (mutex) {
+						mutex.notify();
+					}
+			}
+
+			@Override
+			public void notifyComputerRemoved(MdnsComputer computer) {
+			}
+
+			@Override
+			public void notifyDiscoveryFailure(Exception e) {
+			}
+		});
+		synchronized (mutex) {
+			try {
+				mutex.wait();
+			} catch (InterruptedException ex) { }
+		}
 	}
 
 	public void setLevel(Level level) {

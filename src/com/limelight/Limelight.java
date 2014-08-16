@@ -163,6 +163,7 @@ public class Limelight implements NvConnectionListener {
 		boolean tests = true;
 		boolean sops = true;
 		String mapping = null;
+		String app = "Steam";
 		String audio = "sysdefault";
 		String video = null;
 		Level debug = Level.SEVERE;
@@ -253,6 +254,14 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: output file expected after -out");
 					System.exit(3);
 				}
+			} else if (args[i].equals("-app")) {
+				if (i + 1 < args.length) {
+					app = args[i+1];
+					i++;
+				} else {
+					System.out.println("Syntax error: application name expected after -app");
+					System.exit(3);
+				}
 			} else if (args[i].equals("-notest")) {
 				tests = false;
 			} else if (args[i].equals("-nosops")) {
@@ -286,6 +295,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-30fps\t\tUse 30fps");
 			System.out.println("\t-60fps\t\tUse 60fps [default]");
 			System.out.println("\t-bitrate <bitrate>\t\tSpecify the bitrate in Kbps");
+			System.out.println("\t-app <app>\t\tName of app to stream");
 			System.out.println("\t-nosops\t\t\tDon't allow GFE to modify game settings");
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
@@ -297,7 +307,7 @@ public class Limelight implements NvConnectionListener {
 			System.exit(5);
 		}
 		
-		StreamConfiguration streamConfig = new StreamConfiguration("Steam", width, height, refresh, bitrate, sops);
+		StreamConfiguration streamConfig = new StreamConfiguration(app, width, height, refresh, bitrate, sops);
 		
 		Limelight limelight = new Limelight(host);
 

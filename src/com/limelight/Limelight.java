@@ -365,11 +365,12 @@ public class Limelight implements NvConnectionListener {
 	}
 	
 	public void discover(final boolean first) {
+		displayMessage("Discover GFE");
 		final Object mutex = new Object();
 		new MdnsDiscoveryAgent(new MdnsDiscoveryListener() {
 			@Override
 			public void notifyComputerAdded(MdnsComputer computer) {
-				displayMessage("Discovered " + computer.getName() + " " + computer.getAddress().getHostAddress());
+				displayMessage(" " + computer.getName() + " " + computer.getAddress().getHostAddress());
 				host = computer.getAddress();
 				if (first)
 					synchronized (mutex) {

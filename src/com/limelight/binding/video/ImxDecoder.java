@@ -4,11 +4,11 @@ package com.limelight.binding.video;
  * JNI Decoder bindings
  * @author Iwan Timmer
  */
-public class OmxDecoder {
+public class ImxDecoder {
 	
 	public static boolean load() {
 		try {
-			System.loadLibrary("nv_omx_dec");
+			System.loadLibrary("nv_imx_dec");
 		} catch (Throwable e) {
 			return false;
 		}
@@ -16,8 +16,6 @@ public class OmxDecoder {
 	}
 	
 	public static native int init();
-	
-	public static native void stop();
 	
 	public static native void destroy();
 	

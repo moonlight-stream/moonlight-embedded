@@ -9,6 +9,7 @@
   
   <property name="libs.opus.dir" location="${basedir}/jni/nv_opus_dec/"/>
   <property name="libs.omx.dir" location="${basedir}/jni/nv_omx_dec/"/>
+  <property name="libs.imx.dir" location="${basedir}/jni/nv_imx_dec/"/>
   <property name="libs.alsa.dir" location="${basedir}/jni/nv_alsa/"/>
   <property name="libs.io.dir" location="${basedir}/jni/nv_io/"/>
   
@@ -36,6 +37,12 @@
 	<exec executable="make" dir="${libs.omx.dir}">
 		<arg line="clean"/>
 	</exec>
+	<exec executable="make" dir="${libs.imx.dir}">
+		<arg line="clean"/>
+	</exec>
+	<exec executable="make" dir="${libs.imx.dir}">
+		<arg line="clean"/>
+	</exec>
 	<exec executable="make" dir="${libs.opus.dir}">
 		<arg line="clean"/>
 	</exec>
@@ -53,6 +60,7 @@
   
   <target name="compile-native">
 	  <exec executable="make" dir="${libs.omx.dir}"/>
+	  <exec executable="make" dir="${libs.imx.dir}"/>
 	  <exec executable="make" dir="${libs.opus.dir}"/>
 	  <exec executable="make" dir="${libs.alsa.dir}"/>
 	  <exec executable="make" dir="${libs.io.dir}"/>
@@ -101,6 +109,7 @@
       <binlib>
         <fileset dir="${libs.opus.dir}" includes="*.so"/>
         <fileset dir="${libs.omx.dir}" includes="*.so"/>
+		<fileset dir="${libs.imx.dir}" includes="*.so"/>
 		<fileset dir="${libs.alsa.dir}" includes="*.so"/>
 		<fileset dir="${libs.io.dir}" includes="*.so"/>
       </binlib>

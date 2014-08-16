@@ -1,7 +1,5 @@
 package com.limelight;
 
-import java.io.IOException;
-
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.FakeAudioRenderer;
 import com.limelight.binding.video.FakeVideoRenderer;
@@ -13,19 +11,22 @@ import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import com.limelight.nvstream.http.PairingManager;
 import com.limelight.nvstream.mdns.MdnsComputer;
 import com.limelight.nvstream.mdns.MdnsDiscoveryAgent;
 import com.limelight.nvstream.mdns.MdnsDiscoveryListener;
-import org.xmlpull.v1.XmlPullParserException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main class for Limelight Pi
@@ -76,7 +77,7 @@ public class Limelight implements NvConnectionListener {
 			}
 		}
 	
-		conn = new NvConnection(host.getHostAddress(), "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
+		conn = new NvConnection(host.getHostAddress(), getUniqueId(), this, streamConfig, PlatformBinding.getCryptoProvider());
 		
 		GamepadMapping mapping = null;
 		if (mappingFile!=null) {
@@ -110,7 +111,7 @@ public class Limelight implements NvConnectionListener {
 	 * Creates a connection to the host and starts up the stream.
 	 */
 	private void startUpFake(StreamConfiguration streamConfig, String videoFile) {
-		conn = new NvConnection(host.getHostAddress(), "Pi", this, streamConfig, PlatformBinding.getCryptoProvider());
+		conn = new NvConnection(host.getHostAddress(), getUniqueId(), this, streamConfig, PlatformBinding.getCryptoProvider());
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				new FakeAudioRenderer(),
@@ -124,7 +125,7 @@ public class Limelight implements NvConnectionListener {
 		NvHTTP httpConn;
 	
 		httpConn = new NvHTTP(host,
-			"Pi", PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
+			getUniqueId(), PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
 		try {
 			if (httpConn.getPairState() == PairingManager.PairState.PAIRED) {
 				displayError("pair", "Already paired");
@@ -150,7 +151,7 @@ public class Limelight implements NvConnectionListener {
 	}
 	
 	private void listApps() {
-		NvHTTP conn = new NvHTTP(host, "Pi", PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
+		NvHTTP conn = new NvHTTP(host, getUniqueId(), PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
 		displayMessage("Search apps");
 		try {
 			List<NvApp> apps = conn.getAppList();
@@ -391,6 +392,29 @@ public class Limelight implements NvConnectionListener {
 				mutex.wait();
 			} catch (InterruptedException ex) { }
 		}
+	}
+	
+	public String getUniqueId() {
+		try {
+			File file = new File("uniqueid.dat");
+			if (file.exists()) {
+				FileInputStream in = new FileInputStream(file);
+				byte[] id = new byte[16];
+				in.read(id);
+				in.close();
+				return new String(id);
+			} else {
+				String id = String.format("%016x", new Random().nextLong());
+				FileOutputStream out = new FileOutputStream(file);
+				out.write(id.getBytes());
+				out.close();
+				return id;
+			}
+		} catch (IOException ex) {
+			LimeLog.severe(ex.getMessage());
+		}
+		
+		return "limelight";
 	}
 
 	public void setLevel(Level level) {

@@ -11,6 +11,7 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
 import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,6 +25,7 @@ import com.limelight.nvstream.http.PairingManager;
 import com.limelight.nvstream.mdns.MdnsComputer;
 import com.limelight.nvstream.mdns.MdnsDiscoveryAgent;
 import com.limelight.nvstream.mdns.MdnsDiscoveryListener;
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Main class for Limelight Pi
@@ -144,6 +146,19 @@ public class Limelight implements NvConnectionListener {
 			}
 		} catch (Exception e) {
 			displayError("Pair", e.getMessage());
+		}
+	}
+	
+	private void listApps() {
+		NvHTTP conn = new NvHTTP(host, "Pi", PlatformBinding.getDeviceName(), PlatformBinding.getCryptoProvider());
+		displayMessage("Search apps");
+		try {
+			List<NvApp> apps = conn.getAppList();
+			for (NvApp app:apps) {
+				displayMessage(" " + app.getAppName() + (app.getIsRunning()?" (running)":""));
+			}
+		} catch (Exception e) {
+			displayError("List", e.getMessage());
 		}
 	}
 	
@@ -272,7 +287,7 @@ public class Limelight implements NvConnectionListener {
 				parse = false;
 			} else if (action == null) {
 				action = args[i].toLowerCase();
-				if (!action.equals("stream") && !action.equals("pair") && !action.equals("fake") && !action.equals("help") && !action.equals("discover")) {
+				if (!action.equals("stream") && !action.equals("pair") && !action.equals("fake") && !action.equals("help") && !action.equals("discover") && !action.equals("list")) {
 					System.out.println("Syntax error: invalid action specified");
 					System.exit(3);
 				}
@@ -303,6 +318,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\tpair\t\t\tPair device with computer");
 			System.out.println("\tstream\t\t\tStream computer to device");
 			System.out.println("\tdiscover\t\tList available computers");
+			System.out.println("\tlist\t\tList available games and applications");
 			System.out.println("\thelp\t\t\tShow this help");
 			System.out.println();
 			System.out.println(" Streaming options:");
@@ -344,6 +360,8 @@ public class Limelight implements NvConnectionListener {
 				limelight.startUp(streamConfig, inputs, mapping, audio, tests);
 		} else if (action.equals("pair"))
 			limelight.pair();
+		else if (action.equals("list"))
+			limelight.listApps();
 	}
 	
 	public void discover(final boolean first) {

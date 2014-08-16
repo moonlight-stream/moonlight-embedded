@@ -161,6 +161,7 @@ public class Limelight implements NvConnectionListener {
 		boolean parse = true;
 		boolean fake = false;
 		boolean tests = true;
+		boolean sops = true;
 		String mapping = null;
 		String audio = "sysdefault";
 		String video = null;
@@ -254,6 +255,8 @@ public class Limelight implements NvConnectionListener {
 				}
 			} else if (args[i].equals("-notest")) {
 				tests = false;
+			} else if (args[i].equals("-nosops")) {
+				sops = false;
 			} else if (args[i].equals("-v")) {
 				debug = Level.WARNING;
 			} else if (args[i].equals("-vv")) {
@@ -283,6 +286,7 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-30fps\t\tUse 30fps");
 			System.out.println("\t-60fps\t\tUse 60fps [default]");
 			System.out.println("\t-bitrate <bitrate>\t\tSpecify the bitrate in Kbps");
+			System.out.println("\t-nosops\t\t\tDon't allow GFE to modify game settings");
 			System.out.println("\t-input <device>\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-mapping <file>\tUse <file> as gamepad mapping configuration file");
@@ -293,7 +297,7 @@ public class Limelight implements NvConnectionListener {
 			System.exit(5);
 		}
 		
-		StreamConfiguration streamConfig = new StreamConfiguration("Steam", width, height, refresh, bitrate);
+		StreamConfiguration streamConfig = new StreamConfiguration("Steam", width, height, refresh, bitrate, sops);
 		
 		Limelight limelight = new Limelight(host);
 

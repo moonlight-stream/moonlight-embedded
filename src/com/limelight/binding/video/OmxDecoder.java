@@ -5,8 +5,14 @@ package com.limelight.binding.video;
  * @author Iwan Timmer
  */
 public class OmxDecoder {
-	static {
-		System.loadLibrary("nv_omx_dec");
+	
+	public static boolean load() {
+		try {
+			System.loadLibrary("nv_omx_dec");
+		} catch (Throwable e) {
+			return false;
+		}
+		return false;
 	}
 	
 	public static native int init();

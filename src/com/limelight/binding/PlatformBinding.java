@@ -4,8 +4,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import com.limelight.binding.audio.AlsaAudioRenderer;
+import com.limelight.binding.video.ImxDecoder;
 import com.limelight.binding.video.ImxDecoderRenderer;
 import com.limelight.binding.crypto.PcCryptoProvider;
+import com.limelight.binding.video.OmxDecoder;
+import com.limelight.binding.video.OmxDecoderRenderer;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.LimelightCryptoProvider;
@@ -21,7 +24,12 @@ public class PlatformBinding {
 	 * @return a video decoder and renderer
 	 */
 	public static VideoDecoderRenderer getVideoDecoderRenderer() {
-		return new ImxDecoderRenderer();
+		if (OmxDecoder.load())
+			return new OmxDecoderRenderer();
+		else if (ImxDecoder.load())
+			return new ImxDecoderRenderer();
+
+		return null;
 	}
 	
 	/**

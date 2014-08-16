@@ -5,8 +5,14 @@ package com.limelight.binding.video;
  * @author Iwan Timmer
  */
 public class ImxDecoder {
-	static {
-		System.loadLibrary("nv_imx_dec");
+	
+	public static boolean load() {
+		try {
+			System.loadLibrary("nv_imx_dec");
+		} catch (Throwable e) {
+			return false;
+		}
+		return false;
 	}
 	
 	public static native int init();

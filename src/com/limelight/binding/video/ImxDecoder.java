@@ -12,7 +12,7 @@ public class ImxDecoder {
 		} catch (Throwable e) {
 			return false;
 		}
-		return false;
+		return true;
 	}
 	
 	public static native int init();

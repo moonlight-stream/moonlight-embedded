@@ -81,6 +81,7 @@ public class EvdevHandler implements Runnable {
 		short type = buffer.getShort();
 		short code = buffer.getShort();
 		int value = buffer.getInt();
+		boolean mapped = true;
 		
 		if (type==EvdevConstants.EV_KEY) {
 			if (code<EvdevConstants.KEY_CODES.length) {
@@ -90,6 +91,8 @@ public class EvdevHandler implements Runnable {
 					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_DOWN, (byte) 0);
 				else if (value==EvdevConstants.KEY_RELEASED)
 					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_UP, (byte) 0);
+					
+				mapped = false;
 			} else {
 				byte mouseButton = 0;
 				short gamepadButton = 0;
@@ -147,8 +150,8 @@ public class EvdevHandler implements Runnable {
 						leftTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
 					} else if (code==mapping.btn_tr2) {
 						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
-					}
-					conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+					} else
+						mapped = false;
 				}
 			}
 		} else if (type==EvdevConstants.EV_REL) {
@@ -156,6 +159,8 @@ public class EvdevHandler implements Runnable {
 				conn.sendMouseMove((short) value, (short) 0);
 			else if (code==EvdevConstants.REL_Y)
 				conn.sendMouseMove((short) 0, (short) value);
+				
+			mapped = false;
 		} else if (type==EvdevConstants.EV_ABS) {
 			if (code==mapping.abs_x)
 				leftStickX = accountForDeadzone(absLX.getShort(value));
@@ -193,10 +198,13 @@ public class EvdevHandler implements Runnable {
 					buttonFlags |= ControllerPacket.DOWN_FLAG;
 					buttonFlags &= ~ControllerPacket.UP_FLAG;
 				}
-			}
-
+			} else
+				mapped = false;
+		} else
+			mapped = false;
+		
+		if (mapped)
 			conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
-		}
 	}
 
 	private short accountForDeadzone(short value) {

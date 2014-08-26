@@ -4,6 +4,7 @@ import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.FakeAudioRenderer;
 import com.limelight.binding.video.FakeVideoRenderer;
 import com.limelight.input.EvdevLoader;
+import com.limelight.input.GamepadMapper;
 import com.limelight.input.GamepadMapping;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.NvConnectionListener;
@@ -183,6 +184,7 @@ public class Limelight implements NvConnectionListener {
 		String audio = "sysdefault";
 		String video = null;
 		String action = null;
+		String out= null;
 		Level debug = Level.SEVERE;
 		
 		for (int i = 0; i < args.length; i++) {
@@ -288,11 +290,13 @@ public class Limelight implements NvConnectionListener {
 				parse = false;
 			} else if (action == null) {
 				action = args[i].toLowerCase();
-				if (!action.equals("stream") && !action.equals("pair") && !action.equals("fake") && !action.equals("help") && !action.equals("discover") && !action.equals("list")) {
+				if (!action.equals("stream") && !action.equals("pair") && !action.equals("fake") && !action.equals("help") && !action.equals("discover") && !action.equals("list") && !action.equals("map")) {
 					System.out.println("Syntax error: invalid action specified");
 					System.exit(3);
 				}
-			} else if (host == null) {
+			} else if (action.equals("map") && out == null) {
+				out = args[i];
+			} else if (!action.equals("map") && host == null) {
 				try {
 					host = InetAddress.getByName(args[i]);
 				} catch (UnknownHostException ex) {
@@ -308,19 +312,43 @@ public class Limelight implements NvConnectionListener {
 		if (action == null) {
 			System.out.println("Syntax Error: Missing required action argument");
 			parse = false;
+		} else if (action.equals("map")) {
+			if (inputs.size() != 1) {
+				System.out.println("Syntax error: specify one -input");
+				parse = false;
+			} else if (out == null) {
+				System.out.println("Syntax error: specify the output file");
+				parse = false;
+			}
+			
+			if (parse) {
+				try {
+					GamepadMapper mapper = new GamepadMapper(inputs.get(0));
+					mapper.setup();
+					mapper.save(new File(out));
+				} catch (IOException | InterruptedException ex) {
+					System.err.println(ex.getMessage());
+				}
+				return;
+			}
 		} else if (action.equals("help"))
 			parse = false;
 		
 		if (args.length == 0 || !parse) {
-			System.out.println("Usage: java -jar limelight-pi.jar [options] host");
+			System.out.println("Usage: java -jar limelight-pi.jar action [options] host/file");
 			System.out.println();
 			System.out.println(" Actions:");
 			System.out.println();
+			System.out.println("\tmap\t\t\tCreate mapping file for gamepad");
 			System.out.println("\tpair\t\t\tPair device with computer");
 			System.out.println("\tstream\t\t\tStream computer to device");
 			System.out.println("\tdiscover\t\tList available computers");
 			System.out.println("\tlist\t\t\tList available games and applications");
 			System.out.println("\thelp\t\t\tShow this help");
+			System.out.println();
+			System.out.println(" Mapping options:");
+			System.out.println();
+			System.out.println("\t-input <device>\t\tUse <device> as input");
 			System.out.println();
 			System.out.println(" Streaming options:");
 			System.out.println();

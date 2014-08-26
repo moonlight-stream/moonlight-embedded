@@ -1,23 +1,18 @@
 package com.limelight.input;
 
-import com.limelight.LimeLog;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.ControllerPacket;
 import com.limelight.nvstream.input.KeyboardPacket;
 import com.limelight.nvstream.input.MouseButtonPacket;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 
 /**
  * Class that handles keyboard input using the Evdev interface
  * @author Iwan Timmer
  */
-public class EvdevHandler implements Runnable {
+public class EvdevHandler extends EvdevReader {
 	
 	private static KeyboardTranslator translator;
 	
@@ -32,24 +27,12 @@ public class EvdevHandler implements Runnable {
 	private EvdevAbsolute absLX, absLY, absRX, absRY, absLT, absRT, absDX, absDY;
 	
 	private NvConnection conn;
-	private FileChannel deviceInput;
-	private ByteBuffer inputBuffer;
-	
 	private GamepadMapping mapping;
 	
 	public EvdevHandler(NvConnection conn, String device, GamepadMapping mapping) throws FileNotFoundException, IOException {
+		super(device);
 		this.conn = conn;
 		this.mapping = mapping;
-		File file = new File(device);
-		if (!file.exists())
-			throw new FileNotFoundException("File " + device + " not found");
-		if (!file.canRead())
-			throw new IOException("Can't read from " + device);
-			
-		FileInputStream in = new FileInputStream(file);
-        deviceInput = in.getChannel();
-		inputBuffer = ByteBuffer.allocate(EvdevConstants.MAX_STRUCT_SIZE_BYTES);
-		inputBuffer.order(ByteOrder.nativeOrder());
 		
 		absLX = new EvdevAbsolute(device, mapping.abs_x, mapping.reverse_x);
 		absLY = new EvdevAbsolute(device, mapping.abs_y, !mapping.reverse_y);
@@ -62,15 +45,9 @@ public class EvdevHandler implements Runnable {
 		
 		translator = new KeyboardTranslator(conn);
 	}
-	
-	public void start() {
-		Thread thread = new Thread(this);
-		thread.setDaemon(true);
-		thread.setName("Input - Receiver");
-		thread.start();
-	}
-	
-	private void parseEvent(ByteBuffer buffer) {
+
+	@Override
+	protected void parseEvent(ByteBuffer buffer) {
 		if (buffer.limit()==EvdevConstants.MAX_STRUCT_SIZE_BYTES) {
 			long time_sec = buffer.getLong();
 			long time_usec = buffer.getLong();
@@ -212,22 +189,6 @@ public class EvdevHandler implements Runnable {
 			return value;
 		} else {
 			return 0;
-		}
-	}
-
-	@Override
-	public void run() {
-		try {
-			while (true) {
-				while(inputBuffer.remaining()==EvdevConstants.MAX_STRUCT_SIZE_BYTES)
-					deviceInput.read(inputBuffer);
-
-				inputBuffer.flip();
-				parseEvent(inputBuffer);
-				inputBuffer.clear();
-			}
-		} catch (IOException e) {
-			LimeLog.warning("Input device removed");
 		}
 	}
 	

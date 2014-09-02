@@ -30,7 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Main class for Limelight Pi
+ * Main class for Limelight Embedded
  * @author Diego Waxemberg<br>
  * Cameron Gutman
  * Iwan Timmer
@@ -335,7 +335,7 @@ public class Limelight implements NvConnectionListener {
 			parse = false;
 		
 		if (args.length == 0 || !parse) {
-			System.out.println("Usage: java -jar limelight-pi.jar action [options] host/file");
+			System.out.println("Usage: java -jar limelight.jar action [options] host/file");
 			System.out.println();
 			System.out.println(" Actions:");
 			System.out.println();

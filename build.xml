@@ -119,8 +119,8 @@
   <target name="proguard">
 	<proguard>
       -libraryjars ${java.home}/lib/rt.jar
-      -injars      ${build.dir}/limelight-pi.jar
-      -outjars     ${build.dir}/limelight-pi-dist.jar
+      -injars      ${build.dir}/limelight.jar
+      -outjars     ${build.dir}/limelight-dist.jar
 
       -keepclasseswithmembers public class * {
           public static void main(java.lang.String[]);

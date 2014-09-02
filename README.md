@@ -1,10 +1,10 @@
-#Limelight Pi
+#Limelight Embedded
 
 Limelight is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield,
 but built for Linux/OSX/Windows.
 
-Limelight Pi allows you to stream your full collection of Steam games from
-your powerful Windows desktop to your Raspberry Pi.
+Limelight Embedded allows you to stream your full collection of Steam games from
+your powerful Windows desktop to your embedded system, like Raspberry Pi, CuBox-i and Hummingboard.
 
 For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 
@@ -19,7 +19,7 @@ implementation.
 
 ##Features
 
-* Streams Steam and all of your games from your PC to your Raspberry Pi.
+* Streams Steam and all of your games from your PC to your embedded system.
 
 ##Installation
 
@@ -37,23 +37,28 @@ implementation.
 
 ##Quick Start
 
-* Ensure your machine and Raspberry Pi are on the same network
+* Ensure your machine and embedded system are on the same network
 * Turn on Shield Streaming in the GFE settings
-* Start Limelight Pi with pair
+* Start Limelight Embedded with pair
 * Accept the pairing confirmation on your PC
-* Start Limelight Pi with stream
+* Start Limelight Embedded with stream
 * Play games!
 
 ##Usage
-	Usage: java -jar limelight-pi.jar [options] host
+	Usage: java -jar limelight.jar [options] host
 
 	Actions:
 
+	map Create mapping file for gamepad
 	pair Pair device with computer
 	stream Stream computer to device
 	discover List available computers
 	list List available games and applications
 	help Show this help
+
+	Mapping options:
+
+	-input <device> Use <device> as input
 
 	Streaming options:
 
@@ -81,18 +86,14 @@ implementation.
 * Set JAVA_HOME to your JDK installation directory for example ``export JAVA_HOME=/usr/lib/jvm/jdk-7-oracle-armhf``
 * Build using Ant ``ant``
 
-##Contribute
+## Discussion
 
-This project is being actively developed at [XDA](http://forum.xda-developers.com/showthread.php?t=2505510)
+[XDA](http://forum.xda-developers.com/showthread.php?t=2505510)
+[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878)
+[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173)
+
+##Contribute
 
 1. Fork us
 2. Write code
 3. Send Pull Requests
-
-##Authors
-
-* [Iwan Timmer](https://github.com/irtimmer)
-* [Cameron Gutman](https://github.com/cgutman)  
-* [Diego Waxemberg](https://github.com/dwaxemberg)  
-* [Aaron Neyer](https://github.com/Aaronneyer)  
-* [Andrew Hennessy](https://github.com/yetanothername)

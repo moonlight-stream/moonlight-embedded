@@ -75,11 +75,11 @@ public class EvdevHandler extends EvdevReader {
 				short gamepadButton = 0;
 				
 				if (code==EvdevConstants.BTN_LEFT)
-					mouseButton = MouseButtonPacket.BUTTON_1;
+					mouseButton = MouseButtonPacket.BUTTON_LEFT;
 				else if (code==EvdevConstants.BTN_MIDDLE)
-					mouseButton = MouseButtonPacket.BUTTON_2;
+					mouseButton = MouseButtonPacket.BUTTON_MIDDLE;
 				else if (code==EvdevConstants.BTN_RIGHT)
-					mouseButton = MouseButtonPacket.BUTTON_3;
+					mouseButton = MouseButtonPacket.BUTTON_RIGHT;
 				else if (code==mapping.btn_south)
 					gamepadButton = ControllerPacket.A_FLAG;
 				else if (code==mapping.btn_west)

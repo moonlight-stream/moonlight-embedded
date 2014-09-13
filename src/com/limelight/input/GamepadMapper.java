@@ -116,7 +116,7 @@ public class GamepadMapper extends EvdevReader {
 			readKey("dpad_up", "D-Pad Up");
 		
 		readKey("south", "Button 1 (A)");
-		readKey("easth", "Button 2 (X)");
+		readKey("east", "Button 2 (X)");
 		readKey("north", "Button 3 (Y)");
 		readKey("west", "Button 3 (B)");
 		readKey("select", "Back Button");

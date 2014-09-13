@@ -136,7 +136,9 @@ public class EvdevHandler extends EvdevReader {
 				conn.sendMouseMove((short) value, (short) 0);
 			else if (code==EvdevConstants.REL_Y)
 				conn.sendMouseMove((short) 0, (short) value);
-				
+			else if (code==EvdevConstants.REL_WHEEL)
+				conn.sendMouseScroll((byte) value);
+			
 			mapped = false;
 		} else if (type==EvdevConstants.EV_ABS) {
 			if (code==mapping.abs_x)

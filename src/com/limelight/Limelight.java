@@ -394,9 +394,9 @@ public class Limelight implements NvConnectionListener {
 	}
 	
 	public void discover(final boolean first) {
-		displayMessage("Discover GFE");
+		displayMessage("Discovering GeForce PCs...");
 		final Object mutex = new Object();
-		new MdnsDiscoveryAgent(new MdnsDiscoveryListener() {
+		MdnsDiscoveryAgent agent = new MdnsDiscoveryAgent(new MdnsDiscoveryListener() {
 			@Override
 			public void notifyComputerAdded(MdnsComputer computer) {
 				displayMessage(" " + computer.getName() + " " + computer.getAddress().getHostAddress());
@@ -415,11 +415,13 @@ public class Limelight implements NvConnectionListener {
 			public void notifyDiscoveryFailure(Exception e) {
 			}
 		});
+		agent.startDiscovery(1000);
 		synchronized (mutex) {
 			try {
 				mutex.wait();
 			} catch (InterruptedException ex) { }
 		}
+		agent.stopDiscovery();
 	}
 	
 	public String getUniqueId() {

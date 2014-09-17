@@ -373,12 +373,15 @@ public class Limelight implements NvConnectionListener {
 		Limelight limelight;
 		if (host == null || action.equals("discover")) {
 			limelight = new Limelight();
-			limelight.discover(!action.equals("discover"));
 		} else
 			limelight = new Limelight(host);
 		
 		//Set debugging level
 		limelight.setLevel(debug);
+		
+		if (limelight.host == null) {
+			limelight.discover(!action.equals("discover"));
+		}
 		
 		if (action.equals("stream") || action.equals("fake")) {
 			StreamConfiguration streamConfig = new StreamConfiguration(app, width, height, refresh, bitrate, sops);

@@ -1,5 +1,6 @@
 package com.limelight.binding.video;
 
+import com.limelight.LimeLog;
 import com.limelight.nvstream.av.ByteBufferDescriptor;
 import com.limelight.nvstream.av.DecodeUnit;
 
@@ -47,8 +48,13 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 		boolean ok = true;
 		for (int i=0;i<units.size();i++) {
 			ByteBufferDescriptor bbd = units.get(i);
-			if (ok)
-				ok = (OmxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1)) == 0);
+			if (ok) {
+				int ret = ImxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1));
+				if (ret != 0) {
+					LimeLog.severe("Error code during decode: " + ret);
+					ok = false;
+				}
+			}
 		}
 	}
 	

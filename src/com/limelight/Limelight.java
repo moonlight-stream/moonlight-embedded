@@ -384,7 +384,7 @@ public class Limelight implements NvConnectionListener {
 		}
 		
 		if (action.equals("stream") || action.equals("fake")) {
-			StreamConfiguration streamConfig = new StreamConfiguration(app, width, height, refresh, bitrate, sops);
+			StreamConfiguration streamConfig = new StreamConfiguration(app, width, height, refresh, bitrate, sops, false);
 			
 			if (action.equals("fake"))
 				limelight.startUpFake(streamConfig, video);

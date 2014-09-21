@@ -49,7 +49,7 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 		for (int i=0;i<units.size();i++) {
 			ByteBufferDescriptor bbd = units.get(i);
 			if (ok) {
-				int ret = ImxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1));
+				int ret = OmxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1));
 				if (ret != 0) {
 					LimeLog.severe("Error code during decode: " + ret);
 					ok = false;

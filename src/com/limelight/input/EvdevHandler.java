@@ -23,7 +23,7 @@ public class EvdevHandler extends EvdevReader {
 	private short buttonFlags;
 	private byte leftTrigger, rightTrigger;
 	private short leftStickX, leftStickY, rightStickX, rightStickY;
-	private boolean gamepadModified = false;
+	private boolean gamepadBtnModified = false, gamepadAbsModified = false;
 	
 	private short mouseDeltaX, mouseDeltaY;
 	private byte mouseScroll;
@@ -64,9 +64,10 @@ public class EvdevHandler extends EvdevReader {
 		int value = buffer.getInt();
 		
 		if (type==EvdevConstants.EV_SYN) {
-			if (gamepadModified) {
+			if (gamepadBtnModified || gamepadAbsModified) {
 				conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
-				gamepadModified = false;
+				gamepadBtnModified = false;
+				gamepadAbsModified = false;
 			}
 			if (mouseDeltaX != 0 || mouseDeltaY != 0) {
 				conn.sendMouseMove(mouseDeltaX, mouseDeltaY);
@@ -132,7 +133,7 @@ public class EvdevHandler extends EvdevReader {
 					else if (value==EvdevConstants.KEY_RELEASED)
 						conn.sendMouseButtonUp(mouseButton);
 				} else {
-					gamepadModified = true;
+					gamepadBtnModified = true;
 					
 					if (gamepadButton != 0) {
 						if (value==EvdevConstants.KEY_PRESSED) {
@@ -145,7 +146,7 @@ public class EvdevHandler extends EvdevReader {
 					} else if (code==mapping.btn_tr2) {
 						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
 					} else
-						gamepadModified = false;
+						gamepadBtnModified = false;
 				}
 			}
 		} else if (type==EvdevConstants.EV_REL) {
@@ -157,7 +158,7 @@ public class EvdevHandler extends EvdevReader {
 				mouseScroll = (byte) value;
 			}
 		} else if (type==EvdevConstants.EV_ABS) {
-			gamepadModified = true;
+			gamepadAbsModified = true;
 			
 			if (code==mapping.abs_x)
 				leftStickX = accountForDeadzone(absLX.getShort(value));
@@ -196,7 +197,7 @@ public class EvdevHandler extends EvdevReader {
 					buttonFlags &= ~ControllerPacket.UP_FLAG;
 				}
 			} else
-				gamepadModified = false;
+				gamepadAbsModified = false;
 		}
 	}
 

@@ -23,7 +23,7 @@ public class EvdevHandler extends EvdevReader {
 	private short buttonFlags;
 	private byte leftTrigger, rightTrigger;
 	private short leftStickX, leftStickY, rightStickX, rightStickY;
-	private boolean gamepadModified = false;
+	private boolean gamepadModified;
 	
 	private short mouseDeltaX, mouseDeltaY;
 	private byte mouseScroll;
@@ -76,8 +76,7 @@ public class EvdevHandler extends EvdevReader {
 				conn.sendMouseScroll(mouseScroll);
 				mouseScroll = 0;
 			}
-		}
-		else if (type==EvdevConstants.EV_KEY) {
+		} else if (type==EvdevConstants.EV_KEY) {
 			if (code<EvdevConstants.KEY_CODES.length) {
 				short gfCode = translator.translate(EvdevConstants.KEY_CODES[code]);
 
@@ -135,16 +134,15 @@ public class EvdevHandler extends EvdevReader {
 					gamepadModified = true;
 					
 					if (gamepadButton != 0) {
-						if (value==EvdevConstants.KEY_PRESSED) {
+						if (value==EvdevConstants.KEY_PRESSED)
 							buttonFlags |= gamepadButton;
-						} else  if (value==EvdevConstants.KEY_RELEASED){
+						else  if (value==EvdevConstants.KEY_RELEASED)
 							buttonFlags &= ~gamepadButton;
-						}
-					} else if (code==mapping.btn_tl2) {
+					} else if (code==mapping.btn_tl2)
 						leftTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
-					} else if (code==mapping.btn_tr2) {
+					else if (code==mapping.btn_tr2)
 						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
-					} else
+					else
 						gamepadModified = false;
 				}
 			}
@@ -153,9 +151,8 @@ public class EvdevHandler extends EvdevReader {
 				mouseDeltaX = (short) value;
 			else if (code==EvdevConstants.REL_Y)
 				mouseDeltaY = (short) value;
-			else if (code==EvdevConstants.REL_WHEEL) {
+			else if (code==EvdevConstants.REL_WHEEL)
 				mouseScroll = (byte) value;
-			}
 		} else if (type==EvdevConstants.EV_ABS) {
 			gamepadModified = true;
 			
@@ -201,11 +198,7 @@ public class EvdevHandler extends EvdevReader {
 	}
 
 	private short accountForDeadzone(short value) {
-		if (Math.abs(value) > mapping.abs_deadzone) {
-			return value;
-		} else {
-			return 0;
-		}
+		return Math.abs(value) > mapping.abs_deadzone?value:0;
 	}
 	
 }

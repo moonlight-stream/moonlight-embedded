@@ -23,7 +23,7 @@ public class EvdevHandler extends EvdevReader {
 	private short buttonFlags;
 	private byte leftTrigger, rightTrigger;
 	private short leftStickX, leftStickY, rightStickX, rightStickY;
-	private boolean gamepadModified;
+	private boolean gamepadSynced;
 	
 	private short mouseDeltaX, mouseDeltaY;
 	private byte mouseScroll;
@@ -48,6 +48,7 @@ public class EvdevHandler extends EvdevReader {
 		absDY = new EvdevAbsolute(device, mapping.abs_dpad_y, mapping.reverse_dpad_y);
 		
 		translator = new KeyboardTranslator(conn);
+		gamepadSynced = true;
 	}
 
 	@Override
@@ -62,11 +63,12 @@ public class EvdevHandler extends EvdevReader {
 		short type = buffer.getShort();
 		short code = buffer.getShort();
 		int value = buffer.getInt();
+		boolean gamepadModified = false;
 		
 		if (type==EvdevConstants.EV_SYN) {
-			if (gamepadModified) {
+			if (!gamepadSynced) {
 				conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
-				gamepadModified = false;
+				gamepadSynced = true;
 			}
 			if (mouseDeltaX != 0 || mouseDeltaY != 0) {
 				conn.sendMouseMove(mouseDeltaX, mouseDeltaY);
@@ -195,6 +197,8 @@ public class EvdevHandler extends EvdevReader {
 			} else
 				gamepadModified = false;
 		}
+		
+		gamepadSynced &= !gamepadModified;
 	}
 
 	private short accountForDeadzone(short value) {

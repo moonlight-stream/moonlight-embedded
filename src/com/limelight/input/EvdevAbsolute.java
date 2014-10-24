@@ -55,8 +55,10 @@ public class EvdevAbsolute {
 			return reverse?Short.MIN_VALUE:Short.MAX_VALUE;
 		else if (value<avg-range)
 			return reverse?Short.MAX_VALUE:Short.MIN_VALUE;
-		else
-			return (short) ((value-avg) * Short.MAX_VALUE / (reverse?-range:range));
+		else {
+			value += value<avg?flat:-flat;
+			return (short) ((value-avg) * Short.MAX_VALUE / (reverse?flat-range:range-flat));
+		}
 	}
 	
 	/**
@@ -71,8 +73,10 @@ public class EvdevAbsolute {
 			return reverse?Byte.MIN_VALUE:Byte.MAX_VALUE;
 		else if (value<avg-range)
 			return reverse?Byte.MAX_VALUE:Byte.MIN_VALUE;
-		else
-			return (byte) ((value-avg) * Byte.MAX_VALUE / (reverse?-range:range));
+		else {
+			value += value<avg?flat:-flat;
+			return (byte) ((value-avg) * Byte.MAX_VALUE / (reverse?flat-range:range-flat));
+		}
 	}
 	
 	/**

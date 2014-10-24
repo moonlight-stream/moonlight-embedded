@@ -38,6 +38,9 @@ public class EvdevHandler extends EvdevReader {
 		this.conn = conn;
 		this.mapping = mapping;
 		
+		// We want limelight-common to scale the axis values to match Xinput values
+		ControllerPacket.enableAxisScaling = true;
+		
 		absLX = new EvdevAbsolute(device, mapping.abs_x, mapping.reverse_x);
 		absLY = new EvdevAbsolute(device, mapping.abs_y, !mapping.reverse_y);
 		absRX = new EvdevAbsolute(device, mapping.abs_rx, mapping.reverse_rx);

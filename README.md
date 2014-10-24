@@ -78,6 +78,20 @@ implementation.
 
 	Use ctrl-c to exit application
 
+##Fixed point Opus on Debian
+Debian/Raspbian currently doesn't provide a fixed point Opus build.
+This results in very high cpu usage for audio decompression, especially on the Raspberry Pi.
+Limelight Embedded can load another Opus build for you from the current working directory.
+To compile Opus with fixed point support you have to execute the following commands:
+
+	wget http://downloads.xiph.org/releases/opus/opus-1.1.tar.gz
+	tar xf opus-1.1.tar.gz
+	cd opus-1.1
+	./configure --enable-fixed-point
+	make
+
+Then copy libopus.so from opus-1.1/libs to the directory from which you start Limelight Embedded.
+
 ##Compile
 
 * Install ant (Debian/Raspbian/Fedora/Pidora) or apache-ant (Archlinux)

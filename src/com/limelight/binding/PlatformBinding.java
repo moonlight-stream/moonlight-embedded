@@ -2,6 +2,8 @@ package com.limelight.binding;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.io.File;
+import java.io.IOException;
 
 import com.limelight.binding.audio.AlsaAudioRenderer;
 import com.limelight.binding.video.ImxDecoder;
@@ -12,6 +14,7 @@ import com.limelight.binding.video.OmxDecoderRenderer;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.LimelightCryptoProvider;
+import com.limelight.LimeLog;
 
 /**
  * Used for platform-specific video/audio bindings.
@@ -50,6 +53,14 @@ public class PlatformBinding {
 	 * @return an audio decoder and renderer
 	 */
 	public static AudioRenderer getAudioRenderer(String device) {
+		//Try to load local libopus
+		try {
+			Runtime.getRuntime().load(new File(".").getCanonicalPath()+File.separator+"libopus.so");
+			LimeLog.warning("Use local opus library");
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+			
 		return new AlsaAudioRenderer(device);
 	}
 	

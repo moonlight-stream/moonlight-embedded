@@ -11,12 +11,13 @@ Java_com_limelight_input_IO_ioctl(
 
 	jboolean retval;
 	int fd;
+	int ret;
 	if ((fd = open(jni_filename, O_RDONLY)) < 0) {
 		retval = 0;
 	} else {
-		ioctl(fd, request, jni_buffer);
+		ret = ioctl(fd, request, jni_buffer);
 		close(fd);
-		retval = 1;
+		retval = ret > 0;
 	}
 
 	(*env)->ReleaseByteArrayElements(env, buffer, jni_buffer, 0);

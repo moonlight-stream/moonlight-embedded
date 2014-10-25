@@ -183,4 +183,7 @@ public class EvdevConstants {
 	/* Events */
 	public static final int KEY_RELEASED = 0;
 	public static final int KEY_PRESSED = 1;
+	
+	/* ioctl */
+	public final static char EVDEV_TYPE = 'E';
 }

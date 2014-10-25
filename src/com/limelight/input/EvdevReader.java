@@ -11,6 +11,8 @@ import java.nio.channels.FileChannel;
 
 public abstract class EvdevReader implements Runnable {
 	
+	private final static int EVIOCGNAME = 0x06;
+	
 	private FileChannel deviceInput;
 	private ByteBuffer inputBuffer;
 
@@ -20,6 +22,13 @@ public abstract class EvdevReader implements Runnable {
 			throw new FileNotFoundException("File " + device + " not found");
 		if (!file.canRead())
 			throw new IOException("Can't read from " + device);
+		
+		byte[] data = new byte[255];
+		int request = IO.getRequest(IO.READ_ONLY, EvdevConstants.EVDEV_TYPE, EVIOCGNAME, data.length-1);
+		if (!IO.ioctl(device, data, request))
+			throw new IOException("Path " + device + " is not a evdev device");
+			
+		LimeLog.info("Using " + new String(data));
 			
 		FileInputStream in = new FileInputStream(file);
         deviceInput = in.getChannel();

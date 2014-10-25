@@ -12,8 +12,6 @@ public class EvdevAbsolute {
 	public final static int UP = 1, DOWN = -1, NONE = 0;
 	
 	private final static int ABS_OFFSET = 0x40;
-	private final static int READ_ONLY = 2;
-	private final static char EVDEV_TYPE = 'E';
 	
 	private int avg;
 	private int range;
@@ -25,7 +23,7 @@ public class EvdevAbsolute {
 		ByteBuffer buffer = ByteBuffer.allocate(6*4);
 		buffer.order(ByteOrder.nativeOrder());
 		byte[] data = buffer.array();
-		int request = getRequest(READ_ONLY, EVDEV_TYPE, ABS_OFFSET+axis, 6*4);
+		int request = IO.getRequest(IO.READ_ONLY, EvdevConstants.EVDEV_TYPE, ABS_OFFSET+axis, 6*4);
 		IO.ioctl(filename, data, request);
 		
 		buffer.getInt(); //Skip current value
@@ -37,10 +35,6 @@ public class EvdevAbsolute {
 		range = max-avg;
 		
 		this.reverse = reverse;
-	}
-	
-	private int getRequest(int dir, int type, int nr, int size) {
-		return (dir << 30) | (size << 16) | (type << 8) | nr;
 	}
 	
 	/**

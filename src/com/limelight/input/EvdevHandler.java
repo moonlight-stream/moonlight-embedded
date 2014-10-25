@@ -18,7 +18,7 @@ public class EvdevHandler extends EvdevReader {
 	
 	/* GFE's prefix for every key code */
 	public static final short KEY_PREFIX = (short) 0x80;
-	
+
 	/* Gamepad state */
 	private short buttonFlags;
 	private byte leftTrigger, rightTrigger;

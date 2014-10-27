@@ -389,7 +389,7 @@ public class Limelight implements NvConnectionListener {
 			if (action.equals("fake"))
 				limelight.startUpFake(streamConfig, video);
 			else
-				limelight.startUp(streamConfig, inputs, mapping, audio, tests, debug.intValue() > Level.WARNING.intValue());
+				limelight.startUp(streamConfig, inputs, mapping, audio, tests, debug.intValue() <= Level.WARNING.intValue());
 		} else if (action.equals("pair"))
 			limelight.pair();
 		else if (action.equals("list"))

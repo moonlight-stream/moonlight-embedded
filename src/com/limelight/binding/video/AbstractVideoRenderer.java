@@ -20,6 +20,7 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 	private long endToEndLatency;
 	private long decodeLatency;
 	private long packets;
+	private long maxLatency;
 	
 	@Override
 	public boolean start(final VideoDepacketizer depacketizer) {
@@ -35,12 +36,17 @@ public abstract class AbstractVideoRenderer implements VideoDecoderRenderer {
 						
 						dataSize += decodeUnit.getDataLength();
 						decodeUnit(decodeUnit);
+
+						latency = System.currentTimeMillis()-decodeUnit.getReceiveTimestamp();
+						decodeLatency += latency;
+						
+						if (latency>maxLatency)
+							maxLatency = latency;
 						
 						if (System.currentTimeMillis()>last+2000) {
 							int bitrate = (dataSize/2)/1024;
-							latency = System.currentTimeMillis()-decodeUnit.getReceiveTimestamp();
-							decodeLatency += latency;
-							System.out.println("Video " + bitrate + "kB/s " + latency);
+							System.out.println("Video " + bitrate + "kB/s " + maxLatency + "ms");
+							maxLatency = 0;
 							dataSize = 0;
 							last = System.currentTimeMillis();
 						}

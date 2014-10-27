@@ -56,7 +56,7 @@ public class Limelight implements NvConnectionListener {
 	/*
 	 * Creates a connection to the host and starts up the stream.
 	 */
-	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile, String audioDevice, boolean tests) {
+	private void startUp(StreamConfiguration streamConfig, List<String> inputs, String mappingFile, String audioDevice, boolean tests, boolean debug) {
 		if (tests) {
 			boolean test = true;
 			String vm = System.getProperties().getProperty("java.vm.name");
@@ -105,7 +105,7 @@ public class Limelight implements NvConnectionListener {
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
 				PlatformBinding.getAudioRenderer(audioDevice),
-				PlatformBinding.getVideoDecoderRenderer());
+				PlatformBinding.getVideoDecoderRenderer(debug));
 	}
 	
 	/*
@@ -389,7 +389,7 @@ public class Limelight implements NvConnectionListener {
 			if (action.equals("fake"))
 				limelight.startUpFake(streamConfig, video);
 			else
-				limelight.startUp(streamConfig, inputs, mapping, audio, tests);
+				limelight.startUp(streamConfig, inputs, mapping, audio, tests, debug.intValue() > Level.WARNING.intValue());
 		} else if (action.equals("pair"))
 			limelight.pair();
 		else if (action.equals("list"))

@@ -18,6 +18,7 @@ public class FakeVideoRenderer extends AbstractVideoRenderer {
 
 	public FakeVideoRenderer(String videoFile) {
 		try {
+			this.debug = true;
 			if (videoFile!=null)
 				out = new FileOutputStream(videoFile);
 		} catch (FileNotFoundException e) {

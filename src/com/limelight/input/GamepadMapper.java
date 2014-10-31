@@ -62,7 +62,7 @@ public class GamepadMapper extends EvdevReader {
 				reverse = true;
 			} else if (current != -1 && code == current && val < Short.MAX_VALUE/4) {
 				props.put("abs_"+abs, Short.toString(code));
-				props.put("revers_"+abs, Boolean.toString(reverse));
+				props.put("reverse_"+abs, Boolean.toString(reverse));
 				lastKey = false;
 				set = true;
 			}

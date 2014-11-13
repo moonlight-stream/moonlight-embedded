@@ -98,6 +98,7 @@ Then copy libopus.so from opus-1.1/libs to the directory from which you start Li
 * Install audio libraries libopus-dev and libasound2-dev (Debian/Raspbian) or opus-devel and alsa-lib-devel (Fedora/Pidora) or opus and alsa-lib (Archlinux)
 * Install Raspberry Pi development libraries libraspberrypi-dev (Debian/Raspbian) or raspberrypi-vc-libs-devel (Fedora/Pidora) or raspberrypi-firmware-tools (Archlinux)
 * Set JAVA_HOME to your JDK installation directory for example ``export JAVA_HOME=/usr/lib/jvm/jdk-7-oracle-armhf``
+* Initialize the git submodules ``git submodule update --init``
 * Build using Ant ``ant``
 
 ## Discussion

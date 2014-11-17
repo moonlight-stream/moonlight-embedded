@@ -172,15 +172,12 @@ public class Limelight implements NvConnectionListener {
 	public static void main(String args[]) {
 		InetAddress host = null;
 		List<String> inputs = new ArrayList<String>();
+		StreamConfiguration.Builder builder = new StreamConfiguration.Builder();
 		int width = 1280;
 		int height = 720;
-		int refresh = 60;
-		int bitrate = 10000;
 		boolean parse = true;
 		boolean tests = true;
-		boolean sops = true;
 		String mapping = null;
-		String app = "Steam";
 		String audio = "sysdefault";
 		String video = null;
 		String action = null;
@@ -245,13 +242,13 @@ public class Limelight implements NvConnectionListener {
 					System.exit(3);
 				}
 			} else if (args[i].equals("-30fps")) {
-				refresh = 30;
+				builder.setRefreshRate(30);
 			} else if (args[i].equals("-60fps")) {
-				refresh = 60;
+				builder.setRefreshRate(60);
 			} else if (args[i].equals("-bitrate")) {
 				if (i + 1 < args.length) {
 					try {
-						bitrate = Integer.parseInt(args[i+1]);
+						builder.setBitrate(Integer.parseInt(args[i+1]));
 					} catch (NumberFormatException e) {
 						System.out.println("Syntax error: bitrate must be a number");
 						System.exit(3);
@@ -271,7 +268,7 @@ public class Limelight implements NvConnectionListener {
 				}
 			} else if (args[i].equals("-app")) {
 				if (i + 1 < args.length) {
-					app = args[i+1];
+					builder.setApp(args[i+1]);
 					i++;
 				} else {
 					System.out.println("Syntax error: application name expected after -app");
@@ -280,7 +277,7 @@ public class Limelight implements NvConnectionListener {
 			} else if (args[i].equals("-notest")) {
 				tests = false;
 			} else if (args[i].equals("-nosops")) {
-				sops = false;
+				builder.setEnableSops(false);
 			} else if (args[i].equals("-v")) {
 				debug = Level.WARNING;
 			} else if (args[i].equals("-vv")) {
@@ -308,6 +305,8 @@ public class Limelight implements NvConnectionListener {
 				parse = false;
 			}
 		}
+		
+		builder.setResolution(width, height);		
 		
 		if (action == null) {
 			System.out.println("Syntax Error: Missing required action argument");
@@ -384,7 +383,7 @@ public class Limelight implements NvConnectionListener {
 		}
 		
 		if (action.equals("stream") || action.equals("fake")) {
-			StreamConfiguration streamConfig = new StreamConfiguration(app, width, height, refresh, bitrate, sops, false);
+			StreamConfiguration streamConfig = builder.build();
 			
 			if (action.equals("fake"))
 				limelight.startUpFake(streamConfig, video);

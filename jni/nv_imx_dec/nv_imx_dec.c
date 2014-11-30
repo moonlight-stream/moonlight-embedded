@@ -11,9 +11,8 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 
+#include <linux/fb.h>
 #include <linux/ioctl.h>
-#include <linux/mxc_v4l2.h>
-#include <linux/mxcfb.h>
 #include <linux/v4l2-common.h>
 #include <linux/v4l2-controls.h>
 #include <linux/videodev2.h>
@@ -27,6 +26,13 @@
 #define MODE420              1
 #define MODE422              2
 #define MODE224              3
+
+struct mxcfb_gbl_alpha {
+      int enable;
+      int alpha;
+};
+#define MXCFB_SET_GBL_ALPHA     _IOW('F', 0x21, struct mxcfb_gbl_alpha)
+
 
 struct v4l_buf {
 	void *start;

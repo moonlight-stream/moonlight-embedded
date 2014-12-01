@@ -258,6 +258,19 @@ public class Limelight implements NvConnectionListener {
 					System.out.println("Syntax error: bitrate expected after -bitrate");
 					System.exit(3);
 				}
+			} else if (args[i].equals("-packetsize")) {
+				if (i + 1 < args.length) {
+					try {
+						builder.setMaxPacketSize(Integer.parseInt(args[i+1]));
+					} catch (NumberFormatException e) {
+						System.out.println("Syntax error: packetsize must be a number");
+						System.exit(3);
+					}
+					i++;
+				} else {
+					System.out.println("Syntax error: packetsize expected after -packetsize");
+					System.exit(3);
+				}
 			} else if (args[i].equals("-out")) {
 				if (i + 1 < args.length) {
 					video = args[i+1];
@@ -278,6 +291,8 @@ public class Limelight implements NvConnectionListener {
 				tests = false;
 			} else if (args[i].equals("-nosops")) {
 				builder.setEnableSops(false);
+			} else if (args[i].equals("-localaudio")) {
+				builder.enableLocalAudioPlayback(true);
 			} else if (args[i].equals("-v")) {
 				debug = Level.WARNING;
 			} else if (args[i].equals("-vv")) {
@@ -358,12 +373,14 @@ public class Limelight implements NvConnectionListener {
 			System.out.println("\t-30fps\t\t\tUse 30fps");
 			System.out.println("\t-60fps\t\t\tUse 60fps [default]");
 			System.out.println("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps");
+			System.out.println("\t-packetsize <size>\tSpecify the maximum packetsize in bytes");
 			System.out.println("\t-app <app>\t\tName of app to stream");
 			System.out.println("\t-nosops\t\t\tDon't allow GFE to modify game settings");
 			System.out.println("\t-input <device>\t\tUse <device> as input. Can be used multiple times");
 			System.out.println("\t\t\t\t[default uses all devices in /dev/input]");
 			System.out.println("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file");
 			System.out.println("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)");
+			System.out.println("\t-localaudio\t\tPlay audio locally");
 			System.out.println();
 			System.out.println("Use ctrl-c to exit application");
 			System.exit(5);

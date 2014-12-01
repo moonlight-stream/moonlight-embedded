@@ -68,13 +68,15 @@ implementation.
 	-height <height>Vertical resolution (default 720)
 	-30fps Use 30fps
 	-60fps Use 60fps (default)
-	-bitrate <bitrate>Specify the bitrate in Kbps
+	-bitrate <bitrate> Specify the bitrate in Kbps
+	-packetsize <size> Specify the maximum packetsize in bytes
 	-app <app> Name of app to stream
 	-nosops Don't allow GFE to modify game settings
 	-input <device> Use <device> as input. Can be used multiple times
 	(default uses all devices in /dev/input)
 	-mapping <file> Use <file> as gamepad mapping configuration file
 	-audio <device> Use <device> as ALSA audio output device (default sysdefault)
+	-localaudio Play audio locally
 
 	Use ctrl-c to exit application
 

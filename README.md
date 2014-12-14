@@ -11,10 +11,16 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 [Limelight-common](https://github.com/limelight-stream/limelight-common) is the shared codebase between
 different implementations of Limelight
 
-[Limelight](https://github.com/cgutman/limelight) also has an Android
+[Limelight](https://github.com/limelight-stream/limelight-android) also has an Android
 implementation.
 
-[Limelight-pc](https://github.com/limelight-stream/limelight-pc) also has an Linux (X)/OSX/Windows
+[Limelight-pc](https://github.com/limelight-stream/limelight-pc) also has an Linux/OSX/Windows
+implementation.
+
+[Limelight iOS](https://github.com/limelight-stream/limelight-ios) also has an iOS
+implementation.
+
+[Limelight Windows](https://github.com/limelight-stream/limelight-windows) also has an Windows and Windows Phone
 implementation.
 
 ##Features
@@ -65,7 +71,7 @@ implementation.
 	-720 Use 1280x720 resolution (default)
 	-1080 Use 1920x1080 resolution
 	-width <width> Horizontal resolution (default 1280)
-	-height <height>Vertical resolution (default 720)
+	-height <height> Vertical resolution (default 720)
 	-30fps Use 30fps
 	-60fps Use 60fps (default)
 	-bitrate <bitrate> Specify the bitrate in Kbps
@@ -105,9 +111,9 @@ Then copy libopus.so from opus-1.1/libs to the directory from which you start Li
 
 ## Discussion
 
-[XDA](http://forum.xda-developers.com/showthread.php?t=2505510)
-[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878)
-[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173)
+[XDA](http://forum.xda-developers.com/showthread.php?t=2505510)  
+[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878)  
+[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173)  
 
 ##Contribute
 

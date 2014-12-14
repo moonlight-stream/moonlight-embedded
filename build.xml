@@ -90,7 +90,7 @@
 
   <target name="dist" depends="build">
     <!-- construct one-jar file -->
-    <one-jar destfile="${build.dir}/limelight-pi.jar">
+    <one-jar destfile="${build.dir}/limelight.jar">
       <manifest>
         <attribute name="One-Jar-Main-Class" value="com.limelight.Limelight"/>
       </manifest>

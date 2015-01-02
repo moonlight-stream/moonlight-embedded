@@ -19,6 +19,8 @@
   <property name="one-jar.dist.dir" value="${libs.dir}/build"/>
 
   <property name="classes.dir" location="${basedir}/classes"/>
+  
+  <property name="device" value="all"/>
 
   <target name="init">
     <mkdir dir="${classes.dir}"/>
@@ -58,13 +60,34 @@
   
   <target name="build" depends="compile-native, compile-common, compile-java"/>
   
-  <target name="compile-native">
-	  <exec executable="make" dir="${libs.omx.dir}"/>
-	  <exec executable="make" dir="${libs.imx.dir}"/>
-	  <exec executable="make" dir="${libs.opus.dir}"/>
-	  <exec executable="make" dir="${libs.alsa.dir}"/>
-	  <exec executable="make" dir="${libs.io.dir}"/>
+  <target name="check-device">
+	<condition property="enable.omx" value="true">
+	  <or>
+        <equals arg1="${device}" arg2="pi" />
+        <equals arg1="${device}" arg2="all" />
+      </or>
+	</condition>
+	<condition property="enable.imx" value="true">
+	  <or>
+        <equals arg1="${device}" arg2="imx" />
+        <equals arg1="${device}" arg2="all" />
+      </or>
+	</condition>
   </target>
+  
+  <target name="compile-native" depends="check-device, compile-native-pi, compile-native-imx">
+	<exec executable="make" dir="${libs.opus.dir}"/>
+	<exec executable="make" dir="${libs.alsa.dir}"/>
+	<exec executable="make" dir="${libs.io.dir}"/>
+  </target>
+  
+  <target name="compile-native-pi" if="enable.omx">
+	<exec executable="make" dir="${libs.omx.dir}"/>
+  </target>
+  
+  <target name="compile-native-imx" if="enable.imx">
+    <exec executable="make" dir="${libs.imx.dir}"/>
+  </target>  
   
   <target name="compile-java" depends="init">
     <!-- compile limelight -->

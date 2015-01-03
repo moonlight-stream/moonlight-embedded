@@ -62,6 +62,8 @@ public class PlatformBinding {
 			LimeLog.warning("Use local opus library");
 		} catch(IOException e) {
 			e.printStackTrace();
+		} catch (UnsatisfiedLinkError e) {
+			//Use system opus library
 		}
 			
 		return new AlsaAudioRenderer(device);

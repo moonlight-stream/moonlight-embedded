@@ -432,6 +432,7 @@ public class Limelight implements NvConnectionListener {
 
 			@Override
 			public void notifyDiscoveryFailure(Exception e) {
+				displayError("Discover", e.getMessage());
 			}
 		});
 		agent.startDiscovery(1000);

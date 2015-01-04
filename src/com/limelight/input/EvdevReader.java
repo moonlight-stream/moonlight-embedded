@@ -5,15 +5,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 
 public abstract class EvdevReader implements Runnable {
 	
 	private final static int EVIOCGNAME = 0x06;
 	
-	private FileChannel deviceInput;
+	private InputStream in;
 	private ByteBuffer inputBuffer;
 
 	public EvdevReader(String device) throws FileNotFoundException, IOException {
@@ -30,8 +30,7 @@ public abstract class EvdevReader implements Runnable {
 			
 		LimeLog.info("Using " + new String(data));
 			
-		FileInputStream in = new FileInputStream(file);
-        deviceInput = in.getChannel();
+		in = new FileInputStream(file);
 		inputBuffer = ByteBuffer.allocate(EvdevConstants.MAX_STRUCT_SIZE_BYTES);
 		inputBuffer.order(ByteOrder.nativeOrder());
 	}
@@ -49,10 +48,7 @@ public abstract class EvdevReader implements Runnable {
 	public void run() {
 		try {
 			while (true) {
-				while(inputBuffer.remaining()==EvdevConstants.MAX_STRUCT_SIZE_BYTES)
-					deviceInput.read(inputBuffer);
-
-				inputBuffer.flip();
+				inputBuffer.limit(in.read(inputBuffer.array()));
 				parseEvent(inputBuffer);
 				inputBuffer.clear();
 			}

@@ -4,6 +4,7 @@ import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.ControllerPacket;
 import com.limelight.nvstream.input.KeyboardPacket;
 import com.limelight.nvstream.input.MouseButtonPacket;
+import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,6 +28,8 @@ public class EvdevHandler extends EvdevReader {
 	
 	private short mouseDeltaX, mouseDeltaY;
 	private byte mouseScroll;
+    
+    private byte keyModifiers;
 	
 	private EvdevAbsolute absLX, absLY, absRX, absRY, absLT, absRT, absDX, absDY;
 	
@@ -85,10 +88,25 @@ public class EvdevHandler extends EvdevReader {
 			if (code<EvdevConstants.KEY_CODES.length) {
 				short gfCode = translator.translate(EvdevConstants.KEY_CODES[code]);
 
-				if (value==EvdevConstants.KEY_PRESSED)
-					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_DOWN, (byte) 0);
-				else if (value==EvdevConstants.KEY_RELEASED)
-					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_UP, (byte) 0);
+				if (value==EvdevConstants.KEY_PRESSED) {
+					if (gfCode==KeyEvent.VK_SHIFT)
+						keyModifiers |= KeyboardPacket.MODIFIER_SHIFT;
+					else if (gfCode==KeyEvent.VK_CONTROL)
+						keyModifiers |= KeyboardPacket.MODIFIER_CTRL;
+					else if (gfCode==KeyEvent.VK_ALT)
+						keyModifiers |= KeyboardPacket.MODIFIER_ALT;
+                    
+					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_DOWN, keyModifiers);
+                } else if (value==EvdevConstants.KEY_RELEASED) {
+					if (gfCode==KeyEvent.VK_SHIFT)
+						keyModifiers &= ~KeyboardPacket.MODIFIER_SHIFT;
+					else if (gfCode==KeyEvent.VK_CONTROL)
+						keyModifiers &= ~KeyboardPacket.MODIFIER_CTRL;
+					else if (gfCode==KeyEvent.VK_ALT)
+						keyModifiers &= ~KeyboardPacket.MODIFIER_ALT;
+					
+					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_UP, keyModifiers);
+                }
 			} else {
 				byte mouseButton = 0;
 				short gamepadButton = 0;

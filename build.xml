@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="all" name="Create Runnable Jar for Limelight">
+  <property name="ant.build.javac.target" value="1.7"/>
+  <property name="ant.build.javac.source" value="1.7"/>
+  
   <property name="src.dir" location="${basedir}/src"/>
   <property name="libs.dir" location="${basedir}/libs"/>
 
@@ -104,7 +107,8 @@
   <target name="compile-common" depends="init">
     <!-- compile limelight -->
     <javac includeantruntime="false" destdir="${classes.dir}/common">
-      <src path="${common.src.dir}"/>
+      <src path="${common.src.dir}"/>java
+      
       <classpath>
         <fileset dir="${common.libs.dir}" includes="*.jar"/>
       </classpath>

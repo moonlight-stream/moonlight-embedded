@@ -97,7 +97,7 @@ public class EvdevHandler extends EvdevReader {
 						keyModifiers |= KeyboardPacket.MODIFIER_ALT;
                     
 					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_DOWN, keyModifiers);
-                } else if (value==EvdevConstants.KEY_RELEASED) {
+				} else if (value==EvdevConstants.KEY_RELEASED) {
 					if (gfCode==KeyEvent.VK_SHIFT)
 						keyModifiers &= ~KeyboardPacket.MODIFIER_SHIFT;
 					else if (gfCode==KeyEvent.VK_CONTROL)
@@ -106,7 +106,7 @@ public class EvdevHandler extends EvdevReader {
 						keyModifiers &= ~KeyboardPacket.MODIFIER_ALT;
 					
 					conn.sendKeyboardInput(gfCode, KeyboardPacket.KEY_UP, keyModifiers);
-                }
+				}
 			} else {
 				byte mouseButton = 0;
 				short gamepadButton = 0;

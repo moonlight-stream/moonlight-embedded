@@ -162,9 +162,9 @@ public class EvdevHandler extends EvdevReader {
 						else  if (value==EvdevConstants.KEY_RELEASED)
 							buttonFlags &= ~gamepadButton;
 					} else if (code==mapping.btn_tl2)
-						leftTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
+						leftTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? 0xFF : 0);
 					else if (code==mapping.btn_tr2)
-						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? -1 : 0);
+						rightTrigger = (byte) (value==EvdevConstants.KEY_PRESSED ? 0xFF : 0);
 					else
 						gamepadModified = false;
 				}

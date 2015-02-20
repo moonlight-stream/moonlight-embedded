@@ -75,6 +75,11 @@ public class GamepadMapper extends EvdevReader {
 			notify();		
 		}
 	}
+
+	@Override
+	protected void deviceRemoved() {
+		// Nothing for us to do
+	}
 	
 	public synchronized void readKey(String key, String name) throws InterruptedException {
 		System.out.println(name);

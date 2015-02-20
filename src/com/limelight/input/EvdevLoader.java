@@ -90,15 +90,21 @@ public class EvdevLoader implements Runnable {
 			WatchService watcher = evdev.getFileSystem().newWatchService();
 			evdev.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
 			
-			WatchKey watckKey = watcher.take();
-			List<WatchEvent<?>> events = watckKey.pollEvents();
-			for (WatchEvent event:events) {
-				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-					String name = event.context().toString();
-					if (filter.accept(input, name)) {
-						LimeLog.info("Input " + name + " added");
-						new EvdevHandler(conn, new File(input, name).getAbsolutePath(), mapping).start();
+			for (;;) {
+				WatchKey watchKey = watcher.take();
+				List<WatchEvent<?>> events = watchKey.pollEvents();
+				for (WatchEvent event:events) {
+					if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+						String name = event.context().toString();
+						if (filter.accept(input, name)) {
+							LimeLog.info("Input " + name + " added");
+							new EvdevHandler(conn, new File(input, name).getAbsolutePath(), mapping).start();
+						}
 					}
+				}
+				
+				if (!watchKey.reset()) {
+					break;
 				}
 			}
 		} catch (IOException | InterruptedException ex) {

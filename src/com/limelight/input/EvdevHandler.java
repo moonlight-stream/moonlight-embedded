@@ -1,5 +1,6 @@
 package com.limelight.input;
 
+import com.limelight.LimeLog;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.ControllerPacket;
 import com.limelight.nvstream.input.KeyboardPacket;
@@ -20,11 +21,16 @@ public class EvdevHandler extends EvdevReader {
 	/* GFE's prefix for every key code */
 	public static final short KEY_PREFIX = (short) 0x80;
 
+	/* Global controller ID state */
+	private static int assignedControllerIds = 0;
+	private static Object controllerIdLock = new Object();
+
 	/* Gamepad state */
 	private short buttonFlags;
 	private byte leftTrigger, rightTrigger;
 	private short leftStickX, leftStickY, rightStickX, rightStickY;
 	private boolean gamepadSynced;
+	private short controllerId = -1;
 	
 	private short mouseDeltaX, mouseDeltaY;
 	private byte mouseScroll;
@@ -41,9 +47,6 @@ public class EvdevHandler extends EvdevReader {
 		this.conn = conn;
 		this.mapping = mapping;
 		
-		// We want limelight-common to scale the axis values to match Xinput values
-		ControllerPacket.enableAxisScaling = true;
-		
 		absLX = new EvdevAbsolute(device, mapping.abs_x, mapping.reverse_x);
 		absLY = new EvdevAbsolute(device, mapping.abs_y, !mapping.reverse_y);
 		absRX = new EvdevAbsolute(device, mapping.abs_rx, mapping.reverse_rx);
@@ -55,6 +58,30 @@ public class EvdevHandler extends EvdevReader {
 		
 		translator = new KeyboardTranslator(conn);
 		gamepadSynced = true;
+	}
+
+	private void assignNewControllerId() {
+		synchronized (controllerIdLock) {
+			for (short i = 0; i < 4; i++) {
+				if ((assignedControllerIds & (1 << i)) == 0) {
+					// Assign this unused value to this input device
+					assignedControllerIds |= (1 << i);
+					controllerId = i;
+					LimeLog.info("Assigning controller ID "+i);
+					return;
+				}
+			}
+		}
+
+		// All IDs have been assigned so use controller 0 for the rest
+		controllerId = 0;
+	}
+
+	private void releaseControllerId() {
+		LimeLog.info("Releasing controller ID "+controllerId);
+		synchronized (controllerIdLock) {
+			assignedControllerIds &= ~(1 << controllerId);
+		}
 	}
 
 	@Override
@@ -73,7 +100,16 @@ public class EvdevHandler extends EvdevReader {
 		
 		if (type==EvdevConstants.EV_SYN) {
 			if (!gamepadSynced) {
-				conn.sendControllerInput(buttonFlags, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+				// Assign a controller ID if one hasn't been assigned yet.
+				// Note that we're only assigning IDs to things that actually send
+				// some form of controller input to avoid falsely reserving IDs for
+				// devices that aren't actually controllers or are inactive controllers.
+				if (controllerId < 0) {
+					assignNewControllerId();
+				}
+
+				conn.sendControllerInput(controllerId, buttonFlags, leftTrigger, rightTrigger,
+					leftStickX, leftStickY, rightStickX, rightStickY);
 				gamepadSynced = true;
 			}
 			if (mouseDeltaX != 0 || mouseDeltaY != 0) {
@@ -220,6 +256,14 @@ public class EvdevHandler extends EvdevReader {
 		}
 		
 		gamepadSynced &= !gamepadModified;
+	}
+
+	@Override
+	protected void deviceRemoved() {
+		// Release this device's controller ID (if it has one)
+		if (controllerId >= 0) {
+			releaseControllerId();
+		}
 	}
 
 	private short accountForDeadzone(short value) {

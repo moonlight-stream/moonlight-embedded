@@ -107,7 +107,7 @@
   <target name="compile-common" depends="init">
     <!-- compile limelight -->
     <javac includeantruntime="false" destdir="${classes.dir}/common">
-      <src path="${common.src.dir}"/>java
+      <src path="${common.src.dir}"/>
       
       <classpath>
         <fileset dir="${common.libs.dir}" includes="*.jar"/>

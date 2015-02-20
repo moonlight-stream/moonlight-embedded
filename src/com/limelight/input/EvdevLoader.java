@@ -91,8 +91,8 @@ public class EvdevLoader implements Runnable {
 			evdev.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
 			
 			for (;;) {
-				WatchKey watckKey = watcher.take();
-				List<WatchEvent<?>> events = watckKey.pollEvents();
+				WatchKey watchKey = watcher.take();
+				List<WatchEvent<?>> events = watchKey.pollEvents();
 				for (WatchEvent event:events) {
 					if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
 						String name = event.context().toString();
@@ -101,6 +101,10 @@ public class EvdevLoader implements Runnable {
 							new EvdevHandler(conn, new File(input, name).getAbsolutePath(), mapping).start();
 						}
 					}
+				}
+				
+				if (!watchKey.reset()) {
+					break;
 				}
 			}
 		} catch (IOException | InterruptedException ex) {

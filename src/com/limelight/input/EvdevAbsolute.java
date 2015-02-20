@@ -53,7 +53,7 @@ public class EvdevAbsolute {
 			return reverse?Short.MAX_VALUE:Short.MIN_VALUE;
 		else {
 			value += value<avg?flat:-flat;
-			return (short) ((value-avg) * Short.MAX_VALUE / (reverse?flat-range:range-flat));
+			return (short) ((value-avg) * 0x7FFE / (reverse?flat-range:range-flat));
 		}
 	}
 	

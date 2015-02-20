@@ -43,6 +43,7 @@ public abstract class EvdevReader implements Runnable {
 	}
 	
 	protected abstract void parseEvent(ByteBuffer buffer);
+	protected abstract void deviceRemoved();
 	
 	@Override
 	public void run() {
@@ -54,6 +55,7 @@ public abstract class EvdevReader implements Runnable {
 			}
 		} catch (IOException e) {
 			LimeLog.warning("Input device removed");
+			deviceRemoved();
 		}
 	}
 

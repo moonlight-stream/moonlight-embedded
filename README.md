@@ -37,8 +37,8 @@ implementation.
 
 ##Requirements
 
-* [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GTX 600/700 series GPU (for the PC you're streaming from)
-* High-end wireless router (802.11n dual-band recommended) or Wired network
+* [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GTX 600/700/900 series GPU (for the PC you're streaming from)
+* High-end wireless router (802.11n dual-band recommended) or wired network
 * Geforce Experience 2.1.1 or higher
 
 ##Quick Start

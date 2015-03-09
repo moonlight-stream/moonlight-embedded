@@ -1,7 +1,7 @@
 package com.limelight;
 
 import com.limelight.binding.PlatformBinding;
-import com.limelight.binding.audio.FakeAudioRenderer;
+import com.limelight.binding.audio.FakeAudioDecoderRenderer;
 import com.limelight.binding.video.FakeVideoRenderer;
 import com.limelight.input.EvdevLoader;
 import com.limelight.input.GamepadMapper;
@@ -115,7 +115,7 @@ public class Limelight implements NvConnectionListener {
 		conn = new NvConnection(host.getHostAddress(), getUniqueId(), this, streamConfig, PlatformBinding.getCryptoProvider());
 		conn.start(PlatformBinding.getDeviceName(), null,
 				VideoDecoderRenderer.FLAG_PREFER_QUALITY,
-				new FakeAudioRenderer(),
+				new FakeAudioDecoderRenderer(),
 				new FakeVideoRenderer(videoFile));
 	}
 	

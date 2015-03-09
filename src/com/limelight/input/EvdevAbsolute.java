@@ -12,6 +12,7 @@ public class EvdevAbsolute {
 	public final static int UP = 1, DOWN = -1, NONE = 0;
 	
 	private final static int ABS_OFFSET = 0x40;
+	private final static int UNSIGNED_BYTE_MAX_VALUE = 0xFF;
 	
 	private int min, max;
 	private int avg;
@@ -53,9 +54,7 @@ public class EvdevAbsolute {
 			return reverse?Short.MAX_VALUE:Short.MIN_VALUE;
 		else {
 			value += value<avg?flat:-flat;
-
-			// Divide the value by the range before multiplying to avoid overflowing
-			return (short) (((value-avg) / (float)(reverse?flat-range:range-flat)) * 0x7FFE);
+			return (short) ((value-avg) * Short.MAX_VALUE / (reverse?-range-flat:range-flat) - (reverse?1:0));
 		}
 	}
 	
@@ -68,12 +67,12 @@ public class EvdevAbsolute {
 		if (Math.abs(value-min)<flat)
 			return 0;
 		else if (value>max)
-			return reverse?0:(byte) 0xFF;
+			return reverse?0:(byte) UNSIGNED_BYTE_MAX_VALUE;
 		else if (value<min)
-			return reverse?(byte) 0xFF:0;
+			return reverse?(byte) UNSIGNED_BYTE_MAX_VALUE:0;
 		else {
-			value -= -flat;
-			return (byte) ((value-min) * 0xFF / (reverse?flat-diff:diff-flat));
+			value -= flat;
+			return (byte) (((reverse?max-value:value-min)) * UNSIGNED_BYTE_MAX_VALUE / (diff-flat));
 		}
 	}
 	

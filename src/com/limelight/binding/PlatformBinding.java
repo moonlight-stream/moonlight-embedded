@@ -5,14 +5,14 @@ import java.net.UnknownHostException;
 import java.io.File;
 import java.io.IOException;
 
-import com.limelight.binding.audio.AlsaAudioRenderer;
+import com.limelight.binding.audio.AlsaAudioDecoderRenderer;
 import com.limelight.binding.video.ImxDecoder;
 import com.limelight.binding.video.ImxDecoderRenderer;
 import com.limelight.binding.crypto.PcCryptoProvider;
 import com.limelight.binding.video.OmxDecoder;
 import com.limelight.binding.video.OmxDecoderRenderer;
 import com.limelight.binding.video.AbstractVideoRenderer;
-import com.limelight.nvstream.av.audio.AudioRenderer;
+import com.limelight.nvstream.av.audio.AudioDecoderRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.LimelightCryptoProvider;
 import com.limelight.LimeLog;
@@ -55,7 +55,7 @@ public class PlatformBinding {
 	 * Gets an instance of an audio decoder/renderer.
 	 * @return an audio decoder and renderer
 	 */
-	public static AudioRenderer getAudioRenderer(String device) {
+	public static AudioDecoderRenderer getAudioRenderer(String device) {
 		//Try to load local libopus
 		try {
 			Runtime.getRuntime().load(new File(".").getCanonicalPath()+File.separator+"libopus.so");
@@ -66,7 +66,7 @@ public class PlatformBinding {
 			//Use system opus library
 		}
 			
-		return new AlsaAudioRenderer(device);
+		return new AlsaAudioDecoderRenderer(device);
 	}
 	
 	/**

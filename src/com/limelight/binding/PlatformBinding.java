@@ -11,7 +11,6 @@ import com.limelight.binding.video.ImxDecoderRenderer;
 import com.limelight.binding.crypto.PcCryptoProvider;
 import com.limelight.binding.video.OmxDecoder;
 import com.limelight.binding.video.OmxDecoderRenderer;
-import com.limelight.binding.video.AbstractVideoRenderer;
 import com.limelight.nvstream.av.audio.AudioDecoderRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
 import com.limelight.nvstream.http.LimelightCryptoProvider;
@@ -27,14 +26,13 @@ public class PlatformBinding {
 	 * Gets an instance of a video decoder/renderer.
 	 * @return a video decoder and renderer
 	 */
-	public static VideoDecoderRenderer getVideoDecoderRenderer(boolean debug) {
-		AbstractVideoRenderer renderer = null;
+	public static VideoDecoderRenderer getVideoDecoderRenderer() {
+		VideoDecoderRenderer renderer = null;
 		if (OmxDecoder.load())
 			renderer = new OmxDecoderRenderer();
 		else if (ImxDecoder.load())
 			renderer = new ImxDecoderRenderer();
 
-		renderer.debug = debug;
 		return renderer;
 	}
 	

@@ -3,6 +3,8 @@ package com.limelight.binding.video;
 import com.limelight.LimeLog;
 import com.limelight.nvstream.av.ByteBufferDescriptor;
 import com.limelight.nvstream.av.DecodeUnit;
+import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.nvstream.av.video.VideoDepacketizer;
 
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
@@ -14,10 +16,8 @@ import java.nio.ByteBuffer;
  * Implementation of a video decoder and renderer.
  * @author Iwan Timmer
  */
-public class OmxDecoderRenderer extends AbstractVideoRenderer {
+public class OmxDecoderRenderer extends VideoDecoderRenderer {
 	
-	private final static byte[] BITSTREAM_RESTRICTIONS = new byte[] {(byte) 0xF1, (byte) 0x83, 0x2A, 0x00};
-
 	@Override
 	public boolean setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
 		return OmxDecoder.init() == 0;
@@ -25,7 +25,6 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 
 	@Override
 	public void stop() {
-		super.stop();
 		OmxDecoder.stop();
 	}
 
@@ -35,7 +34,7 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 	}
 
 	@Override
-	public void decodeUnit(DecodeUnit decodeUnit) {
+	public void directSubmitDecodeUnit(DecodeUnit decodeUnit) {
 		List<ByteBufferDescriptor> units = decodeUnit.getBufferList();
 		
 		ByteBufferDescriptor header = units.get(0);
@@ -86,5 +85,15 @@ public class OmxDecoderRenderer extends AbstractVideoRenderer {
 				}
 			}
 		}
+	}
+	
+	@Override
+	public boolean start(VideoDepacketizer depacketizer) {
+		throw new UnsupportedOperationException("CAPABILITY_DIRECT_SUBMIT requires directSubmitDecodeUnit()");
+	}
+
+	@Override
+	public int getCapabilities() {
+		return CAPABILITY_DIRECT_SUBMIT;
 	}
 }

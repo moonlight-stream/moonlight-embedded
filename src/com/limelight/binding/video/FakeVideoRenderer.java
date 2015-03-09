@@ -3,6 +3,8 @@ package com.limelight.binding.video;
 import com.limelight.LimeLog;
 import com.limelight.nvstream.av.ByteBufferDescriptor;
 import com.limelight.nvstream.av.DecodeUnit;
+import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.nvstream.av.video.VideoDepacketizer;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,13 +14,12 @@ import java.io.OutputStream;
  * Implementation of a video decoder and renderer.
  * @author Iwan Timmer
  */
-public class FakeVideoRenderer extends AbstractVideoRenderer {
+public class FakeVideoRenderer extends VideoDecoderRenderer {
 
 	private OutputStream out;
 
 	public FakeVideoRenderer(String videoFile) {
 		try {
-			this.debug = true;
 			if (videoFile!=null)
 				out = new FileOutputStream(videoFile);
 		} catch (FileNotFoundException e) {
@@ -34,8 +35,6 @@ public class FakeVideoRenderer extends AbstractVideoRenderer {
 
 	@Override
 	public void stop() {
-		super.stop();
-		
 		try {
 			if (out!=null)
 				out.close();
@@ -49,7 +48,7 @@ public class FakeVideoRenderer extends AbstractVideoRenderer {
 	}
 
 	@Override
-	public void decodeUnit(DecodeUnit decodeUnit) {
+	public void directSubmitDecodeUnit(DecodeUnit decodeUnit) {
 		if (out!=null) {
 			try {
 				for (ByteBufferDescriptor buf:decodeUnit.getBufferList())
@@ -58,6 +57,16 @@ public class FakeVideoRenderer extends AbstractVideoRenderer {
 				LimeLog.severe(e.getMessage());
 			}
 		}
+	}
+	
+	@Override
+	public boolean start(VideoDepacketizer depacketizer) {
+		throw new UnsupportedOperationException("CAPABILITY_DIRECT_SUBMIT requires directSubmitDecodeUnit()");
+	}
+
+	@Override
+	public int getCapabilities() {
+		return CAPABILITY_DIRECT_SUBMIT;
 	}
 
 }

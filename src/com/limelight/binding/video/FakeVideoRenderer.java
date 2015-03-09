@@ -61,7 +61,7 @@ public class FakeVideoRenderer extends VideoDecoderRenderer {
 	
 	@Override
 	public boolean start(VideoDepacketizer depacketizer) {
-		throw new UnsupportedOperationException("CAPABILITY_DIRECT_SUBMIT requires directSubmitDecodeUnit()");
+		return true;
 	}
 
 	@Override

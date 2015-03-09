@@ -45,8 +45,8 @@ public class ImxDecoderRenderer extends VideoDecoderRenderer {
 	}
 
 	@Override
-	public boolean start(VideoDepacketizer depacketizer) {
-		throw new UnsupportedOperationException("CAPABILITY_DIRECT_SUBMIT requires directSubmitDecodeUnit()");
+	public boolean start(VideoDepacketizer depacketizer) { 
+		return true;
 	}
 
 	@Override

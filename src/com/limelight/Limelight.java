@@ -281,7 +281,7 @@ public class Limelight implements NvConnectionListener {
 				}
 			} else if (args[i].equals("-app")) {
 				if (i + 1 < args.length) {
-					builder.setApp(args[i+1]);
+					builder.setApp(new NvApp(args[i+1]));
 					i++;
 				} else {
 					System.out.println("Syntax error: application name expected after -app");

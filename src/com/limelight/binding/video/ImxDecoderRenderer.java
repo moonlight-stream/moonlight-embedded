@@ -13,7 +13,9 @@ import java.util.List;
  * @author Iwan Timmer
  */
 public class ImxDecoderRenderer extends VideoDecoderRenderer {
-	
+
+	private VideoDepacketizer depacketizer;
+
 	@Override
 	public boolean setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
 		return ImxDecoder.init() == 0;
@@ -42,10 +44,13 @@ public class ImxDecoderRenderer extends VideoDecoderRenderer {
 				}
 			}
 		}
+
+		depacketizer.freeDecodeUnit(decodeUnit);
 	}
 
 	@Override
-	public boolean start(VideoDepacketizer depacketizer) { 
+	public boolean start(VideoDepacketizer depacketizer) {
+		this.depacketizer = depacketizer;
 		return true;
 	}
 

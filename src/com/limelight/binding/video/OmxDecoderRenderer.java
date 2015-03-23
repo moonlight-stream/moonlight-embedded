@@ -17,7 +17,9 @@ import java.nio.ByteBuffer;
  * @author Iwan Timmer
  */
 public class OmxDecoderRenderer extends VideoDecoderRenderer {
-	
+
+	private VideoDepacketizer depacketizer;
+
 	@Override
 	public boolean setup(int width, int height, int redrawRate, Object renderTarget, int drFlags) {
 		return OmxDecoder.init() == 0;
@@ -85,10 +87,13 @@ public class OmxDecoderRenderer extends VideoDecoderRenderer {
 				}
 			}
 		}
+
+		depacketizer.freeDecodeUnit(decodeUnit);
 	}
 	
 	@Override
 	public boolean start(VideoDepacketizer depacketizer) {
+		this.depacketizer = depacketizer;
 		return true;
 	}
 

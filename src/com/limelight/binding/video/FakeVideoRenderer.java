@@ -51,7 +51,7 @@ public class FakeVideoRenderer extends VideoDecoderRenderer {
 	public void directSubmitDecodeUnit(DecodeUnit decodeUnit) {
 		if (out!=null) {
 			try {
-				for (ByteBufferDescriptor buf:decodeUnit.getBufferList())
+				for (ByteBufferDescriptor buf = decodeUnit.getBufferHead(); buf != null; buf = buf.nextDescriptor)
 					out.write(buf.data, buf.offset, buf.length);
 			} catch (IOException e) {
 				LimeLog.severe(e.getMessage());

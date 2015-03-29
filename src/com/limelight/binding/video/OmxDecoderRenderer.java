@@ -37,9 +37,7 @@ public class OmxDecoderRenderer extends VideoDecoderRenderer {
 
 	@Override
 	public void directSubmitDecodeUnit(DecodeUnit decodeUnit) {
-		List<ByteBufferDescriptor> units = decodeUnit.getBufferList();
-		
-		ByteBufferDescriptor header = units.get(0);
+		ByteBufferDescriptor header = decodeUnit.getBufferHead();
 		if (header.data[header.offset+4] == 0x67) {
 			ByteBuffer origSpsBuf = ByteBuffer.wrap(header.data);
 
@@ -73,13 +71,11 @@ public class OmxDecoderRenderer extends VideoDecoderRenderer {
 			if (ret != 0) {
 				LimeLog.severe("Error code during decode: " + ret);
 			}
-		}
-		else {
+		} else {
 			boolean ok = true;
-			for (int i=0;i<units.size();i++) {
-				ByteBufferDescriptor bbd = units.get(i);
+			for (ByteBufferDescriptor bbd = header; bbd != null; bbd = bbd.nextDescriptor) {
 				if (ok) {
-					int ret = OmxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1));
+					int ret = OmxDecoder.decode(bbd.data, bbd.offset, bbd.length, bbd.nextDescriptor == null);
 					if (ret != 0) {
 						LimeLog.severe("Error code during decode: " + ret);
 						ok = false;

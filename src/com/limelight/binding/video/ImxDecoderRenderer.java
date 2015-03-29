@@ -31,13 +31,10 @@ public class ImxDecoderRenderer extends VideoDecoderRenderer {
 
 	@Override
 	public void directSubmitDecodeUnit(DecodeUnit decodeUnit) {
-		List<ByteBufferDescriptor> units = decodeUnit.getBufferList();
-		
 		boolean ok = true;
-		for (int i=0;i<units.size();i++) {
-			ByteBufferDescriptor bbd = units.get(i);
+		for (ByteBufferDescriptor bbd = decodeUnit.getBufferHead(); bbd != null; bbd = bbd.nextDescriptor) {
 			if (ok) {
-				int ret = ImxDecoder.decode(bbd.data, bbd.offset, bbd.length, i == (units.size()-1));
+				int ret = ImxDecoder.decode(bbd.data, bbd.offset, bbd.length, bbd.nextDescriptor == null);
 				if (ret != 0) {
 					LimeLog.severe("Error code during decode: " + ret);
 					ok = false;

@@ -32,7 +32,8 @@ implementation.
 * Download [GeForce Experience](http://www.geforce.com/geforce-experience) and install on your Windows PC
 * Install oracle-java8-jdk (Raspbian) or download and install [Oracle Java SE (ARM v6 Hard Float)](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-arm-downloads-2187472.html)
 * Download the compiled jar from the [GitHub releases page](https://github.com/irtimmer/limelight-pi/releases)
-* Install libopus0 (Debian/Raspbian) or opus (ArchLinux/Fedora/Pidora)
+* Install libopus0 (Debian/Raspbian) or opus (Arch Linux/Fedora/Pidora)
+* Install v4l-utils, firmware-imx and imx-vpu (Arch Linux) for CuBox-i or Hummingboard
 * [Configure sound](http://elinux.org/R-Pi_Troubleshooting#Sound)
 
 ##Requirements
@@ -102,9 +103,10 @@ Then copy libopus.so from opus-1.1/libs to the directory from which you start Li
 
 ##Compile
 
-* Install ant (Debian/Raspbian/Fedora/Pidora) or apache-ant (Archlinux)
-* Install audio libraries libopus-dev and libasound2-dev (Debian/Raspbian) or opus-devel and alsa-lib-devel (Fedora/Pidora) or opus and alsa-lib (Archlinux)
-* Install Raspberry Pi development libraries libraspberrypi-dev (Debian/Raspbian) or raspberrypi-vc-libs-devel (Fedora/Pidora) or raspberrypi-firmware-tools (Archlinux)
+* Install ant (Debian/Raspbian/Fedora/Pidora) or apache-ant (Arch Linux)
+* Install audio libraries libopus-dev and libasound2-dev (Debian/Raspbian) or opus-devel and alsa-lib-devel (Fedora/Pidora) or opus and alsa-lib (Arch Linux)
+* Install for Raspberry Pi development libraries libraspberrypi-dev (Debian/Raspbian) or raspberrypi-vc-libs-devel (Fedora/Pidora) or raspberrypi-firmware-tools (Arch Linux)
+* Install for CuBox-i development libraries linux-headers-imx6-cubox-dt (Arch Linux)
 * Set JAVA_HOME to your JDK installation directory for example ``export JAVA_HOME=/usr/lib/jvm/jdk-7-oracle-armhf``
 * Initialize the git submodules ``git submodule update --init``
 * Build using Ant ``ant``

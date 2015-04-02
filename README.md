@@ -6,7 +6,7 @@ but built for Linux/OSX/Windows.
 Limelight Embedded allows you to stream your full collection of Steam games from
 your powerful Windows desktop to your embedded system, like Raspberry Pi, CuBox-i and Hummingboard.
 
-For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw). [Instructions on how to set things up on OpenELEC can be found here.](https://github.com/HazCod/LimeRPi2-kodi/blob/master/README.md)
+For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw). Instructions on how to set things up on OpenELEC can be found [here.](https://github.com/HazCod/LimeRPi2-kodi/blob/master/README.md)
 
 [Limelight-common](https://github.com/limelight-stream/limelight-common) is the shared codebase between
 different implementations of Limelight

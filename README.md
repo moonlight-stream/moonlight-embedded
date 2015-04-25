@@ -1,27 +1,27 @@
-#Limelight Embedded
+#Moonlight Embedded
 
-Limelight is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield,
+Moonlight (formerly titled Limelight) is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield,
 but built for Linux/OSX/Windows.
 
-Limelight Embedded allows you to stream your full collection of Steam games from
+Moonlight Embedded allows you to stream your full collection of Steam games from
 your powerful Windows desktop to your embedded system, like Raspberry Pi, CuBox-i and Hummingboard.
 
 For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 
-[Limelight-common](https://github.com/limelight-stream/limelight-common) is the shared codebase between
-different implementations of Limelight
+[Moonlight-common](https://github.com/moonlight-stream/moonlight-common) is the shared codebase between
+different implementations of Moonlight
 
-[Limelight](https://github.com/limelight-stream/limelight-android) also has an Android
+[Moonlight](https://github.com/moonlight-stream/moonlight-android) also has an Android
 implementation.
 
-[Limelight-pc](https://github.com/limelight-stream/limelight-pc) also has an Linux/OSX/Windows
+[Moonlight-pc](https://github.com/moonlight-stream/moonlight-pc) also has an Linux/OSX/Windows
 implementation.
 
-[Limelight iOS](https://github.com/limelight-stream/limelight-ios) also has an iOS
-implementation.
+[Moonlight iOS](https://github.com/moonlight-stream/moonlight-ios) also has an iOS
+implementation in beta.
 
-[Limelight Windows](https://github.com/limelight-stream/limelight-windows) also has an Windows and Windows Phone
-implementation.
+[Moonlight Windows](https://github.com/moonlight-stream/moonlight-windows) also has an Windows and Windows Phone
+implementation under development.
 
 ##Features
 
@@ -46,9 +46,9 @@ implementation.
 
 * Ensure your machine and embedded system are on the same network
 * Turn on Shield Streaming in the GFE settings
-* Start Limelight Embedded with pair
+* Start Moonlight Embedded with pair
 * Accept the pairing confirmation on your PC
-* Start Limelight Embedded with stream
+* Start Moonlight Embedded with stream
 * Play games!
 
 ##Usage
@@ -90,7 +90,7 @@ implementation.
 ##Fixed point Opus on Debian
 Debian/Raspbian currently doesn't provide a fixed point Opus build.
 This results in very high cpu usage for audio decompression, especially on the Raspberry Pi.
-Limelight Embedded can load another Opus build for you from the current working directory.
+Moonlight Embedded can load another Opus build for you from the current working directory.
 To compile Opus with fixed point support you have to execute the following commands:
 
 	wget http://downloads.xiph.org/releases/opus/opus-1.1.tar.gz
@@ -99,7 +99,7 @@ To compile Opus with fixed point support you have to execute the following comma
 	./configure --enable-fixed-point
 	make
 
-Then copy libopus.so from opus-1.1/libs to the directory from which you start Limelight Embedded.
+Then copy libopus.so from opus-1.1/libs to the directory from which you start Moonlight Embedded.
 
 ##Compile
 

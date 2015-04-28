@@ -49,7 +49,7 @@ implementation.
 * Play games!
 
 ##Usage
-	Usage: moonlight host game
+	Usage: moonlight host game input
 
 ##Compile
 

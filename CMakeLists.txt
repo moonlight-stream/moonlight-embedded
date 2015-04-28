@@ -1,6 +1,8 @@
 project(moonlight-embedded)
 cmake_minimum_required(VERSION 3.2)
 
+SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+
 aux_source_directory(./common/limelight-common SRC_LIST)
 aux_source_directory(./common/limelight-common/OpenAES SRC_LIST)
 aux_source_directory(./src SRC_LIST)
@@ -15,5 +17,8 @@ find_package(CURL)
 find_package(OpenSSL)
 find_package(EXPAT)
 
-include_directories(./moonlight-common-c)
-target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES})
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(EVDEV libevdev)
+
+include_directories(./moonlight-common-c ${EVDEV_INCLUDE_DIRS})
+target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES})

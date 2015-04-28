@@ -21,6 +21,7 @@
 #include "connection.h"
 #include "video.h"
 #include "audio.h"
+#include "input.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -55,7 +56,13 @@ int main(int argc, char* argv[]) {
 
   client_start_app(config, argv[1], appId);
 
+  input_create(argv[3]);
+
   struct in_addr addr;
   inet_aton(address, &addr);
   LiStartConnection(addr.s_addr, config, &connection_callbacks, &decoder_callbacks, &audio_callbacks, &platform_callbacks, NULL, 0, 4);
+
+  input_loop();
+
+  LiStopConnection();
 }

@@ -31,6 +31,7 @@ implementation.
 
 * Download [GeForce Experience](http://www.geforce.com/geforce-experience) and install on your Windows PC
 * Download the compiled version from the [GitHub releases page](https://github.com/irtimmer/moonlight-embedded/releases)
+* Install libopus0 (Debian/Raspbian) or opus (Arch Linux/Fedora/Pidora)
 * [Configure sound](http://elinux.org/R-Pi_Troubleshooting#Sound)
 
 ##Requirements
@@ -55,6 +56,7 @@ implementation.
 
 * Install cmake
 * Install cryptographics libraries libssl-dev (Debian/Raspbian) or openssl-devel (Fedora/Pidora) or openssl (Arch Linux)
+* Install audio libraries libopus-dev and libasound2-dev (Debian/Raspbian) or opus-devel and alsa-lib-devel (Fedora/Pidora) or opus and alsa-lib (Arch Linux)
 * Initialize the git submodules ``git submodule update --init``
 
 ```

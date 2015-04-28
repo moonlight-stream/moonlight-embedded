@@ -16,9 +16,11 @@ find_package(Threads)
 find_package(CURL)
 find_package(OpenSSL)
 find_package(EXPAT)
+find_package(ALSA)
+find_package(Opus)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(EVDEV libevdev)
 
-include_directories(./moonlight-common-c ${EVDEV_INCLUDE_DIRS})
-target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES})
+include_directories(./moonlight-common-c ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS})
+target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY})

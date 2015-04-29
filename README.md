@@ -50,7 +50,28 @@ implementation.
 * Play games!
 
 ##Usage
-	Usage: moonlight host game input
+	Usage: moonlight [options] host
+
+	Actions:
+
+	pair Pair device with computer
+	stream Stream computer to device
+	list List available games and applications
+	help Show this help
+
+	Streaming options:
+
+	-720 Use 1280x720 resolution (default)
+	-1080 Use 1920x1080 resolution
+	-width <width> Horizontal resolution (default 1280)
+	-height <height> Vertical resolution (default 720)
+	-30fps Use 30fps
+	-60fps Use 60fps (default)
+	-bitrate <bitrate> Specify the bitrate in Kbps
+	-packetsize <size> Specify the maximum packetsize in bytes
+	-app <app> Name of app to stream
+
+	Use ctrl-c to exit application
 
 ##Compile
 

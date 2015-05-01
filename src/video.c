@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "bcm_host.h"
 #include "ilclient.h"
+#include "h264_stream.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -176,6 +177,21 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   }
 
   PLENTRY entry = decodeUnit->bufferList;
+  if (entry != NULL && entry->data[4] == 0x67) {
+    read_debug_nal_unit(stream, entry->data+4, entry->length-4);
+    stream->sps->num_ref_frames = 1;
+    stream->sps->vui.bitstream_restriction_flag = 1;
+    stream->sps->vui.motion_vectors_over_pic_boundaries_flag = 1;
+    stream->sps->vui.max_bytes_per_pic_denom = 2;
+    stream->sps->vui.max_bits_per_mb_denom = 1;
+    stream->sps->vui.log2_max_mv_length_horizontal = 16;
+    stream->sps->vui.log2_max_mv_length_vertical = 16;
+    stream->sps->vui.num_reorder_frames = 0;
+    stream->sps->vui.max_dec_frame_buffering = 1;
+
+    entry->length = write_nal_unit(stream, entry->data+4, entry->length*2) + 4;
+  }
+
   while (entry != NULL) {
     memcpy(dest, entry->data, entry->length);
     buf->nFilledLen += entry->length;

@@ -6,11 +6,12 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 aux_source_directory(./common/limelight-common SRC_LIST)
 aux_source_directory(./common/limelight-common/OpenAES SRC_LIST)
 aux_source_directory(./ilclient SRC_LIST)
+aux_source_directory(./h264bitstream SRC_LIST)
 
 aux_source_directory(./src SRC_LIST)
 
 include_directories(./common)
-include_directories(./ilclient)
+include_directories(./ilclient ./h264bitstream)
 
 add_executable(moonlight ${SRC_LIST})
 set_property(TARGET moonlight PROPERTY C_STANDARD 11)

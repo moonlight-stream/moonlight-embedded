@@ -337,7 +337,7 @@ void read_seq_parameter_set_rbsp(h264_stream_t* h, bs_t* b)
 
     if( 1 )
     {
-        memcpy(h->sps, h->sps_table[sps->seq_parameter_set_id], sizeof(sps_t));
+        memcpy(h->sps_table[sps->seq_parameter_set_id], h->sps, sizeof(sps_t));
     }
 }
 
@@ -1224,7 +1224,7 @@ void write_seq_parameter_set_rbsp(h264_stream_t* h, bs_t* b)
 
     if( 0 )
     {
-        memcpy(h->sps, h->sps_table[sps->seq_parameter_set_id], sizeof(sps_t));
+        memcpy(h->sps_table[sps->seq_parameter_set_id], h->sps, sizeof(sps_t));
     }
 }
 
@@ -2111,7 +2111,7 @@ void read_debug_seq_parameter_set_rbsp(h264_stream_t* h, bs_t* b)
 
     if( 1 )
     {
-        memcpy(h->sps, h->sps_table[sps->seq_parameter_set_id], sizeof(sps_t));
+        memcpy(h->sps_table[sps->seq_parameter_set_id], h->sps, sizeof(sps_t));
     }
 }
 

@@ -82,6 +82,7 @@ static void help() {
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
+  printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   exit(0);
 }
 
@@ -104,12 +105,14 @@ int main(int argc, char* argv[]) {
     {"packetsize", required_argument, 0, 'h'},
     {"app", required_argument, 0, 'i'},
     {"input", required_argument, 0, 'j'},
+    {"mapping", required_argument, 0, 'k'},
     {0, 0, 0, 0},
   };
 
   char* app = "Steam";
   char* action = NULL;
   char* address = NULL;
+  char* mapping = NULL;
   int option_index = 0;
   int c;
   while ((c = getopt_long_only (argc, argv, "-abc:d:efg:h:i:j:", long_options, &option_index)) != -1) {
@@ -144,7 +147,10 @@ int main(int argc, char* argv[]) {
       app = optarg;
       break;
     case 'j':
-      input_create(optarg);
+      input_create(optarg, mapping);
+      break;
+    case 'k':
+      mapping = optarg;
       break;
     case 1:
       if (action == NULL)

@@ -17,5 +17,5 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-void input_create(char* device);
+void input_create(char* device, char* mapFile);
 void input_loop();

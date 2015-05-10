@@ -317,7 +317,7 @@ int client_get_app_id(const char *address, char *name) {
   return -1;
 }
 
-void client_start_app(STREAM_CONFIGURATION *config, const char *address, int appId, bool sops) {
+void client_start_app(STREAM_CONFIGURATION *config, const char *address, int appId, bool sops, bool localaudio) {
   RAND_bytes(config->remoteInputAesKey, 16);
   memset(config->remoteInputAesIv, 0, 16);
 
@@ -329,7 +329,7 @@ void client_start_app(STREAM_CONFIGURATION *config, const char *address, int app
 
   struct http_data *data = http_create_data();
   if (currentGame == 0)
-    sprintf(url, "https://%s:47984/launch?uniqueid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=0", address, unique_id, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid);
+    sprintf(url, "https://%s:47984/launch?uniqueid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d", address, unique_id, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio);
   else
     sprintf(url, "https://%s:47984/resume?uniqueid=%s&rikey=%s&rikeyid=%d", address, unique_id, rikey_hex, rikeyid);
 

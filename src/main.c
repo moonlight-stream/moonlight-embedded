@@ -47,14 +47,14 @@ static void applist(const char* address) {
   }
 }
 
-static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops) {
+static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops, bool localaudio) {
   int appId = client_get_app_id(address, app);
   if (appId<0) {
     printf("Can't find app %s\n", app);
     exit(-1);
   }
 
-  client_start_app(config, address, appId, sops);
+  client_start_app(config, address, appId, sops, localaudio);
 
   struct in_addr addr;
   inet_aton(address, &addr);
@@ -86,6 +86,7 @@ static void help() {
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
+  printf("\t-localaudio\t\tPlay audio locally\n");
   exit(0);
 }
 
@@ -111,6 +112,7 @@ int main(int argc, char* argv[]) {
     {"mapping", required_argument, 0, 'k'},
     {"nosops", no_argument, 0, 'l'},
     {"audio", required_argument, 0, 'm'},
+    {"localaudio", no_argument, 0, 'n'},
     {0, 0, 0, 0},
   };
 
@@ -120,8 +122,9 @@ int main(int argc, char* argv[]) {
   char* mapping = NULL;
   int option_index = 0;
   bool sops = true;
+  bool localaudio = false;
   int c;
-  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:", long_options, &option_index)) != -1) {
+  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:n", long_options, &option_index)) != -1) {
     switch (c) {
     case 'a':
       config.width = 720;
@@ -164,6 +167,9 @@ int main(int argc, char* argv[]) {
     case 'm':
       audio_device = optarg;
       break;
+    case 'n':
+      localaudio = true;
+      break;
     case 1:
       if (action == NULL)
         action = optarg;
@@ -189,7 +195,7 @@ int main(int argc, char* argv[]) {
   if (strcmp("applist", action) == 0)
     applist(address);
   else if (strcmp("stream", action) == 0)
-    stream(&config, address, app, sops);
+    stream(&config, address, app, sops, localaudio);
   else if (strcmp("pair", action) == 0)
     client_pair(address);
   else

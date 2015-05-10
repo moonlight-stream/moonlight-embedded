@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -46,14 +47,14 @@ static void applist(const char* address) {
   }
 }
 
-static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app) {
+static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops) {
   int appId = client_get_app_id(address, app);
   if (appId<0) {
     printf("Can't find app %s\n", app);
     exit(-1);
   }
 
-  client_start_app(config, address, appId);
+  client_start_app(config, address, appId, sops);
 
   struct in_addr addr;
   inet_aton(address, &addr);
@@ -81,6 +82,7 @@ static void help() {
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
   printf("\t-app <app>\t\tName of app to stream\n");
+  printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   exit(0);
@@ -106,6 +108,7 @@ int main(int argc, char* argv[]) {
     {"app", required_argument, 0, 'i'},
     {"input", required_argument, 0, 'j'},
     {"mapping", required_argument, 0, 'k'},
+    {"nosops", no_argument, 0, 'l'},
     {0, 0, 0, 0},
   };
 
@@ -114,8 +117,9 @@ int main(int argc, char* argv[]) {
   char* address = NULL;
   char* mapping = NULL;
   int option_index = 0;
+  bool sops = true;
   int c;
-  while ((c = getopt_long_only (argc, argv, "-abc:d:efg:h:i:j:", long_options, &option_index)) != -1) {
+  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:l", long_options, &option_index)) != -1) {
     switch (c) {
     case 'a':
       config.width = 720;
@@ -152,6 +156,9 @@ int main(int argc, char* argv[]) {
     case 'k':
       mapping = optarg;
       break;
+    case 'l':
+      sops = false;
+      break;
     case 1:
       if (action == NULL)
         action = optarg;
@@ -177,7 +184,7 @@ int main(int argc, char* argv[]) {
   if (strcmp("applist", action) == 0)
     applist(address);
   else if (strcmp("stream", action) == 0)
-    stream(&config, address, app);
+    stream(&config, address, app, sops);
   else if (strcmp("pair", action) == 0)
     client_pair(address);
   else

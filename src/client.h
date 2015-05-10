@@ -21,7 +21,10 @@
 
 #include "limelight-common/Limelight.h"
 
+#include "stdbool.h"
+
 void client_init(const char* serverAddress);
-void client_start_app(STREAM_CONFIGURATION *config, const char* serverAddress, int appId);
+void client_start_app(STREAM_CONFIGURATION *config, const char* serverAddress, int appId, bool sops);
 struct app_list* client_applist(const char* serverAddress);
 int client_get_app_id(const char* serverAddress, char* name);
+void client_pair(const char *address);

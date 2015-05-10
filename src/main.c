@@ -85,6 +85,7 @@ static void help() {
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
+  printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
   exit(0);
 }
 
@@ -109,6 +110,7 @@ int main(int argc, char* argv[]) {
     {"input", required_argument, 0, 'j'},
     {"mapping", required_argument, 0, 'k'},
     {"nosops", no_argument, 0, 'l'},
+    {"audio", required_argument, 0, 'm'},
     {0, 0, 0, 0},
   };
 
@@ -119,7 +121,7 @@ int main(int argc, char* argv[]) {
   int option_index = 0;
   bool sops = true;
   int c;
-  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:l", long_options, &option_index)) != -1) {
+  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:", long_options, &option_index)) != -1) {
     switch (c) {
     case 'a':
       config.width = 720;
@@ -158,6 +160,9 @@ int main(int argc, char* argv[]) {
       break;
     case 'l':
       sops = false;
+      break;
+    case 'm':
+      audio_device = optarg;
       break;
     case 1:
       if (action == NULL)

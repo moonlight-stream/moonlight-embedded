@@ -19,4 +19,6 @@
 
 #include "limelight-common/Limelight.h"
 
+extern const char* audio_device;
+
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks;

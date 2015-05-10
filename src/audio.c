@@ -29,7 +29,7 @@
 #define CHANNEL_COUNT 2
 #define FRAME_SIZE 240
 
-static const char* device = "default";
+const char* audio_device = "sysdefault";
 
 static snd_pcm_t *handle;
 static OpusDecoder* decoder;
@@ -47,7 +47,7 @@ static void audio_renderer_init() {
   unsigned int sampleRate = SAMPLE_RATE;
 
   /* Open PCM device for playback. */
-  CHECK_RETURN(snd_pcm_open(&handle, device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK))
+  CHECK_RETURN(snd_pcm_open(&handle, audio_device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK))
 
   /* Set hardware parameters */
   CHECK_RETURN(snd_pcm_hw_params_malloc(&hw_params));

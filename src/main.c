@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (strcmp("help", action) == 0)
+  if (action == NULL || strcmp("help", action) == 0)
     help();
 
   if (address == NULL) {
@@ -178,4 +178,8 @@ int main(int argc, char* argv[]) {
     applist(address);
   else if (strcmp("stream", action) == 0)
     stream(&config, address, app);
+  else if (strcmp("pair", action) == 0)
+    client_pair(address);
+  else
+    fprintf(stderr, "%s is not a valid actions\n", action);
 }

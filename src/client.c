@@ -19,6 +19,7 @@
 
 #include "http.h"
 #include "xml.h"
+#include "mkcert.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -35,6 +36,7 @@
 
 static const char *uniqueFileName = "uniqueid.dat";
 static const char *certificateFileName = "client.pem";
+static const char *p12FileName = "client.p12";
 static const char *keyFileName = "key.pem";
 
 static char unique_id[17];
@@ -65,7 +67,15 @@ static void client_load_unique_id() {
 static void client_load_cert() {
   FILE *fd = fopen(certificateFileName, "r");
   if (fd == NULL) {
-    fprintf(stderr, "Can't open certificate file");
+    printf("Generating certificate\n");
+    struct CertKeyPair cert = generateCertKeyPair();
+    saveCertKeyPair(certificateFileName, p12FileName, keyFileName, cert);
+    freeCertKeyPair(cert);
+    fd = fopen(certificateFileName, "r");
+  }
+
+  if (fd == NULL) {
+    fprintf(stderr, "Can't open certificate file\n");
     exit(-1);
   }
 

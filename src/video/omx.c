@@ -50,7 +50,15 @@ static unsigned char *dest;
 static int port_settings_changed;
 static int first_packet;
 
+static h264_stream_t* stream;
+
 static void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
+  stream = h264_new();
+  if (stream == NULL) {
+    fprintf(stderr, "Not enough memory\n");
+    exit(EXIT_FAILURE);
+  }
+
   bcm_host_init();
 
   OMX_VIDEO_PARAM_PORTFORMATTYPE format;
@@ -178,7 +186,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
   PLENTRY entry = decodeUnit->bufferList;
   if (entry != NULL && entry->data[4] == 0x67) {
-    read_debug_nal_unit(stream, entry->data+4, entry->length-4);
+    read_nal_unit(stream, entry->data+4, entry->length-4);
     stream->sps->num_ref_frames = 1;
     stream->sps->vui.bitstream_restriction_flag = 1;
     stream->sps->vui.motion_vectors_over_pic_boundaries_flag = 1;

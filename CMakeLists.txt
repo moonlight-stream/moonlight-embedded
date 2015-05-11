@@ -24,6 +24,8 @@ pkg_check_modules(EVDEV REQUIRED libevdev)
 pkg_check_modules(AVAHI REQUIRED avahi-client)
 
 if(BROADCOM_FOUND)
+  aux_source_directory(./ilclient SRC_LIST)
+  aux_source_directory(./h264bitstream SRC_LIST)
   list(APPEND SRC_LIST ./src/video/omx.c)
 elseif(FREESCALE_FOUND)
   list(APPEND SRC_LIST ./src/video/imx.c)
@@ -35,9 +37,6 @@ add_executable(moonlight ${SRC_LIST})
 set_property(TARGET moonlight PROPERTY C_STANDARD 11)
 
 if(BROADCOM_FOUND)
-  aux_source_directory(./ilclient SRC_LIST)
-  aux_source_directory(./h264bitstream SRC_LIST)
-
   include_directories(./ilclient ./h264bitstream ${BROADCOM_INCLUDE_DIRS})
   target_link_libraries (moonlight PUBLIC ${BROADCOM_LIBRARIES})
   set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${BROADCOM_DEFINITIONS})

@@ -17,13 +17,19 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
+
 struct mapping {
   short abs_x, abs_y, abs_z;
   short abs_rx, abs_ry, abs_rz;
 
+  bool reverse_x, reverse_y;
+  bool reverse_rx, reverse_ry;
+
   short abs_deadzone;
 
   short abs_dpad_x, abs_dpad_y;
+  bool reverse_dpad_x, reverse_dpad_y;
 
   short btn_south, btn_east, btn_north, btn_west;
   short btn_select, btn_start, btn_mode;

@@ -63,6 +63,7 @@ static int assignedControllerIds = 0;
 
 static short* currentKey;
 static short* currentAbs;
+static bool* currentReverse;
 
 static void input_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
   parms->flat = libevdev_get_abs_flat(dev->dev, code);
@@ -115,16 +116,16 @@ void input_create(char* device, char* mapFile) {
   input_init_parms(&devices[dev], &(devices[dev].dpadyParms), devices[dev].map.abs_dpad_y);
 }
 
-static short input_convert_value(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms) {
-  if (abs(ev->value) < parms->flat)
+static short input_convert_value(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {
+  if (abs(ev->value - parms->avg) < parms->flat)
     return 0;
   else if (ev->value > parms->max)
-    return SHRT_MAX;
+    return reverse?SHRT_MIN:SHRT_MAX;
   else if (ev->value < parms->min)
-    return SHRT_MIN;
+    return reverse?SHRT_MAX:SHRT_MIN;
   else {
     int value = ev->value + (ev->value<parms->avg?parms->flat:-parms->flat);
-    return (value-parms->avg) * SHRT_MAX / (parms->range - parms->flat);
+    return (value-parms->avg) * SHRT_MAX / ((reverse?-parms->range-1:parms->range) - parms->flat);
   }
 }
 
@@ -139,11 +140,11 @@ static char input_convert_value_byte(struct input_event *ev, struct input_device
   }
 }
 
-static int input_convert_value_direction(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms) {
+static int input_convert_value_direction(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {
   if (ev->value > (parms->avg+parms->range/4))
-    return 1;
+    return reverse?-1:1;
   else if (ev->value < (parms->avg-parms->range/4))
-    return -1;
+    return reverse?1:-1;
   else
     return 0;
 }
@@ -264,19 +265,19 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
   case EV_ABS:
     gamepadModified = true;
     if (ev->code == dev->map.abs_x)
-      dev->leftStickX = input_convert_value(ev, dev, &dev->xParms);
+      dev->leftStickX = input_convert_value(ev, dev, &dev->xParms, dev->map.reverse_x);
     else if (ev->code == dev->map.abs_y)
-      dev->leftStickY = input_convert_value(ev, dev, &dev->yParms);
+      dev->leftStickY = input_convert_value(ev, dev, &dev->yParms, dev->map.reverse_y);
     else if (ev->code == dev->map.abs_rx)
-      dev->rightStickX = input_convert_value(ev, dev, &dev->rxParms);
+      dev->rightStickX = input_convert_value(ev, dev, &dev->rxParms, dev->map.reverse_rx);
     else if (ev->code == dev->map.abs_ry)
-      dev->rightStickY = input_convert_value(ev, dev, &dev->ryParms);
+      dev->rightStickY = input_convert_value(ev, dev, &dev->ryParms, dev->map.reverse_ry);
     else if (ev->code == dev->map.abs_z)
       dev->leftTrigger = input_convert_value_byte(ev, dev, &dev->zParms);
     else if (ev->code == dev->map.abs_rz)
       dev->rightTrigger = input_convert_value_byte(ev, dev, &dev->rzParms);
     else if (ev->code == dev->map.abs_dpad_x) {
-      int dir = input_convert_value_direction(ev, dev, &dev->dpadxParms);
+      int dir = input_convert_value_direction(ev, dev, &dev->dpadxParms, dev->map.reverse_dpad_x);
       if (dir == 1) {
         dev->buttonFlags |= RIGHT_FLAG;
         dev->buttonFlags &= ~LEFT_FLAG;
@@ -288,7 +289,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
         dev->buttonFlags |= LEFT_FLAG;
       }
     } else if (ev->code == dev->map.abs_dpad_y) {
-      int dir = input_convert_value_direction(ev, dev, &dev->dpadyParms);
+      int dir = input_convert_value_direction(ev, dev, &dev->dpadyParms, dev->map.reverse_dpad_y);
       if (dir == 1) {
         dev->buttonFlags |= UP_FLAG;
         dev->buttonFlags &= ~DOWN_FLAG;
@@ -324,10 +325,12 @@ static bool input_handle_mapping_event(struct input_event *ev, struct input_devi
       struct input_abs_parms parms;
       input_init_parms(dev, &parms, ev->code);
 
-      if (ev->value > parms.avg + parms.range/2)
+      if (ev->value > parms.avg + parms.range/2) {
         *currentAbs = ev->code;
-      else if (ev->value < parms.avg - parms.range/2) {
+        *currentReverse = false;
+      } else if (ev->value < parms.avg - parms.range/2) {
         *currentAbs = ev->code;
+        *currentReverse = true;
       } else if (ev->code == *currentAbs)
         return false;
     }
@@ -367,41 +370,44 @@ static void input_map_key(char* keyName, short* key) {
   input_poll(input_handle_mapping_event);
 }
 
-static void input_map_abs(char* keyName, short* abs) {
+static void input_map_abs(char* keyName, short* abs, bool* reverse) {
   printf("%s\n", keyName);
   currentKey = NULL;
   currentAbs = abs;
+  currentReverse = reverse;
   *abs = -1;
   input_poll(input_handle_mapping_event);
 }
 
-static void input_map_abskey(char* keyName, short* key, short* abs) {
+static void input_map_abskey(char* keyName, short* key, short* abs, bool* reverse) {
   printf("%s\n", keyName);
   currentKey = key;
   currentAbs = abs;
+  currentReverse = reverse;
   *key = -1;
   *abs = -1;
+  *currentReverse = false;
   input_poll(input_handle_mapping_event);
 }
 
 void input_map(char* fileName) {
   struct mapping map;
 
-  input_map_abs("Left Stick Right", &(map.abs_x));
-  input_map_abs("Left Stick Down", &(map.abs_y));
+  input_map_abs("Left Stick Right", &(map.abs_x), &(map.reverse_x));
+  input_map_abs("Left Stick Down", &(map.abs_y), &(map.reverse_y));
   input_map_key("Left Stick Button", &(map.btn_thumbl));
 
-  input_map_abs("Right Stick Right", &(map.abs_rx));
-  input_map_abs("Right Stick Down", &(map.abs_ry));
+  input_map_abs("Right Stick Right", &(map.abs_rx), &(map.reverse_rx));
+  input_map_abs("Right Stick Down", &(map.abs_ry), &(map.reverse_ry));
   input_map_key("Right Stick Button", &(map.btn_thumbr));
 
-  input_map_abskey("D-Pad Right", &(map.btn_dpad_right), &(map.abs_dpad_x));
+  input_map_abskey("D-Pad Right", &(map.btn_dpad_right), &(map.abs_dpad_x), &(map.reverse_dpad_x));
   if (map.btn_dpad_right >= 0)
     input_map_key("D-Pad Left", &(map.btn_dpad_left));
   else
     map.btn_dpad_left = -1;
 
-  input_map_abskey("D-Pad Down", &(map.btn_dpad_down), &(map.abs_dpad_y));
+  input_map_abskey("D-Pad Down", &(map.btn_dpad_down), &(map.abs_dpad_y), &(map.reverse_dpad_y));
   if (map.btn_dpad_down >= 0)
     input_map_key("D-Pad Up", &(map.btn_dpad_up));
   else
@@ -415,8 +421,9 @@ void input_map(char* fileName) {
   input_map_key("Start Button", &(map.btn_start));
   input_map_key("Special Button", &(map.btn_mode));
 
-  input_map_abskey("Left Trigger", &(map.btn_tl), &(map.abs_z));
-  input_map_abskey("Right Trigger", &(map.btn_tr), &(map.abs_rz));
+  bool ignored;
+  input_map_abskey("Left Trigger", &(map.btn_tl), &(map.abs_z), &ignored);
+  input_map_abskey("Right Trigger", &(map.btn_tr), &(map.abs_rz), &ignored);
 
   input_map_key("Left Bumper", &(map.btn_tl2));
   input_map_key("Right Bumper", &(map.btn_tr2));

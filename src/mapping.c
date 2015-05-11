@@ -24,6 +24,7 @@
 #include <string.h>
 
 #define write_config(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
+#define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 
 void mapping_load(char* fileName, struct mapping* map) {
   FILE* fd = fopen(fileName, "r");
@@ -90,6 +91,18 @@ void mapping_load(char* fileName, struct mapping* map) {
         map->btn_dpad_left = value;
       else if (strcmp("btn_dpad_right", key) == 0)
         map->btn_dpad_right = value;
+      else if (strcmp("reverse_x", key) == 0)
+        map->reverse_x = strcmp("true", value) == 0;
+      else if (strcmp("reverse_y", key) == 0)
+        map->reverse_y = strcmp("true", value) == 0;
+      else if (strcmp("reverse_rx", key) == 0)
+        map->reverse_rx = strcmp("true", value) == 0;
+      else if (strcmp("reverse_ry", key) == 0)
+        map->reverse_ry = strcmp("true", value) == 0;
+      else if (strcmp("reverse_dpad_x", key) == 0)
+        map->reverse_x = strcmp("true", value) == 0;
+      else if (strcmp("reverse_dpad_y", key) == 0)
+        map->reverse_y = strcmp("true", value) == 0;
       else
         printf("Can't map %s\n", key);
     }
@@ -110,14 +123,23 @@ void mapping_save(char* fileName, struct mapping* map) {
   write_config(fd, "abx_y", map->abs_y);
   write_config(fd, "abx_z", map->abs_z);
 
+  write_config_bool(fd, "reverse_x", map->reverse_x);
+  write_config_bool(fd, "reverse_y", map->reverse_y);
+
   write_config(fd, "abx_rx", map->abs_rx);
   write_config(fd, "abx_ry", map->abs_ry);
   write_config(fd, "abx_rz", map->abs_rz);
+
+  write_config_bool(fd, "reverse_rx", map->reverse_rx);
+  write_config_bool(fd, "reverse_ry", map->reverse_ry);
 
   write_config(fd, "abx_deadzone", map->abs_deadzone);
 
   write_config(fd, "abx_dpad_x", map->abs_dpad_x);
   write_config(fd, "abx_dpad_y", map->abs_dpad_y);
+
+  write_config_bool(fd, "reverse_dpad_x", map->reverse_dpad_x);
+  write_config_bool(fd, "reverse_dpad_y", map->reverse_dpad_y);
 
   write_config(fd, "btn_north", map->btn_north);
   write_config(fd, "btn_east", map->btn_east);

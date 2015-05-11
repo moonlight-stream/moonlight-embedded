@@ -19,3 +19,4 @@
 
 void input_create(char* device, char* mapFile);
 void input_loop();
+void input_map(char* fileName);

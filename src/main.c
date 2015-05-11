@@ -68,6 +68,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 static void help() {
   printf("Usage: moonlight action [options] host\n\n");
   printf(" Actions\n\n");
+  printf("\tmap\t\t\tCreate mapping file for gamepad\n");
   printf("\tpair\t\t\tPair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
   printf("\tlist\t\t\tList available games and applications\n");
@@ -184,6 +185,14 @@ int main(int argc, char* argv[]) {
 
   if (action == NULL || strcmp("help", action) == 0)
     help();
+  else if (strcmp("map", action) == 0) {
+    if (address == NULL) {
+      perror("No filename for mapping");
+      exit(-1);
+    }
+    input_map(address);
+    exit(0);
+  }
 
   if (address == NULL) {
     perror("No address given");

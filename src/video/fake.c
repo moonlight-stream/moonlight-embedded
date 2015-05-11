@@ -23,17 +23,10 @@
 
 static FILE* fd;
 static const char* fileName = "fake.h264";
-static h264_stream_t* stream;
 
 void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
   printf("decoder_renderer_setup %dx%d %dfps\n", width, height, redrawRate);
   fd = fopen(fileName, "w");
-
-  stream = h264_new();
-  if (stream == NULL) {
-    fprintf(stderr, "Not enough memory\n");
-    exit(EXIT_FAILURE);
-  }
 }
 
 void decoder_renderer_start() {
@@ -50,6 +43,7 @@ void decoder_renderer_release() {
 }
 
 int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
+  PLENTRY entry = decodeUnit->bufferList;
   while (entry != NULL) {
     fwrite(entry->data, entry->length, 1, fd);
     entry = entry->next;

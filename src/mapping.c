@@ -36,61 +36,61 @@ void mapping_load(char* fileName, struct mapping* map) {
   char *line = NULL;
   size_t len = 0;
   while (getline(&line, &len, fd) != -1) {
-    short value;
-    char* key = NULL;
-    if (sscanf(line, "%ms = %hd", &key, &value) == 2) {
+    char *key = NULL, *value = NULL;
+    if (sscanf(line, "%ms = %ms", &key, &value) == 2) {
+      long int_value = strtol(value, NULL, 10);
       if (strcmp("abs_x", key) == 0)
-        map->abs_x = value;
+        map->abs_x = int_value;
       else if (strcmp("abs_y", key) == 0)
-        map->abs_y = value;
+        map->abs_y = int_value;
       else if (strcmp("abs_z", key) == 0)
-        map->abs_z = value;
+        map->abs_z = int_value;
       else if (strcmp("abs_rx", key) == 0)
-        map->abs_rx = value;
+        map->abs_rx = int_value;
       else if (strcmp("abs_ry", key) == 0)
-        map->abs_ry = value;
+        map->abs_ry = int_value;
       else if (strcmp("abs_rz", key) == 0)
-        map->abs_rz = value;
+        map->abs_rz = int_value;
       else if (strcmp("abs_deadzone", key) == 0)
-        map->abs_deadzone = value;
+        map->abs_deadzone = int_value;
       else if (strcmp("abs_dpad_x", key) == 0)
-        map->abs_dpad_x = value;
+        map->abs_dpad_x = int_value;
       else if (strcmp("abs_dpad_y", key) == 0)
-        map->abs_dpad_y = value;
+        map->abs_dpad_y = int_value;
       else if (strcmp("btn_south", key) == 0)
-        map->btn_south = value;
+        map->btn_south = int_value;
       else if (strcmp("btn_north", key) == 0)
-        map->btn_north = value;
+        map->btn_north = int_value;
       else if (strcmp("btn_east", key) == 0)
-        map->btn_east = value;
+        map->btn_east = int_value;
       else if (strcmp("btn_west", key) == 0)
-        map->btn_west = value;
+        map->btn_west = int_value;
       else if (strcmp("btn_select", key) == 0)
-        map->btn_select = value;
+        map->btn_select = int_value;
       else if (strcmp("btn_start", key) == 0)
-        map->btn_start = value;
+        map->btn_start = int_value;
       else if (strcmp("btn_mode", key) == 0)
-        map->btn_mode = value;
+        map->btn_mode = int_value;
       else if (strcmp("btn_thumbl", key) == 0)
-        map->btn_thumbl = value;
+        map->btn_thumbl = int_value;
       else if (strcmp("btn_thumbr", key) == 0)
-        map->btn_thumbr = value;
+        map->btn_thumbr = int_value;
       else if (strcmp("btn_tl", key) == 0)
-        map->btn_tl = value;
+        map->btn_tl = int_value;
       else if (strcmp("btn_tr", key) == 0)
-        map->btn_tr = value;
+        map->btn_tr = int_value;
       else if (strcmp("btn_tl2", key) == 0)
-        map->btn_tl2 = value;
+        map->btn_tl2 = int_value;
       else if (strcmp("btn_tr2", key) == 0)
-        map->btn_tr2 = value;
+        map->btn_tr2 = int_value;
       else if (strcmp("btn_dpad_up", key) == 0)
-        map->btn_dpad_up = value;
+        map->btn_dpad_up = int_value;
       else if (strcmp("btn_dpad_down", key) == 0)
-        map->btn_dpad_down = value;
+        map->btn_dpad_down = int_value;
       else if (strcmp("btn_dpad_left", key) == 0)
-        map->btn_dpad_left = value;
+        map->btn_dpad_left = int_value;
       else if (strcmp("btn_dpad_right", key) == 0)
-        map->btn_dpad_right = value;
+        map->btn_dpad_right = int_value;
       else if (strcmp("reverse_x", key) == 0)
         map->reverse_x = strcmp("true", value) == 0;
       else if (strcmp("reverse_y", key) == 0)
@@ -108,6 +108,9 @@ void mapping_load(char* fileName, struct mapping* map) {
     }
     if (key != NULL)
       free(key);
+
+    if (value != NULL)
+      free(value);
   }
   free(line);
 }

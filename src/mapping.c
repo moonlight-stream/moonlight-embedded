@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define write_config(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
+#define write_config(fd, key, value) fprintf(fd, "%s = %hd\n", key, value)
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 
 void mapping_load(char* fileName, struct mapping* map) {
@@ -104,7 +104,7 @@ void mapping_load(char* fileName, struct mapping* map) {
       else if (strcmp("reverse_dpad_y", key) == 0)
         map->reverse_y = strcmp("true", value) == 0;
       else
-        printf("Can't map %s\n", key);
+        printf("Can't map (%s)\n", key);
     }
     if (key != NULL)
       free(key);
@@ -122,24 +122,24 @@ void mapping_save(char* fileName, struct mapping* map) {
     exit(EXIT_FAILURE);
   }
 
-  write_config(fd, "abx_x", map->abs_x);
-  write_config(fd, "abx_y", map->abs_y);
-  write_config(fd, "abx_z", map->abs_z);
+  write_config(fd, "abs_x", map->abs_x);
+  write_config(fd, "abs_y", map->abs_y);
+  write_config(fd, "abs_z", map->abs_z);
 
   write_config_bool(fd, "reverse_x", map->reverse_x);
   write_config_bool(fd, "reverse_y", map->reverse_y);
 
-  write_config(fd, "abx_rx", map->abs_rx);
-  write_config(fd, "abx_ry", map->abs_ry);
-  write_config(fd, "abx_rz", map->abs_rz);
+  write_config(fd, "abs_rx", map->abs_rx);
+  write_config(fd, "abs_ry", map->abs_ry);
+  write_config(fd, "abs_rz", map->abs_rz);
 
   write_config_bool(fd, "reverse_rx", map->reverse_rx);
   write_config_bool(fd, "reverse_ry", map->reverse_ry);
 
-  write_config(fd, "abx_deadzone", map->abs_deadzone);
+  write_config(fd, "abs_deadzone", map->abs_deadzone);
 
-  write_config(fd, "abx_dpad_x", map->abs_dpad_x);
-  write_config(fd, "abx_dpad_y", map->abs_dpad_y);
+  write_config(fd, "abs_dpad_x", map->abs_dpad_x);
+  write_config(fd, "abs_dpad_y", map->abs_dpad_y);
 
   write_config_bool(fd, "reverse_dpad_x", map->reverse_dpad_x);
   write_config_bool(fd, "reverse_dpad_y", map->reverse_dpad_y);

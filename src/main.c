@@ -133,8 +133,8 @@ int main(int argc, char* argv[]) {
       config.height = 1280;
       break;
     case 'b':
-      config.width = 1080;
-      config.height = 1920;
+      config.width = 1920;
+      config.height = 1080;
       break;
     case 'c':
       config.width = atoi(optarg);

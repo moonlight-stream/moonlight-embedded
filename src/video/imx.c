@@ -17,6 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../video.h"
+
 #include "vpu_io.h"
 #include "vpu_lib.h"
 
@@ -154,27 +156,27 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
     Uint32 target_addr = mem_desc.virt_uaddr + (pa_write_ptr - mem_desc.phy_addr);
 
-    if ( (target_addr + data_len) > mem_desc.virt_uaddr + STREAM_BUF_SIZE) {
+    if ( (target_addr + entry->length) > mem_desc.virt_uaddr + STREAM_BUF_SIZE) {
       int room = mem_desc.virt_uaddr + STREAM_BUF_SIZE - target_addr;
-      memcpy((void *)target_addr, indata, room);
-      memcpy((void *)mem_desc.virt_uaddr, indata + room, data_len - room);
+      memcpy((void *)target_addr, entry->data, room);
+      memcpy((void *)mem_desc.virt_uaddr, entry->data + room, entry->length - room);
     } else {
-      memcpy((void *)target_addr, indata, data_len);
+      memcpy((void *)target_addr, entry->data, entry->length);
     }
-    vpu_DecUpdateBitstreamBuffer(handle, data_len);
+    vpu_DecUpdateBitstreamBuffer(handle, entry->length);
   }
 
   if (!initialized) {
     initialized = true;
     
     vpu_DecSetEscSeqInit(handle, 1);
+    DecInitialInfo initinfo = {0};
     if (vpu_DecGetInitialInfo(handle, &initinfo) != RETCODE_SUCCESS) {
       fprintf(stderr, "Can't get initial info\n");
       exit(EXIT_FAILURE);
     }
     vpu_DecSetEscSeqInit(handle, 0);
     
-    DecInitialInfo initinfo = {0};
     int regfbcount = initinfo.minFrameBufferCount + 2;
     threshold = regfbcount - initinfo.minFrameBufferCount;
     int picWidth = ((initinfo.picWidth + 15) & ~15);
@@ -427,3 +429,11 @@ static void decoder_renderer_release() {
   IOFreePhyMem(&mem_desc);
   vpu_UnInit();
 }
+
+DECODER_RENDERER_CALLBACKS decoder_callbacks = {
+  .setup = decoder_renderer_setup,
+  .start = decoder_renderer_start,
+  .stop = decoder_renderer_stop,
+  .release = decoder_renderer_release,
+  .submitDecodeUnit = decoder_renderer_submit_decode_unit,
+};

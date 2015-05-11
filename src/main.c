@@ -22,6 +22,7 @@
 #include "video.h"
 #include "audio.h"
 #include "input.h"
+#include "discover.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -195,8 +196,17 @@ int main(int argc, char* argv[]) {
   }
 
   if (address == NULL) {
-    perror("No address given");
-    exit(-1);
+    address = malloc(MAX_ADDRESS_SIZE);
+    address[0] = 0;
+    if (address == NULL) {
+      perror("Not enough memory");
+      exit(-1);
+    }
+    discover_server(address);
+    if (address[0] == 0) {
+      perror("Can't find server");
+      exit(-1);
+    }
   }
 
   client_init(address);

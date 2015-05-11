@@ -21,6 +21,7 @@ find_package(Freescale)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(EVDEV REQUIRED libevdev)
+pkg_check_modules(AVAHI REQUIRED avahi-client)
 
 if(Broadcom_FOUND)
   aux_source_directory(./ilclient SRC_LIST)
@@ -41,5 +42,5 @@ endif()
 add_executable(moonlight ${SRC_LIST})
 set_property(TARGET moonlight PROPERTY C_STANDARD 11)
 
-include_directories(./moonlight-common-c ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS})
-target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY})
+include_directories(./moonlight-common-c ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${AVAHI_INCLUDE_DIRS})
+target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${AVAHI_LIBRARIES})

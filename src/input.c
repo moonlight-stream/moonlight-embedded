@@ -46,6 +46,7 @@ struct input_device {
   struct mapping map;
   int fd;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
+  short controllerId;
   int buttonFlags;
   short leftTrigger, rightTrigger;
   short leftStickX, leftStickY;
@@ -58,6 +59,7 @@ struct input_device {
 static struct pollfd* fds = NULL;
 static struct input_device* devices = NULL;
 static int numDevices = 0;
+static int assignedControllerIds = 0;
 
 static short* currentKey;
 static short* currentAbs;
@@ -102,6 +104,7 @@ void input_create(char* device, char* mapFile) {
   if (mapFile != NULL)
     mapping_load(mapFile, &(devices[dev].map));
 
+  devices[dev].controllerId = -1;
   input_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map.abs_x);
   input_init_parms(&devices[dev], &(devices[dev].yParms), devices[dev].map.abs_y);
   input_init_parms(&devices[dev], &(devices[dev].zParms), devices[dev].map.abs_z);
@@ -160,7 +163,19 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
       dev->mouseScroll = 0;
     }
     if (dev->gamepadModified) {
-      LiSendControllerEvent(dev->buttonFlags, dev->leftTrigger, dev->rightTrigger, dev->leftStickX, dev->leftStickY, dev->rightStickX, dev->rightStickY);
+      if (dev->controllerId < 0) {
+        for (int i = 0; i < 4; i++) {
+          if ((assignedControllerIds & (1 << i)) == 0) {
+            assignedControllerIds |= (1 << i);
+            dev->controllerId = i;
+            break;
+          }
+        }
+        //Use id 0 when too many gamepads are connected
+        if (dev->controllerId < 0)
+          dev->controllerId = 0;
+      }
+      LiSendMultiControllerEvent(dev->controllerId, dev->buttonFlags, dev->leftTrigger, dev->rightTrigger, dev->leftStickX, dev->leftStickY, dev->rightStickX, dev->rightStickY);
       dev->gamepadModified = false;
     }
     break;

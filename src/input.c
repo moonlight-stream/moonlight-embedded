@@ -23,6 +23,7 @@
 #include "libevdev/libevdev.h"
 #include "limelight-common/Limelight.h"
 
+#include <libudev.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -93,8 +94,8 @@ void input_create(char* device, char* mapFile) {
 
   devices[dev].fd = open(device, O_RDONLY|O_NONBLOCK);
   if (devices[dev].fd <= 0) {
-    fprintf(stderr, "Failed to open device\n");
-    exit(EXIT_FAILURE);
+    fprintf(stderr, "Failed to open device %s\n", device);
+    return;
   }
 
   devices[dev].dev = libevdev_new();
@@ -114,6 +115,35 @@ void input_create(char* device, char* mapFile) {
   input_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map.abs_rz);
   input_init_parms(&devices[dev], &(devices[dev].dpadxParms), devices[dev].map.abs_dpad_x);
   input_init_parms(&devices[dev], &(devices[dev].dpadyParms), devices[dev].map.abs_dpad_y);
+}
+
+void input_autoload(char* mapfile) {
+  struct udev *udev = udev_new();
+  if (!udev) {
+    fprintf(stderr, "Can't create udev\n");
+    exit(1);
+  }
+
+  struct udev_enumerate *enumerate = udev_enumerate_new(udev);
+  udev_enumerate_add_match_subsystem(enumerate, "input");
+  udev_enumerate_scan_devices(enumerate);
+  struct udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
+
+  struct udev_list_entry *dev_list_entry;
+  udev_list_entry_foreach(dev_list_entry, devices) {
+    const char *path = udev_list_entry_get_name(dev_list_entry);
+    struct udev_device *dev = udev_device_new_from_syspath(udev, path);
+    const char *devnode = udev_device_get_devnode(dev);
+    int id;
+    if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
+      input_create(devnode, mapfile);
+    }
+    udev_device_unref(dev);
+  }
+
+  udev_enumerate_unref(enumerate);
+
+  udev_unref(udev);
 }
 
 static short input_convert_value(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {

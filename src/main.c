@@ -122,7 +122,6 @@ int main(int argc, char* argv[]) {
   char* action = NULL;
   char* address = NULL;
   char* mapping = NULL;
-  bool inputs = false;
   int option_index = 0;
   bool sops = true;
   bool localaudio = false;
@@ -160,7 +159,6 @@ int main(int argc, char* argv[]) {
       break;
     case 'j':
       input_create(optarg, mapping);
-      inputs = true;
       break;
     case 'k':
       mapping = optarg;
@@ -211,9 +209,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (!inputs) {
-    input_autoload(mapping);
-  }
+  input_init(mapping);
 
   client_init(address);
 

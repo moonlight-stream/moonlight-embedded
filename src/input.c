@@ -46,6 +46,7 @@ struct input_device {
   struct libevdev *dev;
   struct mapping map;
   int fd;
+  int fdindex;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
   short controllerId;
   int buttonFlags;
@@ -59,12 +60,18 @@ struct input_device {
 
 static struct pollfd* fds = NULL;
 static struct input_device* devices = NULL;
-static int numDevices = 0;
+static int numDevices = 0, numFds = 0;
 static int assignedControllerIds = 0;
 
 static short* currentKey;
 static short* currentAbs;
 static bool* currentReverse;
+
+static bool autoadd;
+static char* defaultMapfile;
+static struct udev *udev;
+static struct udev_monitor *udev_mon;
+static int udev_fdindex;
 
 static void input_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
   parms->flat = libevdev_get_abs_flat(dev->dev, code);
@@ -76,14 +83,23 @@ static void input_init_parms(struct input_device *dev, struct input_abs_parms *p
 }
 
 void input_create(char* device, char* mapFile) {
+  int fd = open(device, O_RDONLY|O_NONBLOCK);
+  if (fd <= 0) {
+    fprintf(stderr, "Failed to open device %s\n", device);
+    fflush(stderr);
+    return;
+  }
+
   int dev = numDevices;
+  int fdindex = numFds;
   numDevices++;
+  numFds++;
 
   if (fds == NULL) {
     fds = malloc(sizeof(struct pollfd));
     devices = malloc(sizeof(struct input_device));
   } else {
-    fds = realloc(fds, sizeof(struct pollfd)*numDevices);
+    fds = realloc(fds, sizeof(struct pollfd)*numFds);
     devices = realloc(devices, sizeof(struct input_device)*numDevices);
   }
 
@@ -92,16 +108,12 @@ void input_create(char* device, char* mapFile) {
     exit(EXIT_FAILURE);
   }
 
-  devices[dev].fd = open(device, O_RDONLY|O_NONBLOCK);
-  if (devices[dev].fd <= 0) {
-    fprintf(stderr, "Failed to open device %s\n", device);
-    return;
-  }
-
+  devices[dev].fd = fd;
   devices[dev].dev = libevdev_new();
   libevdev_set_fd(devices[dev].dev, devices[dev].fd);
-  fds[dev].fd = devices[dev].fd;
-  fds[dev].events = POLLIN;
+  devices[dev].fdindex = fdindex;
+  fds[fdindex].fd = devices[dev].fd;
+  fds[fdindex].events = POLLIN;
 
   if (mapFile != NULL)
     mapping_load(mapFile, &(devices[dev].map));
@@ -117,32 +129,57 @@ void input_create(char* device, char* mapFile) {
   input_init_parms(&devices[dev], &(devices[dev].dpadyParms), devices[dev].map.abs_dpad_y);
 }
 
-void input_autoload(char* mapfile) {
-  struct udev *udev = udev_new();
+void input_init(char* mapfile) {
+  udev = udev_new();
   if (!udev) {
     fprintf(stderr, "Can't create udev\n");
     exit(1);
   }
 
-  struct udev_enumerate *enumerate = udev_enumerate_new(udev);
-  udev_enumerate_add_match_subsystem(enumerate, "input");
-  udev_enumerate_scan_devices(enumerate);
-  struct udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
+  if (autoadd = numDevices == 0) {
+    struct udev_enumerate *enumerate = udev_enumerate_new(udev);
+    udev_enumerate_add_match_subsystem(enumerate, "input");
+    udev_enumerate_scan_devices(enumerate);
+    struct udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
 
-  struct udev_list_entry *dev_list_entry;
-  udev_list_entry_foreach(dev_list_entry, devices) {
-    const char *path = udev_list_entry_get_name(dev_list_entry);
-    struct udev_device *dev = udev_device_new_from_syspath(udev, path);
-    const char *devnode = udev_device_get_devnode(dev);
-    int id;
-    if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
-      input_create(devnode, mapfile);
+    struct udev_list_entry *dev_list_entry;
+    udev_list_entry_foreach(dev_list_entry, devices) {
+      const char *path = udev_list_entry_get_name(dev_list_entry);
+      struct udev_device *dev = udev_device_new_from_syspath(udev, path);
+      const char *devnode = udev_device_get_devnode(dev);
+      int id;
+      if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
+        input_create(devnode, mapfile);
+      }
+      udev_device_unref(dev);
     }
-    udev_device_unref(dev);
+
+    udev_enumerate_unref(enumerate);
   }
 
-  udev_enumerate_unref(enumerate);
+  udev_mon = udev_monitor_new_from_netlink(udev, "udev");
+  udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "input", NULL);
+  udev_monitor_enable_receiving(udev_mon);
 
+  int udev_fdindex = numFds;
+  numFds++;
+
+  if (fds == NULL)
+    fds = malloc(sizeof(struct pollfd));
+  else
+    fds = realloc(fds, sizeof(struct pollfd)*numFds);
+
+  if (fds == NULL) {
+    fprintf(stderr, "Not enough memory\n");
+    exit(EXIT_FAILURE);
+  }
+
+  defaultMapfile = mapfile;
+  fds[udev_fdindex].fd = udev_monitor_get_fd(udev_mon);
+  fds[udev_fdindex].events = POLLIN;
+}
+
+void input_destroy() {
   udev_unref(udev);
 }
 
@@ -370,9 +407,23 @@ static bool input_handle_mapping_event(struct input_event *ev, struct input_devi
 }
 
 static void input_poll(bool (*handler) (struct input_event*, struct input_device*)) {
-  while (poll(fds, numDevices, -1)) {
+  while (poll(fds, numFds, -1)) {
+    if (fds[udev_fdindex].revents > 0) {
+      struct udev_device *dev = udev_monitor_receive_device(udev_mon);
+      const char *action = udev_device_get_action(dev);
+      if (action != NULL) {
+        if (autoadd && strcmp("add", action) == 0) {
+          const char *devnode = udev_device_get_devnode(dev);
+          int id;
+          if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
+            input_create(devnode, defaultMapfile);
+          }
+        }
+        udev_device_unref(dev);
+      }
+    }
     for (int i=0;i<numDevices;i++) {
-      if (fds[i].revents > 0) {
+      if (fds[devices[i].fdindex].revents > 0) {
         int rc;
         struct input_event ev;
         while ((rc = libevdev_next_event(devices[i].dev, LIBEVDEV_READ_FLAG_NORMAL, &ev)) >= 0) {

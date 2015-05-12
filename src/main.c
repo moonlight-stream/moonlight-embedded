@@ -29,11 +29,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <openssl/rand.h>
 #include <getopt.h>
+
+#define MOONLIGHT_PATH "/moonlight/"
+#define USER_PATHS ":~/.moonlight:./"
 
 PLATFORM_CALLBACKS platform_callbacks = {
   .threadStart = NULL,
@@ -92,6 +97,43 @@ static void help() {
   exit(0);
 }
 
+char* get_path(char* name) {
+  const char *xdg_data_dirs = getenv("XDG_DATA_DIRS");
+  char *data_dirs;
+  if (!xdg_data_dirs)
+    data_dirs = "/usr/share:/usr/local/share:" USER_PATHS;
+  else {
+    data_dirs = malloc(strlen(xdg_data_dirs) + strlen(USER_PATHS) + 1);
+    strcpy(data_dirs, xdg_data_dirs);
+    strcpy(data_dirs+strlen(data_dirs), USER_PATHS);
+  }
+
+  char *path = malloc(strlen(data_dirs)+strlen(MOONLIGHT_PATH)+strlen(name)+1);
+  if (path == NULL) {
+    fprintf(stderr, "Not enough memory\n");
+    exit(-1);
+  }
+
+  char* end;
+  do {
+    end = strstr(data_dirs, ":");
+    int length = end != NULL?end - data_dirs:strlen(data_dirs);
+    memcpy(path, data_dirs, length);
+    if (path[0] == '/')
+      sprintf(path+length, "%s%s", MOONLIGHT_PATH, name);
+    else
+      sprintf(path+length, "%s", name);
+
+    if(access(path, F_OK) != -1)
+      return path;
+
+    data_dirs = end + 1;
+  } while (end != NULL);
+
+  free(path);
+  return NULL;
+}
+
 int main(int argc, char* argv[]) {
   STREAM_CONFIGURATION config;
   config.width = 1280;
@@ -121,7 +163,7 @@ int main(int argc, char* argv[]) {
   char* app = "Steam";
   char* action = NULL;
   char* address = NULL;
-  char* mapping = NULL;
+  char* mapping = get_path("mappings/default.conf");
   int option_index = 0;
   bool sops = true;
   bool localaudio = false;
@@ -161,7 +203,7 @@ int main(int argc, char* argv[]) {
       input_create(optarg, mapping);
       break;
     case 'k':
-      mapping = optarg;
+      mapping = get_path(optarg);
       break;
     case 'l':
       sops = false;

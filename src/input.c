@@ -129,6 +129,31 @@ void input_create(char* device, char* mapFile) {
   input_init_parms(&devices[dev], &(devices[dev].dpadyParms), devices[dev].map.abs_dpad_y);
 }
 
+static void input_remove(int devindex) {
+  numDevices--;
+  numFds--;
+
+  if (devices[devindex].controllerId >= 0)
+    assignedControllerIds &= ~(1 << devices[devindex].controllerId);
+
+  int fdindex = devices[devindex].fdindex;
+  if (fdindex != numFds && numFds > 0) {
+    memcpy(&fds[fdindex], &fds[numFds], sizeof(struct pollfd));
+    if (numFds == udev_fdindex)
+      udev_fdindex = numFds;
+    else {
+      for (int i=0;i<numDevices;i++) {
+        if (devices[i].fdindex == numFds)
+          devices[i].fdindex = fdindex;
+      }
+    }
+  }
+  if (devindex != numDevices && numDevices > 0)
+    memcpy(&devices[devindex], &devices[numDevices], sizeof(struct input_device));
+
+  fprintf(stderr, "Removed input device\n");
+}
+
 void input_init(char* mapfile) {
   udev = udev_new();
   if (!udev) {
@@ -434,7 +459,9 @@ static void input_poll(bool (*handler) (struct input_event*, struct input_device
               return;
           }
         }
-        if (rc != -EAGAIN && rc < 0) {
+        if (rc == -ENODEV) {
+          input_remove(i);
+        } else if (rc != -EAGAIN && rc < 0) {
           fprintf(stderr, "Error: %s\n", strerror(-rc));
           exit(EXIT_FAILURE);
         }

@@ -73,7 +73,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
   struct sockaddr_in *addr = (struct sockaddr_in*)res->ai_addr;
   LiStartConnection(addr->sin_addr.s_addr, config, &connection_callbacks, &decoder_callbacks,
     &audio_callbacks, &platform_callbacks, NULL, 0, client_get_server_version());
-  free(res);
+  freeaddrinfo(res);
 
   input_loop();
 

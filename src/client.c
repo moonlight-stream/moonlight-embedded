@@ -39,29 +39,33 @@ static const char *certificateFileName = "client.pem";
 static const char *p12FileName = "client.p12";
 static const char *keyFileName = "key.pem";
 
-static char unique_id[17];
+#define UNIQUEID_BYTES 8
+#define UNIQUEID_CHARS (UNIQUEID_BYTES*2)
+
+static char unique_id[UNIQUEID_CHARS+1];
 static X509 *cert;
 static char cert_hex[4096];
 static EVP_PKEY *privateKey;
 
 static bool paired;
 static int currentGame;
+static int serverMajorVersion;
 
 static void client_load_unique_id() {
   FILE *fd = fopen(uniqueFileName, "r");
   if (fd == NULL) {
-    unsigned char unique_data[16];
-    RAND_bytes(unique_data, 16);
-    for (int i = 0; i < 16; i += 2) {
-      sprintf(unique_id + i, "%02x", unique_data[i]);
+    unsigned char unique_data[UNIQUEID_BYTES];
+    RAND_bytes(unique_data, UNIQUEID_BYTES);
+    for (int i = 0; i < UNIQUEID_BYTES; i++) {
+      sprintf(unique_id + (i * 2), "%02x", unique_data[i]);
     }
     fd = fopen(uniqueFileName, "w");
-    fwrite(unique_id, 16, 1, fd);
+    fwrite(unique_id, UNIQUEID_CHARS, 1, fd);
   } else {
-    fread(unique_id, 16, 1, fd);
+    fread(unique_id, UNIQUEID_CHARS, 1, fd);
   }
   fclose(fd);
-  unique_id[16] = 0;
+  unique_id[UNIQUEID_CHARS] = 0;
 }
 
 static void client_load_cert() {
@@ -110,15 +114,20 @@ static void client_load_server_status(const char *address) {
 
   char *pairedText = NULL;
   char *currentGameText = NULL;
+  char *versionText = NULL;
   xml_search(data->memory, data->size, "currentgame", &currentGameText);
   xml_search(data->memory, data->size, "PairStatus", &pairedText);
+  xml_search(data->memory, data->size, "appversion", &versionText);
   http_free_data(data);
 
   paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
+  strstr(versionText, ".")[0] = 0;
+  serverMajorVersion = atoi(versionText);
 
   free(pairedText);
   free(currentGameText);
+  free(versionText);
 }
 
 static void bytes_to_hex(unsigned char *in, char *out, size_t len) {
@@ -241,7 +250,6 @@ void client_pair(const char *address) {
 
   char *result;
   xml_search(data->memory, data->size, "challengeresponse", &result);
-  printf("Status %s\n", result);
 
   char challenge_response_data_enc[48];
   char challenge_response_data[48];
@@ -343,4 +351,8 @@ void client_init(const char *address) {
   client_load_cert();
 
   client_load_server_status(address);
+}
+
+int client_get_server_version(void) {
+  return serverMajorVersion;
 }

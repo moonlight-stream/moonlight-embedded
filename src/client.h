@@ -28,3 +28,4 @@ void client_start_app(STREAM_CONFIGURATION *config, const char* serverAddress, i
 struct app_list* client_applist(const char* serverAddress);
 int client_get_app_id(const char* serverAddress, char* name);
 void client_pair(const char *address);
+int client_get_server_version(void);

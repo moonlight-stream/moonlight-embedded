@@ -29,8 +29,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <arpa/inet.h>
 #include <openssl/rand.h>
 #include <getopt.h>
@@ -57,9 +60,20 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   client_start_app(config, address, appId, sops, localaudio);
 
-  struct in_addr addr;
-  inet_aton(address, &addr);
-  LiStartConnection(addr.s_addr, config, &connection_callbacks, &decoder_callbacks, &audio_callbacks, &platform_callbacks, NULL, 0, 4);
+  struct addrinfo hints, *res;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  int err = getaddrinfo(address, NULL, &hints, &res);
+  if (err<0 || res == NULL) {
+    printf("Can't resolve host: %s\n", address);
+    exit(-1);
+  }
+
+  struct sockaddr_in *addr = (struct sockaddr_in*)res->ai_addr;
+  LiStartConnection(addr->sin_addr.s_addr, config, &connection_callbacks, &decoder_callbacks,
+    &audio_callbacks, &platform_callbacks, NULL, 0, client_get_server_version());
+  free(res);
 
   input_loop();
 
@@ -197,11 +211,11 @@ int main(int argc, char* argv[]) {
 
   if (address == NULL) {
     address = malloc(MAX_ADDRESS_SIZE);
-    address[0] = 0;
     if (address == NULL) {
       perror("Not enough memory");
       exit(-1);
     }
+    address[0] = 0;
     discover_server(address);
     if (address[0] == 0) {
       perror("Can't find server");

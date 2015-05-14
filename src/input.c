@@ -47,6 +47,7 @@ struct input_device {
   struct mapping map;
   int fd;
   int fdindex;
+  char modifiers;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
   short controllerId;
   int buttonFlags;
@@ -274,8 +275,30 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
     break;
   case EV_KEY:
     if (ev->code < sizeof(keyCodes)/sizeof(keyCodes[0])) {
+      char modifier = NULL;
+      switch (ev->code) {
+      case KEY_LEFTSHIFT:
+      case KEY_RIGHTSHIFT:
+        modifier = MODIFIER_SHIFT;
+        break;
+      case KEY_LEFTALT:
+      case KEY_RIGHTALT:
+        modifier = MODIFIER_ALT;
+        break;
+      case KEY_LEFTCTRL:
+      case KEY_RIGHTCTRL:
+        modifier = MODIFIER_CTRL;
+        break;
+      }
+      if (modifier != NULL) {
+        if (ev->value)
+          dev->modifiers |= modifier;
+        else
+          dev->modifiers &= ~modifier;
+      }
+
       short code = 0x80 << 8 | keyCodes[ev->code];
-      LiSendKeyboardEvent(code, ev->value?KEY_ACTION_DOWN:KEY_ACTION_UP, 0);
+      LiSendKeyboardEvent(code, ev->value?KEY_ACTION_DOWN:KEY_ACTION_UP, dev->modifiers);
     } else {
       int mouseCode = 0;
       short gamepadCode = 0;

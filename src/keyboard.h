@@ -30,8 +30,8 @@ static const short keyCodes[] = {
   0x38, //VK_8
   0x39, //VK_9
   0x30, //VK_0
-  0x2D, //VK_MINUS
-  0x3D, //VK_EQUALS
+  0xBD, //VK_MINUS
+  0xBB, //VK_EQUALS
   0x08, //VK_BACK_SPACE
   0x09, //VK_TAB
   0x51, //VK_Q
@@ -69,9 +69,9 @@ static const short keyCodes[] = {
   0x42, //VK_B
   0x4E, //VK_N
   0x4D, //VK_M
-  0x2C, //VK_COMMA
+  0xBC, //VK_COMMA
   0, //VK_DOT
-  0x2F, //VK_SLASH
+  0xBF, //VK_SLASH
   0x10, //VK_SHIFT Right shift
   0, //VK_KPASTERISK
   0x11, //VK_ALT Left alt
@@ -129,7 +129,7 @@ static const short keyCodes[] = {
   0x28, //VK_DOWN
   0x22, //VK_PAGE_DOWN
   0x9B, //VK_INSERT
-  0x7F, //VK_DELETE
+  0x2E, //VK_DELETE
   0, //VK_MACRO
   0, //VK_MUTE
   0, //VK_VOLUMEDOWN

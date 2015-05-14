@@ -229,7 +229,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   return DR_OK;
 }
 
-DECODER_RENDERER_CALLBACKS decoder_callbacks = {
+DECODER_RENDERER_CALLBACKS decoder_callbacks_omx = {
   .setup = decoder_renderer_setup,
   .start = decoder_renderer_start,
   .stop = decoder_renderer_stop,

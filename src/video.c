@@ -17,16 +17,38 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+
+#include "video.h"
+
 #include "limelight-common/Limelight.h"
 
-extern DECODER_RENDERER_CALLBACKS *decoder_callbacks;
+#include <dlfcn.h>
+#include <stdlib.h>
 
-void video_init();
+DECODER_RENDERER_CALLBACKS *decoder_callbacks;
+char* decoder_output_name;
 
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
-#ifdef HAVE_OMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
-#endif
-#ifdef HAVE_IMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
-#endif
+static int decoder_level;
+
+void video_init() {
+  decoder_callbacks = &decoder_callbacks_fake;
+  #ifdef HAVE_OMX
+  if (dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL) {
+    decoder_callbacks = &decoder_callbacks_omx;
+  }
+  #endif
+  #ifdef HAVE_IMX
+  if (dlsym(RTLD_DEFAULT, "vpu_Init") != NULL) {
+    decoder_callbacks = &decoder_callbacks_imx;
+  }
+  #endif
+}
+
+int video_add_output(int level, char* name, DECODER_RENDERER_CALLBACKS *callbacks) {
+  if (level > decoder_level) {
+    decoder_output_name = name;
+    decoder_level = level;
+    decoder_callbacks = callbacks;
+  }
+}

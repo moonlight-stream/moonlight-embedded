@@ -283,7 +283,7 @@ void client_pair(const char *address) {
   http_request(url, data);
   xml_search(data->memory, data->size, "pairingsecret", &result);
 
-  char *signature = NULL;
+  unsigned char *signature = NULL;
   size_t s_len;
   if (!sign_it(client_secret_data, 16, &signature, &s_len, privateKey)) {
       fprintf(stderr, "Failed to sign data\n");

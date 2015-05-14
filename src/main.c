@@ -64,6 +64,8 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   client_start_app(config, address, appId, sops, localaudio);
 
+  video_init();
+
   struct addrinfo hints, *res;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;

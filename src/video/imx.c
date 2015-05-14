@@ -430,7 +430,7 @@ static void decoder_renderer_release() {
   vpu_UnInit();
 }
 
-DECODER_RENDERER_CALLBACKS decoder_callbacks = {
+DECODER_RENDERER_CALLBACKS decoder_callbacks_imx = {
   .setup = decoder_renderer_setup,
   .start = decoder_renderer_start,
   .stop = decoder_renderer_stop,

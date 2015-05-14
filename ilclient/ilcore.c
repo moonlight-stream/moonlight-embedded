@@ -40,12 +40,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 
-#include "IL/OMX_Component.h"
-#include "interface/vcos/vcos.h"
+#include <IL/OMX_Component.h>
+#include <interface/vcos/vcos.h>
 
-#include "interface/vmcs_host/vcilcs.h"
-#include "interface/vmcs_host/vchost.h"
-#include "interface/vmcs_host/vcilcs_common.h"
+#include <interface/vmcs_host/vcilcs.h>
+#include <interface/vmcs_host/vchost.h>
+#include <interface/vmcs_host/vcilcs_common.h>
 
 static int coreInit = 0;
 static int nActiveHandles = 0;

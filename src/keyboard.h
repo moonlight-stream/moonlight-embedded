@@ -44,9 +44,9 @@ static const short keyCodes[] = {
   0x49, //VK_I
   0x4F, //VK_O
   0x50, //VK_P
-  0xA1, //VK_BRACELEFT
-  0xA2, //VK_BRACERIGHT
-  0x0A, //VK_ENTER
+  0xDB, //VK_BRACELEFT
+  0xDD, //VK_BRACERIGHT
+  0x0D, //VK_ENTER
   0x11, //VK_CONTROL Left control
   0x41, //VK_A
   0x53, //VK_S
@@ -57,11 +57,11 @@ static const short keyCodes[] = {
   0x4A, //VK_J
   0x4B, //VK_K
   0x4C, //VK_L
-  0x3B, //VK_SEMICOLON
-  0, //VK_APOSTROPHE
-  0, //VK_GRAVE
+  0xBA, //VK_SEMICOLON
+  0xDE, //VK_APOSTROPHE
+  0xC0, //VK_GRAVE
   0x10, //VK_SHIFT Left shift
-  0x5C, //VK_BACK_SLASH
+  0xDC, //VK_BACK_SLASH
   0x5A, //VK_Z
   0x58, //VK_X
   0x43, //VK_C
@@ -70,7 +70,7 @@ static const short keyCodes[] = {
   0x4E, //VK_N
   0x4D, //VK_M
   0xBC, //VK_COMMA
-  0, //VK_DOT
+  0xBE, //VK_DOT
   0xBF, //VK_SLASH
   0x10, //VK_SHIFT Right shift
   0, //VK_KPASTERISK
@@ -122,7 +122,7 @@ static const short keyCodes[] = {
   0, //KeyEvent.VK_LINEFEED
   0x24, //VK_HOME
   0x26, //VK_UP
-  0x22, //VK_PAGE_UP
+  0x21, //VK_PAGE_UP
   0x25, //VK_LEFT
   0x27, //VK_RIGHT
   0x23, //VK_END

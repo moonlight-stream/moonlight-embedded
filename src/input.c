@@ -83,7 +83,7 @@ static void input_init_parms(struct input_device *dev, struct input_abs_parms *p
   parms->diff = parms->max - parms->min;
 }
 
-void input_create(char* device, char* mapFile) {
+void input_create(const char* device, char* mapFile) {
   int fd = open(device, O_RDONLY|O_NONBLOCK);
   if (fd <= 0) {
     fprintf(stderr, "Failed to open device %s\n", device);
@@ -275,7 +275,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
     break;
   case EV_KEY:
     if (ev->code < sizeof(keyCodes)/sizeof(keyCodes[0])) {
-      char modifier = NULL;
+      char modifier = 0;
       switch (ev->code) {
       case KEY_LEFTSHIFT:
       case KEY_RIGHTSHIFT:
@@ -290,7 +290,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
         modifier = MODIFIER_CTRL;
         break;
       }
-      if (modifier != NULL) {
+      if (modifier != 0) {
         if (ev->value)
           dev->modifiers |= modifier;
         else

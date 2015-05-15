@@ -322,7 +322,7 @@ struct app_list *client_applist(const char *address) {
   return list;
 }
 
-int client_get_app_id(const char *address, char *name) {
+int client_get_app_id(const char *address, const char *name) {
   struct app_list *list = client_applist(address);
   while (list != NULL) {
     if (strcmp(list->name, name) == 0)

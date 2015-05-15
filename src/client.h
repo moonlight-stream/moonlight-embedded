@@ -26,7 +26,7 @@
 void client_init(const char* serverAddress);
 void client_start_app(STREAM_CONFIGURATION *config, const char* serverAddress, int appId, bool sops, bool localaudio);
 struct app_list* client_applist(const char* serverAddress);
-int client_get_app_id(const char* serverAddress, char* name);
+int client_get_app_id(const char* serverAddress, const char* name);
 void client_pair(const char *address);
 int client_get_server_version(void);
 bool client_is_paired(const char *address);

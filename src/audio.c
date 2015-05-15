@@ -72,14 +72,6 @@ static void audio_renderer_init() {
   CHECK_RETURN(snd_pcm_prepare(handle));
 }
 
-static void audio_renderer_start() {
-  printf("audio_renderer_start\n");
-}
-
-static void audio_renderer_stop() {
-  printf("audio_renderer_stop\n");
-}
-
 static void audio_renderer_release() {
   printf("audio_renderer_release\n");
   if (decoder != NULL)
@@ -109,8 +101,8 @@ static void audio_renderer_decode_and_play_sample(char* data, int length) {
 
 AUDIO_RENDERER_CALLBACKS audio_callbacks = {
   .init = audio_renderer_init,
-  .start = audio_renderer_start,
-  .stop = audio_renderer_stop,
+  .start = NULL,
+  .stop = NULL,
   .release = audio_renderer_release,
   .decodeAndPlaySample = audio_renderer_decode_and_play_sample,
 };

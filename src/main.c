@@ -42,11 +42,6 @@
 #define MOONLIGHT_PATH "/moonlight/"
 #define USER_PATHS ":~/.moonlight:./"
 
-PLATFORM_CALLBACKS platform_callbacks = {
-  .threadStart = NULL,
-  .debugPrint = NULL,
-};
-
 static void applist(const char* address) {
   struct app_list* list = client_applist(address);
   for (int i = 1;list != NULL;i++) {
@@ -78,7 +73,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   struct sockaddr_in *addr = (struct sockaddr_in*)res->ai_addr;
   LiStartConnection(addr->sin_addr.s_addr, config, &connection_callbacks, decoder_callbacks,
-    &audio_callbacks, &platform_callbacks, NULL, 0, client_get_server_version());
+    &audio_callbacks, NULL, NULL, 0, client_get_server_version());
   freeaddrinfo(res);
 
   input_loop();

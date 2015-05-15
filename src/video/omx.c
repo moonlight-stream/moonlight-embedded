@@ -129,10 +129,6 @@ static void decoder_renderer_setup(int width, int height, int redrawRate, void* 
   }
 }
 
-static void decoder_renderer_start() {
-  printf("decoder_renderer_start\n");
-}
-
 static void decoder_renderer_stop() {
   int status = 0;
 
@@ -231,7 +227,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_omx = {
   .setup = decoder_renderer_setup,
-  .start = decoder_renderer_start,
+  .start = NULL,
   .stop = decoder_renderer_stop,
   .release = decoder_renderer_release,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,

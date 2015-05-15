@@ -29,14 +29,6 @@ void decoder_renderer_setup(int width, int height, int redrawRate, void* context
   fd = fopen(fileName, "w");
 }
 
-void decoder_renderer_start() {
-  printf("decoder_renderer_start\n");
-}
-
-void decoder_renderer_stop() {
-  printf("decoder_renderer_stop\n");
-}
-
 void decoder_renderer_release() {
   printf("decoder_renderer_release\n");
   fclose(fd);
@@ -53,8 +45,8 @@ int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_fake = {
   .setup = decoder_renderer_setup,
-  .start = decoder_renderer_start,
-  .stop = decoder_renderer_stop,
+  .start = NULL,
+  .stop = NULL,
   .release = decoder_renderer_release,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
 };

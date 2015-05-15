@@ -274,14 +274,13 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  input_init(mapping);
-
   client_init(address);
 
   if (strcmp("list", action) == 0) {
     pair_check();
     applist(address);
   } else if (strcmp("stream", action) == 0) {
+    input_init(mapping);
     pair_check();
     stream(&config, address, app, sops, localaudio);
   } else if (strcmp("pair", action) == 0)

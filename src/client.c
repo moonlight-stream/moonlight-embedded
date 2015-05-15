@@ -20,6 +20,7 @@
 #include "http.h"
 #include "xml.h"
 #include "mkcert.h"
+#include "client.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -217,6 +218,11 @@ cleanup:
 void client_pair(const char *address) {
   char url[4096];
 
+  if (client_is_paired(NULL)) {
+    printf("Already paired\n");
+    return;
+  }
+
   char pin[5];
   sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
   printf("Please enter the following PIN on the target PC: %s\n", pin);
@@ -302,6 +308,8 @@ void client_pair(const char *address) {
   sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=pairchallenge", address, unique_id, challenge_response_hex);
   http_request(url, data);
   http_free_data(data);
+
+  printf("Paired\n");
 }
 
 struct app_list *client_applist(const char *address) {
@@ -343,6 +351,28 @@ void client_start_app(STREAM_CONFIGURATION *config, const char *address, int app
 
   http_request(url, data);
   http_free_data(data);
+}
+
+void client_quit_app(const char *address) {
+  char url[4096];
+  struct http_data *data = http_create_data();
+  sprintf(url, "https://%s:47984/cancel?uniqueid=%s", address, unique_id);
+  http_request(url, data);
+  http_free_data(data);
+}
+
+bool client_is_paired(const char *address) {
+  if (address != NULL)
+    client_load_server_status(address);
+
+  return paired;
+}
+
+int client_get_current_game(const char *address) {
+  if (address != NULL)
+    client_load_server_status(address);
+
+  return currentGame;
 }
 
 void client_init(const char *address) {

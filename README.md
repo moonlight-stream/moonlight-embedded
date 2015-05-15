@@ -57,6 +57,7 @@ implementation.
 	pair Pair device with computer
 	stream Stream computer to device
 	list List available games and applications
+	quit Quit the application or game being streamed
 	help Show this help
 
 	Streaming options:

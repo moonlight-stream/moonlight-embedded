@@ -77,7 +77,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
   }
 
   struct sockaddr_in *addr = (struct sockaddr_in*)res->ai_addr;
-  LiStartConnection(addr->sin_addr.s_addr, config, &connection_callbacks, &decoder_callbacks,
+  LiStartConnection(addr->sin_addr.s_addr, config, &connection_callbacks, decoder_callbacks,
     &audio_callbacks, &platform_callbacks, NULL, 0, client_get_server_version());
   freeaddrinfo(res);
 
@@ -93,6 +93,7 @@ static void help() {
   printf("\tpair\t\t\tPair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
   printf("\tlist\t\t\tList available games and applications\n");
+  printf("\tquit\t\t\tQuit the application or game being streamed\n");
   printf("\thelp\t\t\tShow this help\n\n");
   printf(" Streaming options\n\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
@@ -147,6 +148,13 @@ char* get_path(char* name) {
 
   free(path);
   return NULL;
+}
+
+static void pair_check(void) {
+  if (!client_is_paired(NULL)) {
+    printf("You must pair with the PC first\n");
+    exit(-1);
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -270,12 +278,17 @@ int main(int argc, char* argv[]) {
 
   client_init(address);
 
-  if (strcmp("applist", action) == 0)
+  if (strcmp("list", action) == 0) {
+    pair_check();
     applist(address);
-  else if (strcmp("stream", action) == 0)
+  } else if (strcmp("stream", action) == 0) {
+    pair_check();
     stream(&config, address, app, sops, localaudio);
-  else if (strcmp("pair", action) == 0)
+  } else if (strcmp("pair", action) == 0)
     client_pair(address);
-  else
-    fprintf(stderr, "%s is not a valid actions\n", action);
+  else if (strcmp("quit", action) == 0) {
+    pair_check();
+    client_quit_app(address);
+  } else
+    fprintf(stderr, "%s is not a valid action\n", action);
 }

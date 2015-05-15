@@ -29,3 +29,6 @@ struct app_list* client_applist(const char* serverAddress);
 int client_get_app_id(const char* serverAddress, char* name);
 void client_pair(const char *address);
 int client_get_server_version(void);
+bool client_is_paired(const char *address);
+int client_get_current_game(const char *address);
+void client_quit_app(const char *address);

@@ -189,8 +189,8 @@ int main(int argc, char* argv[]) {
   while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:n", long_options, &option_index)) != -1) {
     switch (c) {
     case 'a':
-      config.width = 720;
-      config.height = 1280;
+      config.width = 1280;
+      config.height = 720;
       break;
     case 'b':
       config.width = 1920;

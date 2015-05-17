@@ -32,7 +32,11 @@ char* decoder_output_name;
 static int decoder_level;
 
 void video_init() {
+  #ifdef HAVE_SDL
+  decoder_callbacks = &decoder_callbacks_sdl;
+  #else
   decoder_callbacks = &decoder_callbacks_fake;
+  #endif
   #ifdef HAVE_OMX
   if (dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL) {
     decoder_callbacks = &decoder_callbacks_omx;

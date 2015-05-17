@@ -347,12 +347,12 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
           gamepadCode = SPECIAL_FLAG;
       }
 
-      if (mouseCode > 0) {
+      if (mouseCode != 0) {
         LiSendMouseButtonEvent(ev->value?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, mouseCode);
       } else {
         gamepadModified = true;
 
-        if (gamepadCode > 0) {
+        if (gamepadCode != 0) {
           if (ev->value)
             dev->buttonFlags |= gamepadCode;
           else

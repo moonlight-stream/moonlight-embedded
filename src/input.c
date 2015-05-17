@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <limits.h>
+#include <unistd.h>
 
 struct input_abs_parms {
   int min, max;
@@ -51,7 +52,7 @@ struct input_device {
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
   short controllerId;
   int buttonFlags;
-  short leftTrigger, rightTrigger;
+  char leftTrigger, rightTrigger;
   short leftStickX, leftStickY;
   short rightStickX, rightStickY;
   bool gamepadModified;
@@ -162,7 +163,8 @@ void input_init(char* mapfile) {
     exit(1);
   }
 
-  if (autoadd = numDevices == 0) {
+  autoadd = (numDevices == 0);
+  if (autoadd) {
     struct udev_enumerate *enumerate = udev_enumerate_new(udev);
     udev_enumerate_add_match_subsystem(enumerate, "input");
     udev_enumerate_scan_devices(enumerate);
@@ -356,9 +358,9 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
           else
             dev->buttonFlags &= ~gamepadCode;
         } else if (ev->code == dev->map.btn_tl2)
-          dev->leftTrigger = ev->value?USHRT_MAX:0;
+          dev->leftTrigger = ev->value?UCHAR_MAX:0;
         else if (ev->code == dev->map.btn_tr2)
-          dev->rightTrigger = ev->value?USHRT_MAX:0;
+          dev->rightTrigger = ev->value?UCHAR_MAX:0;
         else
           gamepadModified = false;
       }

@@ -251,6 +251,7 @@ int main(int argc, char* argv[]) {
       perror("No filename for mapping");
       exit(-1);
     }
+    input_init(mapping);
     input_map(address);
     exit(0);
   }

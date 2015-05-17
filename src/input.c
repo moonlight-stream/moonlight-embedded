@@ -553,11 +553,11 @@ void input_map(char* fileName) {
   input_map_key("Special Button", &(map.btn_mode));
 
   bool ignored;
-  input_map_abskey("Left Trigger", &(map.btn_tl), &(map.abs_z), &ignored);
-  input_map_abskey("Right Trigger", &(map.btn_tr), &(map.abs_rz), &ignored);
+  input_map_abskey("Left Trigger", &(map.btn_tl2), &(map.abs_z), &ignored);
+  input_map_abskey("Right Trigger", &(map.btn_tr2), &(map.abs_rz), &ignored);
 
-  input_map_key("Left Bumper", &(map.btn_tl2));
-  input_map_key("Right Bumper", &(map.btn_tr2));
+  input_map_key("Left Bumper", &(map.btn_tl));
+  input_map_key("Right Bumper", &(map.btn_tr));
   mapping_save(fileName, &map);
 }
 

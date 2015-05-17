@@ -408,7 +408,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
       if (dir == 1) {
         dev->buttonFlags |= UP_FLAG;
         dev->buttonFlags &= ~DOWN_FLAG;
-      } else if (dir == -1) {
+      } else if (dir == 0) {
         dev->buttonFlags &= ~UP_FLAG;
         dev->buttonFlags &= ~DOWN_FLAG;
       } else {
@@ -525,11 +525,11 @@ void input_map(char* fileName) {
   struct mapping map;
 
   input_map_abs("Left Stick Right", &(map.abs_x), &(map.reverse_x));
-  input_map_abs("Left Stick Down", &(map.abs_y), &(map.reverse_y));
+  input_map_abs("Left Stick Up", &(map.abs_y), &(map.reverse_y));
   input_map_key("Left Stick Button", &(map.btn_thumbl));
 
   input_map_abs("Right Stick Right", &(map.abs_rx), &(map.reverse_rx));
-  input_map_abs("Right Stick Down", &(map.abs_ry), &(map.reverse_ry));
+  input_map_abs("Right Stick Up", &(map.abs_ry), &(map.reverse_ry));
   input_map_key("Right Stick Button", &(map.btn_thumbr));
 
   input_map_abskey("D-Pad Right", &(map.btn_dpad_right), &(map.abs_dpad_x), &(map.reverse_dpad_x));

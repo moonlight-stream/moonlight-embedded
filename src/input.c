@@ -456,6 +456,13 @@ static bool input_handle_mapping_event(struct input_event *ev, struct input_devi
   return true;
 }
 
+static void input_drain(void) {
+  for (int i = 0; i < numDevices; i++) {
+    struct input_event ev;
+    while (libevdev_next_event(devices[i].dev, LIBEVDEV_READ_FLAG_NORMAL, &ev) >= 0);
+  }
+}
+
 static void input_poll(bool (*handler) (struct input_event*, struct input_device*)) {
   while (poll(fds, numFds, -1)) {
     if (fds[udev_fdindex].revents > 0) {
@@ -501,19 +508,23 @@ static void input_map_key(char* keyName, short* key) {
   currentAbs = NULL;
   *key = -1;
   input_poll(input_handle_mapping_event);
+  usleep(250000);
+  input_drain();
 }
 
 static void input_map_abs(char* keyName, short* abs, bool* reverse) {
-  printf("%s\n", keyName);
+  printf("Move %s\n", keyName);
   currentKey = NULL;
   currentAbs = abs;
   currentReverse = reverse;
   *abs = -1;
   input_poll(input_handle_mapping_event);
+  usleep(250000);
+  input_drain();
 }
 
 static void input_map_abskey(char* keyName, short* key, short* abs, bool* reverse) {
-  printf("%s\n", keyName);
+  printf("Press %s\n", keyName);
   currentKey = key;
   currentAbs = abs;
   currentReverse = reverse;
@@ -521,6 +532,8 @@ static void input_map_abskey(char* keyName, short* key, short* abs, bool* revers
   *abs = -1;
   *currentReverse = false;
   input_poll(input_handle_mapping_event);
+  usleep(250000);
+  input_drain();
 }
 
 void input_map(char* fileName) {

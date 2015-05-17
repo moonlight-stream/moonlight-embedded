@@ -110,6 +110,7 @@ void input_create(const char* device, char* mapFile) {
     exit(EXIT_FAILURE);
   }
 
+  memset(&devices[dev], 0, sizeof(devices[0]));
   devices[dev].fd = fd;
   devices[dev].dev = libevdev_new();
   libevdev_set_fd(devices[dev].dev, devices[dev].fd);

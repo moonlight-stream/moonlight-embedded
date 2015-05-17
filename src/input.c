@@ -544,9 +544,9 @@ void input_map(char* fileName) {
   else
     map.btn_dpad_up = -1;
 
-  input_map_key("Button X (1)", &(map.btn_east));
+  input_map_key("Button X (1)", &(map.btn_west));
   input_map_key("Button A (2)", &(map.btn_south));
-  input_map_key("Button B (3)", &(map.btn_west));
+  input_map_key("Button B (3)", &(map.btn_east));
   input_map_key("Button Y (4)", &(map.btn_north));
   input_map_key("Back Button", &(map.btn_select));
   input_map_key("Start Button", &(map.btn_start));

@@ -396,7 +396,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
       if (dir == 1) {
         dev->buttonFlags |= RIGHT_FLAG;
         dev->buttonFlags &= ~LEFT_FLAG;
-      } else if (dir == -1) {
+      } else if (dir == 0) {
         dev->buttonFlags &= ~RIGHT_FLAG;
         dev->buttonFlags &= ~LEFT_FLAG;
       } else {

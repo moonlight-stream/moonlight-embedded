@@ -18,6 +18,7 @@
  */
 
 #include "connection.h"
+#include "global.h"
 
 #include <stdio.h>
 
@@ -43,6 +44,7 @@ void connection_connection_started()
 
 void connection_connection_terminated()
 {
+  quit();
   printf("connection_connection_terminated\n");
 }
 

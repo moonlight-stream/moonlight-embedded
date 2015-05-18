@@ -19,6 +19,7 @@
 
 #include "keyboard.h"
 #include "mapping.h"
+#include "global.h"
 
 #include "libevdev/libevdev.h"
 #include "limelight-common/Limelight.h"
@@ -28,13 +29,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/signalfd.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <limits.h>
 #include <unistd.h>
+#include <pthread.h>
 
 struct input_abs_parms {
   int min, max;
@@ -74,6 +78,8 @@ static char* defaultMapfile;
 static struct udev *udev;
 static struct udev_monitor *udev_mon;
 static int udev_fdindex;
+
+static int sig_fdindex;
 
 static void input_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
   parms->flat = libevdev_get_abs_flat(dev->dev, code);
@@ -190,8 +196,8 @@ void input_init(char* mapfile) {
   udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "input", NULL);
   udev_monitor_enable_receiving(udev_mon);
 
-  int udev_fdindex = numFds;
-  numFds++;
+  udev_fdindex = numFds++;
+  sig_fdindex = numFds++;
 
   if (fds == NULL)
     fds = malloc(sizeof(struct pollfd));
@@ -206,6 +212,17 @@ void input_init(char* mapfile) {
   defaultMapfile = mapfile;
   fds[udev_fdindex].fd = udev_monitor_get_fd(udev_mon);
   fds[udev_fdindex].events = POLLIN;
+
+  main_thread_id = pthread_self();
+  sigset_t sigset;
+  sigemptyset(&sigset);
+  sigaddset(&sigset, SIGHUP);
+  sigaddset(&sigset, SIGTERM);
+  sigaddset(&sigset, SIGINT);
+  sigaddset(&sigset, SIGQUIT);
+  sigprocmask(SIG_BLOCK, &sigset, NULL);
+  fds[sig_fdindex].fd = signalfd(-1, &sigset, 0);
+  fds[sig_fdindex].events = POLLIN | POLLERR | POLLHUP;
 }
 
 void input_destroy() {
@@ -464,7 +481,7 @@ static void input_drain(void) {
   }
 }
 
-static void input_poll(bool (*handler) (struct input_event*, struct input_device*)) {
+static bool input_poll(bool (*handler) (struct input_event*, struct input_device*)) {
   while (poll(fds, numFds, -1)) {
     if (fds[udev_fdindex].revents > 0) {
       struct udev_device *dev = udev_monitor_receive_device(udev_mon);
@@ -479,6 +496,17 @@ static void input_poll(bool (*handler) (struct input_event*, struct input_device
         }
         udev_device_unref(dev);
       }
+    } else if (fds[sig_fdindex].revents > 0) {
+      struct signalfd_siginfo info;
+      read(fds[sig_fdindex].fd, &info, sizeof(info));
+
+      switch (info.ssi_signo) {
+        case SIGINT:
+        case SIGTERM:
+        case SIGQUIT:
+        case SIGHUP:
+          return false;
+      }
     }
     for (int i=0;i<numDevices;i++) {
       if (fds[devices[i].fdindex].revents > 0) {
@@ -489,7 +517,7 @@ static void input_poll(bool (*handler) (struct input_event*, struct input_device
             fprintf(stderr, "Error: cannot keep up\n");
           else if (rc == LIBEVDEV_READ_STATUS_SUCCESS) {
             if (!handler(&ev, &devices[i]))
-              return;
+              return true;
           }
         }
         if (rc == -ENODEV) {
@@ -501,6 +529,8 @@ static void input_poll(bool (*handler) (struct input_event*, struct input_device
       }
     }
   }
+
+  return false;
 }
 
 static void input_map_key(char* keyName, short* key) {
@@ -508,7 +538,9 @@ static void input_map_key(char* keyName, short* key) {
   currentKey = key;
   currentAbs = NULL;
   *key = -1;
-  input_poll(input_handle_mapping_event);
+  if (!input_poll(input_handle_mapping_event))
+    exit(1);
+
   usleep(250000);
   input_drain();
 }
@@ -519,7 +551,9 @@ static void input_map_abs(char* keyName, short* abs, bool* reverse) {
   currentAbs = abs;
   currentReverse = reverse;
   *abs = -1;
-  input_poll(input_handle_mapping_event);
+  if (!input_poll(input_handle_mapping_event))
+    exit(1);
+
   usleep(250000);
   input_drain();
 }
@@ -532,7 +566,9 @@ static void input_map_abskey(char* keyName, short* key, short* abs, bool* revers
   *key = -1;
   *abs = -1;
   *currentReverse = false;
-  input_poll(input_handle_mapping_event);
+  if (!input_poll(input_handle_mapping_event))
+    exit(1);
+
   usleep(250000);
   input_drain();
 }

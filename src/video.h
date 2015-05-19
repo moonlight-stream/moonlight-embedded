@@ -28,5 +28,5 @@ extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
 #endif
 #ifdef HAVE_IMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_imx;
 #endif

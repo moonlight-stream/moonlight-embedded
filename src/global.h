@@ -17,16 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
+#include <pthread.h>
 
-extern DECODER_RENDERER_CALLBACKS *decoder_callbacks;
+extern pthread_t main_thread_id;
 
-void video_init();
-
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
-#ifdef HAVE_OMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
-#endif
-#ifdef HAVE_IMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_imx;
-#endif
+void quit();

@@ -426,11 +426,11 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
     } else if (ev->code == dev->map.abs_dpad_y) {
       int dir = input_convert_value_direction(ev, dev, &dev->dpadyParms, dev->map.reverse_dpad_y);
       if (dir == 1) {
-        dev->buttonFlags |= UP_FLAG;
-        dev->buttonFlags &= ~DOWN_FLAG;
-      } else if (dir == 0) {
+        dev->buttonFlags |= DOWN_FLAG;
         dev->buttonFlags &= ~UP_FLAG;
+      } else if (dir == 0) {
         dev->buttonFlags &= ~DOWN_FLAG;
+        dev->buttonFlags &= ~UP_FLAG;
       } else {
         dev->buttonFlags &= ~DOWN_FLAG;
         dev->buttonFlags |= UP_FLAG;

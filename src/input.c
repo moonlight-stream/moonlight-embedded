@@ -248,7 +248,7 @@ static char input_convert_value_byte(struct input_event *ev, struct input_device
   else if (ev->value>parms->max)
     return UCHAR_MAX;
   else {
-    int value = ev->value + parms->flat;
+    int value = ev->value - parms->flat;
     return (value-parms->min) * UCHAR_MAX / (parms->diff-parms->flat);
   }
 }

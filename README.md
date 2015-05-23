@@ -35,7 +35,7 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 
 	Actions:
 
-        map Create mapping file for gamepad
+	map Create mapping file for gamepad
 	pair Pair device with computer
 	stream Stream computer to device
 	list List available games and applications
@@ -53,11 +53,11 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 	-bitrate <bitrate> Specify the bitrate in Kbps
 	-packetsize <size> Specify the maximum packetsize in bytes
 	-app <app> Name of app to stream
-        -nosops Don't allow GFE to modify game settings
-        -input <device> Use <device> as input. Can be used multiple times
-        -mapping <file> Use <file> as gamepad mapping configuration file (use before -input)
-        -audio <device> Use <device> as ALSA audio output device (default sysdefault)
-        -localaudio Play audio locally
+	-nosops Don't allow GFE to modify game settings
+	-input <device> Use <device> as input. Can be used multiple times
+	-mapping <file> Use <file> as gamepad mapping configuration file (use before -input)
+	-audio <device> Use <device> as ALSA audio output device (default sysdefault)
+	-localaudio Play audio locally
 
 	Use ctrl-c to exit application
 

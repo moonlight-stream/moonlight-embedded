@@ -100,7 +100,7 @@ int xml_search(char* data, size_t len, char* node, char** result) {
   XML_SetCharacterDataHandler(parser, _xml_write_data);
   if (! XML_Parse(parser, data, len, 1)) {
     int code = XML_GetErrorCode(parser);
-    printf("%s\n", XML_ErrorString(code));
+    fprintf(stderr, "XML Error: %s\n", XML_ErrorString(code));
     return 1;
   }
   *result = search.memory;
@@ -120,7 +120,7 @@ struct app_list* xml_applist(char* data, size_t len) {
   XML_SetCharacterDataHandler(parser, _xml_write_data);
   if (! XML_Parse(parser, data, len, 1)) {
     int code = XML_GetErrorCode(parser);
-    printf("%s\n", XML_ErrorString(code));
+    fprintf(stderr, "XML Error %s\n", XML_ErrorString(code));
     exit(-1);
   }
 

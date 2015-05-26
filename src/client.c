@@ -72,8 +72,9 @@ static void client_load_unique_id() {
 static void client_load_cert() {
   FILE *fd = fopen(certificateFileName, "r");
   if (fd == NULL) {
-    printf("Generating certificate\n");
+    printf("Generating certificate...");
     struct CertKeyPair cert = generateCertKeyPair();
+    printf("done\n");
     saveCertKeyPair(certificateFileName, p12FileName, keyFileName, cert);
     freeCertKeyPair(cert);
     fd = fopen(certificateFileName, "r");
@@ -85,7 +86,7 @@ static void client_load_cert() {
   }
 
   if (!(cert = PEM_read_X509(fd, NULL, NULL, NULL))) {
-    printf("Error loading cert into memory.\n");
+    fprintf(stderr, "Error loading cert into memory.\n");
     exit(-1);
   }
 
@@ -146,62 +147,62 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
 
   EVP_MD_CTX *ctx = EVP_MD_CTX_create();
   if (ctx == NULL) {
-    printf("EVP_MD_CTX_create failed, error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "EVP_MD_CTX_create failed, error 0x%lx\n", ERR_get_error());
     return -1;
   }
 
   const EVP_MD *md = EVP_get_digestbyname("SHA256");
   if (md == NULL) {
-    printf("EVP_get_digestbyname failed, error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "EVP_get_digestbyname failed, error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
 
   int rc = EVP_DigestInit_ex(ctx, md, NULL);
   if (rc != 1) {
-    printf("EVP_DigestInit_ex failed, error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "EVP_DigestInit_ex failed, error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
 
   rc = EVP_DigestSignInit(ctx, NULL, md, NULL, pkey);
   if (rc != 1) {
-    printf("EVP_DigestSignInit failed, error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "EVP_DigestSignInit failed, error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
 
   rc = EVP_DigestSignUpdate(ctx, msg, mlen);
   if (rc != 1) {
-    printf("EVP_DigestSignUpdate failed, error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "EVP_DigestSignUpdate failed, error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
 
   size_t req = 0;
   rc = EVP_DigestSignFinal(ctx, NULL, &req);
   if (rc != 1) {
-    printf("EVP_DigestSignFinal failed (1), error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "EVP_DigestSignFinal failed (1), error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
 
   if (!(req > 0)) {
-    printf("EVP_DigestSignFinal failed (2), error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "EVP_DigestSignFinal failed (2), error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
 
   *sig = OPENSSL_malloc(req);
   if (*sig == NULL) {
-    printf("OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
+    fprintf(stderr, "OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
 
   *slen = req;
   rc = EVP_DigestSignFinal(ctx, *sig, slen);
   if (rc != 1) {
-    printf("EVP_DigestSignFinal failed (3), return code %d, error 0x%lx\n", rc,
+    fprintf(stderr, "EVP_DigestSignFinal failed (3), return code %d, error 0x%lx\n", rc,
            ERR_get_error());
     goto cleanup;
   }
 
   if (req != *slen) {
-    printf("EVP_DigestSignFinal failed, mismatched signature sizes %ld, %ld\n",
+    fprintf(stderr, "EVP_DigestSignFinal failed, mismatched signature sizes %ld, %ld\n",
            req, *slen);
     goto cleanup;
   }

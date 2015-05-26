@@ -25,12 +25,10 @@ static FILE* fd;
 static const char* fileName = "fake.h264";
 
 void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
-  printf("decoder_renderer_setup %dx%d %dfps\n", width, height, redrawRate);
   fd = fopen(fileName, "w");
 }
 
 void decoder_renderer_release() {
-  printf("decoder_renderer_release\n");
   fclose(fd);
 }
 

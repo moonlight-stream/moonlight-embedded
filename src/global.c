@@ -23,6 +23,5 @@
 pthread_t main_thread_id;
 
 void quit() {
-  printf("Close thread %d\n", main_thread_id);
   pthread_kill(main_thread_id, SIGTERM);
 }

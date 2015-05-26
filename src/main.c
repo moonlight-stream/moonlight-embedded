@@ -53,7 +53,7 @@ static void applist(const char* address) {
 static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops, bool localaudio) {
   int appId = client_get_app_id(address, app);
   if (appId<0) {
-    printf("Can't find app %s\n", app);
+    fprintf(stderr, "Can't find app %s\n", app);
     exit(-1);
   }
 
@@ -67,7 +67,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
   hints.ai_socktype = SOCK_STREAM;
   int err = getaddrinfo(address, NULL, &hints, &res);
   if (err<0 || res == NULL) {
-    printf("Can't resolve host: %s\n", address);
+    fprintf(stderr, "Can't resolve host: %s\n", address);
     exit(-1);
   }
 
@@ -146,7 +146,7 @@ char* get_path(char* name) {
 
 static void pair_check(void) {
   if (!client_is_paired(NULL)) {
-    printf("You must pair with the PC first\n");
+    fprintf(stderr, "You must pair with the PC first\n");
     exit(-1);
   }
 }

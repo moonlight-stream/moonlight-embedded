@@ -49,7 +49,7 @@ struct CertKeyPair generateCertKeyPair() {
 
     p12 = PKCS12_create("limelight", "GameStream", pkey, x509, NULL, 0, 0, 0, 0, 0);
     if (p12 == NULL) {
-        printf("Error generating a valid PKCS12 certificate.\n");
+        fprintf(stderr, "Error generating a valid PKCS12 certificate.\n");
     }
 
 #ifndef OPENSSL_NO_ENGINE

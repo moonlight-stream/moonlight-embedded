@@ -200,7 +200,7 @@ void input_init(char* mapfile) {
   sig_fdindex = numFds++;
 
   if (fds == NULL)
-    fds = malloc(sizeof(struct pollfd));
+    fds = malloc(sizeof(struct pollfd)*numFds);
   else
     fds = realloc(fds, sizeof(struct pollfd)*numFds);
 

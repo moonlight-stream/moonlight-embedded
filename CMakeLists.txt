@@ -43,7 +43,7 @@ add_executable(moonlight ${SRC_LIST})
 set_property(TARGET moonlight PROPERTY C_STANDARD 11)
 
 if(BROADCOM_FOUND)
-  include_directories(./ilclient ./h264bitstream ${BROADCOM_INCLUDE_DIRS})
+  include_directories(./third_party/ilclient ./third_party/h264bitstream ${BROADCOM_INCLUDE_DIRS})
   target_link_libraries (moonlight PUBLIC ${BROADCOM_LIBRARIES})
   list(APPEND MOONLIGHT_DEFINITIONS ${BROADCOM_DEFINITIONS})
 endif()

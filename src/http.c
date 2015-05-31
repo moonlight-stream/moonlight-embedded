@@ -56,6 +56,7 @@ void http_init() {
   curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyFile);
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_curl);
+  curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 }
 
 int http_request(char* url, struct http_data* data) {

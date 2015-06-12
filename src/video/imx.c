@@ -72,6 +72,10 @@ static int disp_clr_index = 0;
 static FrameBuffer *fb;
 static struct v4l2_buffer dbuf;
 
+bool video_imx_init() {
+  return vpu_Init(NULL) == RETCODE_SUCCESS;
+}
+
 static void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
   struct mxcfb_gbl_alpha alpha;
 
@@ -94,11 +98,6 @@ static void decoder_renderer_setup(int width, int height, int redrawRate, void* 
 
   close(fd_fb);
   
-  if (vpu_Init(NULL) != RETCODE_SUCCESS){
-    fprintf(stderr, "Can't intialize VPU\n");
-    exit(EXIT_FAILURE);
-  }
-
   mem_desc.size = STREAM_BUF_SIZE;
   if (IOGetPhyMem(&mem_desc)){
     fprintf(stderr, "Can't get physical memory address\n");

@@ -30,13 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../video.h"
 
-#include "bcm_host.h"
-#include "ilclient.h"
 #include "h264_stream.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <ilclient.h>
+#include <bcm_host.h>
 
 static TUNNEL_T tunnel[2];
 static COMPONENT_T *list[3];

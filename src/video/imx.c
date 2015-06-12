@@ -19,9 +19,6 @@
 
 #include "../video.h"
 
-#include "vpu_io.h"
-#include "vpu_lib.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -42,6 +39,9 @@
 #include <linux/v4l2-common.h>
 #include <linux/v4l2-controls.h>
 #include <linux/videodev2.h>
+
+#include <vpu_io.h>
+#include <vpu_lib.h>
 
 #define STREAM_BUF_SIZE 0x200000
 #define PS_SAVE_SIZE 0x080000

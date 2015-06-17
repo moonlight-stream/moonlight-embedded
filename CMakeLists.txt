@@ -10,7 +10,6 @@ aux_source_directory(./third_party/moonlight-common-c/limelight-common SRC_LIST)
 aux_source_directory(./third_party/moonlight-common-c/limelight-common/OpenAES SRC_LIST)
 
 include_directories(./third_party/moonlight-common-c)
-include_directories(./third_party/libcec/include)
 
 set(MOONLIGHT_DEFINITIONS)
 

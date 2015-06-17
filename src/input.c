@@ -24,6 +24,10 @@
 #include "libevdev/libevdev.h"
 #include "limelight-common/Limelight.h"
 
+#ifdef HAVE_LIBCEC
+#include <ceccloader.h>
+#endif
+
 #include <libudev.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,10 +43,6 @@
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
-
-#ifdef HAVE_LIBCEC
-#include <ceccloader.h>
-#endif
 
 struct input_abs_parms {
   int min, max;
@@ -91,11 +91,9 @@ static char                 g_strPort[50] = { 0 };
 static libcec_interface_t   g_iface;
 static ICECCallbacks        g_callbacks;
 
-static int on_cec_keypress(void *UNUSED, const cec_keypress key)
-{
+static int on_cec_keypress(void*, const cec_keypress key) {
   char value;
-  switch (key.keycode)
-  {
+  switch (key.keycode) {
     case CEC_USER_CONTROL_CODE_UP:
       value = KEY_UP;
       break;
@@ -124,15 +122,13 @@ static int on_cec_keypress(void *UNUSED, const cec_keypress key)
       break;
   }
   
-  if (value != 0)
-  {
+  if (value != 0) {
     short code = 0x80 << 8 | keyCodes[value];
     LiSendKeyboardEvent(code, (key.duration > 0)?KEY_ACTION_DOWN:KEY_ACTION_UP, 0);
   }
 }
 
-static void init_cec()
-{
+static void init_cec() {
   libcecc_reset_configuration(&g_config);
   g_config.clientVersion = LIBCEC_VERSION_CURRENT;
   g_config.bActivateSource = 0;
@@ -255,6 +251,10 @@ static void input_remove(int devindex) {
 }
 
 void input_init(char* mapfile) {
+  #ifdef HAVE_LIBCEC
+  init_cec();
+  #endif
+
   udev = udev_new();
   if (!udev) {
     fprintf(stderr, "Can't create udev\n");
@@ -705,8 +705,5 @@ void input_map(char* fileName) {
 }
 
 void input_loop() {
-#ifdef HAVE_LIBCEC
-  init_cec();
-#endif
   input_poll(input_handle_event);
 }

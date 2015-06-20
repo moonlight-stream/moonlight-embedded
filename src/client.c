@@ -124,7 +124,10 @@ static void client_load_server_status(const char *address) {
 
   paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
-  strstr(versionText, ".")[0] = 0;
+  char *versionSep = strstr(versionText, ".");
+  if (versionSep != NULL) {
+    *versionSep = 0;
+  }
   serverMajorVersion = atoi(versionText);
 
   free(pairedText);
@@ -306,7 +309,7 @@ void client_pair(const char *address) {
   sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", address, unique_id, client_pairing_secret_hex);
   http_request(url, data);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=pairchallenge", address, unique_id, challenge_response_hex);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=pairchallenge", address, unique_id);
   http_request(url, data);
   http_free_data(data);
 

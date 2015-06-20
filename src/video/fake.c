@@ -28,7 +28,7 @@ void decoder_renderer_setup(int width, int height, int redrawRate, void* context
   fd = fopen(fileName, "w");
 }
 
-void decoder_renderer_release() {
+void decoder_renderer_cleanup() {
   fclose(fd);
 }
 
@@ -43,8 +43,6 @@ int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_fake = {
   .setup = decoder_renderer_setup,
-  .start = NULL,
-  .stop = NULL,
-  .release = decoder_renderer_release,
+  .cleanup = decoder_renderer_cleanup,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
 };

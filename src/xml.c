@@ -92,7 +92,7 @@ int xml_search(char* data, size_t len, char* node, char** result) {
   struct xml_query search;
   search.data = node;
   search.start = 0;
-  search.memory = malloc(1);
+  search.memory = calloc(1, 1);
   search.size = 0;
   XML_Parser parser = XML_ParserCreate("UTF-8");
   XML_SetUserData(parser, &search);
@@ -110,7 +110,7 @@ int xml_search(char* data, size_t len, char* node, char** result) {
 
 struct app_list* xml_applist(char* data, size_t len) {
   struct xml_query query;
-  query.memory = malloc(1);
+  query.memory = calloc(1, 1);
   query.size = 0;
   query.start = 0;
   query.data = NULL;

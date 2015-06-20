@@ -130,7 +130,7 @@ static void decoder_renderer_setup(int width, int height, int redrawRate, void* 
   }
 }
 
-static void decoder_renderer_stop() {
+static void decoder_renderer_cleanup() {
   int status = 0;
 
   buf->nFilledLen = 0;
@@ -145,9 +145,7 @@ static void decoder_renderer_stop() {
   ilclient_flush_tunnels(tunnel, 0);
 
   ilclient_disable_port_buffers(list[0], 130, NULL, NULL, NULL);
-}
 
-static void decoder_renderer_release() {
   ilclient_disable_tunnel(tunnel);
   ilclient_teardown_tunnels(tunnel);
 
@@ -228,8 +226,6 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_omx = {
   .setup = decoder_renderer_setup,
-  .start = NULL,
-  .stop = decoder_renderer_stop,
-  .release = decoder_renderer_release,
+  .cleanup = decoder_renderer_cleanup,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
 };

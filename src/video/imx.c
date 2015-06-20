@@ -412,7 +412,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   return DR_OK;
 }
 
-static void decoder_renderer_release() {
+static void decoder_renderer_cleanup() {
   IOFreePhyMem(&ps_mem_desc);
   IOFreePhyMem(&slice_mem_desc);
   
@@ -423,8 +423,6 @@ static void decoder_renderer_release() {
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_imx = {
   .setup = decoder_renderer_setup,
-  .start = NULL,
-  .stop = NULL,
-  .release = decoder_renderer_release,
+  .cleanup = decoder_renderer_cleanup,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
 };

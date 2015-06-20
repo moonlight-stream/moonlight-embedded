@@ -61,19 +61,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   video_init();
 
-  struct addrinfo hints, *res;
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_STREAM;
-  int err = getaddrinfo(address, NULL, &hints, &res);
-  if (err<0 || res == NULL) {
-    fprintf(stderr, "Can't resolve host: %s\n", address);
-    exit(-1);
-  }
-
-  struct sockaddr_in *addr = (struct sockaddr_in*)res->ai_addr;
-  LiStartConnection(addr->sin_addr.s_addr, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, NULL, 0, client_get_server_version());
-  freeaddrinfo(res);
+  LiStartConnection(address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, NULL, 0, client_get_server_version());
 
   input_loop();
 

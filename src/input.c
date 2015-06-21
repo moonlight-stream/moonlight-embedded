@@ -91,7 +91,7 @@ static char                 g_strPort[50] = { 0 };
 static libcec_interface_t   g_iface;
 static ICECCallbacks        g_callbacks;
 
-static int on_cec_keypress(void*, const cec_keypress key) {
+static int on_cec_keypress(void* userdata, const cec_keypress key) {
   char value;
   switch (key.keycode) {
     case CEC_USER_CONTROL_CODE_UP:

@@ -29,6 +29,7 @@ pkg_check_modules(AVAHI REQUIRED avahi-client)
 pkg_check_modules(UDEV REQUIRED libudev)
 
 if(CEC_FOUND)
+  include_directories(./third_party/libcec)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
 endif()
 

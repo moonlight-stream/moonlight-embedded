@@ -68,7 +68,25 @@ Prebuilt binary packages for Raspbian Wheezy are available, add this line to you
 deb http://archive.itimmer.nl/raspbian/moonlight wheezy main
 ```
 
+Install package using the following commands
+```
+apt-get update
+apt-get install moonlight-embedded
+```
+
 Source package for ArchLinux is available in [AUR](https://aur.archlinux.org/packages/moonlight-embedded/)
+
+Prebuilt binary packages for ArchLinux ARM are available, add those lines to you */etc/pacman.conf*
+```
+[moonlight]
+Server = http://archive.itimmer.nl/archlinux/$repo/os/$arch
+SigLevel = Optional
+```
+
+Install package using the following command
+```
+pacman -Sy moonlight-embedded
+```
 
 ##Compile and install
 

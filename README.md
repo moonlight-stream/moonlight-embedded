@@ -62,6 +62,14 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 
 	Use ctrl-c to exit application
 
+## Packages
+Prebuilt binary packages for Raspbian Wheezy are available, add this line to your */etc/apt/sources.list*
+```
+deb http://archive.itimmer.nl/raspbian/moonlight wheezy main
+```
+
+Source package for ArchLinux is available in [AUR](https://aur.archlinux.org/packages/moonlight-embedded/)
+
 ##Compile and install
 
 * Download and extract Moonlight Embedded from release or git clone

@@ -31,6 +31,7 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 * Play games!
 
 ##Usage
+
 	Usage: moonlight [options] host
 
 	Actions:
@@ -64,8 +65,9 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 ##Compile and install
 
 * Download and extract Moonlight Embedded from release or git clone
-* Install development dependencies
+* Install development dependencies (see Dependencies)
 * Initialize the git submodules ``git submodule update --init``
+* Build and install using the following commands
 
 ```
 mkdir build
@@ -74,21 +76,46 @@ cmake ../
 make
 make install
 ```
+
 ## Dependencies
 
-ArchLinux/Debian (Raspbian)/Debian Development (Raspbian)
-* opus/libopus0/libopus-dev
-* expat/libexpat1/libexpat1-dev
-* openssl/libssl-dev/libssl-dev
-* alsa-lib/libasound2/libasound2-dev
-* systemd/libudev/libudev-dev
-* avahi/libavahi-client3/libavahi-client-dev
-* curl/libcurl3/libcurl4-openssl-dev
-* libevdev/libevdev2/libevdev-dev
+### ArchLinux
+Install with
+```
+pacman -S (package list)
+```
+* opus
+* expat
+* openssl
+* alsa-lib
+* avahi
+* libevdev
 
-Development only dependencies
+For compilation and development you also need:
 * cmake
-* C compiler
+
+### Debian (Raspbian)
+Install with
+```
+apt-get install (package list)
+```
+* libopus0
+* libexpat1
+* libasound2
+* libudev0
+* libavahi-client3
+* libcurl3
+* libevdev2
+
+For compilation and development you also need:
+* libssl-dev
+* libopus-dev
+* libasound2-dev
+* libudev-dev
+* libavahi-client-dev
+* libcurl4-openssl-dev
+* libevdev-dev
+* cmake
 
 ## See also
 

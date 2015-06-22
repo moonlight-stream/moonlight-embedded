@@ -327,8 +327,8 @@ static short input_convert_value(struct input_event *ev, struct input_device *de
     return reverse?SHRT_MIN:SHRT_MAX;
   else if (ev->value < parms->min)
     return reverse?SHRT_MAX:SHRT_MIN;
-  else else if (reverse)
-    return (parms->max - (ev->value<parms->avg?parms->flat*2:0) - input) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) - SHRT_MIN;
+  else if (reverse)
+    return (parms->max - (ev->value<parms->avg?parms->flat*2:0) - ev->value) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) - SHRT_MIN;
   else
     return (ev->value - (ev->value>parms->avg?parms->flat*2:0) - parms->min) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) - SHRT_MIN;
 }

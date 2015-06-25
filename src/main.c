@@ -252,7 +252,7 @@ int main(int argc, char* argv[]) {
     address[0] = 0;
     discover_server(address);
     if (address[0] == 0) {
-      perror("Can't find server");
+      fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
       exit(-1);
     }
   }

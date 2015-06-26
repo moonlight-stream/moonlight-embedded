@@ -236,11 +236,15 @@ static void input_remove(int devindex) {
   if (fdindex != numFds && numFds > 0) {
     memcpy(&fds[fdindex], &fds[numFds], sizeof(struct pollfd));
     if (numFds == udev_fdindex)
-      udev_fdindex = numFds;
+      udev_fdindex = fdindex;
+    else if (numFds == sig_fdindex)
+      sig_fdindex = fdindex;
     else {
       for (int i=0;i<numDevices;i++) {
-        if (devices[i].fdindex == numFds)
+        if (devices[i].fdindex == numFds) {
           devices[i].fdindex = fdindex;
+          break;
+        }
       }
     }
   }
@@ -483,7 +487,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
       case REL_Y:
         dev->mouseDeltaY = ev->value;
         break;
-      case REL_Z:
+      case REL_WHEEL:
         dev->mouseScroll = ev->value;
         break;
     }

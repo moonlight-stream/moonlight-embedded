@@ -227,6 +227,11 @@ void client_pair(const char *address) {
     return;
   }
 
+  if (currentGame != 0) {
+    fprintf(stderr, "The computer is currently in a game. You must close the game before pairing.\n");
+    exit(-1);
+  }
+
   char pin[5];
   sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
   printf("Please enter the following PIN on the target PC: %s\n", pin);

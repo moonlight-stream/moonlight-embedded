@@ -23,6 +23,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct mapping default_mapping = {
+  .abs_x = 0, .abs_y = 1, .abs_z = 2,
+  .abs_rx = 3, .abs_ry = 4, .abs_rz = 5,
+
+  .reverse_x = false, .reverse_y = true,
+  .reverse_rx = false, .reverse_ry = true,
+
+  .abs_deadzone = 0,
+
+  .abs_dpad_x = 16, .abs_dpad_y = 17,
+  .reverse_dpad_x = false, .reverse_dpad_y = false,
+
+  .btn_south = 304, .btn_east = 305, .btn_north = 307, .btn_west = 308,
+  .btn_select = 314, .btn_start = 315, .btn_mode = 316,
+  .btn_thumbl = 317, .btn_thumbr = 318,
+  .btn_tl = 310, .btn_tr = 311, .btn_tl2 = 312, .btn_tr2 = 313,
+
+  .btn_dpad_up = 544, .btn_dpad_down = 545, .btn_dpad_left = 546, .btn_dpad_right = 547
+};
+
 #define write_config(fd, key, value) fprintf(fd, "%s = %hd\n", key, value)
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 

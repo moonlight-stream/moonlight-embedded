@@ -213,6 +213,8 @@ void input_create(const char* device, char* mapFile) {
 
   if (mapFile != NULL)
     mapping_load(mapFile, &(devices[dev].map));
+  else
+    memcpy(&(devices[dev].map), &default_mapping, sizeof(default_mapping));
 
   devices[dev].controllerId = -1;
   input_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map.abs_x);
@@ -474,8 +476,10 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
           dev->leftTrigger = ev->value?UCHAR_MAX:0;
         else if (ev->code == dev->map.btn_tr2)
           dev->rightTrigger = ev->value?UCHAR_MAX:0;
-        else
+        else {
+          fprintf(stderr, "Unmapped button: %d\n", ev->code);
           gamepadModified = false;
+        }
       }
     }
     break;

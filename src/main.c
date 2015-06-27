@@ -40,7 +40,7 @@
 #include <getopt.h>
 
 #define MOONLIGHT_PATH "/moonlight/"
-#define USER_PATHS ":~/.moonlight:./"
+#define USER_PATHS ":~/.moonlight/:./"
 
 static void applist(const char* address) {
   struct app_list* list = client_applist(address);
@@ -95,9 +95,14 @@ static void help() {
   exit(0);
 }
 
-char* get_path(char* name) {
+char* get_path(char* name, int mode) {
   const char *xdg_data_dirs = getenv("XDG_DATA_DIRS");
   char *data_dirs;
+
+  if (access(name, mode) != -1) {
+      return name;
+  }
+
   if (!xdg_data_dirs)
     data_dirs = "/usr/share:/usr/local/share:" USER_PATHS;
   else {
@@ -122,7 +127,7 @@ char* get_path(char* name) {
     else
       sprintf(path+length, "%s", name);
 
-    if(access(path, F_OK) != -1)
+    if(access(path, mode) != -1)
       return path;
 
     data_dirs = end + 1;
@@ -168,7 +173,7 @@ int main(int argc, char* argv[]) {
   char* app = "Steam";
   char* action = NULL;
   char* address = NULL;
-  char* mapping = get_path("mappings/default.conf");
+  char* mapping = get_path("mappings/default.conf", R_OK);
   int option_index = 0;
   bool sops = true;
   bool localaudio = false;
@@ -208,7 +213,11 @@ int main(int argc, char* argv[]) {
       input_create(optarg, mapping);
       break;
     case 'k':
-      mapping = get_path(optarg);
+      mapping = get_path(optarg, R_OK);
+      if (mapping == NULL) {
+        fprintf(stderr, "Unable to open custom mapping file: %s\n", optarg);
+        exit(-1);
+      }
       break;
     case 'l':
       sops = false;

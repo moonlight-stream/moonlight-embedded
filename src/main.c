@@ -40,7 +40,7 @@
 #include <getopt.h>
 
 #define MOONLIGHT_PATH "/moonlight/"
-#define USER_PATHS ":~/.moonlight:./"
+#define USER_PATHS ":~/.moonlight/:./"
 
 static void applist(const char* address) {
   struct app_list* list = client_applist(address);
@@ -98,6 +98,11 @@ static void help() {
 char* get_path(char* name) {
   const char *xdg_data_dirs = getenv("XDG_DATA_DIRS");
   char *data_dirs;
+
+  if (access(name, R_OK) != -1) {
+      return name;
+  }
+
   if (!xdg_data_dirs)
     data_dirs = "/usr/share:/usr/local/share:" USER_PATHS;
   else {
@@ -122,7 +127,7 @@ char* get_path(char* name) {
     else
       sprintf(path+length, "%s", name);
 
-    if(access(path, F_OK) != -1)
+    if(access(path, R_OK) != -1)
       return path;
 
     data_dirs = end + 1;
@@ -209,6 +214,10 @@ int main(int argc, char* argv[]) {
       break;
     case 'k':
       mapping = get_path(optarg);
+      if (mapping == NULL) {
+        fprintf(stderr, "Unable to open custom mapping file: %s\n", optarg);
+        exit(-1);
+      }
       break;
     case 'l':
       sops = false;

@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+export DEB_CFLAGS_MAINT_APPEND = -std=gnu99
+
+%:
+	dh $@ --with quilt

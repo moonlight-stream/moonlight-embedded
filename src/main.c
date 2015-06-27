@@ -53,7 +53,7 @@ static void applist(const char* address) {
 static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops, bool localaudio) {
   int appId = client_get_app_id(address, app);
   if (appId<0) {
-    printf("Can't find app %s\n", app);
+    fprintf(stderr, "Can't find app %s\n", app);
     exit(-1);
   }
 
@@ -61,20 +61,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   video_init();
 
-  struct addrinfo hints, *res;
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_STREAM;
-  int err = getaddrinfo(address, NULL, &hints, &res);
-  if (err<0 || res == NULL) {
-    printf("Can't resolve host: %s\n", address);
-    exit(-1);
-  }
-
-  struct sockaddr_in *addr = (struct sockaddr_in*)res->ai_addr;
-  LiStartConnection(addr->sin_addr.s_addr, config, NULL, decoder_callbacks,
-    &audio_callbacks, NULL, NULL, 0, client_get_server_version());
-  freeaddrinfo(res);
+  LiStartConnection(address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, NULL, 0, client_get_server_version());
 
   input_loop();
 
@@ -147,7 +134,7 @@ char* get_path(char* name) {
 
 static void pair_check(void) {
   if (!client_is_paired(NULL)) {
-    printf("You must pair with the PC first\n");
+    fprintf(stderr, "You must pair with the PC first\n");
     exit(-1);
   }
 }
@@ -265,7 +252,7 @@ int main(int argc, char* argv[]) {
     address[0] = 0;
     discover_server(address);
     if (address[0] == 0) {
-      perror("Can't find server");
+      fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
       exit(-1);
     }
   }

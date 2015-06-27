@@ -18,49 +18,30 @@
  */
 
 #include "connection.h"
+#include "global.h"
 
 #include <stdio.h>
 
-void connection_stage_starting(int stage)
-{
-  printf("connection_stage_starting %d\n", stage);
-}
-
-void connection_stage_complete(int stage)
-{
-  printf("connection_stage_complete %d\n", stage);
-}
-
-void connection_stage_failed(int stage, long iets)
-{
-  printf("connection_stage_failed %d\n", stage);
-}
-
-void connection_connection_started()
-{
-  printf("connection_connection_started\n");
-}
-
 void connection_connection_terminated()
 {
-  printf("connection_connection_terminated\n");
+  quit();
 }
 
 void connection_display_message(char *msg)
 {
-  printf("connection_display_message: %s\n", msg);
+  printf("%s\n", msg);
 }
 
 void connection_display_transient_message(char *msg)
 {
-  printf("connection_display_transient_message: %s\n", msg);
+  printf("%s\n", msg);
 }
 
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
-  .stageStarting = connection_stage_starting,
-  .stageComplete = connection_stage_complete,
-  .stageFailed = connection_stage_failed,
-  .connectionStarted = connection_connection_started,
+  .stageStarting = NULL,
+  .stageComplete = NULL,
+  .stageFailed = NULL,
+  .connectionStarted = NULL,
   .connectionTerminated = connection_connection_terminated,
   .displayMessage = connection_display_message,
   .displayTransientMessage = connection_display_transient_message,

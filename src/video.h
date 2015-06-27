@@ -19,6 +19,8 @@
 
 #include "limelight-common/Limelight.h"
 
+#include <stdbool.h>
+
 extern DECODER_RENDERER_CALLBACKS *decoder_callbacks;
 
 void video_init();
@@ -31,5 +33,6 @@ extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
 #endif
 #ifdef HAVE_IMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_imx;
+bool video_imx_init();
 #endif

@@ -19,21 +19,30 @@
 
 #include "keyboard.h"
 #include "mapping.h"
+#include "global.h"
 
 #include "libevdev/libevdev.h"
 #include "limelight-common/Limelight.h"
+
+#ifdef HAVE_LIBCEC
+#include <ceccloader.h>
+#endif
 
 #include <libudev.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/signalfd.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <limits.h>
+#include <unistd.h>
+#include <pthread.h>
 
 struct input_abs_parms {
   int min, max;
@@ -51,7 +60,7 @@ struct input_device {
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
   short controllerId;
   int buttonFlags;
-  short leftTrigger, rightTrigger;
+  char leftTrigger, rightTrigger;
   short leftStickX, leftStickY;
   short rightStickX, rightStickY;
   bool gamepadModified;
@@ -73,6 +82,91 @@ static char* defaultMapfile;
 static struct udev *udev;
 static struct udev_monitor *udev_mon;
 static int udev_fdindex;
+
+static int sig_fdindex;
+
+#ifdef HAVE_LIBCEC
+static libcec_configuration g_config;
+static char                 g_strPort[50] = { 0 };
+static libcec_interface_t   g_iface;
+static ICECCallbacks        g_callbacks;
+
+static int on_cec_keypress(void* userdata, const cec_keypress key) {
+  char value;
+  switch (key.keycode) {
+    case CEC_USER_CONTROL_CODE_UP:
+      value = KEY_UP;
+      break;
+    case CEC_USER_CONTROL_CODE_DOWN:
+      value = KEY_DOWN;
+      break;
+    case CEC_USER_CONTROL_CODE_LEFT:
+      value = KEY_LEFT;
+      break;
+    case CEC_USER_CONTROL_CODE_RIGHT:
+      value = KEY_RIGHT;
+      break;
+    case CEC_USER_CONTROL_CODE_ENTER:
+    case CEC_USER_CONTROL_CODE_SELECT:
+      value = KEY_ENTER;
+      break;
+    case CEC_USER_CONTROL_CODE_ROOT_MENU:
+      value = KEY_TAB;
+      break;
+    case CEC_USER_CONTROL_CODE_AN_RETURN:
+    case CEC_USER_CONTROL_CODE_EXIT:
+      value = KEY_ESC;
+      break;
+    default:
+      value = 0;
+      break;
+  }
+  
+  if (value != 0) {
+    short code = 0x80 << 8 | keyCodes[value];
+    LiSendKeyboardEvent(code, (key.duration > 0)?KEY_ACTION_DOWN:KEY_ACTION_UP, 0);
+  }
+}
+
+static void init_cec() {
+  libcecc_reset_configuration(&g_config);
+  g_config.clientVersion = LIBCEC_VERSION_CURRENT;
+  g_config.bActivateSource = 0;
+  g_callbacks.CBCecKeyPress = &on_cec_keypress;
+  g_config.callbacks = &g_callbacks;
+  snprintf(g_config.strDeviceName, sizeof(g_config.strDeviceName), "Moonlight");
+  g_config.callbacks = &g_callbacks;
+  g_config.deviceTypes.types[0] = CEC_DEVICE_TYPE_PLAYBACK_DEVICE;
+  
+  if (libcecc_initialise(&g_config, &g_iface, NULL) != 1) {
+    fprintf(stderr, "Failed to initialize libcec interface\n");
+    fflush(stderr);
+    return;
+  }
+  
+  g_iface.init_video_standalone(g_iface.connection);
+  
+  cec_adapter devices[10];
+  int8_t iDevicesFound = g_iface.find_adapters(g_iface.connection, devices, sizeof(devices) / sizeof(devices), NULL);
+  
+  if (iDevicesFound <= 0) {
+    fprintf(stderr, "No CEC devices found\n");
+    fflush(stderr);
+    libcecc_destroy(&g_iface);
+    return;
+  }
+  
+  strcpy(g_strPort, devices[0].comm);
+  if (!g_iface.open(g_iface.connection, g_strPort, 5000)) {
+    fprintf(stderr, "Unable to open the device on port %s\n", g_strPort);
+    fflush(stderr);
+    libcecc_destroy(&g_iface);
+    return;
+  }
+  
+  g_iface.set_active_source(g_iface.connection, g_config.deviceTypes.types[0]);
+}
+#endif
 
 static void input_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
   parms->flat = libevdev_get_abs_flat(dev->dev, code);
@@ -109,6 +203,7 @@ void input_create(const char* device, char* mapFile) {
     exit(EXIT_FAILURE);
   }
 
+  memset(&devices[dev], 0, sizeof(devices[0]));
   devices[dev].fd = fd;
   devices[dev].dev = libevdev_new();
   libevdev_set_fd(devices[dev].dev, devices[dev].fd);
@@ -141,11 +236,15 @@ static void input_remove(int devindex) {
   if (fdindex != numFds && numFds > 0) {
     memcpy(&fds[fdindex], &fds[numFds], sizeof(struct pollfd));
     if (numFds == udev_fdindex)
-      udev_fdindex = numFds;
+      udev_fdindex = fdindex;
+    else if (numFds == sig_fdindex)
+      sig_fdindex = fdindex;
     else {
       for (int i=0;i<numDevices;i++) {
-        if (devices[i].fdindex == numFds)
+        if (devices[i].fdindex == numFds) {
           devices[i].fdindex = fdindex;
+          break;
+        }
       }
     }
   }
@@ -156,13 +255,18 @@ static void input_remove(int devindex) {
 }
 
 void input_init(char* mapfile) {
+  #ifdef HAVE_LIBCEC
+  init_cec();
+  #endif
+
   udev = udev_new();
   if (!udev) {
     fprintf(stderr, "Can't create udev\n");
     exit(1);
   }
 
-  if (autoadd = numDevices == 0) {
+  autoadd = (numDevices == 0);
+  if (autoadd) {
     struct udev_enumerate *enumerate = udev_enumerate_new(udev);
     udev_enumerate_add_match_subsystem(enumerate, "input");
     udev_enumerate_scan_devices(enumerate);
@@ -187,11 +291,11 @@ void input_init(char* mapfile) {
   udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "input", NULL);
   udev_monitor_enable_receiving(udev_mon);
 
-  int udev_fdindex = numFds;
-  numFds++;
+  udev_fdindex = numFds++;
+  sig_fdindex = numFds++;
 
   if (fds == NULL)
-    fds = malloc(sizeof(struct pollfd));
+    fds = malloc(sizeof(struct pollfd)*numFds);
   else
     fds = realloc(fds, sizeof(struct pollfd)*numFds);
 
@@ -203,6 +307,17 @@ void input_init(char* mapfile) {
   defaultMapfile = mapfile;
   fds[udev_fdindex].fd = udev_monitor_get_fd(udev_mon);
   fds[udev_fdindex].events = POLLIN;
+
+  main_thread_id = pthread_self();
+  sigset_t sigset;
+  sigemptyset(&sigset);
+  sigaddset(&sigset, SIGHUP);
+  sigaddset(&sigset, SIGTERM);
+  sigaddset(&sigset, SIGINT);
+  sigaddset(&sigset, SIGQUIT);
+  sigprocmask(SIG_BLOCK, &sigset, NULL);
+  fds[sig_fdindex].fd = signalfd(-1, &sigset, 0);
+  fds[sig_fdindex].events = POLLIN | POLLERR | POLLHUP;
 }
 
 void input_destroy() {
@@ -216,10 +331,10 @@ static short input_convert_value(struct input_event *ev, struct input_device *de
     return reverse?SHRT_MIN:SHRT_MAX;
   else if (ev->value < parms->min)
     return reverse?SHRT_MAX:SHRT_MIN;
-  else {
-    int value = ev->value + (ev->value<parms->avg?parms->flat:-parms->flat);
-    return (value-parms->avg) * SHRT_MAX / ((reverse?-parms->range-1:parms->range) - parms->flat);
-  }
+  else if (reverse)
+    return (parms->max - (ev->value<parms->avg?parms->flat*2:0) - ev->value) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) - SHRT_MIN;
+  else
+    return (ev->value - (ev->value>parms->avg?parms->flat*2:0) - parms->min) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) - SHRT_MIN;
 }
 
 static char input_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms) {
@@ -228,7 +343,7 @@ static char input_convert_value_byte(struct input_event *ev, struct input_device
   else if (ev->value>parms->max)
     return UCHAR_MAX;
   else {
-    int value = ev->value + parms->flat;
+    int value = ev->value - parms->flat;
     return (value-parms->min) * UCHAR_MAX / (parms->diff-parms->flat);
   }
 }
@@ -345,20 +460,20 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
           gamepadCode = SPECIAL_FLAG;
       }
 
-      if (mouseCode > 0) {
+      if (mouseCode != 0) {
         LiSendMouseButtonEvent(ev->value?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, mouseCode);
       } else {
         gamepadModified = true;
 
-        if (gamepadCode > 0) {
+        if (gamepadCode != 0) {
           if (ev->value)
             dev->buttonFlags |= gamepadCode;
           else
             dev->buttonFlags &= ~gamepadCode;
         } else if (ev->code == dev->map.btn_tl2)
-          dev->leftTrigger = ev->value?USHRT_MAX:0;
+          dev->leftTrigger = ev->value?UCHAR_MAX:0;
         else if (ev->code == dev->map.btn_tr2)
-          dev->rightTrigger = ev->value?USHRT_MAX:0;
+          dev->rightTrigger = ev->value?UCHAR_MAX:0;
         else
           gamepadModified = false;
       }
@@ -372,7 +487,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
       case REL_Y:
         dev->mouseDeltaY = ev->value;
         break;
-      case REL_Z:
+      case REL_WHEEL:
         dev->mouseScroll = ev->value;
         break;
     }
@@ -396,7 +511,7 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
       if (dir == 1) {
         dev->buttonFlags |= RIGHT_FLAG;
         dev->buttonFlags &= ~LEFT_FLAG;
-      } else if (dir == -1) {
+      } else if (dir == 0) {
         dev->buttonFlags &= ~RIGHT_FLAG;
         dev->buttonFlags &= ~LEFT_FLAG;
       } else {
@@ -406,11 +521,11 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
     } else if (ev->code == dev->map.abs_dpad_y) {
       int dir = input_convert_value_direction(ev, dev, &dev->dpadyParms, dev->map.reverse_dpad_y);
       if (dir == 1) {
-        dev->buttonFlags |= UP_FLAG;
-        dev->buttonFlags &= ~DOWN_FLAG;
-      } else if (dir == -1) {
+        dev->buttonFlags |= DOWN_FLAG;
         dev->buttonFlags &= ~UP_FLAG;
+      } else if (dir == 0) {
         dev->buttonFlags &= ~DOWN_FLAG;
+        dev->buttonFlags &= ~UP_FLAG;
       } else {
         dev->buttonFlags &= ~DOWN_FLAG;
         dev->buttonFlags |= UP_FLAG;
@@ -454,7 +569,14 @@ static bool input_handle_mapping_event(struct input_event *ev, struct input_devi
   return true;
 }
 
-static void input_poll(bool (*handler) (struct input_event*, struct input_device*)) {
+static void input_drain(void) {
+  for (int i = 0; i < numDevices; i++) {
+    struct input_event ev;
+    while (libevdev_next_event(devices[i].dev, LIBEVDEV_READ_FLAG_NORMAL, &ev) >= 0);
+  }
+}
+
+static bool input_poll(bool (*handler) (struct input_event*, struct input_device*)) {
   while (poll(fds, numFds, -1)) {
     if (fds[udev_fdindex].revents > 0) {
       struct udev_device *dev = udev_monitor_receive_device(udev_mon);
@@ -469,6 +591,17 @@ static void input_poll(bool (*handler) (struct input_event*, struct input_device
         }
         udev_device_unref(dev);
       }
+    } else if (fds[sig_fdindex].revents > 0) {
+      struct signalfd_siginfo info;
+      read(fds[sig_fdindex].fd, &info, sizeof(info));
+
+      switch (info.ssi_signo) {
+        case SIGINT:
+        case SIGTERM:
+        case SIGQUIT:
+        case SIGHUP:
+          return false;
+      }
     }
     for (int i=0;i<numDevices;i++) {
       if (fds[devices[i].fdindex].revents > 0) {
@@ -479,7 +612,7 @@ static void input_poll(bool (*handler) (struct input_event*, struct input_device
             fprintf(stderr, "Error: cannot keep up\n");
           else if (rc == LIBEVDEV_READ_STATUS_SUCCESS) {
             if (!handler(&ev, &devices[i]))
-              return;
+              return true;
           }
         }
         if (rc == -ENODEV) {
@@ -491,6 +624,8 @@ static void input_poll(bool (*handler) (struct input_event*, struct input_device
       }
     }
   }
+
+  return false;
 }
 
 static void input_map_key(char* keyName, short* key) {
@@ -498,38 +633,50 @@ static void input_map_key(char* keyName, short* key) {
   currentKey = key;
   currentAbs = NULL;
   *key = -1;
-  input_poll(input_handle_mapping_event);
+  if (!input_poll(input_handle_mapping_event))
+    exit(1);
+
+  usleep(250000);
+  input_drain();
 }
 
 static void input_map_abs(char* keyName, short* abs, bool* reverse) {
-  printf("%s\n", keyName);
+  printf("Move %s\n", keyName);
   currentKey = NULL;
   currentAbs = abs;
   currentReverse = reverse;
   *abs = -1;
-  input_poll(input_handle_mapping_event);
+  if (!input_poll(input_handle_mapping_event))
+    exit(1);
+
+  usleep(250000);
+  input_drain();
 }
 
 static void input_map_abskey(char* keyName, short* key, short* abs, bool* reverse) {
-  printf("%s\n", keyName);
+  printf("Press %s\n", keyName);
   currentKey = key;
   currentAbs = abs;
   currentReverse = reverse;
   *key = -1;
   *abs = -1;
   *currentReverse = false;
-  input_poll(input_handle_mapping_event);
+  if (!input_poll(input_handle_mapping_event))
+    exit(1);
+
+  usleep(250000);
+  input_drain();
 }
 
 void input_map(char* fileName) {
   struct mapping map;
 
   input_map_abs("Left Stick Right", &(map.abs_x), &(map.reverse_x));
-  input_map_abs("Left Stick Down", &(map.abs_y), &(map.reverse_y));
+  input_map_abs("Left Stick Up", &(map.abs_y), &(map.reverse_y));
   input_map_key("Left Stick Button", &(map.btn_thumbl));
 
   input_map_abs("Right Stick Right", &(map.abs_rx), &(map.reverse_rx));
-  input_map_abs("Right Stick Down", &(map.abs_ry), &(map.reverse_ry));
+  input_map_abs("Right Stick Up", &(map.abs_ry), &(map.reverse_ry));
   input_map_key("Right Stick Button", &(map.btn_thumbr));
 
   input_map_abskey("D-Pad Right", &(map.btn_dpad_right), &(map.abs_dpad_x), &(map.reverse_dpad_x));
@@ -553,11 +700,11 @@ void input_map(char* fileName) {
   input_map_key("Special Button", &(map.btn_mode));
 
   bool ignored;
-  input_map_abskey("Left Trigger", &(map.btn_tl), &(map.abs_z), &ignored);
-  input_map_abskey("Right Trigger", &(map.btn_tr), &(map.abs_rz), &ignored);
+  input_map_abskey("Left Trigger", &(map.btn_tl2), &(map.abs_z), &ignored);
+  input_map_abskey("Right Trigger", &(map.btn_tr2), &(map.abs_rz), &ignored);
 
-  input_map_key("Left Bumper", &(map.btn_tl2));
-  input_map_key("Right Bumper", &(map.btn_tr2));
+  input_map_key("Left Bumper", &(map.btn_tl));
+  input_map_key("Right Bumper", &(map.btn_tr));
   mapping_save(fileName, &map);
 }
 

@@ -36,7 +36,6 @@ static OpusDecoder* decoder;
 static short pcmBuffer[FRAME_SIZE * CHANNEL_COUNT];
 
 static void audio_renderer_init() {
-  printf("audio_renderer_init\n");
   int rc;
   decoder = opus_decoder_create(SAMPLE_RATE, CHANNEL_COUNT, &rc);
 
@@ -72,8 +71,7 @@ static void audio_renderer_init() {
   CHECK_RETURN(snd_pcm_prepare(handle));
 }
 
-static void audio_renderer_release() {
-  printf("audio_renderer_release\n");
+static void audio_renderer_cleanup() {
   if (decoder != NULL)
     opus_decoder_destroy(decoder);
 
@@ -101,8 +99,6 @@ static void audio_renderer_decode_and_play_sample(char* data, int length) {
 
 AUDIO_RENDERER_CALLBACKS audio_callbacks = {
   .init = audio_renderer_init,
-  .start = NULL,
-  .stop = NULL,
-  .release = audio_renderer_release,
+  .cleanup = audio_renderer_cleanup,
   .decodeAndPlaySample = audio_renderer_decode_and_play_sample,
 };

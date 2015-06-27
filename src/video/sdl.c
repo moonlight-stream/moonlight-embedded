@@ -61,7 +61,7 @@ static void sdl_setup(int width, int height, int redrawRate, void* context, int 
   screen_height = height;
 }
 
-static void sdl_release() {
+static void sdl_cleanup() {
   ffmpeg_destroy();
 }
 
@@ -109,8 +109,6 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl = {
   .setup = sdl_setup,
-  .start = NULL,
-  .stop = NULL,
-  .release = sdl_release,
+  .cleanup = sdl_cleanup,
   .submitDecodeUnit = sdl_submit_decode_unit,
 };

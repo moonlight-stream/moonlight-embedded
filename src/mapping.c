@@ -100,11 +100,11 @@ void mapping_load(char* fileName, struct mapping* map) {
       else if (strcmp("reverse_ry", key) == 0)
         map->reverse_ry = strcmp("true", value) == 0;
       else if (strcmp("reverse_dpad_x", key) == 0)
-        map->reverse_x = strcmp("true", value) == 0;
+        map->reverse_dpad_x = strcmp("true", value) == 0;
       else if (strcmp("reverse_dpad_y", key) == 0)
-        map->reverse_y = strcmp("true", value) == 0;
+        map->reverse_dpad_y = strcmp("true", value) == 0;
       else
-        printf("Can't map (%s)\n", key);
+        fprintf(stderr, "Can't map (%s)\n", key);
     }
     if (key != NULL)
       free(key);

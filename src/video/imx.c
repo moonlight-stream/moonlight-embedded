@@ -19,9 +19,6 @@
 
 #include "../video.h"
 
-#include "vpu_io.h"
-#include "vpu_lib.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -42,6 +39,9 @@
 #include <linux/v4l2-common.h>
 #include <linux/v4l2-controls.h>
 #include <linux/videodev2.h>
+
+#include <vpu_io.h>
+#include <vpu_lib.h>
 
 #define STREAM_BUF_SIZE 0x200000
 #define PS_SAVE_SIZE 0x080000
@@ -72,6 +72,10 @@ static int disp_clr_index = 0;
 static FrameBuffer *fb;
 static struct v4l2_buffer dbuf;
 
+bool video_imx_init() {
+  return vpu_Init(NULL) == RETCODE_SUCCESS;
+}
+
 static void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
   struct mxcfb_gbl_alpha alpha;
 
@@ -94,11 +98,6 @@ static void decoder_renderer_setup(int width, int height, int redrawRate, void* 
 
   close(fd_fb);
   
-  if (vpu_Init(NULL) != RETCODE_SUCCESS){
-    fprintf(stderr, "Can't intialize VPU\n");
-    exit(EXIT_FAILURE);
-  }
-
   mem_desc.size = STREAM_BUF_SIZE;
   if (IOGetPhyMem(&mem_desc)){
     fprintf(stderr, "Can't get physical memory address\n");
@@ -413,7 +412,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   return DR_OK;
 }
 
-static void decoder_renderer_release() {
+static void decoder_renderer_cleanup() {
   IOFreePhyMem(&ps_mem_desc);
   IOFreePhyMem(&slice_mem_desc);
   
@@ -424,8 +423,6 @@ static void decoder_renderer_release() {
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_imx = {
   .setup = decoder_renderer_setup,
-  .start = NULL,
-  .stop = NULL,
-  .release = decoder_renderer_release,
+  .cleanup = decoder_renderer_cleanup,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
 };

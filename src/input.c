@@ -474,8 +474,10 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
           dev->leftTrigger = ev->value?UCHAR_MAX:0;
         else if (ev->code == dev->map.btn_tr2)
           dev->rightTrigger = ev->value?UCHAR_MAX:0;
-        else
+        else {
+          fprintf(stderr, "Unmapped button: %d\n", ev->code);
           gamepadModified = false;
+        }
       }
     }
     break;

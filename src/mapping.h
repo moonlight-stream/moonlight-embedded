@@ -39,5 +39,7 @@ struct mapping {
   short btn_dpad_up, btn_dpad_down, btn_dpad_left, btn_dpad_right;
 };
 
+extern struct mapping default_mapping;
+
 void mapping_load(char* fileName, struct mapping* map);
 void mapping_save(char* fileName, struct mapping* map);

@@ -213,6 +213,8 @@ void input_create(const char* device, char* mapFile) {
 
   if (mapFile != NULL)
     mapping_load(mapFile, &(devices[dev].map));
+  else
+    memcpy(&(devices[dev].map), &default_mapping, sizeof(default_mapping));
 
   devices[dev].controllerId = -1;
   input_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map.abs_x);

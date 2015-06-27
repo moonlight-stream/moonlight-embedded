@@ -120,15 +120,19 @@ void ffmpeg_destroy(void) {
   }
 }
 
-int ffmpeg_draw_frame(AVPicture pict) {
-  int err = sws_scale(scaler_ctx, (const uint8_t* const*) dec_frame->data, dec_frame->linesize, 0, decoder_ctx->height, pict.data, pict.linesize);
+int ffmpeg_draw_frame(AVFrame *pict) {
+  int err = sws_scale(scaler_ctx, (const uint8_t* const*) dec_frame->data, dec_frame->linesize, 0, decoder_ctx->height, pict->data, pict->linesize);
 
   if (err != decoder_ctx->height) {
-    printf("Scaling failed");
+    fprintf(stderr, "Scaling failed\n");
     return 0;
   }
   
   return 1;
+}
+
+AVFrame* ffmpeg_get_frame() {
+  return dec_frame;
 }
 
 // packets must be decoded in order
@@ -144,7 +148,7 @@ int ffmpeg_decode(unsigned char* indata, int inlen) {
     got_pic = 0;
     err = avcodec_decode_video2(decoder_ctx, dec_frame, &got_pic, &pkt);
     if (err < 0) {
-      printf("Decode failed");
+      fprintf(stderr, "Decode failed\n");
       got_pic = 0;
       break;
     }
@@ -153,8 +157,9 @@ int ffmpeg_decode(unsigned char* indata, int inlen) {
     pkt.data += err;
   }
   
-  if (got_pic)
+  if (got_pic) {
     return 1;
+  }
 
   return err < 0 ? err : 0;
 }

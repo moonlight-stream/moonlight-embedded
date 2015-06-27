@@ -26,25 +26,13 @@
 
 #define DECODER_BUFFER_SIZE 92*1024
 
-static SDL_Surface *screen;
-static SDL_Overlay *bmp = NULL;
+static SDL_Window *window;
+static SDL_Renderer *renderer;
+static SDL_Texture *bmp = NULL;
 static int screen_width, screen_height;
 static char* ffmpeg_buffer;
 
 static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
-  if(SDL_Init(SDL_INIT_VIDEO)) {
-    fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
-    exit(1);
-  }
-
-  screen = SDL_SetVideoMode(width, height, 0, 0);
-  if(!screen) {
-    fprintf(stderr, "SDL: could not set video mode - exiting\n");
-    exit(1);
-  }
-
-  bmp = SDL_CreateYUVOverlay(width, height, SDL_YV12_OVERLAY, screen);
-  
   int avc_flags = FAST_BILINEAR_FILTERING;
   if (ffmpeg_init(width, height, 2, avc_flags) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
@@ -66,6 +54,31 @@ static void sdl_cleanup() {
 }
 
 static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
+  if (window == NULL) {
+    if(SDL_Init(SDL_INIT_VIDEO)) {
+      fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+      exit(1);
+    }
+
+    window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, 0);
+    if(!window) {
+      fprintf(stderr, "SDL: could not create window - exiting\n");
+      exit(1);
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_TARGETTEXTURE);  
+    if (!renderer) {
+      fprintf(stderr, "SDL: could not create renderer - exiting\n");
+      exit(1);
+    }
+
+    bmp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_TARGET, screen_width, screen_height);
+    if (!bmp) {
+      fprintf(stderr, "SDL: could not create texture - exiting\n");
+      exit(1);
+    }
+  }
+
   if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
     PLENTRY entry = decodeUnit->bufferList;
     int length = 0;
@@ -77,32 +90,20 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
     int ret = ffmpeg_decode(ffmpeg_buffer, length);
     if (ret == 1) {
-      SDL_LockYUVOverlay(bmp);
+      AVFrame* frame = ffmpeg_get_frame();
 
-      AVPicture pict;
-      pict.data[0] = bmp->pixels[0];
-      pict.data[1] = bmp->pixels[2];
-      pict.data[2] = bmp->pixels[1];
-
-      pict.linesize[0] = bmp->pitches[0];
-      pict.linesize[1] = bmp->pitches[2];
-      pict.linesize[2] = bmp->pitches[1];
-
-      ffmpeg_draw_frame(pict);
-    
-      SDL_UnlockYUVOverlay(bmp);
-      
-      SDL_Rect rect;
-      rect.x = 0;
-      rect.y = 0;
-      rect.w = screen_width;
-      rect.h = screen_height;
-      SDL_DisplayYUVOverlay(bmp, &rect);
+      SDL_UpdateYUVTexture(bmp, NULL, frame->data[0], frame->linesize[0], frame->data[1], frame->linesize[1], frame->data[2], frame->linesize[2]);
+      SDL_RenderClear(renderer);
+      SDL_RenderCopy(renderer, bmp, NULL, NULL);
+      SDL_RenderPresent(renderer);
     }
   } else {
     fprintf(stderr, "Video decode buffer too small");
     exit(1);
   }
+  
+  SDL_Event event;
+  SDL_PollEvent(&event);
 
   return DR_OK;
 }

@@ -35,5 +35,6 @@
 int ffmpeg_init(int width, int height, int perf_lvl, int thread_count);
 void ffmpeg_destroy(void);
 
-int ffmpeg_draw_frame(AVPicture pict);
+int ffmpeg_draw_frame(AVFrame *pict);
+AVFrame* ffmpeg_get_frame();
 int ffmpeg_decode(unsigned char* indata, int inlen);

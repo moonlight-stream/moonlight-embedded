@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.1)
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 aux_source_directory(./src SRC_LIST)
+aux_source_directory(./src/input SRC_LIST)
 list(APPEND SRC_LIST ./src/video/fake.c)
 
 set(MOONLIGHT_DEFINITIONS)

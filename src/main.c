@@ -17,12 +17,16 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "loop.h"
 #include "client.h"
 #include "connection.h"
 #include "video.h"
 #include "audio.h"
-#include "input.h"
 #include "discover.h"
+
+#include "input/evdev.h"
+#include "input/udev.h"
+#include "input/cec.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -60,10 +64,14 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
   client_start_app(config, address, appId, sops, localaudio);
 
   video_init();
+  evdev_init();
+  #ifdef HAVE_LIBCEC
+  cec_init();
+  #endif /* HAVE_LIBCEC */
 
   LiStartConnection(address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, NULL, 0, client_get_server_version());
 
-  input_loop();
+  loop_main();
 
   LiStopConnection();
 }
@@ -172,6 +180,7 @@ int main(int argc, char* argv[]) {
   int option_index = 0;
   bool sops = true;
   bool localaudio = false;
+  bool autoadd = true;
   int c;
   while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:n", long_options, &option_index)) != -1) {
     switch (c) {
@@ -205,7 +214,8 @@ int main(int argc, char* argv[]) {
       app = optarg;
       break;
     case 'j':
-      input_create(optarg, mapping);
+      evdev_create(optarg, mapping);
+      autoadd = false;
       break;
     case 'k':
       mapping = get_path(optarg);
@@ -238,8 +248,8 @@ int main(int argc, char* argv[]) {
       perror("No filename for mapping");
       exit(-1);
     }
-    input_init(mapping);
-    input_map(address);
+    udev_init(autoadd, mapping);
+    evdev_map(address);
     exit(0);
   }
 
@@ -263,7 +273,7 @@ int main(int argc, char* argv[]) {
     pair_check();
     applist(address);
   } else if (strcmp("stream", action) == 0) {
-    input_init(mapping);
+    udev_init(autoadd, mapping);
     pair_check();
     stream(&config, address, app, sops, localaudio);
   } else if (strcmp("pair", action) == 0)

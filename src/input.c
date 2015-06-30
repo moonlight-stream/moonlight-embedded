@@ -124,7 +124,7 @@ static int on_cec_keypress(void* userdata, const cec_keypress key) {
   
   if (value != 0) {
     short code = 0x80 << 8 | keyCodes[value];
-    LiSendKeyboardEvent(code, (key.duration > 0)?KEY_ACTION_DOWN:KEY_ACTION_UP, 0);
+    LiSendKeyboardEvent(code, (key.duration > 0)?KEY_ACTION_UP:KEY_ACTION_DOWN, 0);
   }
 }
 

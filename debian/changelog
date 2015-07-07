@@ -1,3 +1,12 @@
+moonlight-embedded (2.0.2-1) UNRELEASED; urgency=low
+
+  * More (untested) gamepad mappings included
+  * Bigger range for gamepad sticks
+  * Better error messaging
+  * Input detection bug fixed
+
+ -- Iwan Timmer <irtimmer@gmail.com>  Sat, 7 Jul 2015 19:05:48 +0000
+
 moonlight-embedded (2.0.1-1) UNRELEASED; urgency=low
 
   * Initial release

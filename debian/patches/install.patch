@@ -1,6 +1,8 @@
 Compile using older version (2.8) of CMake
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
+Index: moonlight-embedded/CMakeLists.txt
+===================================================================
+--- moonlight-embedded.orig/CMakeLists.txt	2015-06-20 14:01:58.000000000 +0000
++++ moonlight-embedded/CMakeLists.txt	2015-07-07 19:36:52.000000000 +0000
 @@ -1,5 +1,5 @@
  project(moonlight-embedded C)
 -cmake_minimum_required(VERSION 3.1)
@@ -8,7 +10,7 @@ Compile using older version (2.8) of CMake
  
  SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
  
-@@ -44,18 +44,18 @@
+@@ -50,18 +50,18 @@
  
  if(BROADCOM_FOUND)
    include_directories(./third_party/ilclient ./third_party/h264bitstream ${BROADCOM_INCLUDE_DIRS})
@@ -24,9 +26,9 @@ Compile using older version (2.8) of CMake
  endif()
  
  set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
- include_directories(./third_party/moonlight-common-c ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${AVAHI_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
--target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${AVAHI_LIBRARIES} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
-+target_link_libraries (moonlight ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${AVAHI_LIBRARIES} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
+ include_directories(./third_party/moonlight-common-c ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${AVAHI_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS} ${CEC_INCLUDE_DIRS})
+-target_link_libraries (moonlight PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${AVAHI_LIBRARIES} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS} ${CEC_LIBRARIES})
++target_link_libraries (moonlight ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${AVAHI_LIBRARIES} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS} ${CEC_LIBRARIES})
  
  include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
  install(TARGETS moonlight DESTINATION ${CMAKE_INSTALL_BINDIR})

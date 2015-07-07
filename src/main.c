@@ -61,7 +61,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   video_init();
 
-  LiStartConnection(address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, NULL, 0, client_get_server_version());
+  LiStartConnection(address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, 0, client_get_server_version());
 
   input_loop();
 

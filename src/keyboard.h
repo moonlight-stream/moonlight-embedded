@@ -75,7 +75,7 @@ static const short keyCodes[] = {
   0x10, //VK_SHIFT Right shift
   0, //VK_KPASTERISK
   0x11, //VK_ALT Left alt
-  0x32, //VK_SPACE
+  0x20, //VK_SPACE
   0x14, //VK_CAPS_LOCK
   0x70, //VK_F1
   0x71, //VK_F2

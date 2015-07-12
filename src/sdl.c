@@ -19,16 +19,46 @@
 
 #ifdef HAVE_SDL
 
+#include "limelight-common/Limelight.h"
+
 #include <stdbool.h>
 #include <SDL.h>
 
 static bool done;
 
 void sdl_loop() {
+  SDL_SetRelativeMouseMode(SDL_TRUE);
+  SDL_ShowCursor(SDL_DISABLE);
+
   SDL_Event event;
 
   while(!done && SDL_WaitEvent(&event)) {
+    int button = 0;
     switch (event.type) {
+    case SDL_MOUSEMOTION:
+      LiSendMouseMoveEvent(event.motion.xrel, event.motion.yrel);
+      break;
+    case SDL_MOUSEWHEEL:
+      LiSendScrollEvent(event.wheel.y);
+      break;
+    case SDL_MOUSEBUTTONUP:
+    case SDL_MOUSEBUTTONDOWN:
+      switch (event.button.button) {
+      case SDL_BUTTON_LEFT:
+        button = BUTTON_LEFT;
+        break;
+      case SDL_BUTTON_MIDDLE:
+        button = BUTTON_MIDDLE;
+        break;
+      case SDL_BUTTON_RIGHT:
+        button = BUTTON_RIGHT;
+        break;
+      }
+
+      if (button != 0)
+        LiSendMouseButtonEvent(event.button.state==SDL_PRESSED?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, button);
+
+      break;
     case SDL_QUIT:
       done = true;
     }

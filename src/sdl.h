@@ -17,15 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
-
-#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
-
-enum platform { SDL, OMX, IMX, FAKE };
-
-enum platform platform_check(char*);
-DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system);
-
 #ifdef HAVE_SDL
+
 void sdl_loop();
-#endif
+
+#endif /* HAVE_SDL */

@@ -24,6 +24,7 @@
 #include "audio.h"
 #include "discover.h"
 #include "platform.h"
+#include "sdl.h"
 
 #include "input/evdev.h"
 #include "input/udev.h"
@@ -71,14 +72,14 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   client_start_app(config, address, appId, sops, localaudio);
 
-  evdev_init();
-  #ifdef HAVE_LIBCEC
-  cec_init();
-  #endif /* HAVE_LIBCEC */
-
   LiStartConnection(address, config, &connection_callbacks, platform_get_video(system), &audio_callbacks, NULL, NULL, 0, client_get_server_version());
 
-  loop_main();
+  if (IS_EMBEDDED(system))
+    loop_main();
+  #ifdef HAVE_SDL
+  else if (system == SDL)
+    sdl_loop();
+  #endif
 
   LiStopConnection();
 }
@@ -303,10 +304,17 @@ int main(int argc, char* argv[]) {
     pair_check();
     applist(address);
   } else if (strcmp("stream", action) == 0) {
-    udev_init(autoadd, mapping);
     pair_check();
-    for (int i=0;i<inputsCount;i++)
-      evdev_create(inputs[i].path, inputs[i].mapping);
+    if (IS_EMBEDDED(system)) {
+      for (int i=0;i<inputsCount;i++)
+        evdev_create(inputs[i].path, inputs[i].mapping);
+
+      udev_init(autoadd, mapping);
+      evdev_init();
+      #ifdef HAVE_LIBCEC
+      cec_init();
+      #endif /* HAVE_LIBCEC */
+    }
 
     stream(&config, address, app, sops, localaudio, system);
   } else if (strcmp("pair", action) == 0)

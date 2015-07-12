@@ -46,6 +46,13 @@
 #define MOONLIGHT_PATH "/moonlight/"
 #define USER_PATHS ":~/.moonlight:./"
 
+#define MAX_INPUTS 6
+
+struct input_config {
+    char* path;
+    char* mapping;
+};
+
 static void applist(const char* address) {
   struct app_list* list = client_applist(address);
   for (int i = 1;list != NULL;i++) {
@@ -173,6 +180,8 @@ int main(int argc, char* argv[]) {
     {0, 0, 0, 0},
   };
 
+  struct input_config inputs[MAX_INPUTS];
+  int inputsCount = 0;
   char* app = "Steam";
   char* action = NULL;
   char* address = NULL;
@@ -214,7 +223,13 @@ int main(int argc, char* argv[]) {
       app = optarg;
       break;
     case 'j':
-      evdev_create(optarg, mapping);
+      if (inputsCount >= MAX_INPUTS) {
+        perror("Too many inputs specified");
+        exit(-1);
+      }
+      inputs[inputsCount].path = optarg;
+      inputs[inputsCount].mapping = optarg;
+      inputsCount++;
       autoadd = false;
       break;
     case 'k':
@@ -249,6 +264,9 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
     udev_init(autoadd, mapping);
+    for (int i=0;i<inputsCount;i++)
+      evdev_create(inputs[i].path, inputs[i].mapping);
+
     evdev_map(address);
     exit(0);
   }
@@ -275,6 +293,9 @@ int main(int argc, char* argv[]) {
   } else if (strcmp("stream", action) == 0) {
     udev_init(autoadd, mapping);
     pair_check();
+    for (int i=0;i<inputsCount;i++)
+      evdev_create(inputs[i].path, inputs[i].mapping);
+
     stream(&config, address, app, sops, localaudio);
   } else if (strcmp("pair", action) == 0)
     client_pair(address);

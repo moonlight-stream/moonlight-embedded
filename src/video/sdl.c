@@ -101,9 +101,6 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     fprintf(stderr, "Video decode buffer too small");
     exit(1);
   }
-  
-  SDL_Event event;
-  SDL_PollEvent(&event);
 
   return DR_OK;
 }

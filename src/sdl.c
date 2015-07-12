@@ -19,6 +19,8 @@
 
 #ifdef HAVE_SDL
 
+#include "sdl.h"
+
 #include "limelight-common/Limelight.h"
 
 #include <stdbool.h>
@@ -56,8 +58,18 @@ void sdl_loop() {
       }
 
       if (button != 0)
-        LiSendMouseButtonEvent(event.button.state==SDL_PRESSED?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, button);
+        LiSendMouseButtonEvent(event.type==SDL_MOUSEBUTTONDOWN?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, button);
 
+      break;
+    case SDL_KEYDOWN:
+    case SDL_KEYUP:
+      button = event.key.keysym.sym;
+      if (button >= (0x40000000 + 0x39) && button < (0x40000000 + sizeof(keyCodes)))
+        button = keyCodes[button - 0x40000039];
+      if (button >= 0x61)
+        button -= 0x20;
+
+      LiSendKeyboardEvent(0x80 << 8 | button, event.type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, 0);
       break;
     case SDL_QUIT:
       done = true;

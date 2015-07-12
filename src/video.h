@@ -19,12 +19,6 @@
 
 #include "limelight-common/Limelight.h"
 
-#include <stdbool.h>
-
-extern DECODER_RENDERER_CALLBACKS *decoder_callbacks;
-
-void video_init();
-
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
 #ifdef HAVE_SDL
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;

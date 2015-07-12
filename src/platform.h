@@ -17,33 +17,9 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
-
-#include "video.h"
-
 #include "limelight-common/Limelight.h"
 
-#include <dlfcn.h>
-#include <stdlib.h>
+enum platform { SDL, OMX, IMX, FAKE };
 
-DECODER_RENDERER_CALLBACKS *decoder_callbacks;
-
-static int decoder_level;
-
-void video_init() {
-  #ifdef HAVE_SDL
-  decoder_callbacks = &decoder_callbacks_sdl;
-  #else
-  decoder_callbacks = &decoder_callbacks_fake;
-  #endif
-  #ifdef HAVE_IMX
-  if (dlsym(RTLD_DEFAULT, "vpu_Init") != NULL && video_imx_init()) {
-    decoder_callbacks = &decoder_callbacks_imx;
-  }
-  #endif
-  #ifdef HAVE_OMX
-  if (dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL) {
-    decoder_callbacks = &decoder_callbacks_omx;
-  }
-  #endif
-}
+enum platform platform_check(char*);
+DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system);

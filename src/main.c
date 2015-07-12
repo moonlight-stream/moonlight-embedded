@@ -23,6 +23,7 @@
 #include "video.h"
 #include "audio.h"
 #include "discover.h"
+#include "platform.h"
 
 #include "input/evdev.h"
 #include "input/udev.h"
@@ -61,7 +62,7 @@ static void applist(const char* address) {
   }
 }
 
-static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops, bool localaudio) {
+static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops, bool localaudio, enum platform system) {
   int appId = client_get_app_id(address, app);
   if (appId<0) {
     fprintf(stderr, "Can't find app %s\n", app);
@@ -70,13 +71,12 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   client_start_app(config, address, appId, sops, localaudio);
 
-  video_init();
   evdev_init();
   #ifdef HAVE_LIBCEC
   cec_init();
   #endif /* HAVE_LIBCEC */
 
-  LiStartConnection(address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, NULL, 0, client_get_server_version());
+  LiStartConnection(address, config, &connection_callbacks, platform_get_video(system), &audio_callbacks, NULL, NULL, 0, client_get_server_version());
 
   loop_main();
 
@@ -177,11 +177,13 @@ int main(int argc, char* argv[]) {
     {"nosops", no_argument, 0, 'l'},
     {"audio", required_argument, 0, 'm'},
     {"localaudio", no_argument, 0, 'n'},
+    {"platform", required_argument, 0, 'o'},
     {0, 0, 0, 0},
   };
 
   struct input_config inputs[MAX_INPUTS];
   int inputsCount = 0;
+  char* platform = "default";
   char* app = "Steam";
   char* action = NULL;
   char* address = NULL;
@@ -191,7 +193,7 @@ int main(int argc, char* argv[]) {
   bool localaudio = false;
   bool autoadd = true;
   int c;
-  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:n", long_options, &option_index)) != -1) {
+  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:", long_options, &option_index)) != -1) {
     switch (c) {
     case 'a':
       config.width = 1280;
@@ -244,6 +246,9 @@ int main(int argc, char* argv[]) {
     case 'n':
       localaudio = true;
       break;
+    case 'o':
+      platform = optarg;
+      break;
     case 1:
       if (action == NULL)
         action = optarg;
@@ -258,7 +263,14 @@ int main(int argc, char* argv[]) {
 
   if (action == NULL || strcmp("help", action) == 0)
     help();
-  else if (strcmp("map", action) == 0) {
+
+  enum platform system = platform_check(platform);
+  if (system != 0) {
+    fprintf(stderr, "Platform '%s' not found\n", platform);
+    exit(-1);
+  }
+
+  if (strcmp("map", action) == 0) {
     if (address == NULL) {
       perror("No filename for mapping");
       exit(-1);
@@ -296,7 +308,7 @@ int main(int argc, char* argv[]) {
     for (int i=0;i<inputsCount;i++)
       evdev_create(inputs[i].path, inputs[i].mapping);
 
-    stream(&config, address, app, sops, localaudio);
+    stream(&config, address, app, sops, localaudio, system);
   } else if (strcmp("pair", action) == 0)
     client_pair(address);
   else if (strcmp("quit", action) == 0) {

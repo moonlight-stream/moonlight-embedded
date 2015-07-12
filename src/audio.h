@@ -21,4 +21,4 @@
 
 extern const char* audio_device;
 
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks;
+extern AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa;

@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "audio.h"
+#include "../audio.h"
 
 #include <stdio.h>
 #include <opus.h>
@@ -35,7 +35,7 @@ static snd_pcm_t *handle;
 static OpusDecoder* decoder;
 static short pcmBuffer[FRAME_SIZE * CHANNEL_COUNT];
 
-static void audio_renderer_init() {
+static void alsa_renderer_init() {
   int rc;
   decoder = opus_decoder_create(SAMPLE_RATE, CHANNEL_COUNT, &rc);
 
@@ -71,7 +71,7 @@ static void audio_renderer_init() {
   CHECK_RETURN(snd_pcm_prepare(handle));
 }
 
-static void audio_renderer_cleanup() {
+static void alsa_renderer_cleanup() {
   if (decoder != NULL)
     opus_decoder_destroy(decoder);
 
@@ -81,7 +81,7 @@ static void audio_renderer_cleanup() {
   }
 }
 
-static void audio_renderer_decode_and_play_sample(char* data, int length) {
+static void alsa_renderer_decode_and_play_sample(char* data, int length) {
   int decodeLen = opus_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
   if (decodeLen > 0) {
     int rc = snd_pcm_writei(handle, pcmBuffer, decodeLen);
@@ -97,8 +97,8 @@ static void audio_renderer_decode_and_play_sample(char* data, int length) {
   }
 }
 
-AUDIO_RENDERER_CALLBACKS audio_callbacks = {
-  .init = audio_renderer_init,
-  .cleanup = audio_renderer_cleanup,
-  .decodeAndPlaySample = audio_renderer_decode_and_play_sample,
+AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa = {
+  .init = alsa_renderer_init,
+  .cleanup = alsa_renderer_cleanup,
+  .decodeAndPlaySample = alsa_renderer_decode_and_play_sample,
 };

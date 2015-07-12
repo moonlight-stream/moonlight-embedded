@@ -72,7 +72,7 @@ static void stream(STREAM_CONFIGURATION* config, const char* address, const char
 
   client_start_app(config, address, appId, sops, localaudio);
 
-  LiStartConnection(address, config, &connection_callbacks, platform_get_video(system), &audio_callbacks, NULL, NULL, 0, client_get_server_version());
+  LiStartConnection(address, config, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, NULL, 0, client_get_server_version());
 
   if (IS_EMBEDDED(system))
     loop_main();

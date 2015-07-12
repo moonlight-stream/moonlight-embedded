@@ -21,6 +21,7 @@
 
 #include "platform.h"
 #include "video.h"
+#include "audio.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -67,4 +68,11 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
     return &decoder_callbacks_fake;
   }
   return NULL;
+}
+
+AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
+  switch (system) {
+  default:
+    return &audio_callbacks_alsa;
+  }
 }

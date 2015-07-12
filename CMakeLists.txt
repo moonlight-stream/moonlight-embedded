@@ -40,6 +40,8 @@ if (AVCODEC_FOUND AND AVUTIL_FOUND AND SWSCALE_FOUND AND SDL_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_SDL)
 endif()
 
+list(APPEND SRC_LIST ./src/audio/alsa.c)
+
 add_subdirectory(libgamestream)
 
 add_executable(moonlight ${SRC_LIST})

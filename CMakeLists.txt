@@ -34,7 +34,7 @@ endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   list(APPEND SRC_LIST ./src/video/fake.c)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_FAKE)
+  list(APPEND MOONLIGHT_DEFINITIONS HAVE_FAKE LC_DEBUG)
 elseif(NOT BROADCOM_FOUND AND NOT FREESCALE_FOUND)
   message(FATAL_ERROR "No video output available")
 endif()

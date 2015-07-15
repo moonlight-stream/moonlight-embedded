@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
   config.width = 1280;
   config.height = 720;
   config.fps = 60;
-  config.bitrate = 8000;
+  config.bitrate = -1;
   config.packetSize = 1024;
 
   static struct option long_options[] = {
@@ -244,6 +244,15 @@ int main(int argc, char* argv[]) {
         exit(-1);
       }
     }
+  }
+
+  if (config.bitrate == -1) {
+    if (config.height >= 1080 && config.fps >= 60)
+      config.bitrate = 20000;
+    else if (config.height >= 1080 || config.fps >= 60)
+      config.bitrate = 10000;
+    else
+      config.bitrate = 5000;
   }
 
   if (inputAdded && !mapped) {

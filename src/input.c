@@ -85,6 +85,11 @@ static int udev_fdindex;
 
 static int sig_fdindex;
 
+static bool grabbingDevices;
+
+#define QUIT_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
+#define QUIT_KEY KEY_Q
+
 #ifdef HAVE_LIBCEC
 static libcec_configuration g_config;
 static char                 g_strPort[50] = { 0 };
@@ -223,6 +228,12 @@ void input_create(const char* device, char* mapFile) {
   input_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map.abs_rz);
   input_init_parms(&devices[dev], &(devices[dev].dpadxParms), devices[dev].map.abs_dpad_x);
   input_init_parms(&devices[dev], &(devices[dev].dpadyParms), devices[dev].map.abs_dpad_y);
+
+  if (grabbingDevices) {
+    if (ioctl(fd, EVIOCGRAB, 1) < 0) {
+      fprintf(stderr, "EVIOCGRAB failed with error %d\n", errno);
+    }
+  }
 }
 
 static void input_remove(int devindex) {
@@ -309,15 +320,6 @@ void input_init(char* mapfile) {
   fds[udev_fdindex].events = POLLIN;
 
   main_thread_id = pthread_self();
-  sigset_t sigset;
-  sigemptyset(&sigset);
-  sigaddset(&sigset, SIGHUP);
-  sigaddset(&sigset, SIGTERM);
-  sigaddset(&sigset, SIGINT);
-  sigaddset(&sigset, SIGQUIT);
-  sigprocmask(SIG_BLOCK, &sigset, NULL);
-  fds[sig_fdindex].fd = signalfd(-1, &sigset, 0);
-  fds[sig_fdindex].events = POLLIN | POLLERR | POLLHUP;
 }
 
 void input_destroy() {
@@ -410,6 +412,12 @@ static bool input_handle_event(struct input_event *ev, struct input_device *dev)
           dev->modifiers |= modifier;
         else
           dev->modifiers &= ~modifier;
+      }
+
+      // Quit the stream if all the required quit keys are down
+      if ((dev->modifiers & QUIT_MODIFIERS) == QUIT_MODIFIERS &&
+          ev->code == QUIT_KEY && ev->value != 0) {
+        return false;
       }
 
       short code = 0x80 << 8 | keyCodes[ev->code];
@@ -579,6 +587,19 @@ static void input_drain(void) {
 }
 
 static bool input_poll(bool (*handler) (struct input_event*, struct input_device*)) {
+  // Block signals that are handled gracefully by the input polling code. This
+  // is done at the last moment to allow Ctrl+C to work until everything
+  // is ready to go.
+  sigset_t sigset;
+  sigemptyset(&sigset);
+  sigaddset(&sigset, SIGHUP);
+  sigaddset(&sigset, SIGTERM);
+  sigaddset(&sigset, SIGINT);
+  sigaddset(&sigset, SIGQUIT);
+  sigprocmask(SIG_BLOCK, &sigset, NULL);
+  fds[sig_fdindex].fd = signalfd(-1, &sigset, 0);
+  fds[sig_fdindex].events = POLLIN | POLLERR | POLLHUP;
+
   while (poll(fds, numFds, -1)) {
     if (fds[udev_fdindex].revents > 0) {
       struct udev_device *dev = udev_monitor_receive_device(udev_mon);
@@ -711,5 +732,24 @@ void input_map(char* fileName) {
 }
 
 void input_loop() {
+  // After grabbing, the only way to quit via the keyboard
+  // is via the special key combo that the input handling
+  // code looks for. For this reason, we wait to grab until
+  // we're ready to take input events. Ctrl+C works up until
+  // this point.
+  for (int i = 0; i < numDevices; i++) {
+    if (ioctl(devices[i].fd, EVIOCGRAB, 1) < 0) {
+      fprintf(stderr, "EVIOCGRAB failed with error %d\n", errno);
+    }
+  }
+
+  // Any new input devices detected after this point will be grabbed immediately
+  grabbingDevices = true;
+
+  // Handle input events until the quit combo is pressed
   input_poll(input_handle_event);
+
+  // Drain any remaining input events so they aren't sent to the terminal
+  usleep(250000);
+  input_drain();
 }

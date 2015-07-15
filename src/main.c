@@ -91,7 +91,8 @@ static void help() {
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
-  printf("\t-localaudio\t\tPlay audio locally\n");
+  printf("\t-localaudio\t\tPlay audio locally\n\n");
+  printf("Use Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);
 }
 

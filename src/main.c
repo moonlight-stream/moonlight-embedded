@@ -178,6 +178,8 @@ int main(int argc, char* argv[]) {
   int option_index = 0;
   bool sops = true;
   bool localaudio = false;
+  bool inputAdded = false;
+  bool mapped = true;
   int c;
   while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:n", long_options, &option_index)) != -1) {
     switch (c) {
@@ -212,6 +214,8 @@ int main(int argc, char* argv[]) {
       break;
     case 'j':
       input_create(optarg, mapping);
+      inputAdded = true;
+      mapped = true;
       break;
     case 'k':
       mapping = get_path(optarg);
@@ -219,6 +223,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Unable to open custom mapping file: %s\n", optarg);
         exit(-1);
       }
+      mapped = false;
       break;
     case 'l':
       sops = false;
@@ -239,6 +244,11 @@ int main(int argc, char* argv[]) {
         exit(-1);
       }
     }
+  }
+
+  if (inputAdded && !mapped) {
+    fprintf(stderr, "Mapping option should be followed by the input to be mapped.\n");
+    exit(-1);
   }
 
   if (action == NULL || strcmp("help", action) == 0)

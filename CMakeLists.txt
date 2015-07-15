@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.1)
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 aux_source_directory(./src SRC_LIST)
-list(APPEND SRC_LIST ./src/video/fake.c)
 
 aux_source_directory(./third_party/moonlight-common-c/limelight-common SRC_LIST)
 aux_source_directory(./third_party/moonlight-common-c/limelight-common/OpenAES SRC_LIST)
@@ -31,6 +30,13 @@ pkg_check_modules(UDEV REQUIRED libudev)
 if(CEC_FOUND)
   include_directories(./third_party/libcec)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
+endif()
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  list(APPEND SRC_LIST ./src/video/fake.c)
+  list(APPEND MOONLIGHT_DEFINITIONS HAVE_FAKE)
+elseif(NOT BROADCOM_FOUND AND NOT FREESCALE_FOUND)
+  message(FATAL_ERROR "No video output available")
 endif()
 
 if(BROADCOM_FOUND)

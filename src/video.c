@@ -25,13 +25,16 @@
 
 #include <dlfcn.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 DECODER_RENDERER_CALLBACKS *decoder_callbacks;
 
 static int decoder_level;
 
 void video_init() {
+  #ifdef HAVE_FAKE
   decoder_callbacks = &decoder_callbacks_fake;
+  #endif
   #ifdef HAVE_IMX
   if (dlsym(RTLD_DEFAULT, "vpu_Init") != NULL && video_imx_init()) {
     decoder_callbacks = &decoder_callbacks_imx;
@@ -42,4 +45,8 @@ void video_init() {
     decoder_callbacks = &decoder_callbacks_omx;
   }
   #endif
+  if (decoder_callbacks == NULL) {
+    fprintf(stderr, "No video output available\n");
+    exit(EXIT_FAILURE);
+  }
 }

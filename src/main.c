@@ -275,6 +275,11 @@ int main(int argc, char* argv[]) {
     input_init(mapping);
     pair_check();
     stream(&config, address, app, sops, localaudio);
+    char cbuffer;
+    printf("Clearing up stdin... Press Ctrl-C when Ready to Quit.");
+    while (cbuffer = getchar()) {
+	}
+    printf("done");
   } else if (strcmp("pair", action) == 0)
     client_pair(address);
   else if (strcmp("quit", action) == 0) {
@@ -283,3 +288,4 @@ int main(int argc, char* argv[]) {
   } else
     fprintf(stderr, "%s is not a valid action\n", action);
 }
+

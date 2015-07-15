@@ -60,7 +60,7 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 	-audio <device> Use <device> as ALSA audio output device (default sysdefault)
 	-localaudio Play audio locally
 
-	Use ctrl-c to exit application
+	Use Ctrl+Alt+Shift+Q to exit streaming session
 
 ## Packages
 Prebuilt binary packages for Raspbian Wheezy are available, add this line to your */etc/apt/sources.list*

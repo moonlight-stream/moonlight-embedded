@@ -63,7 +63,7 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 	Use Ctrl+Alt+Shift+Q to exit streaming session
 
 ## Packages
-Prebuilt binary packages for Raspbian Wheezy are available, add this line to your */etc/apt/sources.list*
+Prebuilt binary packages for Raspbian Wheezy and OSMC are available, add this line to your */etc/apt/sources.list*
 ```
 deb http://archive.itimmer.nl/raspbian/moonlight wheezy main
 ```
@@ -116,11 +116,13 @@ pacman -S (package list)
 * alsa-lib
 * avahi
 * libevdev
+* raspberrypi-firmware-tools (Raspberry Pi)
+* imx-vpu (iMX.6)
 
 For compilation and development you also need:
 * cmake
 
-### Debian (Raspbian)
+### Debian (Raspbian) / OSMC
 Install with
 ```
 apt-get install (package list)
@@ -132,6 +134,8 @@ apt-get install (package list)
 * libavahi-client3
 * libcurl3
 * libevdev2
+* rbp-userland-osmc (Raspberry Pi and OSMC)
+* libraspberrypi0 (Raspberry Pi and Raspbian)
 
 For compilation and development you also need:
 * libssl-dev
@@ -142,6 +146,8 @@ For compilation and development you also need:
 * libcurl4-openssl-dev
 * libevdev-dev
 * cmake
+* rbp-userland-dev-osmc (Raspberry Pi and OSMC)
+* libraspberrypi-dev (Raspberry Pi and Raspbian)
 
 ## See also
 

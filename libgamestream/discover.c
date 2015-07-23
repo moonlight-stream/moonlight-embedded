@@ -31,14 +31,14 @@
 
 static AvahiSimplePoll *simple_poll = NULL;
 
-static void discover_client_callback(AvahiClient *c, AvahiClientState state, void *userdata) {
+static void client_callback(AvahiClient *c, AvahiClientState state, void *userdata) {
   if (state == AVAHI_CLIENT_FAILURE) {
     fprintf(stderr, "Server connection failure: %s\n", avahi_strerror(avahi_client_errno(c)));
     avahi_simple_poll_quit(simple_poll);
   }
 }
 
-static void discover_resolve_callback(AvahiServiceResolver *r, AvahiIfIndex interface, AvahiProtocol protocol, AvahiResolverEvent event, const char *name, const char *type, const char *domain, const char *host_name, const AvahiAddress *address, uint16_t port, AvahiStringList *txt, AvahiLookupResultFlags flags, void *userdata) {
+static void resolve_callback(AvahiServiceResolver *r, AvahiIfIndex interface, AvahiProtocol protocol, AvahiResolverEvent event, const char *name, const char *type, const char *domain, const char *host_name, const AvahiAddress *address, uint16_t port, AvahiStringList *txt, AvahiLookupResultFlags flags, void *userdata) {
   if (event == AVAHI_RESOLVER_FOUND) {
     if (userdata != NULL) {
       avahi_address_snprint(userdata, AVAHI_ADDRESS_STR_MAX, address);
@@ -53,7 +53,7 @@ static void discover_resolve_callback(AvahiServiceResolver *r, AvahiIfIndex inte
   avahi_service_resolver_free(r);
 }
 
-static void discover_browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *name, const char *type, const char *domain, AvahiLookupResultFlags flags, void* userdata) {
+static void browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *name, const char *type, const char *domain, AvahiLookupResultFlags flags, void* userdata) {
   AvahiClient *c = avahi_service_browser_get_client(b);
 
   switch (event) {
@@ -62,7 +62,7 @@ static void discover_browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interf
     avahi_simple_poll_quit(simple_poll);
     break;
   case AVAHI_BROWSER_NEW:
-    if (!(avahi_service_resolver_new(c, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, 0, discover_resolve_callback, userdata)))
+    if (!(avahi_service_resolver_new(c, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, 0, resolve_callback, userdata)))
       fprintf(stderr, "Failed to resolve service '%s': %s\n", name, avahi_strerror(avahi_client_errno(c)));
 
     break;
@@ -71,7 +71,7 @@ static void discover_browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interf
   }
 }
 
-void discover_server(char* dest) {
+void gs_discover_server(char* dest) {
   AvahiClient *client = NULL;
   AvahiServiceBrowser *sb = NULL;
 
@@ -81,13 +81,13 @@ void discover_server(char* dest) {
   }
 
   int error;
-  client = avahi_client_new(avahi_simple_poll_get(simple_poll), 0, discover_client_callback, NULL, &error);
+  client = avahi_client_new(avahi_simple_poll_get(simple_poll), 0, client_callback, NULL, &error);
   if (!client) {
     fprintf(stderr, "Failed to create client: %s\n", avahi_strerror(error));
     goto cleanup;
   }
 
-  if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_nvstream._tcp", NULL, 0, discover_browse_callback, dest))) {
+  if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_nvstream._tcp", NULL, 0, browse_callback, dest))) {
     fprintf(stderr, "Failed to create service browser: %s\n", avahi_strerror(avahi_client_errno(client)));
     goto cleanup;
   }

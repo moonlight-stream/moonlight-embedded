@@ -20,11 +20,11 @@
 
 #include <stdio.h>
 
-struct app_list {
+typedef struct _APP_LIST {
   char* name;
   int id;
-  struct app_list* next;
-};
+  struct _APP_LIST *next;
+} APP_LIST, *PAPP_LIST;
 
 int xml_search(char* data, size_t len, char* node, char** result);
-struct app_list* xml_applist(char* data, size_t len);
+int xml_applist(char* data, size_t len, PAPP_LIST app_list);

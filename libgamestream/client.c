@@ -21,6 +21,7 @@
 #include "xml.h"
 #include "mkcert.h"
 #include "client.h"
+#include "errors.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -48,11 +49,7 @@ static X509 *cert;
 static char cert_hex[4096];
 static EVP_PKEY *privateKey;
 
-static bool paired;
-static int currentGame;
-static int serverMajorVersion;
-
-static void client_load_unique_id() {
+static void load_unique_id() {
   FILE *fd = fopen(uniqueFileName, "r");
   if (fd == NULL) {
     unsigned char unique_data[UNIQUEID_BYTES];
@@ -69,14 +66,14 @@ static void client_load_unique_id() {
   unique_id[UNIQUEID_CHARS] = 0;
 }
 
-static void client_load_cert() {
+static void load_cert() {
   FILE *fd = fopen(certificateFileName, "r");
   if (fd == NULL) {
     printf("Generating certificate...");
-    struct CertKeyPair cert = generateCertKeyPair();
+    CERT_KEY_PAIR cert = mkcert_generate();
     printf("done\n");
-    saveCertKeyPair(certificateFileName, p12FileName, keyFileName, cert);
-    freeCertKeyPair(cert);
+    mkcert_save(certificateFileName, p12FileName, keyFileName, cert);
+    mkcert_free(cert);
     fd = fopen(certificateFileName, "r");
   }
 
@@ -107,32 +104,57 @@ static void client_load_cert() {
   fclose(fd);
 }
 
-static void client_load_server_status(const char *address) {
+static int load_server_status(const char *address, PSERVER_DATA server) {
+  int ret = GS_INVALID;
   char url[4096];
   sprintf(url, "https://%s:47984/serverinfo?uniqueid=%s", address, unique_id);
 
-  struct http_data *data = http_create_data();
-  http_request(url, data);
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL) {
+    ret = GS_OUT_OF_MEMORY;
+    goto cleanup;
+  }
+  if (http_request(url, data) != GS_OK) {
+    ret = GS_IO_ERROR;
+    goto cleanup;
+  }
 
   char *pairedText = NULL;
   char *currentGameText = NULL;
   char *versionText = NULL;
-  xml_search(data->memory, data->size, "currentgame", &currentGameText);
-  xml_search(data->memory, data->size, "PairStatus", &pairedText);
-  xml_search(data->memory, data->size, "appversion", &versionText);
-  http_free_data(data);
+  if (xml_search(data->memory, data->size, "currentgame", &currentGameText) != GS_OK) {
+    goto cleanup;
+  }
 
-  paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
-  currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
+  if (xml_search(data->memory, data->size, "PairStatus", &pairedText) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "appversion", &versionText) != GS_OK)
+    goto cleanup;
+
+  server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
+  server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
   char *versionSep = strstr(versionText, ".");
   if (versionSep != NULL) {
     *versionSep = 0;
   }
-  serverMajorVersion = atoi(versionText);
+  server->serverMajorVersion = atoi(versionText);
+  ret = GS_OK;
 
-  free(pairedText);
-  free(currentGameText);
-  free(versionText);
+  cleanup:
+  if (data != NULL)
+    http_free_data(data);
+
+  if (pairedText != NULL)
+    free(pairedText);
+
+  if (currentGameText != NULL)
+    free(currentGameText);
+
+  if (versionText != NULL)
+    free(versionText);
+
+  return ret;
 }
 
 static void bytes_to_hex(unsigned char *in, char *out, size_t len) {
@@ -143,7 +165,7 @@ static void bytes_to_hex(unsigned char *in, char *out, size_t len) {
 }
 
 static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *slen, EVP_PKEY *pkey) {
-  int result = -1;
+  int result = GS_FAILED;
 
   *sig = NULL;
   *slen = 0;
@@ -210,30 +232,29 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
     goto cleanup;
   }
 
-  result = 1;
+  result = GS_OK;
 
-cleanup:
+  cleanup:
   EVP_MD_CTX_destroy(ctx);
   ctx = NULL;
 
-  return !!result;
+  return result;
 }
 
-void client_pair(const char *address) {
+int gs_pair(PSERVER_DATA server, char* pin) {
+  int ret = GS_OK;
   char url[4096];
 
-  if (client_is_paired(NULL)) {
-    printf("Already paired\n");
-    return;
+  if (server->paired) {
+    fprintf(stderr, "Already paired\n");
+    return GS_WRONG_STATE;
   }
 
-  if (currentGame != 0) {
+  if (server->currentGame != 0) {
     fprintf(stderr, "The computer is currently in a game. You must close the game before pairing.\n");
-    exit(-1);
+    return GS_WRONG_STATE;
   }
 
-  char pin[5];
-  sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
   printf("Please enter the following PIN on the target PC: %s\n", pin);
 
   unsigned char salt_data[16];
@@ -241,9 +262,12 @@ void client_pair(const char *address) {
   RAND_bytes(salt_data, 16);
   bytes_to_hex(salt_data, salt_hex, 16);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", address, unique_id, salt_hex, cert_hex);
-  struct http_data *data = http_create_data();
-  http_request(url, data);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->address, unique_id, salt_hex, cert_hex);
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL)
+    return GS_OUT_OF_MEMORY;
+  else if ((ret = http_request(url, data)) != GS_OK)
+    goto cleanup;
 
   unsigned char salt_pin[20];
   unsigned char aes_key_hash[20];
@@ -260,11 +284,15 @@ void client_pair(const char *address) {
   AES_encrypt(challenge_data, challenge_enc, &aes_key);
   bytes_to_hex(challenge_enc, challenge_hex, 16);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&clientchallenge=%s", address, unique_id, challenge_hex);
-  http_request(url, data);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->address, unique_id, challenge_hex);
+  if ((ret = http_request(url, data)) != GS_OK)
+    goto cleanup;
 
   char *result;
-  xml_search(data->memory, data->size, "challengeresponse", &result);
+  if (xml_search(data->memory, data->size, "challengeresponse", &result) != GS_OK) {
+    ret = GS_INVALID;
+    goto cleanup;
+  }
 
   char challenge_response_data_enc[48];
   char challenge_response_data[48];
@@ -294,15 +322,21 @@ void client_pair(const char *address) {
   }
   bytes_to_hex(challenge_response_hash_enc, challenge_response_hex, 32);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", address, unique_id, challenge_response_hex);
-  http_request(url, data);
-  xml_search(data->memory, data->size, "pairingsecret", &result);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->address, unique_id, challenge_response_hex);
+  if ((ret = http_request(url, data)) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "pairingsecret", &result) != GS_OK) {
+    ret = GS_INVALID;
+    goto cleanup;
+  }
 
   unsigned char *signature = NULL;
   size_t s_len;
-  if (!sign_it(client_secret_data, 16, &signature, &s_len, privateKey)) {
+  if (sign_it(client_secret_data, 16, &signature, &s_len, privateKey) != GS_OK) {
       fprintf(stderr, "Failed to sign data\n");
-      exit(-1);
+      ret = GS_FAILED;
+      goto cleanup;
   }
 
   char client_pairing_secret[16 + 256];
@@ -311,38 +345,41 @@ void client_pair(const char *address) {
   memcpy(client_pairing_secret + 16, signature, 256);
   bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, 16 + 256);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", address, unique_id, client_pairing_secret_hex);
-  http_request(url, data);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->address, unique_id, client_pairing_secret_hex);
+  if ((ret = http_request(url, data)) != GS_OK)
+    goto cleanup;
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=pairchallenge", address, unique_id);
-  http_request(url, data);
-  http_free_data(data);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->address, unique_id);
+  if ((ret = http_request(url, data)) != GS_OK)
+    goto cleanup;
 
   printf("Paired\n");
-}
+  server->paired = true;
 
-struct app_list *client_applist(const char *address) {
-  char url[4096];
-  struct http_data *data = http_create_data();
-  sprintf(url, "https://%s:47984/applist?uniqueid=%s", address, unique_id);
-  http_request(url, data);
-  struct app_list *list = xml_applist(data->memory, data->size);
+  cleanup:
   http_free_data(data);
-  return list;
+
+  return ret;
 }
 
-int client_get_app_id(const char *address, const char *name) {
-  struct app_list *list = client_applist(address);
-  while (list != NULL) {
-    if (strcmp(list->name, name) == 0)
-      return list->id;
+int gs_applist(PSERVER_DATA server, PAPP_LIST list) {
+  int ret = GS_OK;
+  char url[4096];
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL)
+    return GS_OUT_OF_MEMORY;
 
-    list = list->next;
-  }
-  return -1;
+  sprintf(url, "https://%s:47984/applist?uniqueid=%s", server->address, unique_id);
+  if (http_request(url, data) != GS_OK)
+    ret = GS_IO_ERROR;
+  else if (xml_applist(data->memory, data->size, list) != GS_OK)
+    ret = GS_INVALID;
+
+  http_free_data(data);
+  return ret;
 }
 
-void client_start_app(STREAM_CONFIGURATION *config, const char *address, int appId, bool sops, bool localaudio) {
+int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio) {
   RAND_bytes(config->remoteInputAesKey, 16);
   memset(config->remoteInputAesIv, 0, 16);
 
@@ -352,46 +389,40 @@ void client_start_app(STREAM_CONFIGURATION *config, const char *address, int app
   char rikey_hex[33];
   bytes_to_hex(config->remoteInputAesKey, rikey_hex, 16);
 
-  struct http_data *data = http_create_data();
-  if (currentGame == 0)
-    sprintf(url, "https://%s:47984/launch?uniqueid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d", address, unique_id, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio);
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL)
+    return GS_OUT_OF_MEMORY;
+
+  if (server->currentGame == 0)
+    sprintf(url, "https://%s:47984/launch?uniqueid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d", server->address, unique_id, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio);
   else
-    sprintf(url, "https://%s:47984/resume?uniqueid=%s&rikey=%s&rikeyid=%d", address, unique_id, rikey_hex, rikeyid);
+    sprintf(url, "https://%s:47984/resume?uniqueid=%s&rikey=%s&rikeyid=%d", server->address, unique_id, rikey_hex, rikeyid);
 
-  http_request(url, data);
+  int ret = http_request(url, data);
+  if (ret == GS_OK)
+    server->currentGame = appId;
+
   http_free_data(data);
+  return ret;
 }
 
-void client_quit_app(const char *address) {
+int gs_quit_app(PSERVER_DATA server) {
   char url[4096];
-  struct http_data *data = http_create_data();
-  sprintf(url, "https://%s:47984/cancel?uniqueid=%s", address, unique_id);
-  http_request(url, data);
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL)
+    return GS_OUT_OF_MEMORY;
+
+  sprintf(url, "https://%s:47984/cancel?uniqueid=%s", server->address, unique_id);
+  int ret = http_request(url, data);
+
   http_free_data(data);
+  return ret;
 }
 
-bool client_is_paired(const char *address) {
-  if (address != NULL)
-    client_load_server_status(address);
-
-  return paired;
-}
-
-int client_get_current_game(const char *address) {
-  if (address != NULL)
-    client_load_server_status(address);
-
-  return currentGame;
-}
-
-void client_init(const char *address) {
+int gs_init(PSERVER_DATA server, const char *address) {
   http_init();
-  client_load_unique_id();
-  client_load_cert();
+  load_unique_id();
+  load_cert();
 
-  client_load_server_status(address);
-}
-
-int client_get_server_version(void) {
-  return serverMajorVersion;
+  return load_server_status(address, server);
 }

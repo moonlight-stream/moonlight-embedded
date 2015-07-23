@@ -19,21 +19,9 @@
 
 #pragma once
 
-#include "xml.h"
-
-#include "limelight-common/Limelight.h"
-
-#include <stdbool.h>
-
-typedef struct _SERVER_DATA {
-  const char* address;
-  bool paired;
-  int currentGame;
-  int serverMajorVersion;
-} SERVER_DATA, *PSERVER_DATA;
-
-int gs_init(PSERVER_DATA server, const char *address);
-int gs_start_app(PSERVER_DATA server, PSTREAM_CONFIGURATION config, int appId, bool sops, bool localaudio);
-int gs_applist(PSERVER_DATA server, PAPP_LIST app_list);
-int gs_pair(PSERVER_DATA server, char* pin);
-int gs_quit_app(PSERVER_DATA server);
+#define GS_OK 0
+#define GS_FAILED -1
+#define GS_OUT_OF_MEMORY -2
+#define GS_INVALID -3
+#define GS_WRONG_STATE -4
+#define GS_IO_ERROR -5

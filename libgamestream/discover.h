@@ -15,6 +15,10 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
+#include "errors.h"
+
 #define MAX_ADDRESS_SIZE 40
 
-void discover_server(char* dest);
+void gs_discover_server(char* dest);

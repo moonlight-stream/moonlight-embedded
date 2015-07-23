@@ -17,15 +17,16 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <stdlib.h>
 
-struct http_data {
+typedef struct _HTTP_DATA {
   char *memory;
   size_t size;
-};
+} HTTP_DATA, *PHTTP_DATA;
 
-void http_init();
-int http_request(char* url, struct http_data* data);
-
-struct http_data* http_create_data();
-void http_free_data(struct http_data* data);
+int http_init();
+PHTTP_DATA http_create_data();
+int http_request(char* url, PHTTP_DATA data);
+void http_free_data(PHTTP_DATA data);

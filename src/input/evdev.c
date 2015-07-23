@@ -18,10 +18,10 @@
  */
 
 #include "../loop.h"
+#include "../global.h"
 
 #include "keyboard.h"
 #include "mapping.h"
-#include "global.h"
 
 #include "libevdev/libevdev.h"
 #include "limelight-common/Limelight.h"

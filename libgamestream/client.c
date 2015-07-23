@@ -47,6 +47,8 @@ static X509 *cert;
 static char cert_hex[4096];
 static EVP_PKEY *privateKey;
 
+const char* gs_error;
+
 static int load_unique_id(const char* keyDirectory) {
   char uniqueFilePath[4096];
   sprintf(uniqueFilePath, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
@@ -94,12 +96,12 @@ static int load_cert(const char* keyDirectory) {
   }
 
   if (fd == NULL) {
-    fprintf(stderr, "Can't open certificate file\n");
+    gs_error = "Can't open certificate file";
     return GS_FAILED;
   }
 
   if (!(cert = PEM_read_X509(fd, NULL, NULL, NULL))) {
-    fprintf(stderr, "Error loading cert into memory.\n");
+    gs_error = "Error loading cert into memory";
     return GS_FAILED;
   }
 
@@ -117,7 +119,7 @@ static int load_cert(const char* keyDirectory) {
 
   fd = fopen(keyFilePath, "r");
   if (fd == NULL) {
-    fprintf(stderr, "Error loading key into memory.\n");
+    gs_error = "Error loading key into memory";
     return GS_FAILED;
   }
 
@@ -194,66 +196,38 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
   *slen = 0;
 
   EVP_MD_CTX *ctx = EVP_MD_CTX_create();
-  if (ctx == NULL) {
-    fprintf(stderr, "EVP_MD_CTX_create failed, error 0x%lx\n", ERR_get_error());
-    return -1;
-  }
+  if (ctx == NULL)
+    return GS_FAILED;
 
   const EVP_MD *md = EVP_get_digestbyname("SHA256");
-  if (md == NULL) {
-    fprintf(stderr, "EVP_get_digestbyname failed, error 0x%lx\n", ERR_get_error());
+  if (md == NULL)
     goto cleanup;
-  }
 
   int rc = EVP_DigestInit_ex(ctx, md, NULL);
-  if (rc != 1) {
-    fprintf(stderr, "EVP_DigestInit_ex failed, error 0x%lx\n", ERR_get_error());
+  if (rc != 1)
     goto cleanup;
-  }
 
   rc = EVP_DigestSignInit(ctx, NULL, md, NULL, pkey);
-  if (rc != 1) {
-    fprintf(stderr, "EVP_DigestSignInit failed, error 0x%lx\n", ERR_get_error());
+  if (rc != 1)
     goto cleanup;
-  }
 
   rc = EVP_DigestSignUpdate(ctx, msg, mlen);
-  if (rc != 1) {
-    fprintf(stderr, "EVP_DigestSignUpdate failed, error 0x%lx\n", ERR_get_error());
+  if (rc != 1)
     goto cleanup;
-  }
 
   size_t req = 0;
   rc = EVP_DigestSignFinal(ctx, NULL, &req);
-  if (rc != 1) {
-    fprintf(stderr, "EVP_DigestSignFinal failed (1), error 0x%lx\n", ERR_get_error());
+  if (rc != 1 || !(req > 0))
     goto cleanup;
-  }
-
-  if (!(req > 0)) {
-    fprintf(stderr, "EVP_DigestSignFinal failed (2), error 0x%lx\n", ERR_get_error());
-    goto cleanup;
-  }
 
   *sig = OPENSSL_malloc(req);
-  if (*sig == NULL) {
-    fprintf(stderr, "OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
+  if (*sig == NULL)
     goto cleanup;
-  }
 
   *slen = req;
   rc = EVP_DigestSignFinal(ctx, *sig, slen);
-  if (rc != 1) {
-    fprintf(stderr, "EVP_DigestSignFinal failed (3), return code %d, error 0x%lx\n", rc,
-           ERR_get_error());
+  if (rc != 1 || req != *slen)
     goto cleanup;
-  }
-
-  if (req != *slen) {
-    fprintf(stderr, "EVP_DigestSignFinal failed, mismatched signature sizes %ld, %ld\n",
-           req, *slen);
-    goto cleanup;
-  }
 
   result = GS_OK;
 
@@ -269,16 +243,14 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   char url[4096];
 
   if (server->paired) {
-    fprintf(stderr, "Already paired\n");
+    gs_error = "Already paired";
     return GS_WRONG_STATE;
   }
 
   if (server->currentGame != 0) {
-    fprintf(stderr, "The computer is currently in a game. You must close the game before pairing.\n");
+    gs_error = "The computer is currently in a game. You must close the game before pairing";
     return GS_WRONG_STATE;
   }
-
-  printf("Please enter the following PIN on the target PC: %s\n", pin);
 
   unsigned char salt_data[16];
   char salt_hex[33];
@@ -357,7 +329,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   unsigned char *signature = NULL;
   size_t s_len;
   if (sign_it(client_secret_data, 16, &signature, &s_len, privateKey) != GS_OK) {
-      fprintf(stderr, "Failed to sign data\n");
+      gs_error = "Failed to sign data";
       ret = GS_FAILED;
       goto cleanup;
   }

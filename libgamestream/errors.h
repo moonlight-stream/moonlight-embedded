@@ -25,3 +25,5 @@
 #define GS_INVALID -3
 #define GS_WRONG_STATE -4
 #define GS_IO_ERROR -5
+
+const char* gs_error;

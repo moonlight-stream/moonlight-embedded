@@ -304,7 +304,12 @@ int main(int argc, char* argv[]) {
   } else if (strcmp("pair", action) == 0) {
     char pin[5];
     sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
-    gs_pair(server, &pin[0]);
+    printf("Please enter the following PIN on the target PC: %s\n", pin);
+    if (gs_pair(server, &pin[0]) != GS_OK) {
+      fprintf("Failed to pair to server: %s\n", gs_error);
+    } else {
+      printf("Succesfully paired\n");
+    }
   } else if (strcmp("quit", action) == 0) {
     pair_check(server);
     gs_quit_app(server);

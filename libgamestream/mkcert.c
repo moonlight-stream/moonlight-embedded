@@ -48,9 +48,6 @@ CERT_KEY_PAIR mkcert_generate() {
     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
 
     p12 = PKCS12_create("limelight", "GameStream", pkey, x509, NULL, 0, 0, 0, 0, 0);
-    if (p12 == NULL) {
-        fprintf(stderr, "Error generating a valid PKCS12 certificate.\n");
-    }
 
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();

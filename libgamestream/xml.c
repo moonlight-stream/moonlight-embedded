@@ -46,10 +46,8 @@ static void XMLCALL _xml_start_applist_element(void *userData, const char *name,
   struct xml_query *search = (struct xml_query*) userData;
   if (strcmp("App", name) == 0) {
     PAPP_LIST app = malloc(sizeof(APP_LIST));
-    if (app == NULL) {
-      fprintf(stderr, "Not enough memory\n");
+    if (app == NULL)
       return;
-    }
 
     app->next = (PAPP_LIST) search->data;
     search->data = app;
@@ -81,10 +79,8 @@ static void XMLCALL _xml_write_data(void *userData, const XML_Char *s, int len) 
   struct xml_query *search = (struct xml_query*) userData;
   if (search->start > 0) {
     search->memory = realloc(search->memory, search->size + len + 1);
-    if(search->memory == NULL) {
-      fprintf(stderr, "Not enough memory\n");
+    if(search->memory == NULL)
       return;
-    }
   
     memcpy(&(search->memory[search->size]), s, len);
     search->size += len;
@@ -104,7 +100,7 @@ int xml_search(char* data, size_t len, char* node, char** result) {
   XML_SetCharacterDataHandler(parser, _xml_write_data);
   if (! XML_Parse(parser, data, len, 1)) {
     int code = XML_GetErrorCode(parser);
-    fprintf(stderr, "XML Error: %s\n", XML_ErrorString(code));
+    gs_error = XML_ErrorString(code);
     free(search.memory);
     return GS_INVALID;
   } else if (search.memory == NULL)
@@ -127,7 +123,7 @@ int xml_applist(char* data, size_t len, PAPP_LIST app_list) {
   XML_SetCharacterDataHandler(parser, _xml_write_data);
   if (! XML_Parse(parser, data, len, 1)) {
     int code = XML_GetErrorCode(parser);
-    fprintf(stderr, "XML Error %s\n", XML_ErrorString(code));
+    gs_error = XML_ErrorString(code);
     return GS_INVALID;
   }
   app_list = (PAPP_LIST) query.data;

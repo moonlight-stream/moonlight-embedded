@@ -17,12 +17,16 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "loop.h"
 #include "client.h"
 #include "connection.h"
 #include "video.h"
 #include "audio.h"
-#include "input.h"
 #include "discover.h"
+
+#include "input/evdev.h"
+#include "input/udev.h"
+#include "input/cec.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -42,28 +46,55 @@
 #define MOONLIGHT_PATH "/moonlight/"
 #define USER_PATHS ":~/.moonlight/:./"
 
-static void applist(const char* address) {
-  struct app_list* list = client_applist(address);
+static void applist(PSERVER_DATA server) {
+  PAPP_LIST list;
+  if (gs_applist(server, list) != GS_OK) {
+    fprintf(stderr, "Can't get app list\n");
+    return;
+  }
+
   for (int i = 1;list != NULL;i++) {
     printf("%d. %s\n", i, list->name);
     list = list->next;
   }
 }
 
-static void stream(STREAM_CONFIGURATION* config, const char* address, const char* app, bool sops, bool localaudio) {
-  int appId = client_get_app_id(address, app);
+static int get_app_id(PSERVER_DATA server, const char *name) {
+  PAPP_LIST list;
+  if (gs_applist(server, list) != GS_OK) {
+    fprintf(stderr, "Can't get app list\n");
+    return -1;
+  }
+
+  while (list != NULL) {
+    if (strcmp(list->name, name) == 0)
+      return list->id;
+
+    list = list->next;
+  }
+  return -1;
+}
+
+static void stream(PSERVER_DATA server, PSTREAM_CONFIGURATION config, const char* app, bool sops, bool localaudio) {
+  int appId = get_app_id(server, app);
   if (appId<0) {
     fprintf(stderr, "Can't find app %s\n", app);
     exit(-1);
   }
 
-  client_start_app(config, address, appId, sops, localaudio);
+  gs_start_app(server, config, appId, sops, localaudio);
 
   video_init();
+  evdev_init();
+  #ifdef HAVE_LIBCEC
+  cec_init();
+  #endif /* HAVE_LIBCEC */
 
-  LiStartConnection(address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, 0, client_get_server_version());
+  LiStartConnection(server->address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, 0, server->serverMajorVersion);
 
-  input_loop();
+  evdev_start();
+  loop_main();
+  evdev_stop();
 
   LiStopConnection();
 }
@@ -138,8 +169,8 @@ char* get_path(char* name) {
   return NULL;
 }
 
-static void pair_check(void) {
-  if (!client_is_paired(NULL)) {
+static void pair_check(PSERVER_DATA server) {
+  if (!server->paired) {
     fprintf(stderr, "You must pair with the PC first\n");
     exit(-1);
   }
@@ -213,7 +244,7 @@ int main(int argc, char* argv[]) {
       app = optarg;
       break;
     case 'j':
-      input_create(optarg, mapping);
+      evdev_create(optarg, mapping);
       inputAdded = true;
       mapped = true;
       break;
@@ -267,8 +298,8 @@ int main(int argc, char* argv[]) {
       perror("No filename for mapping");
       exit(-1);
     }
-    input_init(mapping);
-    input_map(address);
+    udev_init(!inputAdded, mapping);
+    evdev_map(address);
     exit(0);
   }
 
@@ -279,27 +310,38 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
     address[0] = 0;
-    discover_server(address);
+    gs_discover_server(address);
     if (address[0] == 0) {
       fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
       exit(-1);
     }
   }
 
-  client_init(address);
+  PSERVER_DATA server;
+  if (gs_init(server, address, ".") != GS_OK) {
+      fprintf(stderr, "Can't connect to server %s\n", address);
+      exit(-1);
+  }
 
   if (strcmp("list", action) == 0) {
-    pair_check();
-    applist(address);
+    pair_check(server);
+    applist(server);
   } else if (strcmp("stream", action) == 0) {
-    input_init(mapping);
-    pair_check();
-    stream(&config, address, app, sops, localaudio);
-  } else if (strcmp("pair", action) == 0)
-    client_pair(address);
-  else if (strcmp("quit", action) == 0) {
-    pair_check();
-    client_quit_app(address);
+    udev_init(!inputAdded, mapping);
+    pair_check(server);
+    stream(server, &config, app, sops, localaudio);
+  } else if (strcmp("pair", action) == 0) {
+    char pin[5];
+    sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+    printf("Please enter the following PIN on the target PC: %s\n", pin);
+    if (gs_pair(server, &pin[0]) != GS_OK) {
+      fprintf("Failed to pair to server: %s\n", gs_error);
+    } else {
+      printf("Succesfully paired\n");
+    }
+  } else if (strcmp("quit", action) == 0) {
+    pair_check(server);
+    gs_quit_app(server);
   } else
     fprintf(stderr, "%s is not a valid action\n", action);
 }

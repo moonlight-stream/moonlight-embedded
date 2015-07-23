@@ -17,15 +17,5 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-
-struct http_data {
-  char *memory;
-  size_t size;
-};
-
-void http_init();
-int http_request(char* url, struct http_data* data);
-
-struct http_data* http_create_data();
-void http_free_data(struct http_data* data);
+void udev_init(bool autoload, char* mapfile);
+void evdev_destroy();

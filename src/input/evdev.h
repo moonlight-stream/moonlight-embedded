@@ -17,18 +17,10 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "xml.h"
+void evdev_create(const char* device, char* mapFile);
+void evdev_loop();
+void evdev_map(char* fileName);
 
-#include "limelight-common/Limelight.h"
-
-#include "stdbool.h"
-
-void client_init(const char* serverAddress);
-void client_start_app(STREAM_CONFIGURATION *config, const char* serverAddress, int appId, bool sops, bool localaudio);
-struct app_list* client_applist(const char* serverAddress);
-int client_get_app_id(const char* serverAddress, const char* name);
-void client_pair(const char *address);
-int client_get_server_version(void);
-bool client_is_paired(const char *address);
-int client_get_current_game(const char *address);
-void client_quit_app(const char *address);
+void evdev_init();
+void evdev_start();
+void evdev_stop();

@@ -16,15 +16,5 @@
  * You should have received a copy of the GNU General Public License
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
 
-#include <stdio.h>
-
-struct app_list {
-  char* name;
-  int id;
-  struct app_list* next;
-};
-
-int xml_search(char* data, size_t len, char* node, char** result);
-struct app_list* xml_applist(char* data, size_t len);
+void init_cec();

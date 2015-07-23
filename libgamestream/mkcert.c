@@ -33,7 +33,7 @@ static const int NUM_YEARS = 10;
 int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years);
 int add_ext(X509 *cert, int nid, char *value);
 
-struct CertKeyPair generateCertKeyPair() {
+CERT_KEY_PAIR mkcert_generate() {
     BIO *bio_err;
     X509 *x509 = NULL;
     EVP_PKEY *pkey = NULL;
@@ -48,9 +48,6 @@ struct CertKeyPair generateCertKeyPair() {
     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
 
     p12 = PKCS12_create("limelight", "GameStream", pkey, x509, NULL, 0, 0, 0, 0, 0);
-    if (p12 == NULL) {
-        fprintf(stderr, "Error generating a valid PKCS12 certificate.\n");
-    }
 
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
@@ -60,16 +57,16 @@ struct CertKeyPair generateCertKeyPair() {
     CRYPTO_mem_leaks(bio_err);
     BIO_free(bio_err);
     
-    return (CertKeyPair){x509, pkey, p12};
+    return (CERT_KEY_PAIR) {x509, pkey, p12};
 }
 
-void freeCertKeyPair(struct CertKeyPair certKeyPair) {
+void mkcert_free(CERT_KEY_PAIR certKeyPair) {
     X509_free(certKeyPair.x509);
     EVP_PKEY_free(certKeyPair.pkey);
     PKCS12_free(certKeyPair.p12);
 }
 
-void saveCertKeyPair(const char* certFile, const char* p12File, const char* keyPairFile, CertKeyPair certKeyPair) {
+void mkcert_save(const char* certFile, const char* p12File, const char* keyPairFile, CERT_KEY_PAIR certKeyPair) {
     FILE* certFilePtr = fopen(certFile, "w");
     FILE* keyPairFilePtr = fopen(keyPairFile, "w");
     FILE* p12FilePtr = fopen(p12File, "wb");

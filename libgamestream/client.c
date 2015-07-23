@@ -36,10 +36,8 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
-static const char *uniqueFileName = "uniqueid.dat";
-static const char *certificateFileName = "client.pem";
-static const char *p12FileName = "client.p12";
-static const char *keyFileName = "key.pem";
+#define UNIQUE_FILE_NAME "uniqueid.dat"
+#define P12_FILE_NAME "client.p12"
 
 #define UNIQUEID_BYTES 8
 #define UNIQUEID_CHARS (UNIQUEID_BYTES*2)
@@ -49,42 +47,60 @@ static X509 *cert;
 static char cert_hex[4096];
 static EVP_PKEY *privateKey;
 
-static void load_unique_id() {
-  FILE *fd = fopen(uniqueFileName, "r");
+static int load_unique_id(const char* keyDirectory) {
+  char uniqueFilePath[4096];
+  sprintf(uniqueFilePath, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
+
+  FILE *fd = fopen(uniqueFilePath, "r");
   if (fd == NULL) {
     unsigned char unique_data[UNIQUEID_BYTES];
     RAND_bytes(unique_data, UNIQUEID_BYTES);
     for (int i = 0; i < UNIQUEID_BYTES; i++) {
       sprintf(unique_id + (i * 2), "%02x", unique_data[i]);
     }
-    fd = fopen(uniqueFileName, "w");
+    fd = fopen(uniqueFilePath, "w");
+    if (fd == NULL)
+      return GS_FAILED;
+
     fwrite(unique_id, UNIQUEID_CHARS, 1, fd);
   } else {
     fread(unique_id, UNIQUEID_CHARS, 1, fd);
   }
   fclose(fd);
   unique_id[UNIQUEID_CHARS] = 0;
+
+  return GS_OK;
 }
 
-static void load_cert() {
-  FILE *fd = fopen(certificateFileName, "r");
+static int load_cert(const char* keyDirectory) {
+  char certificateFilePath[4096];
+  sprintf(certificateFilePath, "%s/%s", keyDirectory, CERTIFICATE_FILE_NAME);
+
+  char keyFilePath[4096];
+  sprintf(&keyFilePath[0], "%s/%s", keyDirectory, KEY_FILE_NAME);
+
+  FILE *fd = fopen(certificateFilePath, "r");
   if (fd == NULL) {
     printf("Generating certificate...");
     CERT_KEY_PAIR cert = mkcert_generate();
     printf("done\n");
-    mkcert_save(certificateFileName, p12FileName, keyFileName, cert);
+
+    char p12FilePath[4096];
+    sprintf(p12FilePath, "%s/%s", keyDirectory, P12_FILE_NAME);
+
+    mkcert_save(certificateFilePath, p12FilePath, keyFilePath, cert);
     mkcert_free(cert);
-    fd = fopen(certificateFileName, "r");
+    fd = fopen(certificateFilePath, "r");
   }
 
   if (fd == NULL) {
     fprintf(stderr, "Can't open certificate file\n");
-    exit(-1);
+    return GS_FAILED;
   }
 
   if (!(cert = PEM_read_X509(fd, NULL, NULL, NULL))) {
     fprintf(stderr, "Error loading cert into memory.\n");
-    exit(-1);
+    return GS_FAILED;
   }
 
   rewind(fd);
@@ -99,9 +115,16 @@ static void load_cert() {
 
   fclose(fd);
 
-  fd = fopen(keyFileName, "r");
+  fd = fopen(keyFilePath, "r");
+  if (fd == NULL) {
+    fprintf(stderr, "Error loading key into memory.\n");
+    return GS_FAILED;
+  }
+
   PEM_read_PrivateKey(fd, &privateKey, NULL, NULL);
   fclose(fd);
+
+  return GS_OK;
 }
 
 static int load_server_status(const char *address, PSERVER_DATA server) {
@@ -419,10 +442,13 @@ int gs_quit_app(PSERVER_DATA server) {
   return ret;
 }
 
-int gs_init(PSERVER_DATA server, const char *address) {
-  http_init();
-  load_unique_id();
-  load_cert();
+int gs_init(PSERVER_DATA server, const char *address, const char *keyDirectory) {
+  if (load_unique_id(keyDirectory) != GS_OK)
+    return GS_FAILED;
 
+  if (load_cert(keyDirectory))
+    return GS_FAILED;
+
+  http_init(keyDirectory);
   return load_server_status(address, server);
 }

@@ -21,12 +21,15 @@
 
 #include <stdlib.h>
 
+#define CERTIFICATE_FILE_NAME "client.pem"
+#define KEY_FILE_NAME "key.pem"
+
 typedef struct _HTTP_DATA {
   char *memory;
   size_t size;
 } HTTP_DATA, *PHTTP_DATA;
 
-int http_init();
+int http_init(const char* keyDirectory);
 PHTTP_DATA http_create_data();
 int http_request(char* url, PHTTP_DATA data);
 void http_free_data(PHTTP_DATA data);

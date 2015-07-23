@@ -289,7 +289,7 @@ int main(int argc, char* argv[]) {
   }
 
   PSERVER_DATA server;
-  if (gs_init(server, address) != GS_OK) {
+  if (gs_init(server, address, ".") != GS_OK) {
       fprintf(stderr, "Can't connect to server %s\n", address);
       exit(-1);
   }

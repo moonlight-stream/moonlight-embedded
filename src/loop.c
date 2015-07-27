@@ -68,6 +68,7 @@ void loop_add_fd(int fd, FdHandler handler, int events) {
 
   fds[fdindex].fd = fd;
   fds[fdindex].events = events;
+  fdHandlers[fdindex] = handler;
 }
 
 void loop_remove_fd(int fd) {

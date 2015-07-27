@@ -23,6 +23,7 @@
 #include "video.h"
 #include "audio.h"
 #include "discover.h"
+#include "config.h"
 
 #include "input/evdev.h"
 #include "input/udev.h"
@@ -41,10 +42,6 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <openssl/rand.h>
-#include <getopt.h>
-
-#define MOONLIGHT_PATH "/moonlight/"
-#define USER_PATHS ":~/.moonlight/:./"
 
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list;
@@ -75,14 +72,14 @@ static int get_app_id(PSERVER_DATA server, const char *name) {
   return -1;
 }
 
-static void stream(PSERVER_DATA server, PSTREAM_CONFIGURATION config, const char* app, bool sops, bool localaudio) {
-  int appId = get_app_id(server, app);
+static void stream(PSERVER_DATA server, PCONFIGURATION config) {
+  int appId = get_app_id(server, config->app);
   if (appId<0) {
-    fprintf(stderr, "Can't find app %s\n", app);
+    fprintf(stderr, "Can't find app %s\n", config->app);
     exit(-1);
   }
 
-  gs_start_app(server, config, appId, sops, localaudio);
+  gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
 
   video_init();
   evdev_init();
@@ -90,7 +87,7 @@ static void stream(PSERVER_DATA server, PSTREAM_CONFIGURATION config, const char
   cec_init();
   #endif /* HAVE_LIBCEC */
 
-  LiStartConnection(server->address, config, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, 0, server->serverMajorVersion);
+  LiStartConnection(server->address, &config->stream, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, 0, server->serverMajorVersion);
 
   evdev_start();
   loop_main();
@@ -109,6 +106,7 @@ static void help() {
   printf("\tquit\t\t\tQuit the application or game being streamed\n");
   printf("\thelp\t\t\tShow this help\n\n");
   printf(" Streaming options\n\n");
+  printf("\t-config <config>\tLoad configuration file\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
   printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
@@ -127,48 +125,6 @@ static void help() {
   exit(0);
 }
 
-char* get_path(char* name) {
-  const char *xdg_data_dirs = getenv("XDG_DATA_DIRS");
-  char *data_dirs;
-
-  if (access(name, R_OK) != -1) {
-      return name;
-  }
-
-  if (!xdg_data_dirs)
-    data_dirs = "/usr/share:/usr/local/share:" USER_PATHS;
-  else {
-    data_dirs = malloc(strlen(xdg_data_dirs) + strlen(USER_PATHS) + 1);
-    strcpy(data_dirs, xdg_data_dirs);
-    strcpy(data_dirs+strlen(data_dirs), USER_PATHS);
-  }
-
-  char *path = malloc(strlen(data_dirs)+strlen(MOONLIGHT_PATH)+strlen(name)+1);
-  if (path == NULL) {
-    fprintf(stderr, "Not enough memory\n");
-    exit(-1);
-  }
-
-  char* end;
-  do {
-    end = strstr(data_dirs, ":");
-    int length = end != NULL?end - data_dirs:strlen(data_dirs);
-    memcpy(path, data_dirs, length);
-    if (path[0] == '/')
-      sprintf(path+length, "%s%s", MOONLIGHT_PATH, name);
-    else
-      sprintf(path+length, "%s", name);
-
-    if(access(path, R_OK) != -1)
-      return path;
-
-    data_dirs = end + 1;
-  } while (end != NULL);
-
-  free(path);
-  return NULL;
-}
-
 static void pair_check(PSERVER_DATA server) {
   if (!server->paired) {
     fprintf(stderr, "You must pair with the PC first\n");
@@ -177,160 +133,49 @@ static void pair_check(PSERVER_DATA server) {
 }
 
 int main(int argc, char* argv[]) {
-  STREAM_CONFIGURATION config;
-  config.width = 1280;
-  config.height = 720;
-  config.fps = 60;
-  config.bitrate = -1;
-  config.packetSize = 1024;
+  CONFIGURATION config;
+  config_parse(argc, argv, &config);
 
-  static struct option long_options[] = {
-    {"720", no_argument, 0, 'a'},
-    {"1080", no_argument, 0, 'b'},
-    {"width", required_argument, 0, 'c'},
-    {"height", required_argument, 0, 'd'},
-    {"30fps", no_argument, 0, 'e'},
-    {"60fps", no_argument, 0, 'f'},
-    {"bitrate", required_argument, 0, 'g'},
-    {"packetsize", required_argument, 0, 'h'},
-    {"app", required_argument, 0, 'i'},
-    {"input", required_argument, 0, 'j'},
-    {"mapping", required_argument, 0, 'k'},
-    {"nosops", no_argument, 0, 'l'},
-    {"audio", required_argument, 0, 'm'},
-    {"localaudio", no_argument, 0, 'n'},
-    {0, 0, 0, 0},
-  };
-
-  char* app = "Steam";
-  char* action = NULL;
-  char* address = NULL;
-  char* mapping = get_path("mappings/default.conf");
-  int option_index = 0;
-  bool sops = true;
-  bool localaudio = false;
-  bool inputAdded = false;
-  bool mapped = true;
-  int c;
-  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:n", long_options, &option_index)) != -1) {
-    switch (c) {
-    case 'a':
-      config.width = 1280;
-      config.height = 720;
-      break;
-    case 'b':
-      config.width = 1920;
-      config.height = 1080;
-      break;
-    case 'c':
-      config.width = atoi(optarg);
-      break;
-    case 'd':
-      config.height = atoi(optarg);
-      break;
-    case 'e':
-      config.fps = 30;
-      break;
-    case 'f':
-      config.fps = 60;
-      break;
-    case 'g':
-      config.bitrate = atoi(optarg);
-      break;
-    case 'h':
-      config.packetSize = atoi(optarg);
-      break;
-    case 'i':
-      app = optarg;
-      break;
-    case 'j':
-      evdev_create(optarg, mapping);
-      inputAdded = true;
-      mapped = true;
-      break;
-    case 'k':
-      mapping = get_path(optarg);
-      if (mapping == NULL) {
-        fprintf(stderr, "Unable to open custom mapping file: %s\n", optarg);
-        exit(-1);
-      }
-      mapped = false;
-      break;
-    case 'l':
-      sops = false;
-      break;
-    case 'm':
-      audio_device = optarg;
-      break;
-    case 'n':
-      localaudio = true;
-      break;
-    case 1:
-      if (action == NULL)
-        action = optarg;
-      else if (address == NULL)
-        address = optarg;
-      else {
-        perror("Too many options");
-        exit(-1);
-      }
-    }
-  }
-
-  if (config.bitrate == -1) {
-    if (config.height >= 1080 && config.fps >= 60)
-      config.bitrate = 20000;
-    else if (config.height >= 1080 || config.fps >= 60)
-      config.bitrate = 10000;
-    else
-      config.bitrate = 5000;
-  }
-
-  if (inputAdded && !mapped) {
-    fprintf(stderr, "Mapping option should be followed by the input to be mapped.\n");
-    exit(-1);
-  }
-
-  if (action == NULL || strcmp("help", action) == 0)
+  if (config.action == NULL || strcmp("help", config.action) == 0)
     help();
-  else if (strcmp("map", action) == 0) {
-    if (address == NULL) {
+  else if (strcmp("map", config.action) == 0) {
+    if (config.address == NULL) {
       perror("No filename for mapping");
       exit(-1);
     }
-    udev_init(!inputAdded, mapping);
-    evdev_map(address);
+    udev_init(!inputAdded, config.mapping);
+    evdev_map(config.address);
     exit(0);
   }
 
-  if (address == NULL) {
-    address = malloc(MAX_ADDRESS_SIZE);
-    if (address == NULL) {
+  if (config.address == NULL) {
+    config.address = malloc(MAX_ADDRESS_SIZE);
+    if (config.address == NULL) {
       perror("Not enough memory");
       exit(-1);
     }
-    address[0] = 0;
-    gs_discover_server(address);
-    if (address[0] == 0) {
+    config.address[0] = 0;
+    gs_discover_server(config.address);
+    if (config.address[0] == 0) {
       fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
       exit(-1);
     }
   }
 
   PSERVER_DATA server;
-  if (gs_init(server, address, ".") != GS_OK) {
-      fprintf(stderr, "Can't connect to server %s\n", address);
+  if (gs_init(server, config.address, ".") != GS_OK) {
+      fprintf(stderr, "Can't connect to server %s\n", config.address);
       exit(-1);
   }
 
-  if (strcmp("list", action) == 0) {
+  if (strcmp("list", config.action) == 0) {
     pair_check(server);
     applist(server);
-  } else if (strcmp("stream", action) == 0) {
-    udev_init(!inputAdded, mapping);
+  } else if (strcmp("stream", config.action) == 0) {
+    udev_init(!inputAdded, config.mapping);
     pair_check(server);
-    stream(server, &config, app, sops, localaudio);
-  } else if (strcmp("pair", action) == 0) {
+    stream(server, &config);
+  } else if (strcmp("pair", config.action) == 0) {
     char pin[5];
     sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
     printf("Please enter the following PIN on the target PC: %s\n", pin);
@@ -339,9 +184,9 @@ int main(int argc, char* argv[]) {
     } else {
       printf("Succesfully paired\n");
     }
-  } else if (strcmp("quit", action) == 0) {
+  } else if (strcmp("quit", config.action) == 0) {
     pair_check(server);
     gs_quit_app(server);
   } else
-    fprintf(stderr, "%s is not a valid action\n", action);
+    fprintf(stderr, "%s is not a valid action\n", config.action);
 }

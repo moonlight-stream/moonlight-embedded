@@ -45,6 +45,7 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 
 	Streaming options:
 
+	-config <config> Load configuration file
 	-720 Use 1280x720 resolution (default)
 	-1080 Use 1920x1080 resolution
 	-width <width> Horizontal resolution (default 1280)

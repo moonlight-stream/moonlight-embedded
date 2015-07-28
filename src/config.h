@@ -21,14 +21,24 @@
 
 #include <stdbool.h>
 
+#define MAX_INPUTS 6
+
+struct input_config {
+  char* path;
+  char* mapping;
+};
+
 typedef struct _CONFIGURATION {
   STREAM_CONFIGURATION stream;
   char* app;
   char* action;
   char* address;
   char* mapping;
+  char* platform;
   bool sops;
   bool localaudio;
+  struct input_config inputs[MAX_INPUTS];
+  int inputsCount;
 } CONFIGURATION, *PCONFIGURATION;
 
 bool inputAdded;

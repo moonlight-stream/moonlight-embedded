@@ -19,14 +19,17 @@
 
 #include "limelight-common/Limelight.h"
 
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
+#include <dlfcn.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
+
+enum platform { SDL, OMX, IMX, FAKE };
+
+enum platform platform_check(char*);
+DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system);
+
 #ifdef HAVE_SDL
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
-#endif
-#ifdef HAVE_OMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
-#endif
-#ifdef HAVE_IMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_imx;
-bool video_imx_init();
+void sdl_loop();
 #endif

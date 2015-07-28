@@ -21,6 +21,10 @@ find_package(CEC)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(EVDEV REQUIRED libevdev)
 pkg_check_modules(UDEV REQUIRED libudev)
+pkg_check_modules(SDL sdl2)
+pkg_check_modules(AVCODEC libavcodec)
+pkg_check_modules(AVUTIL libavutil)
+pkg_check_modules(SWSCALE libswscale)
 
 if(CEC_FOUND)
   include_directories(./third_party/libcec)
@@ -46,6 +50,13 @@ if(FREESCALE_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_IMX)
 endif()
 
+if (AVCODEC_FOUND AND AVUTIL_FOUND AND SWSCALE_FOUND AND SDL_FOUND)
+  list(APPEND SRC_LIST ./src/video/ffmpeg.c ./src/video/sdl.c ./src/audio/sdl.c)
+  list(APPEND MOONLIGHT_DEFINITIONS HAVE_SDL)
+endif()
+
+list(APPEND SRC_LIST ./src/audio/alsa.c)
+
 add_subdirectory(libgamestream)
 
 add_executable(moonlight ${SRC_LIST})
@@ -67,6 +78,11 @@ endif()
 if(FREESCALE_FOUND)
   target_include_directories(moonlight PRIVATE ${FREESCALE_INCLUDE_DIRS})
   target_link_libraries (moonlight PUBLIC ${FREESCALE_LIBRARIES})
+endif()
+
+if (AVCODEC_FOUND AND AVUTIL_FOUND AND SWSCALE_FOUND AND SDL_FOUND)
+  target_include_directories(moonlight PRIVATE ${SDL_INCLUDE_DIRS} ${AVCODEC_INCLUDE_DIRS} ${AVUTIL_INCLUDE_DIRS} ${SWSCALE_INCLUDE_DIRS})
+  target_link_libraries(moonlight PUBLIC ${SDL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVUTIL_LIBRARIES} ${SWSCALE_LIBRARIES})
 endif()
 
 set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})

@@ -49,6 +49,7 @@ static struct option long_options[] = {
   {"audio", required_argument, NULL, 'm'},
   {"localaudio", no_argument, NULL, 'n'},
   {"config", required_argument, NULL, 'o'},
+  {"platform", required_argument, 0, 'p'},
   {0, 0, 0, 0},
 };
 
@@ -126,7 +127,13 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->app = value;
     break;
   case 'j':
-    evdev_create(value, config->mapping);
+    if (config->inputsCount >= MAX_INPUTS) {
+      perror("Too many inputs specified");
+      exit(-1);
+    }
+    config->inputs[config->inputsCount].path = optarg;
+    config->inputs[config->inputsCount].mapping = optarg;
+    config->inputsCount++;
     inputAdded = true;
     mapped = true;
     break;
@@ -149,6 +156,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'o':
     config_file_parse(value, config);
+    break;
+  case 'p':
+    config->platform = optarg;
     break;
   case 1:
     if (config->action == NULL)
@@ -191,12 +201,14 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.bitrate = -1;
   config->stream.packetSize = 1024;
 
+  config->platform = "default";
   config->app = "Steam";
   config->action = NULL;
   config->address = NULL;
   config->sops = true;
   config->localaudio = false;
 
+  config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf");
 
   int option_index = 0;

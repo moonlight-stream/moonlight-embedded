@@ -24,6 +24,8 @@
 #include "audio.h"
 #include "discover.h"
 #include "config.h"
+#include "platform.h"
+#include "sdl.h"
 
 #include "input/evdev.h"
 #include "input/udev.h"
@@ -72,7 +74,7 @@ static int get_app_id(PSERVER_DATA server, const char *name) {
   return -1;
 }
 
-static void stream(PSERVER_DATA server, PCONFIGURATION config) {
+static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
   int appId = get_app_id(server, config->app);
   if (appId<0) {
     fprintf(stderr, "Can't find app %s\n", config->app);
@@ -81,17 +83,14 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config) {
 
   gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
 
-  video_init();
-  evdev_init();
-  #ifdef HAVE_LIBCEC
-  cec_init();
-  #endif /* HAVE_LIBCEC */
+  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, 0, server->serverMajorVersion);
 
-  LiStartConnection(server->address, &config->stream, &connection_callbacks, decoder_callbacks, &audio_callbacks, NULL, 0, server->serverMajorVersion);
-
-  evdev_start();
-  loop_main();
-  evdev_stop();
+  if (IS_EMBEDDED(system))
+    loop_main();
+  #ifdef HAVE_SDL
+  else if (system == SDL)
+    sdl_loop();
+  #endif
 
   LiStopConnection();
 }
@@ -138,12 +137,22 @@ int main(int argc, char* argv[]) {
 
   if (config.action == NULL || strcmp("help", config.action) == 0)
     help();
-  else if (strcmp("map", config.action) == 0) {
+  
+  enum platform system = platform_check(config.platform);
+  if (system != 0) {
+    fprintf(stderr, "Platform '%s' not found\n", config.platform);
+    exit(-1);
+  }
+  
+  if (strcmp("map", config.action) == 0) {
     if (config.address == NULL) {
       perror("No filename for mapping");
       exit(-1);
     }
     udev_init(!inputAdded, config.mapping);
+    for (int i=0;i<config.inputsCount;i++)
+      evdev_create(config.inputs[i].path, config.inputs[i].mapping);
+    
     evdev_map(config.address);
     exit(0);
   }
@@ -172,9 +181,19 @@ int main(int argc, char* argv[]) {
     pair_check(server);
     applist(server);
   } else if (strcmp("stream", config.action) == 0) {
-    udev_init(!inputAdded, config.mapping);
     pair_check(server);
-    stream(server, &config);
+    if (IS_EMBEDDED(system)) {
+      for (int i=0;i<config.inputsCount;i++)
+        evdev_create(config.inputs[i].path, config.inputs[i].mapping);
+
+      udev_init(!inputAdded, config.mapping);
+      evdev_init();
+      #ifdef HAVE_LIBCEC
+      cec_init();
+      #endif /* HAVE_LIBCEC */
+    }
+
+    stream(server, &config, system);
   } else if (strcmp("pair", config.action) == 0) {
     char pin[5];
     sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);

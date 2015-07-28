@@ -17,36 +17,36 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
+#ifdef HAVE_SDL
 
-#include "video.h"
+static const short keyCodes[] = {
+  0x14, //SDLK_CAPSLOCK
+  0x70, //SDLK_F1
+  0x71, //SDLK_F2
+  0x72, //SDLK_F3
+  0x73, //SDLK_F4
+  0x74, //SDLK_F5
+  0x75, //SDLK_F6
+  0x76, //SDLK_F7
+  0x77, //SDLK_F8
+  0x78, //SDLK_F9
+  0x79, //SDLK_F10
+  0x7A, //SDLK_F11
+  0x7B, //SDLK_F12
+  0, //SDLK_PRINTSCREEN
+  0x91, //SDLK_SCROLLLOCK
+  0x13, //SDLK_PAUSE
+  0x9B, //SDLK_INSERT
+  0x24, //SDLK_HOME
+  0x21, //SDLK_PAGEUP
+  0x23, //SDLK_END
+  0x22, //SDLK_PAGEDOWN
+  0x27, //SDLK_RIGHT
+  0x25, //SDLK_LEFT
+  0x28, //SDLK_DOWN
+  0x26, //SDLK_UP
+};
 
-#include "limelight-common/Limelight.h"
+void sdl_loop();
 
-#include <dlfcn.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-DECODER_RENDERER_CALLBACKS *decoder_callbacks;
-
-static int decoder_level;
-
-void video_init() {
-  #ifdef HAVE_FAKE
-  decoder_callbacks = &decoder_callbacks_fake;
-  #endif
-  #ifdef HAVE_IMX
-  if (dlsym(RTLD_DEFAULT, "vpu_Init") != NULL && video_imx_init()) {
-    decoder_callbacks = &decoder_callbacks_imx;
-  }
-  #endif
-  #ifdef HAVE_OMX
-  if (dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL) {
-    decoder_callbacks = &decoder_callbacks_omx;
-  }
-  #endif
-  if (decoder_callbacks == NULL) {
-    fprintf(stderr, "No video output available\n");
-    exit(EXIT_FAILURE);
-  }
-}
+#endif /* HAVE_SDL */

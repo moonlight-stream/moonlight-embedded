@@ -72,6 +72,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
   switch (system) {
+  #ifdef HAVE_SDL
+  case SDL:
+    return &audio_callbacks_sdl;
+  #endif
   default:
     return &audio_callbacks_alsa;
   }

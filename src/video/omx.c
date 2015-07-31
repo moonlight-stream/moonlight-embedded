@@ -133,6 +133,11 @@ static void decoder_renderer_setup(int width, int height, int redrawRate, void* 
 static void decoder_renderer_cleanup() {
   int status = 0;
 
+  if((buf = ilclient_get_input_buffer(video_decode, 130, 1)) == NULL){
+    fprintf(stderr, "Can't get video buffer\n");
+    exit(EXIT_FAILURE);
+  }
+
   buf->nFilledLen = 0;
   buf->nFlags = OMX_BUFFERFLAG_TIME_UNKNOWN | OMX_BUFFERFLAG_EOS;
 

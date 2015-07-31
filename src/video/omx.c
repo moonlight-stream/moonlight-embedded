@@ -192,14 +192,15 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     stream->sps->vui.num_reorder_frames = 0;
     stream->sps->vui.max_dec_frame_buffering = 1;
 
-    entry->length = write_nal_unit(stream, entry->data+4, entry->length*2) + 4;
-  }
-
-  while (entry != NULL) {
-    memcpy(dest, entry->data, entry->length);
-    buf->nFilledLen += entry->length;
-    dest += entry->length;
-    entry = entry->next;
+    memcpy(dest, entry->data, 4);
+    buf->nFilledLen = write_nal_unit(stream, dest+4, 128) + 4;
+  } else {
+    while (entry != NULL) {
+      memcpy(dest, entry->data, entry->length);
+      buf->nFilledLen += entry->length;
+      dest += entry->length;
+      entry = entry->next;
+    }
   }
 
   if(port_settings_changed == 0 &&

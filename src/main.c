@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
     help();
   
   enum platform system = platform_check(config.platform);
-  if (system != 0) {
+  if (system == 0) {
     fprintf(stderr, "Platform '%s' not found\n", config.platform);
     exit(-1);
   }

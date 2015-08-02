@@ -25,7 +25,7 @@
 
 #define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
 
-enum platform { SDL, OMX, IMX, FAKE };
+enum platform { NONE, SDL, OMX, IMX, FAKE };
 
 enum platform platform_check(char*);
 DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system);

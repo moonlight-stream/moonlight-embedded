@@ -165,4 +165,6 @@ void mapping_save(char* fileName, struct mapping* map) {
   write_config(fd, "btn_dpad_down", map->btn_dpad_down);
   write_config(fd, "btn_dpad_left", map->btn_dpad_left);
   write_config(fd, "btn_dpad_right", map->btn_dpad_right);
+
+  fclose(fd);
 }

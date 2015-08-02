@@ -130,6 +130,10 @@ static int load_cert(const char* keyDirectory) {
 }
 
 static int load_server_status(const char *address, PSERVER_DATA server) {
+  char *pairedText = NULL;
+  char *currentGameText = NULL;
+  char *versionText = NULL;
+
   int ret = GS_INVALID;
   char url[4096];
   sprintf(url, "https://%s:47984/serverinfo?uniqueid=%s", address, unique_id);
@@ -144,9 +148,6 @@ static int load_server_status(const char *address, PSERVER_DATA server) {
     goto cleanup;
   }
 
-  char *pairedText = NULL;
-  char *currentGameText = NULL;
-  char *versionText = NULL;
   if (xml_search(data->memory, data->size, "currentgame", &currentGameText) != GS_OK) {
     goto cleanup;
   }

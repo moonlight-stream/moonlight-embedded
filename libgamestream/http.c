@@ -113,8 +113,9 @@ PHTTP_DATA http_create_data() {
 
 void http_free_data(PHTTP_DATA data) {
   if (data != NULL) {
-    free(data);
     if (data->memory != NULL)
       free(data->memory);
+
+    free(data);
   }
 }

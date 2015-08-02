@@ -27,10 +27,10 @@
 #include <string.h>
 #include <getopt.h>
 
-#define MOONLIGHT_PATH "/moonlight/"
-#define USER_PATHS ":~/.moonlight/:./"
-
-#define DEFAULT_CACHE_DIR ".cache/"
+#define MOONLIGHT_PATH "/moonlight"
+#define USER_PATHS "."
+#define DEFAULT_CONFIG_DIR "/.config"
+#define DEFAULT_CACHE_DIR "/.cache"
 
 #define write_config_string(fd, key, value) fprintf(fd, "%s = %s\n", key, value)
 #define write_config_int(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
@@ -63,21 +63,22 @@ static struct option long_options[] = {
 
 char* get_path(char* name) {
   const char *xdg_data_dirs = getenv("XDG_DATA_DIRS");
-  char *data_dirs;
+  const char *xdg_config_dir = getenv("XDG_CONFIG_DIR");
+  const char *home_dir = getenv("HOME");
 
   if (access(name, R_OK) != -1) {
       return name;
   }
 
   if (!xdg_data_dirs)
-    data_dirs = "/usr/share:/usr/local/share:" USER_PATHS;
-  else {
-    data_dirs = malloc(strlen(xdg_data_dirs) + strlen(USER_PATHS) + 1);
-    strcpy(data_dirs, xdg_data_dirs);
-    strcpy(data_dirs+strlen(data_dirs), USER_PATHS);
-  }
+    xdg_data_dirs = "/usr/share:/usr/local/share";
+  if (!xdg_config_dir)
+    xdg_config_dir = home_dir;
 
-  char *path = malloc(strlen(data_dirs)+strlen(MOONLIGHT_PATH)+strlen(name)+1);
+  char *data_dirs = malloc(strlen(USER_PATHS) + 1 + strlen(xdg_config_dir) + 1 + strlen(home_dir) + 1 + strlen(DEFAULT_CONFIG_DIR) + 1 + strlen(xdg_data_dirs) + 2);
+  sprintf(data_dirs, USER_PATHS ":%s:%s/" DEFAULT_CONFIG_DIR ":%s/", xdg_config_dir, home_dir, xdg_data_dirs);
+
+  char *path = malloc(strlen(data_dirs)+strlen(MOONLIGHT_PATH)+strlen(name)+2);
   if (path == NULL) {
     fprintf(stderr, "Not enough memory\n");
     exit(-1);
@@ -89,9 +90,9 @@ char* get_path(char* name) {
     int length = end != NULL?end - data_dirs:strlen(data_dirs);
     memcpy(path, data_dirs, length);
     if (path[0] == '/')
-      sprintf(path+length, "%s%s", MOONLIGHT_PATH, name);
+      sprintf(path+length, MOONLIGHT_PATH "/%s", name);
     else
-      sprintf(path+length, "%s", name);
+      sprintf(path+length, "/%s", name);
 
     if(access(path, R_OK) != -1)
       return path;
@@ -275,10 +276,10 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   if (config->key_dir[0] == 0x0) {
     const char *xdg_cache_dir = getenv("XDG_CACHE_DIR");
     if (xdg_cache_dir != NULL)
-      sprintf(config->key_dir, "%s/moonlight", xdg_cache_dir);
+      sprintf(config->key_dir, "%s" MOONLIGHT_PATH, xdg_cache_dir);
     else {
-      const char *xdg_cache_dir = getenv("HOME");
-      sprintf(config->key_dir, "%s/" DEFAULT_CACHE_DIR "moonlight", xdg_cache_dir);
+      const char *home_dir = getenv("HOME");
+      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, home_dir);
     }
   }
 

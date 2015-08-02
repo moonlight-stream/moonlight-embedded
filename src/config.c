@@ -61,8 +61,7 @@ static struct option long_options[] = {
   {0, 0, 0, 0},
 };
 
-char* get_path(char* name) {
-  const char *xdg_data_dirs = getenv("XDG_DATA_DIRS");
+char* get_path(char* name, char* extra_data_dirs) {
   const char *xdg_config_dir = getenv("XDG_CONFIG_DIR");
   const char *home_dir = getenv("HOME");
 
@@ -70,13 +69,13 @@ char* get_path(char* name) {
       return name;
   }
 
-  if (!xdg_data_dirs)
-    xdg_data_dirs = "/usr/share:/usr/local/share";
+  if (!extra_data_dirs)
+    extra_data_dirs = "/usr/share:/usr/local/share";
   if (!xdg_config_dir)
     xdg_config_dir = home_dir;
 
-  char *data_dirs = malloc(strlen(USER_PATHS) + 1 + strlen(xdg_config_dir) + 1 + strlen(home_dir) + 1 + strlen(DEFAULT_CONFIG_DIR) + 1 + strlen(xdg_data_dirs) + 2);
-  sprintf(data_dirs, USER_PATHS ":%s:%s/" DEFAULT_CONFIG_DIR ":%s/", xdg_config_dir, home_dir, xdg_data_dirs);
+  char *data_dirs = malloc(strlen(USER_PATHS) + 1 + strlen(xdg_config_dir) + 1 + strlen(home_dir) + 1 + strlen(DEFAULT_CONFIG_DIR) + 1 + strlen(extra_data_dirs) + 2);
+  sprintf(data_dirs, USER_PATHS ":%s:%s/" DEFAULT_CONFIG_DIR ":%s/", xdg_config_dir, home_dir, extra_data_dirs);
 
   char *path = malloc(strlen(data_dirs)+strlen(MOONLIGHT_PATH)+strlen(name)+2);
   if (path == NULL) {
@@ -147,7 +146,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     mapped = true;
     break;
   case 'k':
-    config->mapping = get_path(value);
+    config->mapping = get_path(value, getenv("XDG_DATA_DIRS"));
     if (config->mapping == NULL) {
       fprintf(stderr, "Unable to open custom mapping file: %s\n", value);
       exit(-1);
@@ -257,7 +256,12 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->localaudio = false;
 
   config->inputsCount = 0;
-  config->mapping = get_path("mappings/default.conf");
+  config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
+  config->key_dir[0] = 0;
+
+  char* config_file = get_path("moonlight.conf", "/etc");
+  if (config_file)
+    config_file_parse(config_file, config);
 
   if (argc == 2 && access(argv[1], F_OK) == 0) {
     config->action = "stream";

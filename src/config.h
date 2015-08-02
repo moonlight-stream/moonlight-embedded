@@ -35,6 +35,7 @@ typedef struct _CONFIGURATION {
   char* address;
   char* mapping;
   char* platform;
+  char* config_file;
   bool sops;
   bool localaudio;
   struct input_config inputs[MAX_INPUTS];

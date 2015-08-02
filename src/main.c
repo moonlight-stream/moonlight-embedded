@@ -106,6 +106,7 @@ static void help() {
   printf("\thelp\t\t\tShow this help\n\n");
   printf(" Streaming options\n\n");
   printf("\t-config <config>\tLoad configuration file\n");
+  printf("\t-save <config>\t\tSave configuration file\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
   printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");

@@ -30,6 +30,10 @@
 #define MOONLIGHT_PATH "/moonlight/"
 #define USER_PATHS ":~/.moonlight/:./"
 
+#define write_config_string(fd, key, value) fprintf(fd, "%s = %s\n", key, value)
+#define write_config_int(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
+#define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
+
 bool inputAdded = false;
 static bool mapped = true;
 
@@ -50,6 +54,7 @@ static struct option long_options[] = {
   {"localaudio", no_argument, NULL, 'n'},
   {"config", required_argument, NULL, 'o'},
   {"platform", required_argument, 0, 'p'},
+  {"save", required_argument, NULL, 'q'},
   {0, 0, 0, 0},
 };
 
@@ -131,8 +136,8 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       perror("Too many inputs specified");
       exit(-1);
     }
-    config->inputs[config->inputsCount].path = optarg;
-    config->inputs[config->inputsCount].mapping = optarg;
+    config->inputs[config->inputsCount].path = value;
+    config->inputs[config->inputsCount].mapping = value;
     config->inputsCount++;
     inputAdded = true;
     mapped = true;
@@ -158,7 +163,10 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config_file_parse(value, config);
     break;
   case 'p':
-    config->platform = optarg;
+    config->platform = value;
+    break;
+  case 'q':
+    config->config_file = value;
     break;
   case 1:
     if (config->action == NULL)
@@ -194,6 +202,34 @@ void config_file_parse(char* filename, PCONFIGURATION config) {
   }
 }
 
+void config_save(char* filename, PCONFIGURATION config) {
+  FILE* fd = fopen(filename, "w");
+  if (fd == NULL) {
+    fprintf(stderr, "Can't open configuration file: %s\n", filename);
+    exit(EXIT_FAILURE);
+  }
+
+  if (config->stream.width != 1280)
+    write_config_int(fd, "width", config->stream.width);
+  if (config->stream.height != 720)
+    write_config_int(fd, "height", config->stream.height);
+  if (config->stream.fps != 60)
+    write_config_int(fd, "fps", config->stream.fps);
+  if (config->stream.bitrate != -1)
+    write_config_int(fd, "bitrate", config->stream.bitrate);
+  if (config->stream.packetSize != 1024)
+    write_config_int(fd, "packetsize", config->stream.packetSize);
+  if (!config->sops)
+    write_config_bool(fd, "sops", config->sops);
+  if (config->localaudio)
+    write_config_bool(fd, "localaudio", config->localaudio);
+
+  if (strcmp(config->app, "Steam") != 0)
+    write_config_string(fd, "app", config->app);
+
+  fclose(fd);
+}
+
 void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.width = 1280;
   config->stream.height = 720;
@@ -205,6 +241,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->app = "Steam";
   config->action = NULL;
   config->address = NULL;
+  config->config_file = NULL;
   config->sops = true;
   config->localaudio = false;
 
@@ -213,9 +250,12 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
 
   int option_index = 0;
   int c;
-  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:n", long_options, &option_index)) != -1) {
+  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:", long_options, &option_index)) != -1) {
     parse_argument(c, optarg, config);
   }
+
+  if (config->config_file != NULL)
+    config_save(config->config_file, config);
 
   if (config->stream.bitrate == -1) {
     if (config->stream.height >= 1080 && config->stream.fps >= 60)

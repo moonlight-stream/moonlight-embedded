@@ -120,7 +120,8 @@ static void help() {
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
-  printf("\t-localaudio\t\tPlay audio locally\n\n");
+  printf("\t-localaudio\t\tPlay audio locally\n");
+  printf("\t-keydir <directory>\tLoad encryption keys from directory\n\n");
   printf("Use Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);
 }
@@ -173,7 +174,7 @@ int main(int argc, char* argv[]) {
   }
 
   PSERVER_DATA server;
-  if (gs_init(server, config.address, ".") != GS_OK) {
+  if (gs_init(server, config.address, config.key_dir) != GS_OK) {
       fprintf(stderr, "Can't connect to server %s\n", config.address);
       exit(-1);
   }

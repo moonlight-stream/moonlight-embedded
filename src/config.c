@@ -30,6 +30,8 @@
 #define MOONLIGHT_PATH "/moonlight/"
 #define USER_PATHS ":~/.moonlight/:./"
 
+#define DEFAULT_CACHE_DIR ".cache/"
+
 #define write_config_string(fd, key, value) fprintf(fd, "%s = %s\n", key, value)
 #define write_config_int(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
@@ -55,6 +57,7 @@ static struct option long_options[] = {
   {"config", required_argument, NULL, 'o'},
   {"platform", required_argument, 0, 'p'},
   {"save", required_argument, NULL, 'q'},
+  {"keydir", required_argument, NULL, 'r'},
   {0, 0, 0, 0},
 };
 
@@ -168,6 +171,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'q':
     config->config_file = value;
     break;
+  case 'r':
+    strcpy(config->key_dir, value);
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -265,6 +271,16 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
 
   if (config->config_file != NULL)
     config_save(config->config_file, config);
+
+  if (config->key_dir[0] == 0x0) {
+    const char *xdg_cache_dir = getenv("XDG_CACHE_DIR");
+    if (xdg_cache_dir != NULL)
+      sprintf(config->key_dir, "%s/moonlight", xdg_cache_dir);
+    else {
+      const char *xdg_cache_dir = getenv("HOME");
+      sprintf(config->key_dir, "%s/" DEFAULT_CACHE_DIR "moonlight", xdg_cache_dir);
+    }
+  }
 
   if (config->stream.bitrate == -1) {
     if (config->stream.height >= 1080 && config->stream.fps >= 60)

@@ -25,6 +25,7 @@
 
 #include "limelight-common/Limelight.h"
 
+#include <sys/stat.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -416,6 +417,7 @@ int gs_quit_app(PSERVER_DATA server) {
 }
 
 int gs_init(PSERVER_DATA server, const char *address, const char *keyDirectory) {
+  mkdir(keyDirectory, 00755);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
 

@@ -252,10 +252,15 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf");
 
-  int option_index = 0;
-  int c;
-  while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:", long_options, &option_index)) != -1) {
-    parse_argument(c, optarg, config);
+  if (argc == 2 && access(argv[1], F_OK) == 0) {
+    config->action = "stream";
+    config_file_parse(argv[1], config);
+  } else {
+    int option_index = 0;
+    int c;
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:", long_options, &option_index)) != -1) {
+      parse_argument(c, optarg, config);
+    }
   }
 
   if (config->config_file != NULL)

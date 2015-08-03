@@ -201,9 +201,13 @@ void config_file_parse(char* filename, PCONFIGURATION config) {
     if (sscanf(line, "%ms = %ms", &key, &value) == 2) {
       if (strcmp(key, "address") == 0) {
         config->address = value;
+      } else if (strcmp(key, "sops") == 0) {
+        config->sops = strcmp("true", value) == 0;
+      } else if (strcmp(key, "localaudio") == 0) {
+        config->localaudio = strcmp("true", value) == 0;
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
-          if (long_options[i].has_arg = required_argument && strcmp(long_options[i].name, key) == 0) {
+          if (long_options[i].has_arg == required_argument && strcmp(long_options[i].name, key) == 0) {
             parse_argument(long_options[i].val, value, config);
           }
         }

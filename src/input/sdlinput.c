@@ -23,7 +23,8 @@
 
 #include "limelight-common/Limelight.h"
 
-#include <stdbool.h>
+#define QUIT_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
+#define QUIT_KEY SDLK_q
 
 typedef struct _GAMEPAD_STATE {
   char leftTrigger, rightTrigger;
@@ -69,7 +70,7 @@ static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id) {
   return &gamepads[0];
 }
 
-void sdlinput_handle_event(SDL_Event* event) {
+bool sdlinput_handle_event(SDL_Event* event) {
   int button = 0;
   PGAMEPAD_STATE gamepad;
   switch (event->type) {
@@ -128,6 +129,10 @@ void sdlinput_handle_event(SDL_Event* event) {
         keyboard_modifiers &= ~modifier;
     }
 
+    // Quit the stream if all the required quit keys are down
+    if ((keyboard_modifiers & QUIT_MODIFIERS) == QUIT_MODIFIERS && event->key.keysym.sym == QUIT_KEY && event->type==SDL_KEYUP)
+      return false;
+
     LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, keyboard_modifiers);
     break;
   case SDL_CONTROLLERAXISMOTION:
@@ -152,7 +157,7 @@ void sdlinput_handle_event(SDL_Event* event) {
       gamepad->rightTrigger = (event->caxis.value >> 8) + 127;
       break;
     default:
-      return;
+      return true;
     }
     LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;
@@ -206,7 +211,7 @@ void sdlinput_handle_event(SDL_Event* event) {
       button = RB_FLAG;
       break;
     default:
-      return;
+      return true;
     }
     if (event->type == SDL_CONTROLLERBUTTONDOWN)
       gamepad->buttons |= button;
@@ -216,6 +221,7 @@ void sdlinput_handle_event(SDL_Event* event) {
     LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;
   }
+  return true;
 }
 
 #endif /* HAVE_SDL */

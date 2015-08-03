@@ -19,6 +19,7 @@
 
 #ifdef HAVE_SDL
 
+#include <stdbool.h>
 #include <SDL.h>
 
 static const short keyCodes[] = {
@@ -50,6 +51,6 @@ static const short keyCodes[] = {
 };
 
 void sdlinput_init();
-void sdlinput_handle_event(SDL_Event* event);
+bool sdlinput_handle_event(SDL_Event* event);
 
 #endif /* HAVE_SDL */

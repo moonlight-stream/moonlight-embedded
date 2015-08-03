@@ -36,10 +36,10 @@ void sdl_loop() {
   SDL_Event event;
 
   while(!done && SDL_WaitEvent(&event)) {
-    sdlinput_handle_event(&event);
-    if (event.type == SDL_QUIT) {
+    if (!sdlinput_handle_event(&event))
+      done = false;
+    else if (event.type == SDL_QUIT)
       done = true;
-    }
   }
 }
 

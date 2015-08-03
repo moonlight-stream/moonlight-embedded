@@ -28,12 +28,35 @@
 
 static bool done;
 
-char leftTrigger, rightTrigger;
-short leftStickX, leftStickY;
-short rightStickX, rightStickY;
-int buttons;
+typedef struct _GAMEPAD_STATE {
+  char leftTrigger, rightTrigger;
+  short leftStickX, leftStickY;
+  short rightStickX, rightStickY;
+  int buttons;
+  SDL_JoystickID sdl_id;
+  short id;
+  bool initialized;
+} GAMEPAD_STATE, *PGAMEPAD_STATE;
+
+GAMEPAD_STATE gamepads[4];
+
+PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id) {
+  for (int i = 0;i<4;i++) {
+    if (gamepads[i].sdl_id == sdl_id)
+      return &gamepads[0];
+    else if (!gamepads[i].initialized) {
+      gamepads[i].sdl_id = sdl_id;
+      gamepads[i].id = i;
+      gamepads[i].initialized = true;
+      return &gamepads[0];
+    }
+  }
+  return &gamepads[0];
+}
 
 void sdl_loop() {
+  memset(gamepads, 0, sizeof(gamepads));
+
   SDL_SetRelativeMouseMode(SDL_TRUE);
   SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
   SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
@@ -51,6 +74,7 @@ void sdl_loop() {
 
   while(!done && SDL_WaitEvent(&event)) {
     int button = 0;
+    PGAMEPAD_STATE gamepad;
     switch (event.type) {
     case SDL_MOUSEMOTION:
       LiSendMouseMoveEvent(event.motion.xrel, event.motion.yrel);
@@ -87,32 +111,34 @@ void sdl_loop() {
       LiSendKeyboardEvent(0x80 << 8 | button, event.type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, 0);
       break;
     case SDL_CONTROLLERAXISMOTION:
+      gamepad = get_gamepad(event.caxis.which);
       switch (event.caxis.axis) {
       case SDL_CONTROLLER_AXIS_LEFTX:
-        leftStickX = event.caxis.value;
+        gamepad->leftStickX = event.caxis.value;
         break;
       case SDL_CONTROLLER_AXIS_LEFTY:
-        leftStickY = -event.caxis.value - 1;
+        gamepad->leftStickY = -event.caxis.value - 1;
         break;
       case SDL_CONTROLLER_AXIS_RIGHTX:
-        rightStickX = event.caxis.value;
+        gamepad->rightStickX = event.caxis.value;
         break;
       case SDL_CONTROLLER_AXIS_RIGHTY:
-        rightStickY = -event.caxis.value - 1;
+        gamepad->rightStickY = -event.caxis.value - 1;
         break;
       case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-        leftTrigger = (event.caxis.value >> 8) + 127;
+        gamepad->leftTrigger = (event.caxis.value >> 8) + 127;
         break;
       case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-        rightTrigger = (event.caxis.value >> 8) + 127;
+        gamepad->rightTrigger = (event.caxis.value >> 8) + 127;
         break;
       default:
         continue;
       }
-      LiSendControllerEvent(0, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+      LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
       break;
     case SDL_CONTROLLERBUTTONDOWN:
     case SDL_CONTROLLERBUTTONUP:
+      gamepad = get_gamepad(event.cbutton.which);
       switch (event.cbutton.button) {
       case SDL_CONTROLLER_BUTTON_A:
         button = A_FLAG;
@@ -163,11 +189,11 @@ void sdl_loop() {
         continue;
       }
       if (event.type == SDL_CONTROLLERBUTTONDOWN)
-        buttons |= button;
+        gamepad->buttons |= button;
       else
-        buttons &= ~button;
+        gamepad->buttons &= ~button;
 
-      LiSendControllerEvent(buttons, leftTrigger, rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+      LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
       break;
     case SDL_QUIT:
       done = true;

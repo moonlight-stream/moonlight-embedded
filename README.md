@@ -43,9 +43,13 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 	quit Quit the application or game being streamed
 	help Show this help
 
-	Streaming options:
+	Global options:
 
 	-config <config> Load configuration file
+	-save <config> Save configuration file
+
+	Streaming options:
+
 	-720 Use 1280x720 resolution (default)
 	-1080 Use 1920x1080 resolution
 	-width <width> Horizontal resolution (default 1280)
@@ -56,10 +60,13 @@ For a demo see this [video](https://www.youtube.com/watch?v=XRW6O0bSHNw).
 	-packetsize <size> Specify the maximum packetsize in bytes
 	-app <app> Name of app to stream
 	-nosops Don't allow GFE to modify game settings
-	-input <device> Use <device> as input. Can be used multiple times
-	-mapping <file> Use <file> as gamepad mapping configuration file (use before -input)
-	-audio <device> Use <device> as ALSA audio output device (default sysdefault)
 	-localaudio Play audio locally
+	-keydir <directory>\tLoad encryption keys from directory
+
+	I/O options:
+	-mapping <file> Use <file> as gamepad mapping configuration file (use before -input)
+	-input <device> Use <device> as input. Can be used multiple times
+	-audio <device> Use <device> as ALSA audio output device (default sysdefault)
 
 	Use Ctrl+Alt+Shift+Q to exit streaming session
 

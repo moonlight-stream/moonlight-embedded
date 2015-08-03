@@ -96,17 +96,19 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
 }
 
 static void help() {
-  printf("Usage: moonlight action [options] host\n\n");
-  printf(" Actions\n\n");
+  printf("Usage: moonlight [action] (options) [host]\n");
+  printf("       moonlight [configfile]\n");
+  printf("\n Actions\n\n");
   printf("\tmap\t\t\tCreate mapping file for gamepad\n");
   printf("\tpair\t\t\tPair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
   printf("\tlist\t\t\tList available games and applications\n");
   printf("\tquit\t\t\tQuit the application or game being streamed\n");
-  printf("\thelp\t\t\tShow this help\n\n");
-  printf(" Streaming options\n\n");
+  printf("\thelp\t\t\tShow this help\n");
+  printf("\n Global Options\n\n");
   printf("\t-config <config>\tLoad configuration file\n");
   printf("\t-save <config>\t\tSave configuration file\n");
+  printf("\n Streaming options\n\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
   printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
@@ -117,12 +119,15 @@ static void help() {
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
-  printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
-  printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
-  printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
   printf("\t-localaudio\t\tPlay audio locally\n");
-  printf("\t-keydir <directory>\tLoad encryption keys from directory\n\n");
-  printf("Use Ctrl+Alt+Shift+Q to exit streaming session\n\n");
+  printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
+  #ifdef HAVE_EMBEDDED
+  printf("\n I/O options\n\n");
+  printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
+  printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
+  printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
+  #endif
+  printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);
 }
 

@@ -30,6 +30,7 @@
 #include "input/evdev.h"
 #include "input/udev.h"
 #include "input/cec.h"
+#include "input/sdlinput.h"
 
 #include "limelight-common/Limelight.h"
 
@@ -203,6 +204,10 @@ int main(int argc, char* argv[]) {
       cec_init();
       #endif /* HAVE_LIBCEC */
     }
+    #ifdef HAVE_SDL
+    else if (system == SDL)
+      sdlinput_init();
+    #endif
 
     stream(server, &config, system);
   } else if (strcmp("pair", config.action) == 0) {

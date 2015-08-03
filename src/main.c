@@ -177,6 +177,10 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
   }
+  
+  char host_config_file[128];
+  sprintf(host_config_file, "hosts/%s.conf", config.address);
+  config_file_parse(host_config_file, &config);
 
   PSERVER_DATA server;
   if (gs_init(server, config.address, config.key_dir) != GS_OK) {

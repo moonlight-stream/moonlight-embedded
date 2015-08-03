@@ -266,7 +266,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   char* config_file = get_path("moonlight.conf", "/etc");
   if (config_file)
     config_file_parse(config_file, config);
-
+  
   if (argc == 2 && access(argv[1], F_OK) == 0) {
     config->action = "stream";
     config_file_parse(argv[1], config);

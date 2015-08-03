@@ -6,6 +6,7 @@ set(MOONLIGHT_PATCH_VERSION 0)
 set(MOONLIGHT_VERSION ${MOONLIGHT_MAJOR_VERSION}.${MOONLIGHT_MINOR_VERSION}.${MOONLIGHT_PATCH_VERSION})
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
 
 aux_source_directory(./src SRC_LIST)
 aux_source_directory(./src/input SRC_LIST)
@@ -89,6 +90,6 @@ set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIO
 target_include_directories(moonlight PRIVATE ./libgamestream ./third_party/moonlight-common-c ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
 target_link_libraries (moonlight PUBLIC ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
 
-include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
 install(TARGETS moonlight DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY mappings DESTINATION ${CMAKE_INSTALL_DATADIR})
+install(FILES moonlight.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})

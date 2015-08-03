@@ -37,6 +37,8 @@ typedef struct _GAMEPAD_STATE {
 
 static GAMEPAD_STATE gamepads[4];
 
+static int keyboard_modifiers;
+
 void sdlinput_init() {
   memset(gamepads, 0, sizeof(gamepads));
 
@@ -103,7 +105,30 @@ void sdlinput_handle_event(SDL_Event* event) {
     if (button >= 0x61)
       button -= 0x20;
 
-    LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, 0);
+    int modifier = 0;
+    switch (event->key.keysym.sym) {
+    case SDLK_RSHIFT:
+    case SDLK_LSHIFT:
+      modifier = MODIFIER_SHIFT;
+      break;
+    case SDLK_RALT:
+    case SDLK_LALT:
+      modifier = MODIFIER_ALT;
+      break;
+    case SDLK_RCTRL:
+    case SDLK_LCTRL:
+      modifier = MODIFIER_CTRL;
+      break;
+    }
+
+    if (modifier != 0) {
+      if (event->type==SDL_KEYDOWN)
+        keyboard_modifiers |= modifier;
+      else
+        keyboard_modifiers &= ~modifier;
+    }
+
+    LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, keyboard_modifiers);
     break;
   case SDL_CONTROLLERAXISMOTION:
     gamepad = get_gamepad(event->caxis.which);

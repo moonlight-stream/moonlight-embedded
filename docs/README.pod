@@ -1,0 +1,149 @@
+=head1 NAME
+
+Moonlight Embedded - Open source implementation of NVIDIA's GameStream
+
+=head1 SYNOPSIS
+
+Usage: I<moonlight> E<lt>actionE<gt> [options] [host]
+       I<moonlight> E<lt>configfileE<gt>
+
+=head1 ACTIONS
+
+=over 4
+
+=item B<map>
+
+Create a mapping file for a gamepad.
+
+=item B<pair>
+
+Pair this computer with the host.
+
+=item B<stream>
+
+Stream game from host to this computer.
+
+=item B<list>
+
+List all available games and application on host.
+
+=item B<quit>
+
+Quit the current running game or application on host.
+
+=item B<help>
+
+Show help for all available commands.
+
+=back
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-config> [I<CONFIG>]
+
+Load configuration file I<CONFIG>.
+All options specified before B<-config> will be overwritten by the options in I<CONFIG>.
+This options can be used multiple times.
+
+=item B<-save> [I<CONFIG>]
+
+Save the configuration provided by the options on the command line and all loaded configuration files to the file I<CONFIG>.
+
+=item B<-720>
+
+Use the resolution 1280x720 for streaming.
+This is the default option.
+
+=item B<-1080>
+
+Use the resolution 1920x1080 for streaming.
+
+=item B<-width> [I<WIDTH>]
+
+Change the horizontal resolution to I<WIDTH>
+
+=item B<-height> [I<HEIGHT>]
+
+Change the vertical resolution to I<HEIGHT>
+
+=item B<-30fps>
+
+Use 30 fps for streaming.
+
+=item B<-60fps>
+
+Use 60 fps for streaming.
+This is the default configuration.
+
+=item B<-bitrate> [I<BITRATE>]
+
+Change bitrate to I<BITRATE> kbps.
+By default the bitrate depends on the selected resolution and fps.
+For resolution 1080p and 60 fps and higher 20 Mbps is used.
+For resolution 1080p or 60 fps and higher 10 Mbps is used
+For other configurations 5 Mbps is used by default.
+
+=item B<-packetsize> [I<PACKETSIZE>]
+
+Change the network packetsize to I<PACKETSIZE>.
+The packetsize should the smaller than the MTU of the network.
+By default a safe value of 1024 is used.
+
+=item B<-app> [I<APP>]
+
+Change the requested app to execute to I<APP>.
+By default Steam is started.
+
+=item B<-nosops>
+
+Stop GFE from changing the graphical settings of the requested game or application.
+
+=item B<-localaudio>
+
+Play the audio on the host instead of this computer.
+
+=item B<-keydir> [I<DIRECTORY>]
+
+Change the directory to save encryption keys to I<DIRECTORY>.
+By default the encryption keys are stored in $XDG_CACHE_DIR/moonlight or ~/.cache/moonlight
+
+=item B<-mapping> [I<MAPPING>]
+
+Use I<MAPPING> as the mapping file for all inputs specified after this B<-mapping>.
+If no B<-input> is specified after the B<-mapping> this mapping is used for autoloaded inputs.
+
+=item B<-input> [I<INPUT>]
+
+Enable the I<INPUT> device.
+By default all available input devices are enabled.
+Only evdev devices /dev/input/event* are supported.
+To use a different gamepad mapping then the default the B<-mapping> should be specified before the B<-input>.
+
+=item B<-audio> [I<DEVICE>]
+
+Use <DEVICE> as audio output device.
+The default value is 'sysdefault'
+
+=back
+
+=head1 CONFIG FILE
+
+Moonlight Embedded will load a confiuration file from:
+
+  $XDG_CONFIG_HOME/moonligt/moonlight.conf (fallback to ~/.config/moonligt/moonlight.conf)
+
+If no user specified configuration file is available the configuration will be loaded from:
+
+  /etc/moonlight/moonlight.conf
+
+A documented example configuration file can be found at /etc/moonlight/moonlight.conf.
+
+=head1 COMMENTS
+
+Use Ctrl+Alt+Shift+Q to quit the streaming session.
+
+=head1 AUTHOR
+
+Iwan Timmer E<lt>irtimmer@gmail.comE<gt>

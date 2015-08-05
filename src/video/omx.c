@@ -28,9 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Video decode on Raspberry Pi using OpenMAX IL though the ilcient helper library
 // Based upon video decode example from the Raspberry Pi firmware
 
+#include "sps.h"
 #include "../video.h"
-
-#include "h264_stream.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,16 +50,9 @@ static unsigned char *dest;
 static int port_settings_changed;
 static int first_packet;
 
-static h264_stream_t* stream;
-
 static void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
-  stream = h264_new();
-  if (stream == NULL) {
-    fprintf(stderr, "Not enough memory\n");
-    exit(EXIT_FAILURE);
-  }
-
   bcm_host_init();
+  gs_sps_init(width, height);
 
   OMX_VIDEO_PARAM_PORTFORMATTYPE format;
   OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
@@ -179,22 +171,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     first_packet = 0;
   }
 
-  PLENTRY entry = decodeUnit->bufferList;
-  if (entry != NULL && entry->data[4] == 0x67) {
-    read_nal_unit(stream, entry->data+4, entry->length-4);
-    stream->sps->num_ref_frames = 1;
-    stream->sps->vui.bitstream_restriction_flag = 1;
-    stream->sps->vui.motion_vectors_over_pic_boundaries_flag = 1;
-    stream->sps->vui.max_bytes_per_pic_denom = 2;
-    stream->sps->vui.max_bits_per_mb_denom = 1;
-    stream->sps->vui.log2_max_mv_length_horizontal = 16;
-    stream->sps->vui.log2_max_mv_length_vertical = 16;
-    stream->sps->vui.num_reorder_frames = 0;
-    stream->sps->vui.max_dec_frame_buffering = 1;
-
-    entry->length = write_nal_unit(stream, entry->data+4, entry->length*2) + 4;
-  }
-
+  PLENTRY entry = gs_sps_fix(decodeUnit->bufferList, GS_SPS_BITSTREAM_FIXUP);
   while (entry != NULL) {
     memcpy(dest, entry->data, entry->length);
     buf->nFilledLen += entry->length;
@@ -228,4 +205,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_omx = {
   .setup = decoder_renderer_setup,
   .cleanup = decoder_renderer_cleanup,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
+  .capabilities = CAPABILITY_NEEDS_SPS_CLEANUP | CAPABILITY_NEEDS_SPS_BITSTREAM_FIXUP,
 };

@@ -43,7 +43,7 @@ static int keyboard_modifiers;
 void sdlinput_init() {
   memset(gamepads, 0, sizeof(gamepads));
 
-  SDL_SetRelativeMouseMode(SDL_TRUE);
+//SDL_SetRelativeMouseMode(SDL_TRUE);
   SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
   SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
 
@@ -101,9 +101,9 @@ bool sdlinput_handle_event(SDL_Event* event) {
   case SDL_KEYDOWN:
   case SDL_KEYUP:
     button = event->key.keysym.sym;
-    if (button >= (0x40000000 + 0x39) && button < (0x40000000 + sizeof(keyCodes)))
+    if (button >= (0x40000000 + 0x39) && button < (0x40000000 + 0x39 + sizeof(keyCodes)))
       button = keyCodes[button - 0x40000039];
-    if (button >= 0x61)
+    else if (button >= 0x61)
       button -= 0x20;
 
     int modifier = 0;

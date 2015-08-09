@@ -42,6 +42,7 @@ static const short keyCodes[] = {
   0x9B, //SDLK_INSERT
   0x24, //SDLK_HOME
   0x21, //SDLK_PAGEUP
+  0, //Not used
   0x23, //SDLK_END
   0x22, //SDLK_PAGEDOWN
   0x27, //SDLK_RIGHT

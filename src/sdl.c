@@ -37,7 +37,7 @@ void sdl_loop() {
 
   while(!done && SDL_WaitEvent(&event)) {
     if (!sdlinput_handle_event(&event))
-      done = false;
+      done = true;
     else if (event.type == SDL_QUIT)
       done = true;
   }

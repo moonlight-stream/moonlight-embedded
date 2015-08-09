@@ -18,7 +18,18 @@
  */
 
 #ifdef HAVE_LIBCEC
+
+#include "limelight-common/Limelight.h"
+
 #include <ceccloader.h>
+
+#define KEY_LEFT 0x25
+#define KEY_UP 0x26
+#define KEY_RIGHT 0x27
+#define KEY_DOWN 0x28
+#define KEY_ENTER 0x0D
+#define KEY_TAB 0x09
+#define KEY_ESC 0x1B
 
 static libcec_configuration g_config;
 static char                 g_strPort[50] = { 0 };
@@ -57,12 +68,12 @@ static int on_cec_keypress(void* userdata, const cec_keypress key) {
   }
   
   if (value != 0) {
-    short code = 0x80 << 8 | keyCodes[value];
+    short code = 0x80 << 8 | value;
     LiSendKeyboardEvent(code, (key.duration > 0)?KEY_ACTION_UP:KEY_ACTION_DOWN, 0);
   }
 }
 
-void init_cec() {
+void cec_init() {
   libcecc_reset_configuration(&g_config);
   g_config.clientVersion = LIBCEC_VERSION_CURRENT;
   g_config.bActivateSource = 0;

@@ -17,4 +17,4 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-void init_cec();
+void cec_init();

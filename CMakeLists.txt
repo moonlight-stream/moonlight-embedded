@@ -28,7 +28,6 @@ pkg_check_modules(AVUTIL libavutil)
 pkg_check_modules(SWSCALE libswscale)
 
 if(CEC_FOUND)
-  include_directories(./third_party/libcec)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
 endif()
 
@@ -69,7 +68,7 @@ set_property(TARGET moonlight PROPERTY C_STANDARD 11)
 
 if (CEC_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
-  target_include_directories(moonlight PRIVATE ./third_party/libcec ${CEC_INCLUDE_DIRS})
+  target_include_directories(moonlight PRIVATE ./third_party/libcec ${CEC_INCLUDE_DIRS}/libcec)
   target_link_libraries (moonlight PUBLIC ${CEC_LIBRARIES})
 endif()
 

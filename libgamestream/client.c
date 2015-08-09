@@ -130,14 +130,14 @@ static int load_cert(const char* keyDirectory) {
   return GS_OK;
 }
 
-static int load_server_status(const char *address, PSERVER_DATA server) {
+static int load_server_status(PSERVER_DATA server) {
   char *pairedText = NULL;
   char *currentGameText = NULL;
   char *versionText = NULL;
 
   int ret = GS_INVALID;
   char url[4096];
-  sprintf(url, "https://%s:47984/serverinfo?uniqueid=%s", address, unique_id);
+  sprintf(url, "https://%s:47984/serverinfo?uniqueid=%s", server->address, unique_id);
 
   PHTTP_DATA data = http_create_data();
   if (data == NULL) {
@@ -359,7 +359,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   return ret;
 }
 
-int gs_applist(PSERVER_DATA server, PAPP_LIST list) {
+int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
   int ret = GS_OK;
   char url[4096];
   PHTTP_DATA data = http_create_data();
@@ -416,7 +416,7 @@ int gs_quit_app(PSERVER_DATA server) {
   return ret;
 }
 
-int gs_init(PSERVER_DATA server, const char *address, const char *keyDirectory) {
+int gs_init(PSERVER_DATA server, const char *keyDirectory) {
   mkdir(keyDirectory, 00755);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
@@ -425,5 +425,5 @@ int gs_init(PSERVER_DATA server, const char *address, const char *keyDirectory) 
     return GS_FAILED;
 
   http_init(keyDirectory);
-  return load_server_status(address, server);
+  return load_server_status(server);
 }

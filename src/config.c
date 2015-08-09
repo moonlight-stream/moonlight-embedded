@@ -163,7 +163,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->localaudio = true;
     break;
   case 'o':
-    config_file_parse(value, config);
+    if (!config_file_parse(value, config))
+      exit(EXIT_FAILURE);
+
     break;
   case 'p':
     config->platform = value;
@@ -186,11 +188,11 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   }
 }
 
-void config_file_parse(char* filename, PCONFIGURATION config) {
+bool config_file_parse(char* filename, PCONFIGURATION config) {
   FILE* fd = fopen(filename, "r");
   if (fd == NULL) {
     fprintf(stderr, "Can't open configuration file: %s\n", filename);
-    exit(EXIT_FAILURE);
+    return false;
   }
 
   char *line = NULL;
@@ -214,6 +216,7 @@ void config_file_parse(char* filename, PCONFIGURATION config) {
       }
     }
   }
+  return true;
 }
 
 void config_save(char* filename, PCONFIGURATION config) {
@@ -269,7 +272,9 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   
   if (argc == 2 && access(argv[1], F_OK) == 0) {
     config->action = "stream";
-    config_file_parse(argv[1], config);
+    if (!config_file_parse(argv[1], config))
+      exit(EXIT_FAILURE);
+
   } else {
     int option_index = 0;
     int c;

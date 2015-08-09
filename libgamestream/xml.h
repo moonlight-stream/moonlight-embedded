@@ -27,4 +27,4 @@ typedef struct _APP_LIST {
 } APP_LIST, *PAPP_LIST;
 
 int xml_search(char* data, size_t len, char* node, char** result);
-int xml_applist(char* data, size_t len, PAPP_LIST app_list);
+int xml_applist(char* data, size_t len, PAPP_LIST *app_list);

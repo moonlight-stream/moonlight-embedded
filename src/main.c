@@ -47,8 +47,8 @@
 #include <openssl/rand.h>
 
 static void applist(PSERVER_DATA server) {
-  PAPP_LIST list;
-  if (gs_applist(server, list) != GS_OK) {
+  PAPP_LIST list = NULL;
+  if (gs_applist(server, &list) != GS_OK) {
     fprintf(stderr, "Can't get app list\n");
     return;
   }
@@ -60,8 +60,8 @@ static void applist(PSERVER_DATA server) {
 }
 
 static int get_app_id(PSERVER_DATA server, const char *name) {
-  PAPP_LIST list;
-  if (gs_applist(server, list) != GS_OK) {
+  PAPP_LIST list = NULL;
+  if (gs_applist(server, &list) != GS_OK) {
     fprintf(stderr, "Can't get app list\n");
     return -1;
   }
@@ -183,17 +183,18 @@ int main(int argc, char* argv[]) {
   sprintf(host_config_file, "hosts/%s.conf", config.address);
   config_file_parse(host_config_file, &config);
 
-  PSERVER_DATA server;
-  if (gs_init(server, config.address, config.key_dir) != GS_OK) {
+  SERVER_DATA server;
+  server.address = config.address;
+  if (gs_init(&server, config.key_dir) != GS_OK) {
       fprintf(stderr, "Can't connect to server %s\n", config.address);
       exit(-1);
   }
 
   if (strcmp("list", config.action) == 0) {
-    pair_check(server);
-    applist(server);
+    pair_check(&server);
+    applist(&server);
   } else if (strcmp("stream", config.action) == 0) {
-    pair_check(server);
+    pair_check(&server);
     if (IS_EMBEDDED(system)) {
       for (int i=0;i<config.inputsCount;i++)
         evdev_create(config.inputs[i].path, config.inputs[i].mapping);
@@ -209,19 +210,19 @@ int main(int argc, char* argv[]) {
       sdlinput_init();
     #endif
 
-    stream(server, &config, system);
+    stream(&server, &config, system);
   } else if (strcmp("pair", config.action) == 0) {
     char pin[5];
     sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
     printf("Please enter the following PIN on the target PC: %s\n", pin);
-    if (gs_pair(server, &pin[0]) != GS_OK) {
+    if (gs_pair(&server, &pin[0]) != GS_OK) {
       fprintf(stderr, "Failed to pair to server: %s\n", gs_error);
     } else {
       printf("Succesfully paired\n");
     }
   } else if (strcmp("quit", config.action) == 0) {
-    pair_check(server);
-    gs_quit_app(server);
+    pair_check(&server);
+    gs_quit_app(&server);
   } else
     fprintf(stderr, "%s is not a valid action\n", config.action);
 }

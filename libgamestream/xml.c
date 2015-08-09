@@ -49,6 +49,8 @@ static void XMLCALL _xml_start_applist_element(void *userData, const char *name,
     if (app == NULL)
       return;
 
+    app->id = 0;
+    app->name = NULL;
     app->next = (PAPP_LIST) search->data;
     search->data = app;
   } else if (strcmp("ID", name) == 0 || strcmp("AppTitle", name) == 0) {
@@ -111,7 +113,7 @@ int xml_search(char* data, size_t len, char* node, char** result) {
   return GS_OK;
 }
 
-int xml_applist(char* data, size_t len, PAPP_LIST app_list) {
+int xml_applist(char* data, size_t len, PAPP_LIST *app_list) {
   struct xml_query query;
   query.memory = calloc(1, 1);
   query.size = 0;
@@ -126,7 +128,7 @@ int xml_applist(char* data, size_t len, PAPP_LIST app_list) {
     gs_error = XML_ErrorString(code);
     return GS_INVALID;
   }
-  app_list = (PAPP_LIST) query.data;
+  *app_list = (PAPP_LIST) query.data;
 
   return GS_OK;
 }

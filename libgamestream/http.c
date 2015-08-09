@@ -46,7 +46,7 @@ static size_t _write_curl(void *contents, size_t size, size_t nmemb, void *userp
 
 int http_init(const char* keyDirectory) {
   curl = curl_easy_init();
-  if (curl)
+  if (!curl)
     return GS_FAILED;
 
   char certificateFilePath[4096];

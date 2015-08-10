@@ -43,8 +43,7 @@ static int keyboard_modifiers;
 void sdlinput_init() {
   memset(gamepads, 0, sizeof(gamepads));
 
-//SDL_SetRelativeMouseMode(SDL_TRUE);
-  SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
+  SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
   SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
 
   for (int i = 0; i < SDL_NumJoysticks(); ++i) {

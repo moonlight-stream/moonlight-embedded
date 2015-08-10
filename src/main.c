@@ -84,7 +84,13 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
 
   gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
 
-  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, 0, server->serverMajorVersion);
+  void *context = NULL;
+  #ifdef HAVE_SDL
+  if (system == SDL)
+    context = sdl_window;
+  #endif
+
+  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), context, 0, server->serverMajorVersion);
 
   if (IS_EMBEDDED(system))
     loop_main();
@@ -207,7 +213,7 @@ int main(int argc, char* argv[]) {
     }
     #ifdef HAVE_SDL
     else if (system == SDL)
-      sdlinput_init();
+      sdl_init(config.stream.width, config.stream.height);
     #endif
 
     stream(&server, &config, system);

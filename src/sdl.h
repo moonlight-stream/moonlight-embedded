@@ -19,6 +19,11 @@
 
 #ifdef HAVE_SDL
 
+#include <SDL.h>
+
+SDL_Window *sdl_window;
+
+void sdl_init(int width, int height);
 void sdl_loop();
 
 #endif /* HAVE_SDL */

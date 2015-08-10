@@ -25,16 +25,29 @@
 #include "limelight-common/Limelight.h"
 
 #include <stdbool.h>
-#include <SDL.h>
 
 static bool done;
 
-void sdl_loop() {
-  SDL_InitSubSystem(SDL_INIT_EVENTS);
+SDL_Window *sdl_window;
+
+void sdl_init(int width, int height) {
+  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
+    fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+    exit(1);
+  }
+
+  sdl_window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
+  if(!sdl_window) {
+    fprintf(stderr, "SDL: could not create window - exiting\n");
+    exit(1);
+  }
   SDL_ShowCursor(SDL_DISABLE);
+  //SDL_SetRelativeMouseMode(SDL_TRUE);
+  sdlinput_init();
+}
 
+void sdl_loop() {
   SDL_Event event;
-
   while(!done && SDL_WaitEvent(&event)) {
     if (!sdlinput_handle_event(&event))
       done = true;

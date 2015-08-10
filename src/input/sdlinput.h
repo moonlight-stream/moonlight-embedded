@@ -52,6 +52,6 @@ static const short keyCodes[] = {
 };
 
 void sdlinput_init();
-bool sdlinput_handle_event(SDL_Event* event);
+int sdlinput_handle_event(SDL_Event* event);
 
 #endif /* HAVE_SDL */

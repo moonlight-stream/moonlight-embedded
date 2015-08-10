@@ -27,6 +27,7 @@
 #include <stdbool.h>
 
 static bool done;
+static int fullscreen_flags;
 
 SDL_Window *sdl_window;
 
@@ -41,19 +42,34 @@ void sdl_init(int width, int height) {
     fprintf(stderr, "SDL: could not create window - exiting\n");
     exit(1);
   }
-  SDL_ShowCursor(SDL_DISABLE);
-  //SDL_SetRelativeMouseMode(SDL_TRUE);
+  SDL_SetRelativeMouseMode(SDL_TRUE);
   sdlinput_init();
 }
 
 void sdl_loop() {
   SDL_Event event;
   while(!done && SDL_WaitEvent(&event)) {
-    if (!sdlinput_handle_event(&event))
+    switch (sdlinput_handle_event(&event)) {
+    case SDL_QUIT_APPLICATION:
       done = true;
-    else if (event.type == SDL_QUIT)
-      done = true;
+      break;
+    case SDL_TOGGLE_FULLSCREEN:
+      fullscreen_flags ^= SDL_WINDOW_FULLSCREEN;
+      SDL_SetWindowFullscreen(sdl_window, fullscreen_flags);
+    case SDL_MOUSE_GRAB:
+      SDL_SetRelativeMouseMode(SDL_TRUE);
+      break;
+    case SDL_MOUSE_UNGRAB:
+      SDL_SetRelativeMouseMode(SDL_FALSE);
+      break;
+    default:
+      if (event.type == SDL_QUIT)
+        done = true;
+    }
   }
+
+  SDL_DestroyWindow(sdl_window);
+  SDL_Quit();
 }
 
 #endif /* HAVE_SDL */

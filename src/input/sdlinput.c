@@ -20,11 +20,13 @@
 #ifdef HAVE_SDL
 
 #include "sdlinput.h"
+#include "../sdl.h"
 
 #include "limelight-common/Limelight.h"
 
-#define QUIT_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
+#define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY SDLK_q
+#define FULLSCREEN_KEY SDLK_f
 
 typedef struct _GAMEPAD_STATE {
   char leftTrigger, rightTrigger;
@@ -69,7 +71,7 @@ static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id) {
   return &gamepads[0];
 }
 
-bool sdlinput_handle_event(SDL_Event* event) {
+int sdlinput_handle_event(SDL_Event* event) {
   int button = 0;
   PGAMEPAD_STATE gamepad;
   switch (event->type) {
@@ -96,7 +98,7 @@ bool sdlinput_handle_event(SDL_Event* event) {
     if (button != 0)
       LiSendMouseButtonEvent(event->type==SDL_MOUSEBUTTONDOWN?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, button);
 
-    break;
+    return SDL_MOUSE_GRAB;
   case SDL_KEYDOWN:
   case SDL_KEYUP:
     button = event->key.keysym.sym;
@@ -129,8 +131,12 @@ bool sdlinput_handle_event(SDL_Event* event) {
     }
 
     // Quit the stream if all the required quit keys are down
-    if ((keyboard_modifiers & QUIT_MODIFIERS) == QUIT_MODIFIERS && event->key.keysym.sym == QUIT_KEY && event->type==SDL_KEYUP)
-      return false;
+    if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == QUIT_KEY && event->type==SDL_KEYUP)
+      return SDL_QUIT_APPLICATION;
+    else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == FULLSCREEN_KEY && event->type==SDL_KEYUP)
+      return SDL_TOGGLE_FULLSCREEN;
+    else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS)
+      return SDL_MOUSE_UNGRAB;
 
     LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, keyboard_modifiers);
     break;
@@ -156,7 +162,7 @@ bool sdlinput_handle_event(SDL_Event* event) {
       gamepad->rightTrigger = (event->caxis.value >> 8) + 127;
       break;
     default:
-      return true;
+      return SDL_NOTHING;
     }
     LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;
@@ -210,7 +216,7 @@ bool sdlinput_handle_event(SDL_Event* event) {
       button = RB_FLAG;
       break;
     default:
-      return true;
+      return SDL_NOTHING;
     }
     if (event->type == SDL_CONTROLLERBUTTONDOWN)
       gamepad->buttons |= button;
@@ -220,7 +226,7 @@ bool sdlinput_handle_event(SDL_Event* event) {
     LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;
   }
-  return true;
+  return SDL_NOTHING;
 }
 
 #endif /* HAVE_SDL */

@@ -32,26 +32,24 @@ void gs_sps_init(int width, int height) {
   initial_height = height;
 }
 
-PLENTRY gs_sps_fix(PLENTRY entry, int flags) {
+PLENTRY gs_sps_fix(PLENTRY *head, int flags) {
+  PLENTRY entry = *head;
   if (replay_sps == 1) {
-    PLENTRY replay_entry = malloc(sizeof(LENTRY));
-    char *buffer = malloc(128);
-    if (replay_entry == NULL || buffer == NULL)
+    PLENTRY replay_entry = (PLENTRY) malloc(sizeof(*replay_entry) + 128);
+    if (replay_entry == NULL)
       return NULL;
 
+    replay_entry->data = (char *) (entry + 1);
     char spsData[] = {0x00, 0x00, 0x00, 0x01, 0x67};
-    memcpy(buffer, spsData, sizeof(spsData));
+    memcpy(replay_entry->data, spsData, sizeof(spsData));
     h264_stream->sps->profile_idc = H264_PROFILE_HIGH;
-    replay_entry->length = write_nal_unit(h264_stream, buffer+4, 124) + 4;
+    replay_entry->length = write_nal_unit(h264_stream, replay_entry->data+4, 124) + 4;
 
-    replay_entry->data = buffer;
     replay_entry->next = entry;
     entry = replay_entry;
     replay_sps = 2;
-    return replay_entry;
   } else if ((entry->data[4] & 0x1F) == NAL_UNIT_TYPE_SPS) {
     read_nal_unit(h264_stream, entry->data+4, entry->length-4);
-    free(entry->data);
 
     // Some decoders rely on H264 level to decide how many buffers are needed
     // Since we only need one frame buffered, we'll set level as low as we can
@@ -96,15 +94,22 @@ PLENTRY gs_sps_fix(PLENTRY entry, int flags) {
     if ((flags & GS_SPS_BASELINE_HACK) == GS_SPS_BASELINE_HACK && !replay_sps)
       h264_stream->sps->profile_idc = H264_PROFILE_BASELINE;
 
-    entry->data = malloc(128);
-    if (entry->data == NULL)
+    PLENTRY sps_entry = (PLENTRY) malloc(sizeof(*sps_entry) + 128);
+    if (sps_entry == NULL)
       return NULL;
 
-    entry->length = write_nal_unit(h264_stream, entry->data+4, 124) + 4;
+    PLENTRY next = entry->next;
+    free(entry);
+    sps_entry->data = (char*) (entry + 1);
+    sps_entry->length = write_nal_unit(h264_stream, sps_entry->data+4, 124) + 4;
+    printf("Writen %d\n", sps_entry->length);
+    sps_entry->next = next;
+    entry = sps_entry;
   } else if ((entry->data[4] & 0x1F) == NAL_UNIT_TYPE_PPS) {
     if ((flags & GS_SPS_BASELINE_HACK) == GS_SPS_BASELINE_HACK && !replay_sps)
       replay_sps = 1;
 
   }
+  *head = entry;
   return entry;
 }

@@ -23,4 +23,4 @@
 #define GS_SPS_BASELINE_HACK 0x02
 
 void gs_sps_init();
-PLENTRY gs_sps_fix(PLENTRY entry, int flags);
+PLENTRY gs_sps_fix(PLENTRY *entry, int flags);

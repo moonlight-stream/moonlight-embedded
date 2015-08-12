@@ -176,7 +176,8 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     first_packet = 0;
   }
 
-  PLENTRY entry = gs_sps_fix(decodeUnit->bufferList, GS_SPS_BITSTREAM_FIXUP);
+  PLENTRY entry = gs_sps_fix(&decodeUnit->bufferList, GS_SPS_BITSTREAM_FIXUP);
+  decodeUnit->bufferList = entry;
   while (entry != NULL) {
     memcpy(dest, entry->data, entry->length);
     buf->nFilledLen += entry->length;

@@ -28,7 +28,8 @@
 enum platform { NONE, SDL, OMX, IMX, FAKE };
 
 enum platform platform_check(char*);
-DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system);
+PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
+PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
 
 #ifdef HAVE_SDL
 void sdl_loop();

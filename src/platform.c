@@ -40,10 +40,10 @@ enum platform platform_check(char* name) {
       return IMX;
   }
   #endif
-  #ifdef HAVE_OMX
-  if (std || strcmp(name, "omx") == 0) {
+  #ifdef HAVE_PI
+  if (std || strcmp(name, "pi") == 0) {
     if (dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
-      return OMX;
+      return PI;
   }
   #endif
   #ifdef HAVE_FAKE
@@ -63,9 +63,9 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   case IMX:
     return &decoder_callbacks_imx;
   #endif
-  #ifdef HAVE_OMX
-  case OMX:
-    return &decoder_callbacks_omx;
+  #ifdef HAVE_PI
+  case PI:
+    return &decoder_callbacks_pi;
   #endif
   #ifdef HAVE_FAKE
   case FAKE:

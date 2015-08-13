@@ -23,8 +23,8 @@ extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
 #ifdef HAVE_SDL
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
 #endif
-#ifdef HAVE_OMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_omx;
+#ifdef HAVE_PI
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_pi;
 #endif
 #ifdef HAVE_IMX
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_imx;

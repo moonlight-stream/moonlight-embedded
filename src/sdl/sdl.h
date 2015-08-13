@@ -17,16 +17,15 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
+#include <SDL.h>
 
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
-#ifdef HAVE_SDL
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
-#endif
-#ifdef HAVE_PI
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_pi;
-#endif
-#ifdef HAVE_IMX
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_imx;
-bool video_imx_init();
-#endif
+#define SDL_NOTHING 0
+#define SDL_QUIT_APPLICATION 1
+#define SDL_MOUSE_GRAB 2
+#define SDL_MOUSE_UNGRAB 3
+#define SDL_TOGGLE_FULLSCREEN 4
+
+SDL_Window *sdl_window;
+
+void sdl_init(int width, int height);
+void sdl_loop();

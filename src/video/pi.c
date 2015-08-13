@@ -29,7 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Based upon video decode example from the Raspberry Pi firmware
 
 #include "sps.h"
-#include "../video.h"
+
+#include "limelight-common/Limelight.h"
 
 #include <stdio.h>
 #include <stdlib.h>

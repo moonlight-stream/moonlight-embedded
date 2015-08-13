@@ -31,6 +31,10 @@ enum platform platform_check(char*);
 PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
 PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
 
+#ifdef HAVE_FAKE
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
+#endif
 #ifdef HAVE_SDL
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
 void sdl_loop();
 #endif

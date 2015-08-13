@@ -20,7 +20,6 @@
 #include "loop.h"
 #include "client.h"
 #include "connection.h"
-#include "video.h"
 #include "audio.h"
 #include "discover.h"
 #include "config.h"

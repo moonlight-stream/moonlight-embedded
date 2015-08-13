@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../video.h"
+#include "limelight-common/Limelight.h"
 
 #include <stdlib.h>
 #include <stdio.h>

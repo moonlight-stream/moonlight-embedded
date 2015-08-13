@@ -20,13 +20,14 @@
 #define _GNU_SOURCE
 
 #include "platform.h"
-#include "video.h"
 #include "audio.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
+
+typedef bool(*ImxInit)();
 
 enum platform platform_check(char* name) {
   bool std = strcmp(name, "default") == 0;
@@ -36,13 +37,18 @@ enum platform platform_check(char* name) {
   #endif
   #ifdef HAVE_IMX
   if (std || strcmp(name, "imx") == 0) {
-    if (dlsym(RTLD_DEFAULT, "vpu_Init") != NULL && video_imx_init())
-      return IMX;
+    void *handle = dlopen("libmoonlight-imx.so", RTLD_NOW);
+    ImxInit video_imx_init = (ImxInit) dlsym(RTLD_DEFAULT, "video_imx_init");
+    if (handle != NULL) {
+      if (video_imx_init())
+        return IMX;
+    }
   }
   #endif
   #ifdef HAVE_PI
   if (std || strcmp(name, "pi") == 0) {
-    if (dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
+    void *handle = dlopen("libmoonlight-pi.so", RTLD_NOW);
+    if (handle != NULL && dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
       return PI;
   }
   #endif
@@ -61,11 +67,11 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   #endif
   #ifdef HAVE_IMX
   case IMX:
-    return &decoder_callbacks_imx;
+    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_imx");
   #endif
   #ifdef HAVE_PI
   case PI:
-    return &decoder_callbacks_pi;
+    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_pi");
   #endif
   #ifdef HAVE_FAKE
   case FAKE:

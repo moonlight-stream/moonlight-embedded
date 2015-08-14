@@ -1,3 +1,10 @@
+moonlight-embedded (2.1.0-1) UNRELEASED; urgency=low
+
+  * Support OSMC
+  * Update Moonlight-embedded to version 2.1.0
+
+ -- Iwan Timmer <irtimmer@gmail.com>  Sat, 7 Jul 2015 19:05:48 +0000
+
 moonlight-embedded (2.0.2-1) UNRELEASED; urgency=low
 
   * More (untested) gamepad mappings included

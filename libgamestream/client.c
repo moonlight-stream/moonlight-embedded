@@ -350,7 +350,6 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
-  printf("Paired\n");
   server->paired = true;
 
   cleanup:

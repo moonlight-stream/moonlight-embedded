@@ -190,9 +190,16 @@ int main(int argc, char* argv[]) {
 
   SERVER_DATA server;
   server.address = config.address;
-  if (gs_init(&server, config.key_dir) != GS_OK) {
-      fprintf(stderr, "Can't connect to server %s\n", config.address);
-      exit(-1);
+  int ret;
+  if ((ret = gs_init(&server, config.key_dir)) == GS_OUT_OF_MEMORY) {
+    fprintf(stderr, "Not enough memory\n");
+    exit(-1);
+  } else if (ret == GS_INVALID) {
+    fprintf(stderr, "Invalid data received from server: %s\n", config.address, gs_error);
+    exit(-1);
+  } else if (ret != GS_OK) {
+    fprintf(stderr, "Can't connect to server %s\n", config.address);
+    exit(-1);
   }
 
   if (strcmp("list", config.action) == 0) {

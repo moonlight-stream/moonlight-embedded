@@ -23,6 +23,8 @@
 #include <expat.h>
 #include <string.h>
 
+static XML_Parser parser;
+
 struct xml_query {
   char *memory;
   size_t size;
@@ -103,11 +105,15 @@ int xml_search(char* data, size_t len, char* node, char** result) {
   if (! XML_Parse(parser, data, len, 1)) {
     int code = XML_GetErrorCode(parser);
     gs_error = XML_ErrorString(code);
+    XML_ParserFree(parser);
     free(search.memory);
     return GS_INVALID;
-  } else if (search.memory == NULL)
+  } else if (search.memory == NULL) {
+    XML_ParserFree(parser);
     return GS_OUT_OF_MEMORY;
+  }
 
+  XML_ParserFree(parser);
   *result = search.memory;
   
   return GS_OK;
@@ -126,8 +132,11 @@ int xml_applist(char* data, size_t len, PAPP_LIST *app_list) {
   if (! XML_Parse(parser, data, len, 1)) {
     int code = XML_GetErrorCode(parser);
     gs_error = XML_ErrorString(code);
+    XML_ParserFree(parser);
     return GS_INVALID;
   }
+
+  XML_ParserFree(parser);
   *app_list = (PAPP_LIST) query.data;
 
   return GS_OK;

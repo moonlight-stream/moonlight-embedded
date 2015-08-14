@@ -83,22 +83,26 @@ char* get_path(char* name, char* extra_data_dirs) {
     exit(-1);
   }
 
+  char* data_dir = data_dirs;
   char* end;
   do {
-    end = strstr(data_dirs, ":");
-    int length = end != NULL?end - data_dirs:strlen(data_dirs);
-    memcpy(path, data_dirs, length);
+    end = strstr(data_dir, ":");
+    int length = end != NULL?end - data_dir:strlen(data_dir);
+    memcpy(path, data_dir, length);
     if (path[0] == '/')
       sprintf(path+length, MOONLIGHT_PATH "/%s", name);
     else
       sprintf(path+length, "/%s", name);
 
-    if(access(path, R_OK) != -1)
+    if(access(path, R_OK) != -1) {
+      free(data_dirs);
       return path;
+    }
 
-    data_dirs = end + 1;
+    data_dir = end + 1;
   } while (end != NULL);
 
+  free(data_dirs);
   free(path);
   return NULL;
 }

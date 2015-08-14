@@ -1,12 +1,12 @@
 project(moonlight-embedded C)
 cmake_minimum_required(VERSION 3.1)
-set(MOONLIGHT_MAJOR_VERSION 0)
+SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
+
+set(MOONLIGHT_MAJOR_VERSION 2)
 set(MOONLIGHT_MINOR_VERSION 1)
 set(MOONLIGHT_PATCH_VERSION 0)
 set(MOONLIGHT_VERSION ${MOONLIGHT_MAJOR_VERSION}.${MOONLIGHT_MINOR_VERSION}.${MOONLIGHT_PATCH_VERSION})
-
-SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
 
 aux_source_directory(./src SRC_LIST)
 aux_source_directory(./src/input SRC_LIST)

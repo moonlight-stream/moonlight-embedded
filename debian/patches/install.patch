@@ -36,7 +36,7 @@ Index: moonlight-embedded/CMakeLists.txt
 @@ -74,18 +74,18 @@
  if(FREESCALE_FOUND)
    list(APPEND MOONLIGHT_DEFINITIONS HAVE_IMX)
-   add_library(moonlight-pi SHARED ./src/video/imx.c)
+   add_library(moonlight-imx SHARED ./src/video/imx.c)
 -  target_include_directories(moonlight-imx PRIVATE ./third_party/ilclient ${FREESCALE_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR})
 +  include_directories(${FREESCALE_INCLUDE_DIRS})
    target_link_libraries(moonlight-imx gamestream ${FREESCALE_LIBRARIES})

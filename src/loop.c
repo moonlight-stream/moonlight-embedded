@@ -107,7 +107,6 @@ void loop_main() {
         if (ret == LOOP_RETURN) {
           return;
         }
-        break;
       }
     }
   }

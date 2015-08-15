@@ -45,4 +45,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_fake = {
   .setup = decoder_renderer_setup,
   .cleanup = decoder_renderer_cleanup,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT,
 };

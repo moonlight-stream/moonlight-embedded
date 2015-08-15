@@ -212,5 +212,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_pi = {
   .setup = decoder_renderer_setup,
   .cleanup = decoder_renderer_cleanup,
   .submitDecodeUnit = decoder_renderer_submit_decode_unit,
-  .capabilities = GS_SPS_BITSTREAM_FIXUP,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT,
 };

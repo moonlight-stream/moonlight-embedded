@@ -37,7 +37,7 @@ enum platform platform_check(char* name) {
   #endif
   #ifdef HAVE_IMX
   if (std || strcmp(name, "imx") == 0) {
-    void *handle = dlopen("libmoonlight-imx.so", RTLD_NOW);
+    void *handle = dlopen("libmoonlight-imx.so", RTLD_NOW | RTLD_GLOBAL);
     ImxInit video_imx_init = (ImxInit) dlsym(RTLD_DEFAULT, "video_imx_init");
     if (handle != NULL) {
       if (video_imx_init())
@@ -47,7 +47,7 @@ enum platform platform_check(char* name) {
   #endif
   #ifdef HAVE_PI
   if (std || strcmp(name, "pi") == 0) {
-    void *handle = dlopen("libmoonlight-pi.so", RTLD_NOW);
+    void *handle = dlopen("libmoonlight-pi.so", RTLD_NOW | RTLD_GLOBAL);
     if (handle != NULL && dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
       return PI;
   }

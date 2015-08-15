@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 2.8.11)
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
 
+# include C99 helper macro
+include(cmake/use_c99.cmake)
+
 set(MOONLIGHT_MAJOR_VERSION 2)
 set(MOONLIGHT_MINOR_VERSION 1)
 set(MOONLIGHT_PATCH_VERSION 0)
@@ -53,7 +56,7 @@ add_subdirectory(libgamestream)
 
 add_executable(moonlight ${SRC_LIST})
 target_link_libraries(moonlight gamestream)
-set_property(TARGET moonlight PROPERTY C_STANDARD 99)
+use_c99(moonlight)
 
 if (CEC_FOUND AND CEC_VERSION_COMPATIBLE)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)

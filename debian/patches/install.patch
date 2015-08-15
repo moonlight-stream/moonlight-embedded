@@ -1,12 +1,7 @@
 Compile using older version (2.8) of CMake
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -53,11 +53,11 @@
- 
- add_executable(moonlight ${SRC_LIST})
- target_link_libraries(moonlight gamestream)
--set_property(TARGET moonlight PROPERTY C_STANDARD 99)
-+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+@@ -57,7 +57,7 @@
  
  if (CEC_FOUND AND CEC_VERSION_COMPATIBLE)
    list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
@@ -48,14 +43,7 @@ Compile using older version (2.8) of CMake
  add_subdirectory(docs)
 --- a/libgamestream/CMakeLists.txt
 +++ b/libgamestream/CMakeLists.txt
-@@ -14,13 +14,13 @@
- add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
- 
- add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})
--set_property(TARGET gamestream PROPERTY C_STANDARD 99)
-+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
- target_link_libraries(gamestream moonlight-common)
- 
+@@ -20,7 +20,7 @@
  set_target_properties(gamestream PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})
  set_target_properties(moonlight-common PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})
  

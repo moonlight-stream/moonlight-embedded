@@ -58,6 +58,7 @@ static struct option long_options[] = {
   {"platform", required_argument, 0, 'p'},
   {"save", required_argument, NULL, 'q'},
   {"keydir", required_argument, NULL, 'r'},
+  {"remote", no_argument, NULL, 's'},
   {0, 0, 0, 0},
 };
 
@@ -180,6 +181,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'r':
     strcpy(config->key_dir, value);
     break;
+  case 's':
+    config->stream.remote = 1;
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -257,6 +261,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.fps = 60;
   config->stream.bitrate = -1;
   config->stream.packetSize = 1024;
+  config->stream.remote = 0;
 
   config->platform = "default";
   config->app = "Steam";
@@ -282,7 +287,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

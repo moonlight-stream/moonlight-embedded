@@ -14,7 +14,7 @@ aux_source_directory(../third_party/moonlight-common-c/limelight-common/OpenAES 
 add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
 
 add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})
-set_property(TARGET gamestream PROPERTY C_STANDARD 99)
+use_c99(gamestream)
 target_link_libraries(gamestream moonlight-common)
 
 set_target_properties(gamestream PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})

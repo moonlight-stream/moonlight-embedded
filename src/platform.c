@@ -87,10 +87,8 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
   case SDL:
     return &audio_callbacks_sdl;
   #endif
-  #ifdef HAVE_FAKE
   default:
     return &audio_callbacks_alsa;
-  #endif
   }
   return NULL;
 }

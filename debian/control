@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Iwan Timmer <irtimmer@gmail.com>
 Build-Depends:
  debhelper (>= 8.0.0),
- cmake,
+ cmake (>= 2.8.11),
  libopus-dev,
  libexpat1-dev,
  libasound2-dev,

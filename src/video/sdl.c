@@ -94,5 +94,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl = {
   .setup = sdl_setup,
   .cleanup = sdl_cleanup,
   .submitDecodeUnit = sdl_submit_decode_unit,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_REFERENCE_FRAME_INVALIDATION,
 };

@@ -50,6 +50,34 @@ static EVP_PKEY *privateKey;
 
 const char* gs_error;
 
+static int mkdirtree(const char* directory) {
+  char buffer[1024];
+  char* p = buffer;
+
+  // The passed in string could be a string literal
+  // so we must copy it first
+  strcpy(p, directory);
+
+  while (*p != 0) {
+    // Find the end of the path element
+    do {
+      p++;
+    } while (*p != 0 && *p != '/');
+
+    char oldChar = *p;
+    *p = 0;
+
+    // Create the directory if it doesn't exist already
+    if (mkdir(buffer, 0775) == -1 && errno != EEXIST) {
+        return -1;
+    }
+
+    *p = oldChar;
+  }
+
+  return 0;
+}
+
 static int load_unique_id(const char* keyDirectory) {
   char uniqueFilePath[4096];
   sprintf(uniqueFilePath, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
@@ -416,7 +444,7 @@ int gs_quit_app(PSERVER_DATA server) {
 }
 
 int gs_init(PSERVER_DATA server, const char *keyDirectory) {
-  mkdir(keyDirectory, 00755);
+  mkdirtree(keyDirectory);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
 

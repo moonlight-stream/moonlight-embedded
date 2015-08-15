@@ -1,22 +1,28 @@
-moonlight-embedded (2.1.0-1) UNRELEASED; urgency=low
+moonlight-embedded (2.1.1-1) RELEASED; urgency=high
+
+  * Update to version 2.1.1
+
+ -- Iwan Timmer <irtimmer@gmail.com>  Sat, 15 Aug 2015 11:34:26 +0200
+
+moonlight-embedded (2.1.0-1) RELEASED; urgency=low
 
   * Support OSMC
   * Update Moonlight-embedded to version 2.1.0
 
- -- Iwan Timmer <irtimmer@gmail.com>  Sat, 7 Jul 2015 19:05:48 +0000
+ -- Iwan Timmer <irtimmer@gmail.com>  Fri, 14 Aug 2015 16:13:67 +0200
 
-moonlight-embedded (2.0.2-1) UNRELEASED; urgency=low
+moonlight-embedded (2.0.2-1) RELEASED; urgency=medium
 
   * More (untested) gamepad mappings included
   * Bigger range for gamepad sticks
   * Better error messaging
   * Input detection bug fixed
 
- -- Iwan Timmer <irtimmer@gmail.com>  Sat, 7 Jul 2015 19:05:48 +0000
+ -- Iwan Timmer <irtimmer@gmail.com>  Sat, 7 Jul 2015 21:05:48 +0200
 
-moonlight-embedded (2.0.1-1) UNRELEASED; urgency=low
+moonlight-embedded (2.0.1-1) RELEASED; urgency=high
 
   * Initial release
   * This is my first Debian package
 
- -- Iwan Timmer <irtimmer@gmail.com>  Sat, 20 Jun 2015 11:58:32 +0000
+ -- Iwan Timmer <irtimmer@gmail.com>  Sat, 20 Jun 2015 13:58:32 +0200

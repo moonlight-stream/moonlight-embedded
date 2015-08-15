@@ -34,14 +34,15 @@ void gs_sps_init(int width, int height) {
 
 PLENTRY gs_sps_fix(PLENTRY *head, int flags) {
   PLENTRY entry = *head;
+  const char naluHeader[] = {0x00, 0x00, 0x00, 0x01};
+
   if (replay_sps == 1) {
     PLENTRY replay_entry = (PLENTRY) malloc(sizeof(*replay_entry) + 128);
     if (replay_entry == NULL)
       return NULL;
 
     replay_entry->data = (char *) (entry + 1);
-    char spsData[] = {0x00, 0x00, 0x00, 0x01, 0x67};
-    memcpy(replay_entry->data, spsData, sizeof(spsData));
+    memcpy(replay_entry->data, naluHeader, sizeof(naluHeader));
     h264_stream->sps->profile_idc = H264_PROFILE_HIGH;
     replay_entry->length = write_nal_unit(h264_stream, replay_entry->data+4, 124) + 4;
 
@@ -100,9 +101,9 @@ PLENTRY gs_sps_fix(PLENTRY *head, int flags) {
 
     PLENTRY next = entry->next;
     free(entry);
-    sps_entry->data = (char*) (entry + 1);
+    sps_entry->data = (char*) (sps_entry + 1);
+    memcpy(sps_entry->data, naluHeader, sizeof(naluHeader));
     sps_entry->length = write_nal_unit(h264_stream, sps_entry->data+4, 124) + 4;
-    printf("Writen %d\n", sps_entry->length);
     sps_entry->next = next;
     entry = sps_entry;
   } else if ((entry->data[4] & 0x1F) == NAL_UNIT_TYPE_PPS) {

@@ -182,7 +182,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     strcpy(config->key_dir, value);
     break;
   case 's':
-    config->stream.remote = 1;
+    config->stream.streamingRemotely = 1;
     break;
   case 1:
     if (config->action == NULL)
@@ -261,7 +261,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.fps = 60;
   config->stream.bitrate = -1;
   config->stream.packetSize = 1024;
-  config->stream.remote = 0;
+  config->stream.streamingRemotely = 0;
 
   config->platform = "default";
   config->app = "Steam";

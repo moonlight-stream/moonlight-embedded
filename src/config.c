@@ -208,7 +208,7 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
 
   while (getline(&line, &len, fd) != -1) {
     char *key = NULL, *value = NULL;
-    if (sscanf(line, "%ms = %ms", &key, &value) == 2) {
+    if (sscanf(line, "%ms = %m[^\n]", &key, &value) == 2) {
       if (strcmp(key, "address") == 0) {
         config->address = value;
       } else if (strcmp(key, "sops") == 0) {

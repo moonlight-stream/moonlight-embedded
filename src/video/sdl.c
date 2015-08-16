@@ -45,18 +45,8 @@ static void sdl_setup(int width, int height, int redrawRate, void* context, int 
     exit(1);
   }
 
-  SDL_Window *window = (SDL_Window*) context;
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  if (!renderer) {
-    fprintf(stderr, "SDL: could not create renderer - exiting\n");
-    exit(1);
-  }
-
-  bmp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_TARGET, width, height);
-  if (!bmp) {
-    fprintf(stderr, "SDL: could not create texture - exiting\n");
-    exit(1);
-  }
+  screen_width = width;
+  screen_height = height;
 }
 
 static void sdl_cleanup() {
@@ -64,6 +54,26 @@ static void sdl_cleanup() {
 }
 
 static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
+  if (window == NULL) {
+    window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_OPENGL);
+    if(!window) {
+      fprintf(stderr, "SDL: could not create window - exiting\n");
+      exit(1);
+    }
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!renderer) {
+      printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
+      exit(1);
+    }
+
+    bmp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
+    if (!bmp) {
+      fprintf(stderr, "SDL: could not create texture - exiting\n");
+      exit(1);
+    }
+  }
+
   if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
     PLENTRY entry = decodeUnit->bufferList;
     int length = 0;

@@ -37,12 +37,6 @@ void sdl_init(int width, int height) {
     exit(1);
   }
 
-  sdl_window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
-  if(!sdl_window) {
-    fprintf(stderr, "SDL: could not create window - exiting\n");
-    exit(1);
-  }
-  SDL_SetRelativeMouseMode(SDL_TRUE);
   sdlinput_init();
 }
 

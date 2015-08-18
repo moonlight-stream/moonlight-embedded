@@ -188,10 +188,6 @@ int main(int argc, char* argv[]) {
     }
   }
   
-  char host_config_file[128];
-  sprintf(host_config_file, "hosts/%s.conf", config.address);
-  config_file_parse(host_config_file, &config);
-
   SERVER_DATA server;
   server.address = config.address;
   int ret;

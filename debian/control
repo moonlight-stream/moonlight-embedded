@@ -12,7 +12,9 @@ Build-Depends:
  libavahi-client-dev,
  libcurl4-openssl-dev,
  libevdev-dev,
- libraspberrypi-dev | rbp-userland-dev-osmc
+ libssl-dev,
+ libv4l-dev, libvpu-imx6-dev, imx-kernel-api
+# libraspberrypi-dev | rbp-userland-dev-osmc
 Standards-Version: 3.9.3
 Homepage: https://github.com/irtimmer/moonlight-embedded
 

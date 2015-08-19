@@ -7,7 +7,7 @@ mark_as_advanced(BROADCOM_INCLUDE_DIR)
 find_path(KERNEL_INCLUDE_DIR
   NAMES linux/mxc_v4l2.h
   DOC "Kernel include directory"
-  PATHS /lib/modules/${CMAKE_SYSTEM_VERSION}/build)
+  PATHS /lib/modules/${CMAKE_SYSTEM_VERSION}/build /usr/include/imx-kernel-api)
 mark_as_advanced(KERNEL_INCLUDE_DIR)
 
 find_library(VPU_LIBRARY

@@ -81,7 +81,6 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     SDL_Log("\n");
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
-    SDL_ShowCursor(SDL_DISABLE);
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -89,7 +88,7 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
       exit(1);
     }
-
+    SDL_ShowCursor(SDL_DISABLE);
     bmp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
     if (!bmp) {
       fprintf(stderr, "SDL: could not create texture - exiting\n");

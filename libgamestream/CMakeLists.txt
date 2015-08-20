@@ -11,6 +11,8 @@ aux_source_directory(../third_party/h264bitstream GAMESTREAM_SRC_LIST)
 aux_source_directory(../third_party/moonlight-common-c/limelight-common MOONLIGHT_COMMON_SRC_LIST)
 aux_source_directory(../third_party/moonlight-common-c/limelight-common/OpenAES MOONLIGHT_COMMON_SRC_LIST)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+
 add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
 
 add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})

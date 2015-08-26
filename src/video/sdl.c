@@ -55,7 +55,7 @@ static void sdl_cleanup() {
 
 static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   if (window == NULL) {
-    window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
     if(!window) {
       fprintf(stderr, "SDL: could not create window - exiting\n");
       exit(1);

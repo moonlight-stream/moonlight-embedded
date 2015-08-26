@@ -27,7 +27,7 @@
 #include <stdbool.h>
 
 static bool done;
-static int fullscreen_flags;
+static int fullscreen_flags = SDL_WINDOW_FULLSCREEN;
 
 SDL_Window *sdl_window;
 

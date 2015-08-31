@@ -163,6 +163,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       memcpy((void *)target_addr, entry->data, entry->length);
     }
     vpu_DecUpdateBitstreamBuffer(handle, entry->length);
+    entry = entry->next;
   }
 
   if (!initialized) {
@@ -201,6 +202,11 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     strcpy(v4l_device, "/dev/video");
     strcat(v4l_device, node);
     fd = open(v4l_device, O_RDWR, 0);
+    if (fd < 0){
+      fprintf(stderr, "Can't access video output\n");
+      exit(EXIT_FAILURE);
+    }
+
     struct v4l2_format fmt = {0};
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
     fmt.fmt.pix.width = picWidth;
@@ -315,14 +321,14 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       fprintf(stderr, "Can't register decoder to framebuffer\n");
       exit(EXIT_FAILURE);
     }
-    
-    if (!decoding) {
-      if (vpu_DecStartOneFrame(handle, &decparam) != RETCODE_SUCCESS) {
-        fprintf(stderr, "Can't start decoding\n");
-        exit(EXIT_FAILURE);
-      }
-      decoding = true;
+  }
+
+  if (!decoding) {
+    if (vpu_DecStartOneFrame(handle, &decparam) != RETCODE_SUCCESS) {
+      fprintf(stderr, "Can't start decoding\n");
+      exit(EXIT_FAILURE);
     }
+    decoding = true;
   }
   
   int loop_id = 0;

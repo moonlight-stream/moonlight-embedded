@@ -24,8 +24,10 @@
 #include <SDL.h>
 #include <SDL_thread.h>
 #include <SDL_opengles.h>
+#include <stdbool.h>
 
 #define DECODER_BUFFER_SIZE 92*1024
+#define ODROID_THREAD_COUNT 4
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -34,8 +36,10 @@ static int screen_width, screen_height;
 static char* ffmpeg_buffer;
 
 static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
-  int avc_flags = FAST_BILINEAR_FILTERING;
-  if (ffmpeg_init(width, height, 2, avc_flags) < 0) {
+  static bool thread_slice = false;
+  if(height < 1080 && redrawRate < 60)
+    thread_slice = true;
+  if (ffmpeg_init(width, height, thread_slice, ODROID_THREAD_COUNT) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     exit(1);
   }

@@ -53,15 +53,11 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
     return -1;
   }
 
-  if (perf_lvl & DISABLE_LOOP_FILTER)
-    // Skip the loop filter for performance reasons
-    decoder_ctx->skip_loop_filter = AVDISCARD_ALL;
-
-  if (perf_lvl & LOW_LATENCY_DECODE)
+  if (perf_lvl)
     // Use low delay single threaded encoding
     decoder_ctx->flags |= CODEC_FLAG_LOW_DELAY;
 
-  if (perf_lvl & SLICE_THREADING)
+  if (perf_lvl)
     decoder_ctx->thread_type = FF_THREAD_SLICE;
   else
     decoder_ctx->thread_type = FF_THREAD_FRAME;
@@ -71,6 +67,7 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
   decoder_ctx->width = width;
   decoder_ctx->height = height;
   decoder_ctx->pix_fmt = PIX_FMT_YUV420P;
+  decoder_ctx->flags2 |= CODEC_FLAG2_FAST;
 
   int err = avcodec_open2(decoder_ctx, decoder, NULL);
   if (err < 0) {

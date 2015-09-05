@@ -34,7 +34,6 @@ static AVPacket pkt;
 static AVCodec* decoder;
 static AVCodecContext* decoder_ctx;
 static AVFrame* dec_frame;
-static struct SwsContext* scaler_ctx;
 
 enum decoders {SOFTWARE, VDPAU};
 enum decoders decoder_system;
@@ -109,22 +108,6 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
     vdpau_init(decoder_ctx, width, height);
   #endif
 
-  int filtering;
-  if (perf_lvl & FAST_BILINEAR_FILTERING)
-    filtering = SWS_FAST_BILINEAR;
-  else if (perf_lvl & BILINEAR_FILTERING)
-    filtering = SWS_BILINEAR;
-  else
-    filtering = SWS_BICUBIC;
-
-  if (decoder_system == SOFTWARE) {
-    scaler_ctx = sws_getContext(decoder_ctx->width, decoder_ctx->height, decoder_ctx->pix_fmt, decoder_ctx->width, decoder_ctx->height, PIX_FMT_YUV420P, filtering, NULL, NULL, NULL);
-    if (scaler_ctx == NULL) {
-      printf("Couldn't get scaler context\n");
-      return -1;
-    }
-  }
-
   return 0;
 }
 
@@ -136,25 +119,10 @@ void ffmpeg_destroy(void) {
     av_free(decoder_ctx);
     decoder_ctx = NULL;
   }
-  if (scaler_ctx) {
-    sws_freeContext(scaler_ctx);
-    scaler_ctx = NULL;
-  }
   if (dec_frame) {
     av_frame_free(&dec_frame);
     dec_frame = NULL;
   }
-}
-
-int ffmpeg_draw_frame(AVFrame *pict) {
-  int err = sws_scale(scaler_ctx, (const uint8_t* const*) dec_frame->data, dec_frame->linesize, 0, decoder_ctx->height, pict->data, pict->linesize);
-
-  if (err != decoder_ctx->height) {
-    fprintf(stderr, "Scaling failed\n");
-    return 0;
-  }
-  
-  return 1;
 }
 
 AVFrame* ffmpeg_get_frame() {

@@ -21,6 +21,8 @@
 
 #include <SDL.h>
 
+#include <stdbool.h>
+
 #define SDL_NOTHING 0
 #define SDL_QUIT_APPLICATION 1
 #define SDL_MOUSE_GRAB 2
@@ -29,7 +31,7 @@
 
 SDL_Window *sdl_window;
 
-void sdl_init(int width, int height);
+void sdl_init(int width, int height, bool fullscreen);
 void sdl_loop();
 
 #endif /* HAVE_SDL */

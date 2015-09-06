@@ -17,34 +17,4 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
-
-#include <stdbool.h>
-
-#define MAX_INPUTS 6
-
-struct input_config {
-  char* path;
-  char* mapping;
-};
-
-typedef struct _CONFIGURATION {
-  STREAM_CONFIGURATION stream;
-  char* app;
-  char* action;
-  char* address;
-  char* mapping;
-  char* platform;
-  char* config_file;
-  char key_dir[4096];
-  bool sops;
-  bool localaudio;
-  bool fullscreen;
-  struct input_config inputs[MAX_INPUTS];
-  int inputsCount;
-} CONFIGURATION, *PCONFIGURATION;
-
-bool inputAdded;
-
-bool config_file_parse(char* filename, PCONFIGURATION config);
-void config_parse(int argc, char* argv[], PCONFIGURATION config);
+#define DISPLAY_FULLSCREEN 1

@@ -17,6 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../video.h"
 #include "ffmpeg.h"
 
 #include "limelight-common/Limelight.h"
@@ -32,6 +33,8 @@ static SDL_Texture *bmp = NULL;
 static int screen_width, screen_height;
 static char* ffmpeg_buffer;
 
+static bool fullscreen;
+
 static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = FAST_BILINEAR_FILTERING;
   if (ffmpeg_init(width, height, 2, avc_flags) < 0) {
@@ -45,6 +48,7 @@ static void sdl_setup(int width, int height, int redrawRate, void* context, int 
     exit(1);
   }
 
+  fullscreen = drFlags & DISPLAY_FULLSCREEN == DISPLAY_FULLSCREEN);
   screen_width = width;
   screen_height = height;
 }
@@ -55,7 +59,7 @@ static void sdl_cleanup() {
 
 static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   if (window == NULL) {
-    window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+    window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_OPENGL | (fullscreen?SDL_WINDOW_FULLSCREEN:0));
     if(!window) {
       fprintf(stderr, "SDL: could not create window - exiting\n");
       exit(1);

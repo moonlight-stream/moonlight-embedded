@@ -21,6 +21,7 @@
 #include "client.h"
 #include "connection.h"
 #include "audio.h"
+#include "video.h"
 #include "discover.h"
 #include "config.h"
 #include "platform.h"
@@ -89,7 +90,11 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     context = sdl_window;
   #endif
 
-  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), context, 0, server->serverMajorVersion);
+  int drFlags = 0;
+  if (config->fullscreen)
+    drFlags |= DISPLAY_FULLSCREEN;
+
+  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), context, drFlags, server->serverMajorVersion);
 
   if (IS_EMBEDDED(system)) {
     evdev_start();
@@ -131,6 +136,10 @@ static void help() {
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
   printf("\t-localaudio\t\tPlay audio locally\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
+  #ifdef HAVE_SDL
+  printf("\n Video options (SDL Only)\n\n");
+  printf("\t-fullscreen\t\tMake window fullscreen\n");
+  #endif
   #ifdef HAVE_EMBEDDED
   printf("\n I/O options\n\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
@@ -224,7 +233,7 @@ int main(int argc, char* argv[]) {
     }
     #ifdef HAVE_SDL
     else if (system == SDL)
-      sdl_init(config.stream.width, config.stream.height);
+      sdl_init(config.stream.width, config.stream.height, config.fullscreen);
     #endif
 
     stream(&server, &config, system);

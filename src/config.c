@@ -59,6 +59,7 @@ static struct option long_options[] = {
   {"save", required_argument, NULL, 'q'},
   {"keydir", required_argument, NULL, 'r'},
   {"remote", no_argument, NULL, 's'},
+  {"fullscreen", no_argument, NULL, 't'},
   {0, 0, 0, 0},
 };
 
@@ -184,6 +185,8 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 's':
     config->stream.streamingRemotely = 1;
     break;
+  case 't':
+    config->fullscreen = true;
   case 1:
     if (config->action == NULL)
       config->action = value;

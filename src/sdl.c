@@ -24,19 +24,18 @@
 
 #include "limelight-common/Limelight.h"
 
-#include <stdbool.h>
-
 static bool done;
-static int fullscreen_flags = SDL_WINDOW_FULLSCREEN;
+static int fullscreen_flags;
 
 SDL_Window *sdl_window;
 
-void sdl_init(int width, int height) {
+void sdl_init(int width, int height, bool fullscreen) {
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
     fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
     exit(1);
   }
 
+  fullscreen_flags = fullscreen?SDL_WINDOW_FULLSCREEN:0;
   sdlinput_init();
 }
 

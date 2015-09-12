@@ -146,7 +146,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       exit(-1);
     }
     config->inputs[config->inputsCount].path = value;
-    config->inputs[config->inputsCount].mapping = value;
+    config->inputs[config->inputsCount].mapping = config->mapping;
     config->inputsCount++;
     inputAdded = true;
     mapped = true;

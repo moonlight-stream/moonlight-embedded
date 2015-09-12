@@ -25,6 +25,8 @@
 #include <SDL.h>
 #include <SDL_thread.h>
 
+#include <stdbool.h>
+
 #define DECODER_BUFFER_SIZE 92*1024
 
 static SDL_Window *window;
@@ -48,7 +50,7 @@ static void sdl_setup(int width, int height, int redrawRate, void* context, int 
     exit(1);
   }
 
-  fullscreen = drFlags & DISPLAY_FULLSCREEN == DISPLAY_FULLSCREEN);
+  fullscreen = (drFlags & DISPLAY_FULLSCREEN) == DISPLAY_FULLSCREEN;
   screen_width = width;
   screen_height = height;
 }

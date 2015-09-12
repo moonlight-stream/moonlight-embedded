@@ -317,8 +317,13 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
       config->stream.bitrate = 5000;
   }
 
-  if (inputAdded && !mapped) {
-    fprintf(stderr, "Mapping option should be followed by the input to be mapped.\n");
-    exit(-1);
+  if (inputAdded) {
+    if (!mapped) {
+        fprintf(stderr, "Mapping option should be followed by the input to be mapped.\n");
+        exit(-1);
+    } else if (config->mapping == NULL) {
+        fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
+        exit(-1);
+    }
   }
 }

@@ -52,6 +52,13 @@ enum platform platform_check(char* name) {
       return PI;
   }
   #endif
+  #ifdef HAVE_VDPAU
+  if (std || strcmp(name, "vdpau") == 0) {
+    void *handle = dlopen("libmoonlight-vdpau.so", RTLD_NOW | RTLD_GLOBAL);
+    if (handle != NULL)
+      return VDPAU;
+  }
+  #endif
   #ifdef HAVE_FAKE
   if (std || strcmp(name, "fake") == 0)
     return FAKE;
@@ -72,6 +79,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   #ifdef HAVE_PI
   case PI:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_pi");
+  #endif
+  #ifdef HAVE_VDPAU
+  case PI:
+    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_vdpau");
   #endif
   #ifdef HAVE_FAKE
   case FAKE:

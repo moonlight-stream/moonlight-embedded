@@ -23,27 +23,34 @@
 #include <SDL_audio.h>
 
 #include <stdio.h>
-#include <opus.h>
+#include <opus_multistream.h>
 
-#define SAMPLE_RATE 48000
-#define CHANNEL_COUNT 2
+#define MAX_CHANNEL_COUNT 6
 #define FRAME_SIZE 240
 
-static OpusDecoder* decoder;
-static short pcmBuffer[FRAME_SIZE * CHANNEL_COUNT];
+static OpusMSDecoder* decoder;
+static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static SDL_AudioDeviceID dev;
+static int channelCount;
 
-static void sdl_renderer_init() {
+static void sdl_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc;
-  decoder = opus_decoder_create(SAMPLE_RATE, CHANNEL_COUNT, &rc);
+  decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
+                                            opusConfig->channelCount,
+                                            opusConfig->streams,
+                                            opusConfig->coupledStreams,
+                                            opusConfig->mapping,
+                                            &rc);
+
+  channelCount = opusConfig->channelCount;
 
   SDL_InitSubSystem(SDL_INIT_AUDIO);
 
   SDL_AudioSpec want, have;
   SDL_zero(want);
-  want.freq = SAMPLE_RATE;
+  want.freq = opusConfig->sampleRate;
   want.format = AUDIO_S16LSB;
-  want.channels = CHANNEL_COUNT;
+  want.channels = opusConfig->channelCount;
   want.samples = 4096;
 
   dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
@@ -58,15 +65,15 @@ static void sdl_renderer_init() {
 
 static void sdl_renderer_cleanup() {
   if (decoder != NULL)
-    opus_decoder_destroy(decoder);
+    opus_multistream_decoder_destroy(decoder);
 
   SDL_CloseAudioDevice(dev);
 }
 
 static void sdl_renderer_decode_and_play_sample(char* data, int length) {
-  int decodeLen = opus_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
+  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
   if (decodeLen > 0) {
-    SDL_QueueAudio(dev, pcmBuffer, decodeLen * CHANNEL_COUNT * sizeof(short));
+    SDL_QueueAudio(dev, pcmBuffer, decodeLen * channelCount * sizeof(short));
   } else {
     printf("Opus error from decode: %d\n", decodeLen);
   }

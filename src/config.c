@@ -60,6 +60,7 @@ static struct option long_options[] = {
   {"keydir", required_argument, NULL, 'r'},
   {"remote", no_argument, NULL, 's'},
   {"fullscreen", no_argument, NULL, 't'},
+  {"surround", no_argument, NULL, 'u'},
   {0, 0, 0, 0},
 };
 
@@ -187,6 +188,10 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 't':
     config->fullscreen = true;
+    break;
+  case 'u':
+    config->stream.audioConfiguration = AUDIO_CONFIGURATION_51_SURROUND;
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -259,12 +264,15 @@ void config_save(char* filename, PCONFIGURATION config) {
 }
 
 void config_parse(int argc, char* argv[], PCONFIGURATION config) {
+  LiInitializeStreamConfiguration(&config->stream);
+
   config->stream.width = 1280;
   config->stream.height = 720;
   config->stream.fps = 60;
   config->stream.bitrate = -1;
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
+  config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
 
   config->platform = "default";
   config->app = "Steam";

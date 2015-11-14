@@ -162,6 +162,7 @@ static int load_server_status(PSERVER_DATA server) {
   char *pairedText = NULL;
   char *currentGameText = NULL;
   char *versionText = NULL;
+  char *stateText = NULL;
 
   int ret = GS_INVALID;
   char url[4096];
@@ -187,6 +188,9 @@ static int load_server_status(PSERVER_DATA server) {
   if (xml_search(data->memory, data->size, "appversion", &versionText) != GS_OK)
     goto cleanup;
 
+  if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
+    goto cleanup;
+
   server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
   char *versionSep = strstr(versionText, ".");
@@ -194,6 +198,12 @@ static int load_server_status(PSERVER_DATA server) {
     *versionSep = 0;
   }
   server->serverMajorVersion = atoi(versionText);
+  if (strstr(stateText, "_SERVER_AVAILABLE")) {
+    // After GFE 2.8, current game remains set even after streaming
+    // has ended. We emulate the old behavior by forcing it to zero
+    // if streaming is not active.
+    server->currentGame = 0;
+  }
   ret = GS_OK;
 
   cleanup:

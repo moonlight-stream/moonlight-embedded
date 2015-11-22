@@ -31,10 +31,6 @@ typedef bool(*ImxInit)();
 
 enum platform platform_check(char* name) {
   bool std = strcmp(name, "default") == 0;
-  #ifdef HAVE_SDL
-  if (std || strcmp(name, "sdl") == 0)
-    return SDL;
-  #endif
   #ifdef HAVE_IMX
   if (std || strcmp(name, "imx") == 0) {
     void *handle = dlopen("libmoonlight-imx.so", RTLD_NOW | RTLD_GLOBAL);
@@ -51,6 +47,10 @@ enum platform platform_check(char* name) {
     if (handle != NULL && dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
       return PI;
   }
+  #endif
+  #ifdef HAVE_SDL
+  if (std || strcmp(name, "sdl") == 0)
+    return SDL;
   #endif
   #ifdef HAVE_FAKE
   if (std || strcmp(name, "fake") == 0)

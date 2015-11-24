@@ -1,3 +1,9 @@
+moonlight-embedded (2.1.2-1) RELEASED; urgency=high
+
+  * Update to version 2.1.2
+
+ -- Iwan Timmer <irtimmer@gmail.com>  Tue, 24 Nov 2015 18:13:03 +0000
+
 moonlight-embedded (2.1.1-1) RELEASED; urgency=high
 
   * Update to version 2.1.1
@@ -13,10 +19,7 @@ moonlight-embedded (2.1.0-1) RELEASED; urgency=low
 
 moonlight-embedded (2.0.2-1) RELEASED; urgency=medium
 
-  * More (untested) gamepad mappings included
-  * Bigger range for gamepad sticks
-  * Better error messaging
-  * Input detection bug fixed
+  * Update to version 2.0.2
 
  -- Iwan Timmer <irtimmer@gmail.com>  Sat, 7 Jul 2015 21:05:48 +0200
 

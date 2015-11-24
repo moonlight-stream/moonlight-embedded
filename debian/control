@@ -2,13 +2,27 @@ Source: moonlight-embedded
 Section: games
 Priority: extra
 Maintainer: Iwan Timmer <irtimmer@gmail.com>
-Build-Depends: debhelper (>= 8.0.0), cmake, libopus-dev, libexpat1-dev, libasound2-dev, libudev-dev, libavahi-client-dev, libcurl4-openssl-dev, libevdev-dev, libraspberrypi-dev | rbp-userland-dev-osmc
+Build-Depends:
+ debhelper (>= 8.0.0),
+ cmake (>= 2.8.11),
+ libopus-dev,
+ libexpat1-dev,
+ libasound2-dev,
+ libudev-dev,
+ libavahi-client-dev,
+ libcurl4-openssl-dev,
+ libevdev-dev,
+ libssl-dev,
+ libv4l-dev, libvpu-imx6-dev, imx-kernel-api
+# libraspberrypi-dev | rbp-userland-dev-osmc
 Standards-Version: 3.9.3
 Homepage: https://github.com/irtimmer/moonlight-embedded
 
 Package: moonlight-embedded
 Architecture: armhf
-Depends: libopus0, libexpat1, libssl1.0.0, libasound2, libudev0, libavahi-client3, libcurl3, libevdev2, libraspberrypi0 | rbp-userland-osmc, ${shlibs:Depends}, ${misc:Depends}
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends}
 Recommends: alsa-base
 Suggests: alsa-utils
 Description: GameStream client for Linux

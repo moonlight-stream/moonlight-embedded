@@ -8,7 +8,7 @@ Homepage: https://github.com/irtimmer/moonlight-embedded
 
 Package: moonlight-embedded
 Architecture: armhf
-Depends: libopus0, libexpat1, libssl1.0.0, libasound2, libudev0, libavahi-client3, libcurl3, libevdev2, libraspberrypi0 | rbp-userland-osmc, ${shlibs:Depends}, ${misc:Depends}
+Depends: libraspberrypi0 | rbp-userland-osmc, ${shlibs:Depends}, ${misc:Depends}
 Recommends: alsa-base
 Suggests: alsa-utils
 Description: GameStream client for Linux

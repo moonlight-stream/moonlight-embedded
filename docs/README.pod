@@ -77,6 +77,10 @@ Use 30 fps for streaming.
 Use 60 fps for streaming.
 This is the default configuration.
 
+=item B<-fps> [I<FPS>]
+
+Change the number of frame per second to I<FPS>
+
 =item B<-bitrate> [I<BITRATE>]
 
 Change bitrate to I<BITRATE> kbps.

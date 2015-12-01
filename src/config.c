@@ -61,6 +61,7 @@ static struct option long_options[] = {
   {"remote", no_argument, NULL, 's'},
   {"fullscreen", no_argument, NULL, 't'},
   {"surround", no_argument, NULL, 'u'},
+  {"fps", required_argument, NULL, 'v'},
   {0, 0, 0, 0},
 };
 
@@ -191,6 +192,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'u':
     config->stream.audioConfiguration = AUDIO_CONFIGURATION_51_SURROUND;
+    break;
+  case 'v':
+    config->stream.fps = atoi(value);
     break;
   case 1:
     if (config->action == NULL)

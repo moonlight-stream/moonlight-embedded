@@ -38,8 +38,8 @@ static char* ffmpeg_buffer;
 static bool fullscreen;
 
 static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
-  int avc_flags = FAST_BILINEAR_FILTERING;
-  if (ffmpeg_init(width, height, 2, avc_flags) < 0) {
+  int avc_flags = SLICE_THREADING;
+  if (ffmpeg_init(width, height, avc_flags, 2) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     exit(1);
   }
@@ -51,6 +51,7 @@ static void sdl_setup(int width, int height, int redrawRate, void* context, int 
   }
 
   fullscreen = (drFlags & DISPLAY_FULLSCREEN) == DISPLAY_FULLSCREEN;
+  fullscreen = false;
   screen_width = width;
   screen_height = height;
 }
@@ -110,5 +111,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl = {
   .setup = sdl_setup,
   .cleanup = sdl_cleanup,
   .submitDecodeUnit = sdl_submit_decode_unit,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_REFERENCE_FRAME_INVALIDATION,
+  .capabilities = CAPABILITY_SLICES_PER_FRAME(2) | CAPABILITY_REFERENCE_FRAME_INVALIDATION | CAPABILITY_DIRECT_SUBMIT,
 };

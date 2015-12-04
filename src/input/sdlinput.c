@@ -59,14 +59,13 @@ void sdlinput_init() {
 
 static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id) {
   for (int i = 0;i<4;i++) {
-    if (gamepads[i].sdl_id == sdl_id)
-      return &gamepads[0];
-    else if (!gamepads[i].initialized) {
+    if (!gamepads[i].initialized) {
       gamepads[i].sdl_id = sdl_id;
       gamepads[i].id = i;
       gamepads[i].initialized = true;
-      return &gamepads[0];
-    }
+      return &gamepads[i];
+    } else if (gamepads[i].sdl_id == sdl_id)
+      return &gamepads[i];
   }
   return &gamepads[0];
 }

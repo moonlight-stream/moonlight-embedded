@@ -139,7 +139,7 @@ static void help() {
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
   #ifdef HAVE_SDL
   printf("\n Video options (SDL Only)\n\n");
-  printf("\t-fullscreen\t\tMake window fullscreen\n");
+  printf("\t-windowed\t\tDisplay screen in a window\n");
   #endif
   #ifdef HAVE_EMBEDDED
   printf("\n I/O options\n\n");

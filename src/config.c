@@ -59,7 +59,7 @@ static struct option long_options[] = {
   {"save", required_argument, NULL, 'q'},
   {"keydir", required_argument, NULL, 'r'},
   {"remote", no_argument, NULL, 's'},
-  {"fullscreen", no_argument, NULL, 't'},
+  {"windowed", no_argument, NULL, 't'},
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {0, 0, 0, 0},
@@ -188,7 +188,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->stream.streamingRemotely = 1;
     break;
   case 't':
-    config->fullscreen = true;
+    config->fullscreen = false;
     break;
   case 'u':
     config->stream.audioConfiguration = AUDIO_CONFIGURATION_51_SURROUND;
@@ -285,6 +285,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->config_file = NULL;
   config->sops = true;
   config->localaudio = false;
+  config->fullscreen = true;
 
   config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));

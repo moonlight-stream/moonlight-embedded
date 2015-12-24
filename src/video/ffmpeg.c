@@ -19,10 +19,15 @@
 
 #include "ffmpeg.h"
 
+#ifdef HAVE_VDPAU
+#include "ffmpeg_vdpau.h"
+#endif
+
 #include <stdlib.h>
 #include <libswscale/swscale.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 // General decoder and renderer state
 static AVPacket pkt;
@@ -30,6 +35,9 @@ static AVCodec* decoder;
 static AVCodecContext* decoder_ctx;
 static AVFrame* dec_frame;
 static struct SwsContext* scaler_ctx;
+
+enum decoders {SOFTWARE, VDPAU};
+enum decoders decoder_system;
 
 #define BYTES_PER_PIXEL 4
 
@@ -42,10 +50,19 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
 
   av_init_packet(&pkt);
 
-  decoder = avcodec_find_decoder(AV_CODEC_ID_H264);
+  #ifdef HAVE_VDPAU
+  decoder = avcodec_find_decoder_by_name("h264_vdpau");
+  if (decoder != NULL)
+    decoder_system = VDPAU;
+  #endif
+
   if (decoder == NULL) {
-    printf("Couldn't find H264 decoder");
-    return -1;
+    decoder_system = SOFTWARE;
+    decoder = avcodec_find_decoder_by_name("h264");
+    if (decoder == NULL) {
+      printf("Couldn't find decoder\n");
+      return -1;
+    }
   }
 
   decoder_ctx = avcodec_alloc_context3(decoder);
@@ -84,7 +101,12 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
     printf("Couldn't allocate frame");
     return -1;
   }
-  
+
+  #ifdef HAVE_VDPAU
+  if (decoder_system == VDPAU)
+    vdpau_init(decoder_ctx, width, height);
+  #endif
+
   int filtering;
   if (perf_lvl & FAST_BILINEAR_FILTERING)
     filtering = SWS_FAST_BILINEAR;
@@ -93,10 +115,12 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
   else
     filtering = SWS_BICUBIC;
 
-  scaler_ctx = sws_getContext(decoder_ctx->width, decoder_ctx->height, decoder_ctx->pix_fmt, decoder_ctx->width, decoder_ctx->height, PIX_FMT_YUV420P, filtering, NULL, NULL, NULL);
-  if (scaler_ctx == NULL) {
-    printf("Couldn't get scaler context");
-    return -1;
+  if (decoder_system == SOFTWARE) {
+    scaler_ctx = sws_getContext(decoder_ctx->width, decoder_ctx->height, decoder_ctx->pix_fmt, decoder_ctx->width, decoder_ctx->height, PIX_FMT_YUV420P, filtering, NULL, NULL, NULL);
+    if (scaler_ctx == NULL) {
+      printf("Couldn't get scaler context\n");
+      return -1;
+    }
   }
 
   return 0;
@@ -132,7 +156,12 @@ int ffmpeg_draw_frame(AVFrame *pict) {
 }
 
 AVFrame* ffmpeg_get_frame() {
-  return dec_frame;
+  if (decoder_system == SOFTWARE)
+    return dec_frame;
+  #ifdef HAVE_VDPAU
+  else if (decoder_system == VDPAU)
+    return vdpau_get_frame(dec_frame);
+  #endif
 }
 
 // packets must be decoded in order
@@ -148,7 +177,9 @@ int ffmpeg_decode(unsigned char* indata, int inlen) {
     got_pic = 0;
     err = avcodec_decode_video2(decoder_ctx, dec_frame, &got_pic, &pkt);
     if (err < 0) {
-      fprintf(stderr, "Decode failed\n");
+      char errorstring[512];
+      av_strerror(err, errorstring, sizeof(errorstring));
+      fprintf(stderr, "Decode failed - %s\n", errorstring);
       got_pic = 0;
       break;
     }

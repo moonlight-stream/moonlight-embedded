@@ -25,3 +25,6 @@ extern AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa;
 #ifdef HAVE_SDL
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl;
 #endif
+#ifdef HAVE_PULSE
+extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
+#endif

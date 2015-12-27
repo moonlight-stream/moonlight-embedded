@@ -88,6 +88,9 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
     return &audio_callbacks_sdl;
   #endif
   default:
+    #ifdef HAVE_PULSE
+    return &audio_callbacks_pulse;
+    #endif
     return &audio_callbacks_alsa;
   }
   return NULL;

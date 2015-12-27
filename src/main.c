@@ -95,6 +95,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   if (config->fullscreen)
     drFlags |= DISPLAY_FULLSCREEN;
 
+  printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
   LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), context, drFlags, server->serverMajorVersion);
 
   if (IS_EMBEDDED(system)) {
@@ -160,7 +161,7 @@ static void pair_check(PSERVER_DATA server) {
 }
 
 int main(int argc, char* argv[]) {
-  printf("Moonlight Embedded %d.%d.%d (%s)\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
+  printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
   CONFIGURATION config;
   config_parse(argc, argv, &config);
@@ -208,6 +209,8 @@ int main(int argc, char* argv[]) {
 
   SERVER_DATA server;
   server.address = config.address;
+  printf("Connect to %s...\n", server.address);
+
   int ret;
   if ((ret = gs_init(&server, config.key_dir)) == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
@@ -226,8 +229,10 @@ int main(int argc, char* argv[]) {
   } else if (strcmp("stream", config.action) == 0) {
     pair_check(&server);
     if (IS_EMBEDDED(system)) {
-      for (int i=0;i<config.inputsCount;i++)
+      for (int i=0;i<config.inputsCount;i++) {
+        printf("Add input %s (mapping %s)...\n", config.inputs[i].path, config.inputs[i].mapping);
         evdev_create(config.inputs[i].path, config.inputs[i].mapping);
+      }
 
       udev_init(!inputAdded, config.mapping);
       evdev_init();

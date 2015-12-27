@@ -20,6 +20,7 @@
 #include "loop.h"
 #include "client.h"
 #include "connection.h"
+#include "configuration.h"
 #include "audio.h"
 #include "video.h"
 #include "discover.h"
@@ -159,6 +160,8 @@ static void pair_check(PSERVER_DATA server) {
 }
 
 int main(int argc, char* argv[]) {
+  printf("Moonlight Embedded %d.%d.%d (%s)\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
+
   CONFIGURATION config;
   config_parse(argc, argv, &config);
 

@@ -27,7 +27,11 @@
 static bool done;
 static int fullscreen_flags;
 
-SDL_Window *sdl_window;
+static SDL_Window *window;
+static SDL_Renderer *renderer;
+static SDL_Texture *bmp;
+
+SDL_mutex *mutex;
 
 void sdl_init(int width, int height, bool fullscreen) {
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
@@ -36,6 +40,32 @@ void sdl_init(int width, int height, bool fullscreen) {
   }
 
   fullscreen_flags = fullscreen?SDL_WINDOW_FULLSCREEN:0;
+  window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | fullscreen_flags);
+  if(!window) {
+    fprintf(stderr, "SDL: could not create window - exiting\n");
+    exit(1);
+  }
+
+  SDL_SetRelativeMouseMode(SDL_TRUE);
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  if (!renderer) {
+    printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
+    exit(1);
+  }
+
+  bmp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, width, height);
+  if (!bmp) {
+    fprintf(stderr, "SDL: could not create texture - exiting\n");
+    exit(1);
+  }
+
+  mutex = SDL_CreateMutex();
+  if (!mutex) {
+    fprintf(stderr, "Couldn't create mutex\n");
+    exit(1);
+  }
+
+
   sdlinput_init();
 }
 
@@ -48,7 +78,7 @@ void sdl_loop() {
       break;
     case SDL_TOGGLE_FULLSCREEN:
       fullscreen_flags ^= SDL_WINDOW_FULLSCREEN;
-      SDL_SetWindowFullscreen(sdl_window, fullscreen_flags);
+      SDL_SetWindowFullscreen(window, fullscreen_flags);
     case SDL_MOUSE_GRAB:
       SDL_SetRelativeMouseMode(SDL_TRUE);
       break;
@@ -58,10 +88,24 @@ void sdl_loop() {
     default:
       if (event.type == SDL_QUIT)
         done = true;
+      else if (event.type == SDL_USEREVENT) {
+        if (event.user.code == SDL_CODE_FRAME) {
+          if (SDL_LockMutex(mutex) == 0) {
+            Uint8** data = ((Uint8**) event.user.data1);
+            int* linesize = ((int*) event.user.data2);
+            SDL_UpdateYUVTexture(bmp, NULL, data[0], linesize[0], data[1], linesize[1], data[2], linesize[2]);
+            SDL_RenderClear(renderer);
+            SDL_RenderCopy(renderer, bmp, NULL, NULL);
+            SDL_RenderPresent(renderer);
+            SDL_UnlockMutex(mutex);
+          } else
+            fprintf(stderr, "Couldn't lock mutex\n");
+        }
+      }
     }
   }
 
-  SDL_DestroyWindow(sdl_window);
+  SDL_DestroyWindow(window);
   SDL_Quit();
 }
 

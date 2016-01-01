@@ -18,6 +18,7 @@
  */
 
 #include "../video.h"
+#include "../sdl.h"
 #include "ffmpeg.h"
 
 #include "limelight-common/Limelight.h"
@@ -29,13 +30,8 @@
 
 #define DECODER_BUFFER_SIZE 92*1024
 
-static SDL_Window *window;
-static SDL_Renderer *renderer;
-static SDL_Texture *bmp = NULL;
 static int screen_width, screen_height;
 static char* ffmpeg_buffer;
-
-static bool fullscreen;
 
 static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
@@ -50,8 +46,6 @@ static void sdl_setup(int width, int height, int redrawRate, void* context, int 
     exit(1);
   }
 
-  fullscreen = (drFlags & DISPLAY_FULLSCREEN) == DISPLAY_FULLSCREEN;
-  fullscreen = false;
   screen_width = width;
   screen_height = height;
 }
@@ -61,26 +55,6 @@ static void sdl_cleanup() {
 }
 
 static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  if (window == NULL) {
-    window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_OPENGL | (fullscreen?SDL_WINDOW_FULLSCREEN:0));
-    if(!window) {
-      fprintf(stderr, "SDL: could not create window - exiting\n");
-      exit(1);
-    }
-    SDL_SetRelativeMouseMode(SDL_TRUE);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer) {
-      printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
-      exit(1);
-    }
-
-    bmp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
-    if (!bmp) {
-      fprintf(stderr, "SDL: could not create texture - exiting\n");
-      exit(1);
-    }
-  }
-
   if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
     PLENTRY entry = decodeUnit->bufferList;
     int length = 0;
@@ -90,15 +64,22 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       entry = entry->next;
     }
 
-    int ret = ffmpeg_decode(ffmpeg_buffer, length);
-    if (ret == 1) {
-      AVFrame* frame = ffmpeg_get_frame();
+    if (SDL_LockMutex(mutex) == 0) {
+      int ret = ffmpeg_decode(ffmpeg_buffer, length);
+      if (ret == 1) {
+        AVFrame* frame = ffmpeg_get_frame();
 
-      SDL_UpdateYUVTexture(bmp, NULL, frame->data[0], frame->linesize[0], frame->data[1], frame->linesize[1], frame->data[2], frame->linesize[2]);
-      SDL_RenderClear(renderer);
-      SDL_RenderCopy(renderer, bmp, NULL, NULL);
-      SDL_RenderPresent(renderer);
-    }
+        SDL_Event event;
+        event.type = SDL_USEREVENT;
+        event.user.code = SDL_CODE_FRAME;
+        event.user.data1 = &frame->data;
+        event.user.data2 = &frame->linesize;
+        SDL_PushEvent(&event);
+      }
+
+      SDL_UnlockMutex(mutex);
+    } else
+      fprintf(stderr, "Couldn't lock mutex\n");
   } else {
     fprintf(stderr, "Video decode buffer too small");
     exit(1);

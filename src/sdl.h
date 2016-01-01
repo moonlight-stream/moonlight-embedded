@@ -29,9 +29,11 @@
 #define SDL_MOUSE_UNGRAB 3
 #define SDL_TOGGLE_FULLSCREEN 4
 
-SDL_Window *sdl_window;
+#define SDL_CODE_FRAME 0
 
 void sdl_init(int width, int height, bool fullscreen);
 void sdl_loop();
+
+SDL_mutex *mutex;
 
 #endif /* HAVE_SDL */

@@ -116,10 +116,8 @@ static char evdev_convert_value_byte(struct input_event *ev, struct input_device
     return 0;
   else if (ev->value>parms->max)
     return UCHAR_MAX;
-  else {
-    int value = ev->value - parms->flat;
-    return (value-parms->min) * UCHAR_MAX / (parms->diff-parms->flat);
-  }
+  else
+    return (ev->value - parms->flat - parms->min) * UCHAR_MAX / (parms->diff - parms->flat);
 }
 
 static int evdev_convert_value_direction(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {

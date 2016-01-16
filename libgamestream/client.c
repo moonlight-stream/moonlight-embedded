@@ -43,6 +43,12 @@
 #define UNIQUEID_BYTES 8
 #define UNIQUEID_CHARS (UNIQUEID_BYTES*2)
 
+#define CHANNEL_COUNT_STEREO 2
+#define CHANNEL_COUNT_51_SURROUND 6
+
+#define CHANNEL_MASK_STEREO 0x3
+#define CHANNEL_MASK_51_SURROUND 0xFC
+
 static char unique_id[UNIQUEID_CHARS+1];
 static X509 *cert;
 static char cert_hex[4096];
@@ -427,9 +433,11 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
 
-  if (server->currentGame == 0)
-    sprintf(url, "https://%s:47984/launch?uniqueid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d", server->address, unique_id, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio);
-  else
+  if (server->currentGame == 0) {
+    int channelCounnt = config->audioConfiguration == AUDIO_CONFIGURATION_STEREO ? CHANNEL_COUNT_STEREO : CHANNEL_COUNT_51_SURROUND;
+    int mask = config->audioConfiguration == AUDIO_CONFIGURATION_STEREO ? CHANNEL_MASK_STEREO : CHANNEL_MASK_51_SURROUND;
+    sprintf(url, "https://%s:47984/launch?uniqueid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d", server->address, unique_id, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio, (mask << 16) + channelCounnt);
+  } else
     sprintf(url, "https://%s:47984/resume?uniqueid=%s&rikey=%s&rikeyid=%d", server->address, unique_id, rikey_hex, rikeyid);
 
   int ret = http_request(url, data);

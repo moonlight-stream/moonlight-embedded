@@ -31,6 +31,8 @@
 #define BILINEAR_FILTERING 0x10
 // Uses a faster bilinear filtering with lower image quality
 #define FAST_BILINEAR_FILTERING 0x20
+// Uses hardware acceleration
+#define HARDWARE_ACCELERATION 0x40
 
 int ffmpeg_init(int width, int height, int perf_lvl, int thread_count);
 void ffmpeg_destroy(void);

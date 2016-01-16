@@ -62,6 +62,7 @@ static struct option long_options[] = {
   {"windowed", no_argument, NULL, 't'},
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
+  {"forcehw", no_argument, NULL, 'w'},
   {0, 0, 0, 0},
 };
 
@@ -196,6 +197,8 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'v':
     config->stream.fps = atoi(value);
     break;
+  case 'w':
+    config->forcehw = true;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -303,7 +306,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

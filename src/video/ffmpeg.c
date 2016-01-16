@@ -51,9 +51,11 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
   av_init_packet(&pkt);
 
   #ifdef HAVE_VDPAU
-  decoder = avcodec_find_decoder_by_name("h264_vdpau");
-  if (decoder != NULL)
-    decoder_system = VDPAU;
+  if (perf_lvl & HARDWARE_ACCELERATION) {
+    decoder = avcodec_find_decoder_by_name("h264_vdpau");
+    if (decoder != NULL)
+      decoder_system = VDPAU;
+  }
   #endif
 
   if (decoder == NULL) {

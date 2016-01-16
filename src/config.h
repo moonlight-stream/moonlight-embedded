@@ -40,6 +40,7 @@ typedef struct _CONFIGURATION {
   bool sops;
   bool localaudio;
   bool fullscreen;
+  bool forcehw;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
 } CONFIGURATION, *PCONFIGURATION;

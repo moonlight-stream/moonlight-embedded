@@ -17,6 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
+
 #include "limelight-common/Limelight.h"
 
 extern const char* audio_device;
@@ -27,4 +29,5 @@ extern AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl;
 #endif
 #ifdef HAVE_PULSE
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
+bool audio_pulse_init();
 #endif

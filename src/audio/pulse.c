@@ -34,6 +34,22 @@ static pa_simple *dev = NULL;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static int channelCount;
 
+bool audio_pulse_init() {
+    pa_sample_spec spec = {
+      .format = PA_SAMPLE_S16LE,
+      .rate = 44000,
+      .channels = 2
+    };
+
+    int error;
+    dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
+    if (dev) {
+        pa_simple_free(dev);
+        return true;
+    } else
+        return false;
+}
+
 static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc, error;
   unsigned char alsaMapping[6];

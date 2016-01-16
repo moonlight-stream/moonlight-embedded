@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <uuid/uuid.h>
 #include <openssl/sha.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
@@ -170,9 +171,14 @@ static int load_server_status(PSERVER_DATA server) {
   char *versionText = NULL;
   char *stateText = NULL;
 
+  uuid_t uuid;
+  char uuid_str[37];
+  
   int ret = GS_INVALID;
   char url[4096];
-  sprintf(url, "https://%s:47984/serverinfo?uniqueid=%s", server->address, unique_id);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/serverinfo?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
 
   PHTTP_DATA data = http_create_data();
   if (data == NULL) {
@@ -287,6 +293,8 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
 int gs_pair(PSERVER_DATA server, char* pin) {
   int ret = GS_OK;
   char url[4096];
+  uuid_t uuid;
+  char uuid_str[37];
 
   if (server->paired) {
     gs_error = "Already paired";
@@ -303,7 +311,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   RAND_bytes(salt_data, 16);
   bytes_to_hex(salt_data, salt_hex, 16);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->address, unique_id, salt_hex, cert_hex);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->address, unique_id, uuid_str, salt_hex, cert_hex);
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
@@ -325,7 +335,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   AES_encrypt(challenge_data, challenge_enc, &aes_key);
   bytes_to_hex(challenge_enc, challenge_hex, 16);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->address, unique_id, challenge_hex);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->address, unique_id, uuid_str, challenge_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -363,7 +375,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   }
   bytes_to_hex(challenge_response_hash_enc, challenge_response_hex, 32);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->address, unique_id, challenge_response_hex);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->address, unique_id, uuid_str, challenge_response_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -386,11 +400,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   memcpy(client_pairing_secret + 16, signature, 256);
   bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, 16 + 256);
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->address, unique_id, client_pairing_secret_hex);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->address, unique_id, uuid_str, client_pairing_secret_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->address, unique_id);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->address, unique_id, uuid_str);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -405,11 +423,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
   int ret = GS_OK;
   char url[4096];
+  uuid_t uuid;
+  char uuid_str[37];
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
 
-  sprintf(url, "https://%s:47984/applist?uniqueid=%s", server->address, unique_id);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/applist?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
   if (http_request(url, data) != GS_OK)
     ret = GS_IO_ERROR;
   else if (xml_applist(data->memory, data->size, list) != GS_OK)
@@ -420,6 +442,9 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
 }
 
 int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio) {
+  uuid_t uuid;
+  char uuid_str[37];
+
   RAND_bytes(config->remoteInputAesKey, 16);
   memset(config->remoteInputAesIv, 0, 16);
 
@@ -433,12 +458,14 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
 
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
   if (server->currentGame == 0) {
     int channelCounnt = config->audioConfiguration == AUDIO_CONFIGURATION_STEREO ? CHANNEL_COUNT_STEREO : CHANNEL_COUNT_51_SURROUND;
     int mask = config->audioConfiguration == AUDIO_CONFIGURATION_STEREO ? CHANNEL_MASK_STEREO : CHANNEL_MASK_51_SURROUND;
-    sprintf(url, "https://%s:47984/launch?uniqueid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d", server->address, unique_id, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio, (mask << 16) + channelCounnt);
+    sprintf(url, "https://%s:47984/launch?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d", server->address, unique_id, uuid_str, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio, (mask << 16) + channelCounnt);
   } else
-    sprintf(url, "https://%s:47984/resume?uniqueid=%s&rikey=%s&rikeyid=%d", server->address, unique_id, rikey_hex, rikeyid);
+    sprintf(url, "https://%s:47984/resume?uniqueid=%s&uuid=%s&rikey=%s&rikeyid=%d", server->address, unique_id, uuid_str, rikey_hex, rikeyid);
 
   int ret = http_request(url, data);
   if (ret == GS_OK)
@@ -450,11 +477,15 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 
 int gs_quit_app(PSERVER_DATA server) {
   char url[4096];
+  uuid_t uuid;
+  char uuid_str[37];
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
 
-  sprintf(url, "https://%s:47984/cancel?uniqueid=%s", server->address, unique_id);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "https://%s:47984/cancel?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
   int ret = http_request(url, data);
 
   http_free_data(data);

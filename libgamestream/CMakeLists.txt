@@ -1,3 +1,4 @@
+find_package(LibUUID REQUIRED)
 find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -20,8 +21,8 @@ target_link_libraries(gamestream moonlight-common)
 set_target_properties(gamestream PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})
 set_target_properties(moonlight-common PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})
 
-target_include_directories(gamestream PRIVATE ../third_party/moonlight-common-c ../third_party/h264bitstream ${AVAHI_INCLUDE_DIRS})
-target_link_libraries(gamestream ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${AVAHI_LIBRARIES})
+target_include_directories(gamestream PRIVATE ../third_party/moonlight-common-c ../third_party/h264bitstream ${AVAHI_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
+target_link_libraries(gamestream ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${AVAHI_LIBRARIES} ${LIBUUID_LIBRARIES})
 
 target_link_libraries(gamestream ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 

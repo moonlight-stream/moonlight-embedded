@@ -81,7 +81,7 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_pi");
   #endif
   #ifdef HAVE_VDPAU
-  case PI:
+  case VDPAU:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_vdpau");
   #endif
   #ifdef HAVE_FAKE

@@ -170,6 +170,8 @@ static int load_server_status(PSERVER_DATA server) {
   char *currentGameText = NULL;
   char *versionText = NULL;
   char *stateText = NULL;
+  char *heightText = NULL;
+  char *serverCodecModeSupportText = NULL;
 
   uuid_t uuid;
   char uuid_str[37];
@@ -203,8 +205,15 @@ static int load_server_status(PSERVER_DATA server) {
   if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
     goto cleanup;
 
+  if (xml_search(data->memory, data->size, "Height", &heightText) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
+    goto cleanup;
+
   server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
+  server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
   char *versionSep = strstr(versionText, ".");
   if (versionSep != NULL) {
     *versionSep = 0;
@@ -230,6 +239,12 @@ static int load_server_status(PSERVER_DATA server) {
 
   if (versionText != NULL)
     free(versionText);
+
+  if (heightText != NULL)
+    free(heightText);
+
+  if (serverCodecModeSupportText != NULL)
+    free(serverCodecModeSupportText);
 
   return ret;
 }
@@ -444,6 +459,9 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
 int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio) {
   uuid_t uuid;
   char uuid_str[37];
+
+  if (config->height >= 2160 && !server->supports4K)
+    return GS_NOT_SUPPORTED_4K;
 
   RAND_bytes(config->remoteInputAesKey, 16);
   memset(config->remoteInputAesIv, 0, 16);

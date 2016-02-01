@@ -28,6 +28,7 @@
 typedef struct _SERVER_DATA {
   const char* address;
   bool paired;
+  bool supports4K;
   int currentGame;
   int serverMajorVersion;
 } SERVER_DATA, *PSERVER_DATA;

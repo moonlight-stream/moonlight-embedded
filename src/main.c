@@ -83,7 +83,14 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     exit(-1);
   }
 
-  gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
+  int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
+  if (ret < 0) {
+    if (ret == GS_NOT_SUPPORTED_4K)
+      fprintf(stderr, "Server doesn't support 4K\n");
+    else
+      fprintf(stderr, "Errorcode starting app: %d\n", ret);
+    exit(-1);
+  }
 
   int drFlags = 0;
   if (config->fullscreen)

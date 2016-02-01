@@ -95,6 +95,11 @@ Change the network packetsize to I<PACKETSIZE>.
 The packetsize should the smaller than the MTU of the network.
 By default a safe value of 1024 is used.
 
+=item B<-forcehevc>
+
+Request a h265/HEVC from the server.
+Will still use h264 if server doesn't support HEVC.
+
 =item B<-remote>
 
 Enable the optimizations for remote connections in GFE.

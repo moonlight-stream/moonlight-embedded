@@ -83,11 +83,6 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     exit(-1);
   }
 
-  // h265
-  if (config->hevc) {
-    config->stream.supportsHevc = 1;
-  }
-
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -142,7 +137,7 @@ static void help() {
   printf("\t-60fps\t\t\tUse 60fps [default]\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
-  printf("\t-hevc \t\tUse high efficiency video decoding (HEVC)\n");
+  printf("\t-forcehevc\t\tUse high efficiency video decoding (HEVC)\n");
   printf("\t-remote\t\t\tEnable remote optimizations\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");

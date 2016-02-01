@@ -202,7 +202,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->forcehw = true;
     break;
   case 'x':
-    config->hevc = true;
+    config->stream.supportsHevc = true;
     break;
   case 1:
     if (config->action == NULL)
@@ -285,6 +285,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
+  config->stream.supportsHevc = false;
 
   config->platform = "default";
   config->app = "Steam";
@@ -294,7 +295,6 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
-  config->hevc = false;
 
   config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));

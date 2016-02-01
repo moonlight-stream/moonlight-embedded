@@ -172,6 +172,7 @@ static int load_server_status(PSERVER_DATA server) {
   char *stateText = NULL;
   char *heightText = NULL;
   char *serverCodecModeSupportText = NULL;
+  char *maxLumaPixelsHEVC = NULL;
 
   uuid_t uuid;
   char uuid_str[37];
@@ -211,9 +212,13 @@ static int load_server_status(PSERVER_DATA server) {
   if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
     goto cleanup;
 
+  if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
+    goto cleanup;
+
   server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
   server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
+  server->maxLumaPixelsHEVC = maxLumaPixelsHEVC == NULL ? 0 : atol(maxLumaPixelsHEVC);
   char *versionSep = strstr(versionText, ".");
   if (versionSep != NULL) {
     *versionSep = 0;
@@ -245,6 +250,9 @@ static int load_server_status(PSERVER_DATA server) {
 
   if (serverCodecModeSupportText != NULL)
     free(serverCodecModeSupportText);
+
+  if (maxLumaPixelsHEVC != NULL)
+    free(maxLumaPixelsHEVC);
 
   return ret;
 }
@@ -476,6 +484,11 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
+
+  //Check support for H.265 video
+  //TODO: Find a better way to detect this
+  if (!(config->supportsHevc && server->maxLumaPixelsHEVC > 0 && server->gpuType != NULL && strstr(server->gpuType, "GTX 9")))
+    config->supportsHevc = VIDEO_FORMAT_H264;
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);

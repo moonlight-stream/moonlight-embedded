@@ -1,8 +1,8 @@
 Compile using older version (2.8) of CMake
 Index: moonlight-embedded/CMakeLists.txt
 ===================================================================
---- moonlight-embedded.orig/CMakeLists.txt	2015-11-24 18:12:41.000000000 +0000
-+++ moonlight-embedded/CMakeLists.txt	2015-11-24 18:16:41.000000000 +0000
+--- moonlight-embedded.orig/CMakeLists.txt
++++ moonlight-embedded/CMakeLists.txt
 @@ -1,5 +1,5 @@
  project(moonlight-embedded C)
 -cmake_minimum_required(VERSION 3.1)
@@ -10,22 +10,23 @@ Index: moonlight-embedded/CMakeLists.txt
  SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
  include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
  
-@@ -58,11 +58,11 @@
+@@ -81,12 +81,12 @@ add_subdirectory(libgamestream)
  
  add_executable(moonlight ${SRC_LIST})
  target_link_libraries(moonlight gamestream)
 -set_property(TARGET moonlight PROPERTY C_STANDARD 99)
 +set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
  
- if (CEC_FOUND AND CEC_VERSION_COMPATIBLE)
+ if (CEC_FOUND)
    list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
--  target_include_directories(moonlight PRIVATE ./third_party/libcec ${CEC_INCLUDE_DIRS}/libcec)
-+  include_directories(./third_party/libcec ${CEC_INCLUDE_DIRS}/libcec)
+   list(APPEND MOONLIGHT_OPTIONS CEC)
+-  target_include_directories(moonlight PRIVATE ./third_party/libcec ${CEC_INCLUDE_DIRS})
++  include_directories(./third_party/libcec ${CEC_INCLUDE_DIRS})
    target_link_libraries(moonlight ${CEC_LIBRARIES})
  endif()
  
-@@ -70,7 +70,7 @@
-   list(APPEND MOONLIGHT_DEFINITIONS HAVE_PI)
+@@ -95,7 +95,7 @@ if(BROADCOM_FOUND)
+   list(APPEND MOONLIGHT_OPTIONS PI)
    aux_source_directory(./third_party/ilclient ILCLIENT_SRC_LIST)
    add_library(moonlight-pi SHARED ./src/video/pi.c ${ILCLIENT_SRC_LIST})
 -  target_include_directories(moonlight-pi PRIVATE ./third_party/ilclient ${BROADCOM_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR})
@@ -33,9 +34,9 @@ Index: moonlight-embedded/CMakeLists.txt
    target_link_libraries(moonlight-pi gamestream ${BROADCOM_LIBRARIES})
    set_property(TARGET moonlight-pi PROPERTY COMPILE_DEFINITIONS ${BROADCOM_DEFINITIONS})
    install(TARGETS moonlight-pi DESTINATION ${CMAKE_INSTALL_LIBDIR})
-@@ -79,18 +79,18 @@
- if(FREESCALE_FOUND)
+@@ -105,29 +105,29 @@ if(FREESCALE_FOUND)
    list(APPEND MOONLIGHT_DEFINITIONS HAVE_IMX)
+   list(APPEND MOONLIGHT_OPTIONS IMX)
    add_library(moonlight-imx SHARED ./src/video/imx.c)
 -  target_include_directories(moonlight-imx PRIVATE ${FREESCALE_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR})
 +  include_directories(${FREESCALE_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR})
@@ -44,10 +45,23 @@ Index: moonlight-embedded/CMakeLists.txt
  endif()
  
  if (SOFTWARE_FOUND)
--  target_include_directories(moonlight PRIVATE ${SDL_INCLUDE_DIRS} ${AVCODEC_INCLUDE_DIRS} ${AVUTIL_INCLUDE_DIRS} ${SWSCALE_INCLUDE_DIRS})
-+  include_directories(${SDL_INCLUDE_DIRS} ${AVCODEC_INCLUDE_DIRS} ${AVUTIL_INCLUDE_DIRS} ${SWSCALE_INCLUDE_DIRS})
-   target_link_libraries(moonlight ${SDL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVUTIL_LIBRARIES} ${SWSCALE_LIBRARIES})
+-  target_include_directories(moonlight PRIVATE ${SDL_INCLUDE_DIRS} ${AVCODEC_INCLUDE_DIRS} ${AVUTIL_INCLUDE_DIRS})
++  include_directories(${SDL_INCLUDE_DIRS} ${AVCODEC_INCLUDE_DIRS} ${AVUTIL_INCLUDE_DIRS})
+   target_link_libraries(moonlight ${SDL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVUTIL_LIBRARIES})
+   if(VDPAU_FOUND)
+-    target_include_directories(moonlight PRIVATE ${XLIB_INCLUDE_DIRS} ${LIBVA_INCLUDE_DIRS})
++    include_directories(${XLIB_INCLUDE_DIRS} ${LIBVA_INCLUDE_DIRS})
+     target_link_libraries(moonlight ${XLIB_LIBRARIES} ${LIBVA_LIBRARIES})
+   endif()
  endif()
+ 
+ if (PULSE_FOUND)
+-  target_include_directories(moonlight PRIVATE ${PULSE_INCLUDE_DIRS})
++  include_directories(${PULSE_INCLUDE_DIRS})
+   target_link_libraries(moonlight ${PULSE_LIBRARIES})
+ endif()
+ 
+ configure_file("./src/configuration.h.in" "${PROJECT_BINARY_DIR}/configuration.h")
  
  set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
 -target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
@@ -57,9 +71,9 @@ Index: moonlight-embedded/CMakeLists.txt
  add_subdirectory(docs)
 Index: moonlight-embedded/libgamestream/CMakeLists.txt
 ===================================================================
---- moonlight-embedded.orig/libgamestream/CMakeLists.txt	2015-11-24 18:12:27.000000000 +0000
-+++ moonlight-embedded/libgamestream/CMakeLists.txt	2015-11-24 18:15:27.000000000 +0000
-@@ -14,13 +14,13 @@
+--- moonlight-embedded.orig/libgamestream/CMakeLists.txt
++++ moonlight-embedded/libgamestream/CMakeLists.txt
+@@ -15,13 +15,13 @@ aux_source_directory(../third_party/moon
  add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
  
  add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})
@@ -70,8 +84,8 @@ Index: moonlight-embedded/libgamestream/CMakeLists.txt
  set_target_properties(gamestream PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})
  set_target_properties(moonlight-common PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})
  
--target_include_directories(gamestream PRIVATE ../third_party/moonlight-common-c ../third_party/h264bitstream ${AVAHI_INCLUDE_DIRS})
-+include_directories(../third_party/h264bitstream ../third_party/moonlight-common-c ${AVAHI_INCLUDE_DIRS})
- target_link_libraries(gamestream ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${AVAHI_LIBRARIES})
+-target_include_directories(gamestream PRIVATE ../third_party/moonlight-common-c ../third_party/h264bitstream ${AVAHI_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
++include_directories(../third_party/moonlight-common-c ../third_party/h264bitstream ${AVAHI_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
+ target_link_libraries(gamestream ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${AVAHI_LIBRARIES} ${LIBUUID_LIBRARIES})
  
  target_link_libraries(gamestream ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})

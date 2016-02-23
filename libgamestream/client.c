@@ -379,7 +379,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   char challenge_response[16 + 256 + 16];
   char challenge_response_hash[32];
   char challenge_response_hash_enc[32];
-  char challenge_response_hex[33];
+  char challenge_response_hex[65];
   memcpy(challenge_response, challenge_response_data + 20, 16);
   memcpy(challenge_response + 16, cert->signature->data, 256);
   memcpy(challenge_response + 16 + 256, client_secret_data, 16);

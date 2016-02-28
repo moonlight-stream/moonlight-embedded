@@ -225,7 +225,7 @@ static libcecc_lib_instance_t libcecc_load_library(const char* strLib)
   #if defined(__APPLE__)
     lib =  dlopen(strLib ? strLib : "libcec." CEC_LIB_VERSION_MAJOR_STR ".dylib", RTLD_LAZY);
   #else
-    lib = dlopen(strLib ? strLib : "libcec.so." CEC_LIB_VERSION_MAJOR_STR ".0", RTLD_LAZY);
+    lib = dlopen(strLib ? strLib : "libcec.so." CEC_LIB_VERSION_MAJOR_STR, RTLD_LAZY);
   #endif
   if (lib == NULL)
     printf("%s\n", dlerror());

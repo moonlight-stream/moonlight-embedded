@@ -337,17 +337,18 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   unsigned char salt_pin[20];
   unsigned char aes_key_hash[20];
-  AES_KEY aes_key;
+  AES_KEY enc_key, dec_key;
   memcpy(salt_pin, salt_data, 16);
-  memcpy(salt_pin+16, salt_pin, 4);
+  memcpy(salt_pin+16, pin, 4);
   SHA1(salt_pin, 20, aes_key_hash);
-  AES_set_encrypt_key((unsigned char *)aes_key_hash, 128, &aes_key);
+  AES_set_encrypt_key((unsigned char *)aes_key_hash, 128, &enc_key);
+  AES_set_decrypt_key((unsigned char *)aes_key_hash, 128, &dec_key);
 
   unsigned char challenge_data[16];
   unsigned char challenge_enc[16];
   char challenge_hex[33];
   RAND_bytes(challenge_data, 16);
-  AES_encrypt(challenge_data, challenge_enc, &aes_key);
+  AES_encrypt(challenge_data, challenge_enc, &enc_key);
   bytes_to_hex(challenge_enc, challenge_hex, 16);
 
   uuid_generate_random(uuid);
@@ -364,13 +365,13 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   char challenge_response_data_enc[48];
   char challenge_response_data[48];
-  for (int count = 0; count < strlen(result); count++) {
+  for (int count = 0; count < strlen(result); count += 2) {
     sscanf(&result[count], "%2hhx", &challenge_response_data_enc[count / 2]);
   }
   free(result);
 
   for (int i = 0; i < 48; i += 16) {
-    AES_decrypt(&challenge_response_data_enc[i], &challenge_response_data[i], &aes_key);
+    AES_decrypt(&challenge_response_data_enc[i], &challenge_response_data[i], &dec_key);
   }
 
   char client_secret_data[16];
@@ -386,7 +387,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   SHA1(challenge_response, 16 + 256 + 16, challenge_response_hash);
 
   for (int i = 0; i < 32; i += 16) {
-    AES_encrypt(&challenge_response_hash[i], &challenge_response_hash_enc[i], &aes_key);
+    AES_encrypt(&challenge_response_hash[i], &challenge_response_hash_enc[i], &enc_key);
   }
   bytes_to_hex(challenge_response_hash_enc, challenge_response_hex, 32);
 

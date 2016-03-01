@@ -30,7 +30,6 @@
 
 #define DECODER_BUFFER_SIZE 92*1024
 
-static int screen_width, screen_height;
 static char* ffmpeg_buffer;
 
 static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
@@ -45,9 +44,6 @@ static void sdl_setup(int width, int height, int redrawRate, void* context, int 
     fprintf(stderr, "Not enough memory\n");
     exit(1);
   }
-
-  screen_width = width;
-  screen_height = height;
 }
 
 static void sdl_cleanup() {

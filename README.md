@@ -33,6 +33,8 @@ More information about installing and runnning Moonlight Embedded is available o
 
 ## Bugs
 
+Please check the fora, wiki and old bug reports before submitting a new bug report.
+
 Bugs can be reported to the [issue tracker](https://github.com/irtimmer/moonlight-embedded/issues).
 
 ## See also
@@ -47,6 +49,7 @@ different C implementations of Moonlight
 [XDA](http://forum.xda-developers.com/showthread.php?t=2505510)  
 [Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878)  
 [SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173)  
+[ODROID Forum](http://forum.odroid.com/viewtopic.php?f=91&t=15456) Moonlight Embedded on ODROID  
 
 ## Contribute
 

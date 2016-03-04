@@ -31,3 +31,6 @@ extern AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl;
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
 bool audio_pulse_init();
 #endif
+#ifdef HAVE_OMX
+extern AUDIO_RENDERER_CALLBACKS audio_callbacks_omx;
+#endif

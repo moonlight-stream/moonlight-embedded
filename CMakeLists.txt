@@ -16,6 +16,7 @@ set(MOONLIGHT_DEFINITIONS)
 find_package(ALSA REQUIRED)
 find_package(Opus REQUIRED)
 find_package(Broadcom)
+find_package(OMX)
 find_package(Freescale)
 
 find_package(PkgConfig REQUIRED)
@@ -73,6 +74,12 @@ if (PULSE_FOUND)
   list(APPEND MOONLIGHT_OPTIONS PULSE)
 endif()
 
+if (OMX_FOUND)
+  list(APPEND SRC_LIST ./src/audio/omx.c)
+  list(APPEND MOONLIGHT_DEFINITIONS HAVE_OMX)
+  list(APPEND MOONLIGHT_OPTIONS OMX)
+endif()
+
 include_directories("${PROJECT_BINARY_DIR}")
 
 list(APPEND SRC_LIST ./src/audio/alsa.c)
@@ -126,7 +133,17 @@ endif()
 
 configure_file("./src/configuration.h.in" "${PROJECT_BINARY_DIR}/configuration.h")
 
+if (OMX_FOUND)
+  target_include_directories(moonlight PRIVATE ${OMX_INCLUDE_DIRS})
+  target_link_libraries(moonlight ${OMX_LIBRARIES})
+endif()
+
+if (OMX_FOUND)
+  set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS} ${OMX_DEFINITIONS})
+else(
 set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
+)
+endif()
 target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
 target_link_libraries(moonlight ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
 

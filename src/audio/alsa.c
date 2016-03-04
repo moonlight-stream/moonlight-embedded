@@ -28,8 +28,6 @@
 #define MAX_CHANNEL_COUNT 6
 #define FRAME_SIZE 240
 
-const char* audio_device = "sysdefault";
-
 static snd_pcm_t *handle;
 static OpusMSDecoder* decoder;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];

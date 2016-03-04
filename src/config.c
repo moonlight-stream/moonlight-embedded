@@ -38,6 +38,7 @@
 
 bool inputAdded = false;
 static bool mapped = true;
+const char* audio_device = "sysdefault";
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},

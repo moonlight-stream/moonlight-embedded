@@ -1,3 +1,22 @@
+/*
+ * This file is part of Moonlight Embedded.
+ *
+ * Copyright (C) 2015 Iwan Timmer
+ *
+ * Moonlight is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moonlight is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "../audio.h"
 
 #include <stdio.h>
@@ -16,11 +35,11 @@
 
 #define OUT_CHANNELS(num_channels) ((num_channels) > 4 ? 8: (num_channels) > 2 ? 4: (num_channels))
 
-static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
-
 static OpusMSDecoder* decoder;
 ILCLIENT_T  *handle;
 COMPONENT_T *component;
+static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
+static int channelCount;
 
 void setOutputDevice(OMX_HANDLETYPE hdl, const char *name) {
     OMX_ERRORTYPE err;
@@ -41,10 +60,9 @@ void setOutputDevice(OMX_HANDLETYPE hdl, const char *name) {
     }
 }
 
-void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber) {
+void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber, int num_channels, int sampleRate) {
     OMX_AUDIO_PARAM_PCMMODETYPE sPCMMode;
     OMX_ERRORTYPE err;
-	int num_channels = 6;
  
     memset(&sPCMMode, 0, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
     sPCMMode.nSize = sizeof(OMX_AUDIO_PARAM_PCMMODETYPE);
@@ -56,7 +74,7 @@ void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber) {
     sPCMMode.nChannels = OUT_CHANNELS(num_channels);
     sPCMMode.eNumData = OMX_NumericalDataSigned;
     sPCMMode.eEndian = OMX_EndianLittle;
-    sPCMMode.nSamplingRate = 48000;
+    sPCMMode.nSamplingRate = sampleRate;
     sPCMMode.bInterleaved = OMX_TRUE;
     sPCMMode.nBitPerSample = 16;
     sPCMMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
@@ -146,7 +164,7 @@ void error_callback(void *userdata, COMPONENT_T *comp, OMX_U32 data) {
     fprintf(stderr, "OMX error %s\n", err2str(data));
 }
 
-static void set_audio_render_input_format(COMPONENT_T *cmpt) {
+static void set_audio_render_input_format(COMPONENT_T *cmpt, int num_channels, int sampleRate) {
     // set input audio format
     // printf("Setting audio render format\n");
     OMX_AUDIO_PARAM_PORTFORMATTYPE audioPortFormat;
@@ -166,17 +184,30 @@ static void set_audio_render_input_format(COMPONENT_T *cmpt) {
     OMX_SetParameter(ilclient_get_handle(cmpt),
                      OMX_IndexParamAudioPortFormat, &audioPortFormat);
 
-    setPCMMode(ilclient_get_handle(cmpt), 100);
+    setPCMMode(ilclient_get_handle(cmpt), 100, num_channels, sampleRate);
 
 }
 
 static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
     int rc;
+	unsigned char omxMapping[6];
+
+	channelCount = opusConfig->channelCount;
+
+    omxMapping[0] = opusConfig->mapping[0];
+    omxMapping[1] = opusConfig->mapping[1];
+    if (opusConfig->channelCount == 6) {
+      omxMapping[2] = opusConfig->mapping[4];
+      omxMapping[3] = opusConfig->mapping[5];
+      omxMapping[4] = opusConfig->mapping[2];
+      omxMapping[5] = opusConfig->mapping[3];
+    }
+
     decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
                                               opusConfig->channelCount,
                                               opusConfig->streams,
                                               opusConfig->coupledStreams,
-                                              opusConfig->mapping,
+                                              omxMapping,
                                               &rc);
 
     int i;
@@ -221,7 +252,7 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
     }
 
     // must be before we enable buffers
-    set_audio_render_input_format(component);
+    set_audio_render_input_format(component, opusConfig->channelCount, opusConfig->sampleRate);
 
     setOutputDevice(ilclient_get_handle(component), "hdmi");
 
@@ -255,7 +286,7 @@ static inline OMX_TICKS ToOmxTicks(int64_t value) {
     return s;
 }
 
-static OMX_ERRORTYPE omx_play_buffer(short *buffer, int decodeLen) {
+static OMX_ERRORTYPE omx_play_buffer(short *buffer, int length) {
     int r;
 	OMX_BUFFERHEADERTYPE *buff_header = 
 	ilclient_get_input_buffer(component, 100, 1);
@@ -263,8 +294,8 @@ static OMX_ERRORTYPE omx_play_buffer(short *buffer, int decodeLen) {
 	buff_header->nOffset = 0;
 	buff_header->nFlags = OMX_BUFFERFLAG_TIME_UNKNOWN;
 	buff_header->nTimeStamp = ToOmxTicks(0);
-	memcpy(buff_header->pBuffer, buffer, decodeLen);
-	buff_header->nFilledLen = decodeLen;
+	memcpy(buff_header->pBuffer, buffer, length);
+	buff_header->nFilledLen = length;
     r = OMX_EmptyThisBuffer(ilclient_get_handle(component),
 			    buff_header);
     if (r != OMX_ErrorNone) {
@@ -277,7 +308,7 @@ static OMX_ERRORTYPE omx_play_buffer(short *buffer, int decodeLen) {
 static void omx_renderer_decode_and_play_sample(char* data, int length) {
   int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
   if (decodeLen > 0) {
-	int rc = omx_play_buffer(pcmBuffer, decodeLen);
+	int rc = omx_play_buffer(pcmBuffer, decodeLen * sizeof(short) * channelCount);
     if (rc < 0)
       printf("OMX error from omx_play_buffer: %d\n", rc);
     // else if (decodeLen != rc)

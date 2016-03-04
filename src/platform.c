@@ -104,6 +104,9 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
     if (audio_pulse_init())
       return &audio_callbacks_pulse;
     #endif
+    #ifdef HAVE_OMX
+      return &audio_callbacks_omx;
+    #endif
     return &audio_callbacks_alsa;
   }
   return NULL;

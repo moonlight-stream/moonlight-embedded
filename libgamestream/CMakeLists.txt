@@ -9,10 +9,13 @@ pkg_check_modules(AVAHI REQUIRED avahi-client)
 aux_source_directory(./ GAMESTREAM_SRC_LIST)
 aux_source_directory(../third_party/h264bitstream GAMESTREAM_SRC_LIST)
 
+aux_source_directory(../third_party/moonlight-common-c/enet MOONLIGHT_COMMON_SRC_LIST)
 aux_source_directory(../third_party/moonlight-common-c/limelight-common MOONLIGHT_COMMON_SRC_LIST)
 aux_source_directory(../third_party/moonlight-common-c/limelight-common/OpenAES MOONLIGHT_COMMON_SRC_LIST)
 
 add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
+target_include_directories(moonlight-common PRIVATE ../third_party/moonlight-common-c/enet/include)
+target_compile_definitions(moonlight-common PRIVATE -DHAS_SOCKLEN_T=1)
 
 add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})
 set_property(TARGET gamestream PROPERTY C_STANDARD 99)

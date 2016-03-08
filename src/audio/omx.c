@@ -116,16 +116,11 @@ void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber, int num_channels, int s
        break;
 	}
 
-
     err = OMX_SetParameter(hdl, OMX_IndexParamAudioPcm, &sPCMMode);
     if(err != OMX_ErrorNone){
-	fprintf(stderr, "PCM mode unsupported\n");
-	return;
-    } else {
-	// fprintf(stderr, "PCM mode supported\n");
-	// fprintf(stderr, "PCM sampling rate %d\n", sPCMMode.nSamplingRate);
-	// fprintf(stderr, "PCM nChannels %d\n", sPCMMode.nChannels);
-    } 
+		fprintf(stderr, "PCM mode unsupported\n");
+		return;
+    }
 }
 
 char *err2str(int err) {
@@ -177,9 +172,7 @@ void error_callback(void *userdata, COMPONENT_T *comp, OMX_U32 data) {
 
 static void set_audio_render_input_format(COMPONENT_T *cmpt, int num_channels, int sampleRate) {
     // set input audio format
-    // printf("Setting audio render format\n");
     OMX_AUDIO_PARAM_PORTFORMATTYPE audioPortFormat;
-    //setHeader(&audioPortFormat,  sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     memset(&audioPortFormat, 0, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     audioPortFormat.nSize = sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE);
     audioPortFormat.nVersion.nVersion = OMX_VERSION;
@@ -191,7 +184,6 @@ static void set_audio_render_input_format(COMPONENT_T *cmpt, int num_channels, i
                      OMX_IndexParamAudioPortFormat, &audioPortFormat);
 
     audioPortFormat.eEncoding = OMX_AUDIO_CodingPCM;
-    //audioPortFormat.eEncoding = OMX_AUDIO_CodingMP3;
     OMX_SetParameter(ilclient_get_handle(cmpt),
                      OMX_IndexParamAudioPortFormat, &audioPortFormat);
 
@@ -321,11 +313,9 @@ static OMX_ERRORTYPE omx_play_buffer(short *buffer, int length) {
 static void omx_renderer_decode_and_play_sample(char* data, int length) {
   int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
   if (decodeLen > 0) {
-	int rc = omx_play_buffer(pcmBuffer, decodeLen * sizeof(short) * channelCount);
-    if (rc < 0)
-      printf("OMX error from omx_play_buffer: %d\n", rc);
-    // else if (decodeLen != rc)
-      // printf("OMX omx_play_buffer, write %d frames\n", rc);
+	OMX_ERRORTYPE err = omx_play_buffer(pcmBuffer, decodeLen * sizeof(short) * channelCount);
+    if (err < 0)
+      printf("OMX error from omx_play_buffer: %d\n", err);
   } else {
     printf("Opus error from decode: %d\n", decodeLen);
   }

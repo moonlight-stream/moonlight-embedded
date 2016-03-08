@@ -33,8 +33,6 @@
 #define MAX_CHANNEL_COUNT 6
 #define FRAME_SIZE 240
 
-#define OUT_CHANNELS(num_channels) ((num_channels) > 4 ? 8: (num_channels) > 2 ? 4: (num_channels))
-
 static OpusMSDecoder* decoder;
 ILCLIENT_T  *handle;
 COMPONENT_T *component;
@@ -60,6 +58,19 @@ void setOutputDevice(OMX_HANDLETYPE hdl, const char *name) {
     }
 }
 
+static OMX_STATETYPE GetOMXState(OMX_HANDLETYPE hdl) {
+	OMX_STATETYPE state;
+	OMX_ERRORTYPE err;
+	
+    err = OMX_GetState(handle, &state);
+    if (err != OMX_ErrorNone) {
+        fprintf(stderr, "Error on getting state\n");
+        exit(1);
+    } else {
+    return state;
+    }
+}
+
 void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber, int num_channels, int sampleRate) {
     OMX_AUDIO_PARAM_PCMMODETYPE sPCMMode;
     OMX_ERRORTYPE err;
@@ -71,7 +82,7 @@ void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber, int num_channels, int s
     sPCMMode.nPortIndex = startPortNumber;
 
     sPCMMode.nPortIndex = 100;
-    sPCMMode.nChannels = OUT_CHANNELS(num_channels);
+    sPCMMode.nChannels = num_channels;
     sPCMMode.eNumData = OMX_NumericalDataSigned;
     sPCMMode.eEndian = OMX_EndianLittle;
     sPCMMode.nSamplingRate = sampleRate;
@@ -244,12 +255,13 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
 	exit(1);
     }
 
-    err = ilclient_change_component_state(component,
-					  OMX_StateIdle);
-    if (err < 0) {
-	fprintf(stderr, "Couldn't change state to Idle\n");
-	exit(1);
-    }
+    if (GetOMXState(handle) != OMX_StateIdle) {
+		err = ilclient_change_component_state(component, OMX_StateIdle);
+		if (err < 0) {
+			fprintf(stderr, "Couldn't change state to Idle\n");
+			exit(1);
+		}
+	}
 
     // must be before we enable buffers
     set_audio_render_input_format(component, opusConfig->channelCount, opusConfig->sampleRate);
@@ -260,13 +272,14 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
     ilclient_enable_port_buffers(component, 100, 
 				 NULL, NULL, NULL);
     ilclient_enable_port(component, 100);
-	
-	err = ilclient_change_component_state(component,
-					  OMX_StateExecuting);
-    if (err < 0) {
-	fprintf(stderr, "Couldn't change state to Executing\n");
-	exit(1);
-    }
+
+	if (GetOMXState(handle) != OMX_StateExecuting) {
+		err = ilclient_change_component_state(component, OMX_StateExecuting);
+		if (err < 0) {
+			fprintf(stderr, "Couldn't change state to Executing\n");
+			exit(1);
+			}
+	}
 }
 
 static void omx_renderer_cleanup() {

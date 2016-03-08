@@ -154,7 +154,7 @@ static void help() {
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
-  printf("\t-useomx \t\tUse OMX audio instead of ALSA or PULSE\n");
+  printf("\t-omx \t\tUse OMX audio instead of ALSA or PULSE\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

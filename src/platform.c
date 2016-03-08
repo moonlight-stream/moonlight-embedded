@@ -21,7 +21,6 @@
 
 #include "platform.h"
 #include "audio.h"
-#include "config.h"
 
 #include <stdbool.h>
 #include <stdlib.h>

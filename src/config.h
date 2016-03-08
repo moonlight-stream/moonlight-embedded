@@ -41,13 +41,11 @@ typedef struct _CONFIGURATION {
   bool localaudio;
   bool fullscreen;
   bool forcehw;
-  bool useomx;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
 } CONFIGURATION, *PCONFIGURATION;
 
 bool inputAdded;
-bool UseOMX;
 
 bool config_file_parse(char* filename, PCONFIGURATION config);
 void config_parse(int argc, char* argv[], PCONFIGURATION config);

@@ -32,7 +32,7 @@
 
 static char* ffmpeg_buffer;
 
-static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
+static void sdl_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
   if (drFlags && FORCE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;

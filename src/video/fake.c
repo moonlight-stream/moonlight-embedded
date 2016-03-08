@@ -24,7 +24,7 @@
 static FILE* fd;
 static const char* fileName = "fake.h264";
 
-void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
+void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   fd = fopen(fileName, "w");
 }
 

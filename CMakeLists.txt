@@ -136,12 +136,9 @@ configure_file("./src/configuration.h.in" "${PROJECT_BINARY_DIR}/configuration.h
 if (OMX_FOUND)
   target_include_directories(moonlight PRIVATE ${OMX_INCLUDE_DIRS})
   target_link_libraries(moonlight ${OMX_LIBRARIES})
-endif()
-
-if (OMX_FOUND)
   set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS} ${OMX_DEFINITIONS})
 else(
-set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
+  set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
 )
 endif()
 target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})

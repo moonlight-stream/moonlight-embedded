@@ -39,6 +39,9 @@ COMPONENT_T *component;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static int channelCount;
 
+const char* omx_device = "hdmi";
+bool UseOMX = false;
+
 void setOutputDevice(OMX_HANDLETYPE hdl, const char *name) {
     OMX_ERRORTYPE err;
     OMX_CONFIG_BRCMAUDIODESTINATIONTYPE arDest;
@@ -52,7 +55,7 @@ void setOutputDevice(OMX_HANDLETYPE hdl, const char *name) {
        
 	err = OMX_SetParameter(hdl, OMX_IndexConfigBrcmAudioDestination, &arDest);
 	if (err != OMX_ErrorNone) {
-	    fprintf(stderr, "Error on setting audio destination\n");
+	    fprintf(stderr, "Error on setting audio destination\nomx option must be set to hdmi or local\n");
 	    exit(1);
 	}
     }
@@ -258,7 +261,7 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
     // must be before we enable buffers
     set_audio_render_input_format(component, opusConfig->channelCount, opusConfig->sampleRate);
 
-    setOutputDevice(ilclient_get_handle(component), "hdmi");
+    setOutputDevice(ilclient_get_handle(component), omx_device);
 
     // input port
     ilclient_enable_port_buffers(component, 100, 

@@ -63,7 +63,7 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
-  {"omx", no_argument, NULL, 'x'},
+  {"omx", required_argument, NULL, 'x'},
   {0, 0, 0, 0},
 };
 
@@ -200,9 +200,13 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'w':
     config->forcehw = true;
+    break;
   case 'x':
-    config->useomx = true;
+  #ifdef HAVE_OMX
     UseOMX = true;
+    omx_device = value;
+  #endif
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -310,7 +314,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:wx:", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

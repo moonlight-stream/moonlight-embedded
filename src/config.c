@@ -63,6 +63,7 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
+  {"omx", no_argument, NULL, 'x'},
   {0, 0, 0, 0},
 };
 
@@ -199,6 +200,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'w':
     config->forcehw = true;
+  case 'x':
+    config->useomx = true;
+    UseOMX = true;
   case 1:
     if (config->action == NULL)
       config->action = value;

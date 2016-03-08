@@ -62,7 +62,7 @@ static OMX_STATETYPE GetOMXState(OMX_HANDLETYPE hdl) {
 	OMX_STATETYPE state;
 	OMX_ERRORTYPE err;
 	
-    err = OMX_GetState(handle, &state);
+    err = OMX_GetState(hdl, &state);
     if (err != OMX_ErrorNone) {
         fprintf(stderr, "Error on getting state\n");
         exit(1);

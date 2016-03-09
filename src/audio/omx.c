@@ -18,16 +18,17 @@
  */
 
 #include "../audio.h"
+#include "../config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include <OMX_Core.h>
-#include <OMX_Component.h>
+#include <IL/OMX_Core.h>
+#include <IL/OMX_Component.h>
 
 #include <opus_multistream.h>
-#include <bcm_host.h>
+#include "bcm_host.h"
 #include "ilclient.h"
 
 #define MAX_CHANNEL_COUNT 6
@@ -38,9 +39,6 @@ ILCLIENT_T  *handle;
 COMPONENT_T *component;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static int channelCount;
-
-const char* omx_device = "hdmi";
-bool UseOMX = false;
 
 void setOutputDevice(OMX_HANDLETYPE hdl, const char *name) {
     OMX_ERRORTYPE err;
@@ -55,22 +53,9 @@ void setOutputDevice(OMX_HANDLETYPE hdl, const char *name) {
        
 	err = OMX_SetParameter(hdl, OMX_IndexConfigBrcmAudioDestination, &arDest);
 	if (err != OMX_ErrorNone) {
-	    fprintf(stderr, "Error on setting audio destination\nomx option must be set to hdmi or local\n");
+	    fprintf(stderr, "OMX Error: Error on setting audio destination\nomx option must be set to hdmi or local\n");
 	    exit(1);
 	}
-    }
-}
-
-static OMX_STATETYPE GetOMXState(OMX_HANDLETYPE hdl) {
-	OMX_STATETYPE state;
-	OMX_ERRORTYPE err;
-	
-    err = OMX_GetState(hdl, &state);
-    if (err != OMX_ErrorNone) {
-        fprintf(stderr, "Error on getting state\n");
-        exit(1);
-    } else {
-    return state;
     }
 }
 
@@ -86,7 +71,7 @@ void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber, int num_channels, int s
 
     sPCMMode.nPortIndex = 100;
     sPCMMode.nChannels = num_channels;
-    sPCMMode.eNumData = OMX_NumericalDataSigned;
+    sPCMMode.eNumData = OMX_NumericalDataUnsigned;
     sPCMMode.eEndian = OMX_EndianLittle;
     sPCMMode.nSamplingRate = sampleRate;
     sPCMMode.bInterleaved = OMX_TRUE;
@@ -121,7 +106,7 @@ void setPCMMode(OMX_HANDLETYPE hdl, int startPortNumber, int num_channels, int s
 
     err = OMX_SetParameter(hdl, OMX_IndexParamAudioPcm, &sPCMMode);
     if(err != OMX_ErrorNone){
-		fprintf(stderr, "PCM mode unsupported\n");
+		fprintf(stderr, "OMX Error: PCM mode unsupported\n");
 		return;
     }
 }
@@ -196,24 +181,14 @@ static void set_audio_render_input_format(COMPONENT_T *cmpt, int num_channels, i
 
 static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
     int rc;
-	unsigned char omxMapping[6];
 
 	channelCount = opusConfig->channelCount;
-
-    omxMapping[0] = opusConfig->mapping[0];
-    omxMapping[1] = opusConfig->mapping[1];
-    if (opusConfig->channelCount == 6) {
-      omxMapping[2] = opusConfig->mapping[4];
-      omxMapping[3] = opusConfig->mapping[5];
-      omxMapping[4] = opusConfig->mapping[2];
-      omxMapping[5] = opusConfig->mapping[3];
-    }
 
     decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
                                               opusConfig->channelCount,
                                               opusConfig->streams,
                                               opusConfig->coupledStreams,
-                                              omxMapping,
+                                              opusConfig->mapping,
                                               &rc);
 
     int i;
@@ -224,13 +199,13 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
 
     handle = ilclient_init();
     if (handle == NULL) {
-		fprintf(stderr, "IL client init failed\n");
+		fprintf(stderr, "OMX Error: IL client init failed\n");
 		exit(1);
     }
 
     if (OMX_Init() != OMX_ErrorNone) {
         ilclient_destroy(handle);
-        fprintf(stderr, "OMX init failed\n");
+        fprintf(stderr, "OMX Error: OMX init failed\n");
 		exit(1);
     }
 
@@ -246,20 +221,18 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
 				    ILCLIENT_ENABLE_INPUT_BUFFERS
 				    );
     if (err == -1) {
-	fprintf(stderr, "Component create failed\n");
+	fprintf(stderr, "OMX Error: Component create failed\n");
 	exit(1);
     }
 
-    if (GetOMXState(handle) != OMX_StateIdle) {
-		err = ilclient_change_component_state(component, OMX_StateIdle);
-		if (err < 0) {
-			fprintf(stderr, "Couldn't change state to Idle\n");
-			exit(1);
-		}
+	err = ilclient_change_component_state(component, OMX_StateIdle);
+	if (err < 0) {
+		fprintf(stderr, "OMX Error: Couldn't change state to Idle\n");
+		exit(1);
 	}
 
     // must be before we enable buffers
-    set_audio_render_input_format(component, opusConfig->channelCount, opusConfig->sampleRate);
+    set_audio_render_input_format(component, channelCount, opusConfig->sampleRate);
 
     setOutputDevice(ilclient_get_handle(component), omx_device);
 
@@ -268,12 +241,10 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
 				 NULL, NULL, NULL);
     ilclient_enable_port(component, 100);
 
-	if (GetOMXState(handle) != OMX_StateExecuting) {
-		err = ilclient_change_component_state(component, OMX_StateExecuting);
-		if (err < 0) {
-			fprintf(stderr, "Couldn't change state to Executing\n");
-			exit(1);
-			}
+	err = ilclient_change_component_state(component, OMX_StateExecuting);
+	if (err < 0) {
+		fprintf(stderr, "OMX Error: Couldn't change state to Executing\n");
+		exit(1);
 	}
 }
 
@@ -281,7 +252,14 @@ static void omx_renderer_cleanup() {
   if (decoder != NULL)
     opus_multistream_decoder_destroy(decoder);
   if (handle != NULL) {
-    OMX_Deinit();
+    if (GetOMXState(ilclient_get_handle(component)) != OMX_StateLoaded) {
+		int err = ilclient_change_component_state(component, OMX_StateLoaded);
+		if (err < 0) {
+			fprintf(stderr, "OMX Error: Couldn't change state to Loaded\n");
+			exit(1);
+		}
+	}
+	OMX_FreeHandle(handle);
     ilclient_destroy(handle);
     bcm_host_deinit();
   }
@@ -307,7 +285,7 @@ static OMX_ERRORTYPE omx_play_buffer(short *buffer, int length) {
     r = OMX_EmptyThisBuffer(ilclient_get_handle(component),
 			    buff_header);
     if (r != OMX_ErrorNone) {
-	fprintf(stderr, "Empty buffer error %s\n",
+	fprintf(stderr, "OMX Error: Empty buffer error %s\n",
 		err2str(r));
     }
     return r;

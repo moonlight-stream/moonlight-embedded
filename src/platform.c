@@ -21,6 +21,7 @@
 
 #include "platform.h"
 #include "audio.h"
+#include "config.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -99,14 +100,15 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
   case SDL:
     return &audio_callbacks_sdl;
   #endif
+  #ifdef HAVE_PI
+  case PI:
+    if (UseOMX)
+      return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
+  #endif
   default:
     #ifdef HAVE_PULSE
 	if (audio_pulse_init())
 	  return &audio_callbacks_pulse;
-    #endif
-    #ifdef HAVE_OMX
-	if(UseOMX)
-      return &audio_callbacks_omx;
     #endif
     return &audio_callbacks_alsa;
   }

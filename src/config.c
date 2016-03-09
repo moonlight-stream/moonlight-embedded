@@ -202,7 +202,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->forcehw = true;
     break;
   case 'x':
-  #ifdef HAVE_OMX
+  #ifdef HAVE_PI
     UseOMX = true;
     omx_device = value;
   #endif

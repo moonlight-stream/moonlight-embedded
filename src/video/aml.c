@@ -296,7 +296,7 @@ int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       fprintf(stderr, "codec_write error: %x\n", api);
       codec_reset(&codecParam);
       result = DR_NEED_IDR;
-	  break;
+      break;
     }
 
     entry = entry->next;

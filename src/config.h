@@ -43,6 +43,9 @@ typedef struct _CONFIGURATION {
   bool forcehw;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
+#ifdef HAVE_AML
+  bool hevc;
+#endif
 } CONFIGURATION, *PCONFIGURATION;
 
 bool inputAdded;

@@ -63,6 +63,9 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
+#ifdef HAVE_AML
+  {"hevc", no_argument, NULL, 'x'},
+#endif
   {0, 0, 0, 0},
 };
 
@@ -199,6 +202,12 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'w':
     config->forcehw = true;
+    break;
+#ifdef HAVE_AML
+  case 'x':
+    config->hevc = true;
+    break;
+#endif
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -289,6 +298,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
+  config->hevc = false;
 
   config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
@@ -306,7 +316,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w:x", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

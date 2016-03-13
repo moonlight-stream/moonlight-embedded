@@ -161,7 +161,7 @@ static void help() {
   #endif
   #ifdef HAVE_AML
   printf("\n Amlogic Codec options\n\n");
-  printf("\t-hecv \t\tUse high efficiency video decoding (HECV)\n");
+  printf("\t-hevc \t\tUse high efficiency video decoding (HEVC)\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

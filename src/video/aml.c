@@ -35,14 +35,14 @@
 static codec_para_t codecParam = { 0 };
 const size_t EXTERNAL_PTS = (1);
 const size_t SYNC_OUTSIDE = (2);
-extern bool hevc;
+
 fbdev_window window;
 
 void SetupDisplay() {
   int ret = -1;
 
   int fd_fb0 = open("/dev/fb0", O_RDWR);
-  fprintf(stderr, "file handle: %x\n", fd_fb0);
+  fprintf(stdout, "file handle: %x\n", fd_fb0);
 
   struct fb_var_screeninfo info;
   ret = ioctl(fd_fb0, FBIOGET_VSCREENINFO, &info);
@@ -54,7 +54,7 @@ void SetupDisplay() {
   window.width = info.xres;
   window.height = info.yres;
 
-  fprintf(stderr, "screen info: width=%d, height=%d, bpp=%d\n", window.width, window.height, info.bits_per_pixel);
+  fprintf(stdout, "screen info: width=%d, height=%d, bpp=%d\n", window.width, window.height, info.bits_per_pixel);
 
   // Get the EGL display (fb0)
   EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -161,8 +161,7 @@ void SetupDisplay() {
 
   free((void*)configs);
 
-  if (match == 0)
-  {
+  if (match == 0) {
     fprintf(stderr, "No eglConfig match found.\n");
     exit(1);
   }
@@ -244,7 +243,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
 
       fprintf(stdout, "Decoding H264 video.\n");
 	  break;
-	case VIDEO_FORMAT_H265: // 2
+    case VIDEO_FORMAT_H265: // 2
 
       codecParam.video_type = VFORMAT_HEVC;
       codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;  ///< video format, such as H264, MPEG2...
@@ -262,7 +261,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   codecParam.am_sysinfo.param = (void *)(EXTERNAL_PTS | SYNC_OUTSIDE);   //< other parameters for video decoder
  
   int api = codec_init(&codecParam);
-  fprintf(stderr, "codec_init=%x\n", api);
+  fprintf(stdout, "codec_init=%x\n", api);
 
   if (api != 0) {
     fprintf(stderr, "codec_init failed.\n");

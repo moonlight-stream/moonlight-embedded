@@ -84,9 +84,11 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   }
 
   // h265
+#ifdef HAVE_AML
   if (config->hevc) {
     config->stream.supportsHevc = 1;
   }
+#endif
 
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {
@@ -161,7 +163,7 @@ static void help() {
   #endif
   #ifdef HAVE_AML
   printf("\n Amlogic Codec options\n\n");
-  printf("\t-hevc \t\tUse high efficiency video decoding (HEVC)\n");
+  printf("\t-forceh264 \t\tForce to disable the use of HEVC\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

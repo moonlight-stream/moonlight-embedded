@@ -64,7 +64,7 @@ static struct option long_options[] = {
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
 #ifdef HAVE_AML
-  {"hevc", no_argument, NULL, 'x'},
+  {"forceh264", no_argument, NULL, 'x'},
 #endif
   {0, 0, 0, 0},
 };
@@ -205,7 +205,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
 #ifdef HAVE_AML
   case 'x':
-    config->hevc = true;
+    config->hevc = false;
     break;
 #endif
   case 1:
@@ -289,6 +289,9 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
+#ifdef HAVE_AML
+  config->stream.supportsHevc = 0;
+#endif
 
   config->platform = "default";
   config->app = "Steam";
@@ -298,7 +301,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
-  config->hevc = false;
+  config->hevc = true;
 
   config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));

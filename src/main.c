@@ -83,6 +83,11 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     exit(-1);
   }
 
+  // h265
+  if (config->hevc) {
+    config->stream.supportsHevc = 1;
+  }
+
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -153,6 +158,10 @@ static void help() {
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
+  #endif
+  #ifdef HAVE_AML
+  printf("\n Amlogic Codec options\n\n");
+  printf("\t-hecv \t\tUse high efficiency video decoding (HECV)\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

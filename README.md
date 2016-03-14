@@ -3,7 +3,7 @@
 Moonlight Embedded is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield, but built for Linux.
 
 Moonlight Embedded allows you to stream your full collection of Steam games from
-your powerful Windows desktop to your (embedded) Linux system, like Raspberry Pi, CuBox-i and Hummingboard.
+your powerful Windows desktop to your (embedded) Linux system, like ODROID, Raspberry Pi, CuBox-i and Hummingboard.
 
 ## Documentation
 
@@ -14,7 +14,8 @@ More information about installing and runnning Moonlight Embedded is available o
 * Streams Steam and all of your games from your PC to your embedded system.
 * Use mDNS to scan for compatible GeForce Experience (GFE) machines on the network.
 * Qwerty Keyboard, Mouse and Gamepad support
-* Support hardware video decoding on Raspberry Pi and i.MX 6 devices
+* Support H264 hardware video decoding on ODROID, Raspberry Pi and i.MX 6 devices
+* Support HEVC hardware video decoding on ODROID C1/C2
 
 ## Requirements
 

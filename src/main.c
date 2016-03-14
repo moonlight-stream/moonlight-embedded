@@ -83,6 +83,11 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     exit(-1);
   }
 
+  // h265
+  if (config->hevc && access("/dev/amvideo", F_OK) != -1) {
+    config->stream.supportsHevc = 1;
+  }
+
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -143,6 +148,7 @@ static void help() {
   printf("\t-localaudio\t\tPlay audio locally\n");
   printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
+  printf("\t-forceh264 \t\tForce to disable the use of HEVC\n");
   #ifdef HAVE_SDL
   printf("\n Video options (SDL Only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");

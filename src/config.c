@@ -63,9 +63,7 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
-#ifdef HAVE_AML
   {"forceh264", no_argument, NULL, 'x'},
-#endif
   {0, 0, 0, 0},
 };
 
@@ -203,11 +201,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'w':
     config->forcehw = true;
     break;
-#ifdef HAVE_AML
   case 'x':
     config->hevc = false;
     break;
-#endif
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -289,9 +285,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
-#ifdef HAVE_AML
   config->stream.supportsHevc = 0;
-#endif
 
   config->platform = "default";
   config->app = "Steam";

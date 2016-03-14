@@ -150,6 +150,7 @@ static void help() {
   printf("\t-localaudio\t\tPlay audio locally\n");
   printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
+  printf("\t-forceh264 \t\tForce to disable the use of HEVC\n");
   #ifdef HAVE_SDL
   printf("\n Video options (SDL Only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
@@ -160,10 +161,6 @@ static void help() {
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
-  #endif
-  #ifdef HAVE_AML
-  printf("\n Amlogic Codec options\n\n");
-  printf("\t-forceh264 \t\tForce to disable the use of HEVC\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

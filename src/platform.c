@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <dlfcn.h>
 
 typedef bool(*ImxInit)();
@@ -48,13 +49,16 @@ enum platform platform_check(char* name) {
       return PI;
   }
   #endif
+  #ifdef HAVE_AML
+  if (std || strcmp(name, "aml") == 0) {
+    void *handle = dlopen("libmoonlight-aml.so", RTLD_NOW | RTLD_GLOBAL);
+    if (handle != NULL && access("/dev/amvideo", F_OK) != -1)
+      return AML;
+  }
+  #endif
   #ifdef HAVE_SDL
   if (std || strcmp(name, "sdl") == 0)
     return SDL;
-  #endif
-  #ifdef HAVE_AML
-  if (std || strcmp(name, "aml") == 0)
-    return AML;
   #endif
   #ifdef HAVE_FAKE
   if (std || strcmp(name, "fake") == 0)
@@ -79,7 +83,7 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   #endif
   #ifdef HAVE_AML
   case AML:
-    return &decoder_callbacks_aml;
+    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_aml");
   #endif
   #ifdef HAVE_FAKE
   case FAKE:

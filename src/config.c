@@ -63,9 +63,7 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
-#ifdef HAVE_AML
-  {"hevc", no_argument, NULL, 'x'},
-#endif
+  {"forcehevc", no_argument, NULL, 'x'},
   {0, 0, 0, 0},
 };
 
@@ -203,11 +201,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'w':
     config->forcehw = true;
     break;
-#ifdef HAVE_AML
   case 'x':
     config->hevc = true;
     break;
-#endif
   case 1:
     if (config->action == NULL)
       config->action = value;

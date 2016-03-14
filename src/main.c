@@ -142,6 +142,7 @@ static void help() {
   printf("\t-60fps\t\t\tUse 60fps [default]\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
+  printf("\t-hevc \t\tUse high efficiency video decoding (HEVC)\n");
   printf("\t-remote\t\t\tEnable remote optimizations\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
@@ -158,10 +159,6 @@ static void help() {
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
-  #endif
-  #ifdef HAVE_AML
-  printf("\n Amlogic Codec options\n\n");
-  printf("\t-hevc \t\tUse high efficiency video decoding (HEVC)\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

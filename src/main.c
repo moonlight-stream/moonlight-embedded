@@ -84,11 +84,9 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   }
 
   // h265
-#ifdef HAVE_AML
-  if (config->hevc) {
+  if (config->hevc && access("/dev/amvideo", F_OK) != -1) {
     config->stream.supportsHevc = 1;
   }
-#endif
 
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {

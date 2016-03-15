@@ -33,11 +33,6 @@
 static char* ffmpeg_buffer;
 
 static void sdl_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  if (videoFormat != VIDEO_FORMAT_H264) {
-    fprintf(stderr, "Video format not supported\n");
-    exit(1);
-  }
-
   int avc_flags = SLICE_THREADING;
   if (drFlags && FORCE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;

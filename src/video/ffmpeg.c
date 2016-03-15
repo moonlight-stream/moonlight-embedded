@@ -23,6 +23,8 @@
 #include "ffmpeg_vdpau.h"
 #endif
 
+#include "limelight-common/Limelight.h"
+
 #include <stdlib.h>
 #include <libswscale/swscale.h>
 #include <pthread.h>
@@ -42,7 +44,7 @@ enum decoders decoder_system;
 
 // This function must be called before
 // any other decoding functions
-int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
+int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int thread_count) {
   // Initialize the avcodec library and register codecs
   av_log_set_level(AV_LOG_QUIET);
   avcodec_register_all();
@@ -51,7 +53,15 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
 
   #ifdef HAVE_VDPAU
   if (perf_lvl & HARDWARE_ACCELERATION) {
-    decoder = avcodec_find_decoder_by_name("h264_vdpau");
+    switch (videoFormat) {
+      case VIDEO_FORMAT_H264:
+        decoder = avcodec_find_decoder_by_name("h264_vdpau");
+        break;
+      case VIDEO_FORMAT_H265:
+        decoder = avcodec_find_decoder_by_name("hevc_vdpau");
+        break;
+    }
+
     if (decoder != NULL)
       decoder_system = VDPAU;
   }
@@ -59,7 +69,14 @@ int ffmpeg_init(int width, int height, int perf_lvl, int thread_count) {
 
   if (decoder == NULL) {
     decoder_system = SOFTWARE;
-    decoder = avcodec_find_decoder_by_name("h264");
+    switch (videoFormat) {
+      case VIDEO_FORMAT_H264:
+        decoder = avcodec_find_decoder_by_name("h264");
+        break;
+      case VIDEO_FORMAT_H265:
+        decoder = avcodec_find_decoder_by_name("hevc");
+        break;
+    }
     if (decoder == NULL) {
       printf("Couldn't find decoder\n");
       return -1;

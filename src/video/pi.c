@@ -54,6 +54,11 @@ static int port_settings_changed;
 static int first_packet;
 
 static void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+  if (videoFormat != VIDEO_FORMAT_H264) {
+    fprintf(stderr, "Video format not supported\n");
+    exit(1);
+  }
+
   bcm_host_init();
   gs_sps_init(width, height);
 

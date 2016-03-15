@@ -84,6 +84,11 @@ bool video_imx_init() {
 }
 
 static void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+  if (videoFormat != VIDEO_FORMAT_H264) {
+    fprintf(stderr, "Video format not supported\n");
+    exit(1);
+  }
+
   struct mxcfb_gbl_alpha alpha;
 
   dbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;

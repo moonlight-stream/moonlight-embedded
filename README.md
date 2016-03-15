@@ -3,19 +3,11 @@
 Moonlight Embedded is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield, but built for Linux.
 
 Moonlight Embedded allows you to stream your full collection of Steam games from
-your powerful Windows desktop to your (embedded) Linux system, like ODROID, Raspberry Pi, CuBox-i and Hummingboard.
+your powerful Windows desktop to your (embedded) Linux system, like Raspberry Pi, CuBox-i and ODROID.
 
 ## Documentation
 
 More information about installing and runnning Moonlight Embedded is available on the [wiki](https://github.com/irtimmer/moonlight-embedded/wiki).
-
-## Features
-
-* Streams Steam and all of your games from your PC to your embedded system.
-* Use mDNS to scan for compatible GeForce Experience (GFE) machines on the network.
-* Qwerty Keyboard, Mouse and Gamepad support
-* Support H264 hardware video decoding on ODROID, Raspberry Pi and i.MX 6 devices
-* Support HEVC hardware video decoding on ODROID C1/C2
 
 ## Requirements
 
@@ -47,9 +39,9 @@ different C implementations of Moonlight
 
 ## Discussion
 
-[XDA](http://forum.xda-developers.com/showthread.php?t=2505510)  
-[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878)  
-[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173)  
+[XDA](http://forum.xda-developers.com/showthread.php?t=2505510) Moonlight in General  
+[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878) Moonlight Embedded for Raspberry Pi  
+[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173) Moonlight Embedded for Cubox-i and Hummingboard  
 [ODROID Forum](http://forum.odroid.com/viewtopic.php?f=91&t=15456) Moonlight Embedded on ODROID  
 
 ## Contribute

@@ -37,7 +37,7 @@ static void sdl_setup(int videoFormat, int width, int height, int redrawRate, vo
   if (drFlags && FORCE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;
 
-  if (ffmpeg_init(width, height, avc_flags, 2) < 0) {
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     exit(1);
   }

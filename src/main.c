@@ -201,6 +201,7 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
     config.address[0] = 0;
+    printf("Searching for server...\n");
     gs_discover_server(config.address);
     if (config.address[0] == 0) {
       fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
@@ -228,6 +229,8 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Can't connect to server %s\n", config.address);
     exit(-1);
   }
+
+  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.gfeVersion, server.serverMajorVersion);
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);

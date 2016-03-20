@@ -172,7 +172,6 @@ static int load_server_status(PSERVER_DATA server) {
   char *stateText = NULL;
   char *heightText = NULL;
   char *serverCodecModeSupportText = NULL;
-  char *maxLumaPixelsHEVC = NULL;
 
   uuid_t uuid;
   char uuid_str[37];
@@ -215,14 +214,12 @@ static int load_server_status(PSERVER_DATA server) {
   if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
     goto cleanup;
 
+  if (xml_search(data->memory, data->size, "GfeVersion", &server->gfeVersion) != GS_OK)
+    goto cleanup;
+
   server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
   server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
-  server->maxLumaPixelsHEVC = maxLumaPixelsHEVC == NULL ? 0 : atol(maxLumaPixelsHEVC);
-  char *versionSep = strstr(versionText, ".");
-  if (versionSep != NULL) {
-    *versionSep = 0;
-  }
   server->serverMajorVersion = atoi(versionText);
   if (strstr(stateText, "_SERVER_AVAILABLE")) {
     // After GFE 2.8, current game remains set even after streaming
@@ -250,9 +247,6 @@ static int load_server_status(PSERVER_DATA server) {
 
   if (serverCodecModeSupportText != NULL)
     free(serverCodecModeSupportText);
-
-  if (maxLumaPixelsHEVC != NULL)
-    free(maxLumaPixelsHEVC);
 
   return ret;
 }

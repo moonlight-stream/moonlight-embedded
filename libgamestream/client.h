@@ -28,11 +28,11 @@
 typedef struct _SERVER_DATA {
   const char* address;
   char* gpuType;
+  char* gfeVersion;
   bool paired;
   bool supports4K;
   int currentGame;
   int serverMajorVersion;
-  long maxLumaPixelsHEVC;
 } SERVER_DATA, *PSERVER_DATA;
 
 int gs_init(PSERVER_DATA server, const char *keyDirectory);

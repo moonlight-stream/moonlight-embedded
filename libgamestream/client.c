@@ -485,11 +485,6 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
 
-  //Check support for H.265 video
-  //TODO: Find a better way to detect this
-  if (!(config->supportsHevc && server->maxLumaPixelsHEVC > 0 && server->gpuType != NULL && strstr(server->gpuType, "GTX 9")))
-    config->supportsHevc = VIDEO_FORMAT_H264;
-
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
   if (server->currentGame == 0) {

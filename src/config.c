@@ -207,12 +207,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'w':
     config->forcehw = true;
     break;
-<<<<<<< HEAD
   case 'x':
     config->stream.supportsHevc = true;
     break;
-=======
->>>>>>> 162cf3c6a2c19895501f800acbcb6e763c52031b
   case 1:
     if (config->action == NULL)
       config->action = value;

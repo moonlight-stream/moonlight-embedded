@@ -46,7 +46,7 @@ typedef struct _CONFIGURATION {
 } CONFIGURATION, *PCONFIGURATION;
 
 bool inputAdded;
-bool UseOMX;
+bool UseOMXAudio;
 const char* omx_device;
 
 bool config_file_parse(char* filename, PCONFIGURATION config);

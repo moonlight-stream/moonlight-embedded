@@ -307,8 +307,26 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
   return result;
 }
 
+int gs_unpair(PSERVER_DATA server) {
+  char url[4096];
+  uuid_t uuid;
+  char uuid_str[37];
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL)
+    return GS_OUT_OF_MEMORY;
+
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  sprintf(url, "http://%s:47989/unpair?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
+  ret = http_request(url, data);
+
+  http_free_data(data);
+  return ret;
+}
+
 int gs_pair(PSERVER_DATA server, char* pin) {
   int ret = GS_OK;
+  char* result = NULL;
   char url[4096];
   uuid_t uuid;
   char uuid_str[37];
@@ -337,6 +355,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   else if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
+  if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+    goto cleanup;
+
+  if (strcmp(result, "1") != 0) {
+    gs_error = "Pairing failed";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
   unsigned char salt_pin[20];
   unsigned char aes_key_hash[20];
   AES_KEY enc_key, dec_key;
@@ -359,7 +386,19 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
-  char *result;
+  free(result);
+  result = NULL;
+  if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+    goto cleanup;
+
+  if (strcmp(result, "1") != 0) {
+    gs_error = "Pairing failed";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
+  free(result);
+  result = NULL;
   if (xml_search(data->memory, data->size, "challengeresponse", &result) != GS_OK) {
     ret = GS_INVALID;
     goto cleanup;
@@ -370,7 +409,6 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   for (int count = 0; count < strlen(result); count += 2) {
     sscanf(&result[count], "%2hhx", &challenge_response_data_enc[count / 2]);
   }
-  free(result);
 
   for (int i = 0; i < 48; i += 16) {
     AES_decrypt(&challenge_response_data_enc[i], &challenge_response_data[i], &dec_key);
@@ -399,10 +437,25 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
+  free(result);
+  result = NULL;
+  if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+    goto cleanup;
+
+  if (strcmp(result, "1") != 0) {
+    gs_error = "Pairing failed";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
+  free(result);
+  result = NULL;
   if (xml_search(data->memory, data->size, "pairingsecret", &result) != GS_OK) {
     ret = GS_INVALID;
     goto cleanup;
   }
+
+  //TODO: verify pairingsecret
 
   unsigned char *signature = NULL;
   size_t s_len;
@@ -424,15 +477,40 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
+  free(result);
+  result = NULL;
+  if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+    goto cleanup;
+
+  if (strcmp(result, "1") != 0) {
+    gs_error = "Pairing failed";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
   sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->address, unique_id, uuid_str);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
+  free(result);
+  result = NULL;
+  if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+    goto cleanup;
+
+  if (strcmp(result, "1") != 0) {
+    gs_error = "Pairing failed";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
   server->paired = true;
 
   cleanup:
+  if (result != NULL)
+    free(result);
+
   http_free_data(data);
 
   return ret;
@@ -461,6 +539,7 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
 
 int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio) {
   uuid_t uuid;
+  char* result = NULL;
   char uuid_str[37];
 
   if (config->height >= 2160 && !server->supports4K)
@@ -488,9 +567,22 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   } else
     sprintf(url, "https://%s:47984/resume?uniqueid=%s&uuid=%s&rikey=%s&rikeyid=%d", server->address, unique_id, uuid_str, rikey_hex, rikeyid);
 
-  int ret = http_request(url, data);
-  if (ret == GS_OK)
+  if ((ret = http_request(url, data)) == GS_OK)
     server->currentGame = appId;
+  else
+    goto cleanup;
+
+  if ((ret = xml_search(data->memory, data->size, "cancel", &result)) != GS_OK)
+    goto cleanup;
+
+  if (atoi(result) == 0) {
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
+  cleanup:
+  if (result != NULL)
+    free(result);
 
   http_free_data(data);
   return ret;
@@ -500,6 +592,7 @@ int gs_quit_app(PSERVER_DATA server) {
   char url[4096];
   uuid_t uuid;
   char uuid_str[37];
+  char* result = NULL;
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
@@ -507,7 +600,20 @@ int gs_quit_app(PSERVER_DATA server) {
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
   sprintf(url, "https://%s:47984/cancel?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
-  int ret = http_request(url, data);
+  if ((ret = http_request(url, data)) != GS_OK)
+    goto cleanup;
+
+  if ((ret = xml_search(data->memory, data->size, "cancel", &result)) != GS_OK)
+    goto cleanup;
+
+  if (strcmp(result, "0") == 0) {
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
+  cleanup:
+  if (result != NULL)
+    free(result);
 
   http_free_data(data);
   return ret;

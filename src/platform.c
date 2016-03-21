@@ -29,6 +29,7 @@
 #include <dlfcn.h>
 
 typedef bool(*ImxInit)();
+bool UseOMXAudio = false;
 
 enum platform platform_check(char* name) {
   bool std = strcmp(name, "default") == 0;
@@ -90,7 +91,7 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
   #endif
   #ifdef HAVE_PI
   case PI:
-    if (UseOMX)
+    if (UseOMXAudio)
       return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
   #endif
   default:

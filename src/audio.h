@@ -32,5 +32,7 @@ extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
 bool audio_pulse_init();
 #endif
 #ifdef HAVE_PI
+extern bool UseOMXAudio;
+extern const char* omx_device;
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_omx;
 #endif

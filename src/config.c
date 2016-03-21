@@ -38,6 +38,7 @@
 
 bool inputAdded = false;
 static bool mapped = true;
+const char* omx_device = "hdmi";
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
@@ -63,7 +64,6 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
-  {"omx", required_argument, NULL, 'x'},
   {0, 0, 0, 0},
 };
 
@@ -167,7 +167,13 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->sops = false;
     break;
   case 'm':
-    audio_device = value;
+    if (strcmp(audio_device,"omxhdmi") == 0) {
+	  UseOMXAudio = true;
+      omx_device = "hdmi";
+	} else if (strcmp(audio_device, "omxlocal") == 0) {
+	  UseOMXAudio = true;
+	  omx_device = "local";
+	} else audio_device = value;
     break;
   case 'n':
     config->localaudio = true;
@@ -175,7 +181,6 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'o':
     if (!config_file_parse(value, config))
       exit(EXIT_FAILURE);
-
     break;
   case 'p':
     config->platform = value;
@@ -200,12 +205,6 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'w':
     config->forcehw = true;
-    break;
-  case 'x':
-  #ifdef HAVE_PI
-    UseOMX = true;
-    omx_device = value;
-  #endif
     break;
   case 1:
     if (config->action == NULL)
@@ -314,7 +313,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:wx:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

@@ -153,8 +153,8 @@ static void help() {
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
+  printf("\t device can also be omxhdmi or omxlocal for OMX Audio\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
-  printf("\t-omx <hdmi or local>\t\tUse OMX audio instead of ALSA or PULSE\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

@@ -177,7 +177,6 @@ static void omx_renderer_cleanup() {
     ilclient_disable_port_buffers(component, 100, NULL, NULL, NULL);
     ilclient_change_component_state(component, OMX_StateIdle);
     ilclient_change_component_state(component, OMX_StateLoaded);
-    ilclient_cleanup_component(component);
   }
 }
 
@@ -191,8 +190,7 @@ static void omx_renderer_decode_and_play_sample(char* data, int length) {
     buf->nFilledLen = decodeLen * sizeof(short) * channelCount;
     int r = OMX_EmptyThisBuffer(ilclient_get_handle(component), buf);
     if (r != OMX_ErrorNone) {
-    fprintf(stderr, "Empty buffer error %s\n",
-      err2str(r));
+    fprintf(stderr, "Empty buffer error\n");
     } else {
       printf("Opus error from decode: %d\n", decodeLen);
     }

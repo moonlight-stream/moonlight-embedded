@@ -21,7 +21,6 @@
 
 #include "platform.h"
 #include "audio.h"
-#include "config.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -30,7 +29,6 @@
 #include <dlfcn.h>
 
 typedef bool(*ImxInit)();
-bool UseOMXAudio = false;
 
 enum platform platform_check(char* name) {
   bool std = strcmp(name, "default") == 0;

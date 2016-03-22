@@ -186,7 +186,7 @@ static void omx_renderer_decode_and_play_sample(char* data, int length) {
 	buf = ilclient_get_input_buffer(component, 100, 1);
     buf->nOffset = 0;
     buf->nFlags = OMX_BUFFERFLAG_TIME_UNKNOWN;
-    memcpy(buf->pBuffer, pcmBuffer, length);
+    memcpy(buf->pBuffer, pcmBuffer, decodeLen * sizeof(short) * channelCount);
     buf->nFilledLen = decodeLen * sizeof(short) * channelCount;
     int r = OMX_EmptyThisBuffer(ilclient_get_handle(component), buf);
     if (r != OMX_ErrorNone) {

@@ -99,10 +99,15 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
   case SDL:
     return &audio_callbacks_sdl;
   #endif
+  #ifdef HAVE_PI
+  case PI:
+    if (UseOMXAudio)
+      return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
+  #endif
   default:
     #ifdef HAVE_PULSE
-    if (audio_pulse_init())
-      return &audio_callbacks_pulse;
+	if (audio_pulse_init())
+	  return &audio_callbacks_pulse;
     #endif
     return &audio_callbacks_alsa;
   }

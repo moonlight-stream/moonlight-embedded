@@ -38,6 +38,8 @@
 
 bool inputAdded = false;
 static bool mapped = true;
+const char* omx_device = "hdmi";
+bool UseOMXAudio = false;
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
@@ -167,7 +169,13 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->sops = false;
     break;
   case 'm':
-    audio_device = value;
+    if (strcmp(value, "omxhdmi") == 0) {
+	  UseOMXAudio = true;
+      omx_device = "hdmi";
+	} else if (strcmp(value, "omxlocal") == 0) {
+	  UseOMXAudio = true;
+	  omx_device = "local";
+	} else audio_device = value;
     break;
   case 'n':
     config->localaudio = true;
@@ -175,7 +183,6 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'o':
     if (!config_file_parse(value, config))
       exit(EXIT_FAILURE);
-
     break;
   case 'p':
     config->platform = value;

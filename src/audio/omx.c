@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,6 +130,9 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
   	return;
   }
   OMX_CONFIG_BRCMAUDIODESTINATIONTYPE arDest;
+
+  if (audio_device == NULL)
+    audio_device = "hdmi";
 
   if (audio_device && strlen(audio_device) < sizeof(arDest.sName)) {
     memset(&arDest, 0, sizeof(OMX_CONFIG_BRCMAUDIODESTINATIONTYPE));

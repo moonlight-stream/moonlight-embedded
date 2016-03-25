@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,6 +61,9 @@ static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
   snd_pcm_uframes_t period_size = FRAME_SIZE * opusConfig->channelCount * 2;
   snd_pcm_uframes_t buffer_size = 12 * period_size;
   unsigned int sampleRate = opusConfig->sampleRate;
+
+  if (audio_device == NULL)
+    audio_device = "sysdefault";
 
   /* Open PCM device for playback. */
   CHECK_RETURN(snd_pcm_open(&handle, audio_device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK))

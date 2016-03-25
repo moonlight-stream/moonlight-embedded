@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -152,7 +152,7 @@ static void help() {
   printf("\n I/O options\n\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
-  printf("\t-audio <device>\t\tUse <device> as audio output device (default sysdefault)\n");
+  printf("\t-audio <device>\t\tUse <device> as audio output device\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");

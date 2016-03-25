@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 
 bool inputAdded = false;
 static bool mapped = true;
+const char* audio_device = NULL;
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},

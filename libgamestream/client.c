@@ -308,6 +308,7 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
 }
 
 int gs_unpair(PSERVER_DATA server) {
+  int ret = GS_OK;
   char url[4096];
   uuid_t uuid;
   char uuid_str[37];
@@ -538,6 +539,7 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
 }
 
 int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio) {
+  int ret = GS_OK;
   uuid_t uuid;
   char* result = NULL;
   char uuid_str[37];
@@ -589,6 +591,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 }
 
 int gs_quit_app(PSERVER_DATA server) {
+  int ret = GS_OK;
   char url[4096];
   uuid_t uuid;
   char uuid_str[37];

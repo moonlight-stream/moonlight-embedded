@@ -366,11 +366,17 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   }
 
   unsigned char salt_pin[20];
-  unsigned char aes_key_hash[20];
+  unsigned char aes_key_hash[32];
   AES_KEY enc_key, dec_key;
   memcpy(salt_pin, salt_data, 16);
   memcpy(salt_pin+16, pin, 4);
-  SHA1(salt_pin, 20, aes_key_hash);
+
+  int hash_length = server->serverMajorVersion >= 7 ? 32 : 20;
+  if (server->serverMajorVersion >= 7)
+    SHA256(salt_pin, 20, aes_key_hash);
+  else
+    SHA1(salt_pin, 20, aes_key_hash);
+
   AES_set_encrypt_key((unsigned char *)aes_key_hash, 128, &enc_key);
   AES_set_decrypt_key((unsigned char *)aes_key_hash, 128, &dec_key);
 
@@ -422,10 +428,13 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   char challenge_response_hash[32];
   char challenge_response_hash_enc[32];
   char challenge_response_hex[65];
-  memcpy(challenge_response, challenge_response_data + 20, 16);
+  memcpy(challenge_response, challenge_response_data + hash_length, 16);
   memcpy(challenge_response + 16, cert->signature->data, 256);
   memcpy(challenge_response + 16 + 256, client_secret_data, 16);
-  SHA1(challenge_response, 16 + 256 + 16, challenge_response_hash);
+  if (server->serverMajorVersion >= 7)
+    SHA256(challenge_response, 16 + 256 + 16, challenge_response_hash);
+  else
+    SHA1(challenge_response, 16 + 256 + 16, challenge_response_hash);
 
   for (int i = 0; i < 32; i += 16) {
     AES_encrypt(&challenge_response_hash[i], &challenge_response_hash_enc[i], &enc_key);

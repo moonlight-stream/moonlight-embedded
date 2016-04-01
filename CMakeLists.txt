@@ -41,7 +41,7 @@ else()
   set(SOFTWARE_FOUND FALSE)
 endif()
 
-SET(MOONLIGHT_COMMON_INCLUDE_DIR ./third_party/moonlight-common-c)
+SET(MOONLIGHT_COMMON_INCLUDE_DIR ./third_party/moonlight-common-c/src)
 SET(GAMESTREAM_INCLUDE_DIR ./libgamestream)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)

@@ -22,7 +22,7 @@
 #include "sdl.h"
 #include "input/sdlinput.h"
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 static bool done;
 static int fullscreen_flags;

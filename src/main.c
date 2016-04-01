@@ -33,7 +33,7 @@
 #include "input/cec.h"
 #include "input/sdlinput.h"
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <stdio.h>
 #include <stdlib.h>

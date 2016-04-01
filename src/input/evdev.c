@@ -24,7 +24,7 @@
 #include "mapping.h"
 
 #include "libevdev/libevdev.h"
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <libudev.h>
 #include <stdio.h>

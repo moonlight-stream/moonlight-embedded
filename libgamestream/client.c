@@ -23,7 +23,7 @@
 #include "client.h"
 #include "errors.h"
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <sys/stat.h>
 #include <stdbool.h>

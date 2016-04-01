@@ -22,7 +22,7 @@
 #include "sdlinput.h"
 #include "../sdl.h"
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY SDLK_q

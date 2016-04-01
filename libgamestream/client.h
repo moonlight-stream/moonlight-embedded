@@ -25,6 +25,9 @@
 
 #include <stdbool.h>
 
+#define MIN_SUPPORTED_GFE_VERSION 3
+#define MAX_SUPPORTED_GFE_VERSION 7
+
 typedef struct _SERVER_DATA {
   const char* address;
   char* gpuType;

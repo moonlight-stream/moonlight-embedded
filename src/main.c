@@ -226,6 +226,9 @@ int main(int argc, char* argv[]) {
   } else if (ret == GS_INVALID) {
     fprintf(stderr, "Invalid data received from server: %s\n", config.address, gs_error);
     exit(-1);
+  } else if (ret == GS_UNSUPPORTED_VERSION) {
+    fprintf(stderr, "Unsupported version: %s\n", gs_error);
+    exit(-1);
   } else if (ret != GS_OK) {
     fprintf(stderr, "Can't connect to server %s\n", config.address);
     exit(-1);

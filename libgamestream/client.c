@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -538,6 +538,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   server->paired = true;
 
   cleanup:
+  if (ret != GS_OK)
+    gs_unpair(server);
+  
   if (result != NULL)
     free(result);
 

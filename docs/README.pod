@@ -19,6 +19,10 @@ Create a mapping file for a gamepad.
 
 Pair this computer with the host.
 
+=item B<unpair>
+
+Unpair this computer with the host.
+
 =item B<stream>
 
 Stream game from host to this computer.

@@ -121,6 +121,7 @@ static void help() {
   printf("\n Actions\n\n");
   printf("\tmap\t\t\tCreate mapping file for gamepad\n");
   printf("\tpair\t\t\tPair device with computer\n");
+  printf("\tunpair\t\t\tUnpair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
   printf("\tlist\t\t\tList available games and applications\n");
   printf("\tquit\t\t\tQuit the application or game being streamed\n");
@@ -263,6 +264,12 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "Failed to pair to server: %s\n", gs_error);
     } else {
       printf("Succesfully paired\n");
+    }
+  } else if (strcmp("unpair", config.action) == 0) {
+    if (gs_unpair(&server) != GS_OK) {
+      fprintf(stderr, "Failed to unpair to server: %s\n", gs_error);
+    } else {
+      printf("Succesfully unpaired\n");
     }
   } else if (strcmp("quit", config.action) == 0) {
     pair_check(&server);

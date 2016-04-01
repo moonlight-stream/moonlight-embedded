@@ -327,6 +327,34 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
   return result;
 }
 
+static bool verifySignature(const char *data, int dataLength, const char *signature, int signatureLength, const char *cert) {
+    X509* x509;
+    BIO* bio = BIO_new(BIO_s_mem());
+    BIO_puts(bio, cert);
+    x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+    
+    BIO_free(bio);
+    
+    if (!x509) {
+        printf("Invalid certificate\n");
+        return false;
+    }
+    
+    EVP_PKEY* pubKey = X509_get_pubkey(x509);
+    EVP_MD_CTX *mdctx = NULL;
+    mdctx = EVP_MD_CTX_create();
+    EVP_DigestVerifyInit(mdctx, NULL, EVP_sha256(), NULL, pubKey);
+    EVP_DigestVerifyUpdate(mdctx, data, dataLength);
+    int result = EVP_DigestVerifyFinal(mdctx, signature, signatureLength);
+    
+    X509_free(x509);
+    EVP_PKEY_free(pubKey);
+    EVP_MD_CTX_destroy(mdctx);
+    printf("%d/%d = %d\n", dataLength, signatureLength, result);
+    
+    return result > 0;
+}
+
 int gs_unpair(PSERVER_DATA server) {
   int ret = GS_OK;
   char url[4096];
@@ -384,6 +412,24 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     ret = GS_FAILED;
     goto cleanup;
   }
+
+  free(result);
+  result = NULL;
+  if ((ret = xml_search(data->memory, data->size, "plaincert", &result)) != GS_OK)
+    goto cleanup;
+
+  if (strlen(result)/2 > 8191) {
+    gs_error = "Server certificate too big";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
+  char plaincert[8192];
+  for (int count = 0; count < strlen(result); count += 2) {
+    sscanf(&result[count], "%2hhx", &plaincert[count / 2]);
+  }
+  plaincert[strlen(result)/2] = '\0';
+  printf("%d / %d\n", strlen(result)/2, strlen(plaincert));
 
   unsigned char salt_pin[20];
   unsigned char aes_key_hash[32];
@@ -485,7 +531,16 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
 
-  //TODO: verify pairingsecret
+  char pairing_secret[16 + 256];
+  for (int count = 0; count < strlen(result); count += 2) {
+    sscanf(&result[count], "%2hhx", &pairing_secret[count / 2]);
+  }
+
+  if (!verifySignature(pairing_secret, 16, pairing_secret+16, 256, plaincert)) {
+    gs_error = "MITM attack detected";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
 
   unsigned char *signature = NULL;
   size_t s_len;

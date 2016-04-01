@@ -166,87 +166,107 @@ static int load_cert(const char* keyDirectory) {
 }
 
 static int load_server_status(PSERVER_DATA server) {
-  char *pairedText = NULL;
-  char *currentGameText = NULL;
-  char *versionText = NULL;
-  char *stateText = NULL;
-  char *heightText = NULL;
-  char *serverCodecModeSupportText = NULL;
 
   uuid_t uuid;
   char uuid_str[37];
-  
-  int ret = GS_INVALID;
+
+  int ret;
   char url[4096];
-  uuid_generate_random(uuid);
-  uuid_unparse(uuid, uuid_str);
-  sprintf(url, "https://%s:47984/serverinfo?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
+  int i;
 
-  PHTTP_DATA data = http_create_data();
-  if (data == NULL) {
-    ret = GS_OUT_OF_MEMORY;
-    goto cleanup;
-  }
-  if (http_request(url, data) != GS_OK) {
-    ret = GS_IO_ERROR;
-    goto cleanup;
-  }
+  i = 0;
+  do {
+    char *pairedText = NULL;
+    char *currentGameText = NULL;
+    char *versionText = NULL;
+    char *stateText = NULL;
+    char *heightText = NULL;
+    char *serverCodecModeSupportText = NULL;
 
-  if (xml_search(data->memory, data->size, "currentgame", &currentGameText) != GS_OK) {
-    goto cleanup;
-  }
+    ret = GS_INVALID;
 
-  if (xml_search(data->memory, data->size, "PairStatus", &pairedText) != GS_OK)
-    goto cleanup;
+    uuid_generate_random(uuid);
+    uuid_unparse(uuid, uuid_str);
 
-  if (xml_search(data->memory, data->size, "appversion", &versionText) != GS_OK)
-    goto cleanup;
+    // Modern GFE versions don't allow serverinfo to be fetched over HTTPS if the client
+    // is not already paired. Since we can't pair without knowing the server version, we
+    // make another request over HTTP if the HTTPS request fails. We can't just use HTTP
+    // for everything because it doesn't accurately tell us if we're paired.
+    sprintf(url, "%s://%s:%d/serverinfo?uniqueid=%s&uuid=%s",
+      i == 0 ? "https" : "http", server->address, i == 0 ? 47984 : 47989, unique_id, uuid_str);
 
-  if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
-    goto cleanup;
+    PHTTP_DATA data = http_create_data();
+    if (data == NULL) {
+      ret = GS_OUT_OF_MEMORY;
+      goto cleanup;
+    }
+    if (http_request(url, data) != GS_OK) {
+      ret = GS_IO_ERROR;
+      goto cleanup;
+    }
 
-  if (xml_search(data->memory, data->size, "Height", &heightText) != GS_OK)
-    goto cleanup;
+    if (xml_search(data->memory, data->size, "currentgame", &currentGameText) != GS_OK) {
+      goto cleanup;
+    }
 
-  if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
-    goto cleanup;
+    if (xml_search(data->memory, data->size, "PairStatus", &pairedText) != GS_OK)
+      goto cleanup;
 
-  if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
-    goto cleanup;
+    if (xml_search(data->memory, data->size, "appversion", &versionText) != GS_OK)
+      goto cleanup;
 
-  if (xml_search(data->memory, data->size, "GfeVersion", &server->gfeVersion) != GS_OK)
-    goto cleanup;
+    if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
+      goto cleanup;
 
-  server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
-  server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
-  server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
-  server->serverMajorVersion = atoi(versionText);
-  if (strstr(stateText, "_SERVER_AVAILABLE")) {
-    // After GFE 2.8, current game remains set even after streaming
-    // has ended. We emulate the old behavior by forcing it to zero
-    // if streaming is not active.
-    server->currentGame = 0;
-  }
-  ret = GS_OK;
+    if (xml_search(data->memory, data->size, "Height", &heightText) != GS_OK)
+      goto cleanup;
 
-  cleanup:
-  if (data != NULL)
-    http_free_data(data);
+    if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
+      goto cleanup;
 
-  if (pairedText != NULL)
-    free(pairedText);
+    if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
+      goto cleanup;
 
-  if (currentGameText != NULL)
-    free(currentGameText);
+    if (xml_search(data->memory, data->size, "GfeVersion", &server->gfeVersion) != GS_OK)
+      goto cleanup;
 
-  if (versionText != NULL)
-    free(versionText);
+    // These fields are present on all version of GFE that this client supports
+    if (!strlen(currentGameText) || !strlen(pairedText) || !strlen(versionText) || !strlen(stateText))
+      goto cleanup;
 
-  if (heightText != NULL)
-    free(heightText);
+    server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
+    server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
+    server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
+    server->serverMajorVersion = atoi(versionText);
+    if (strstr(stateText, "_SERVER_AVAILABLE")) {
+      // After GFE 2.8, current game remains set even after streaming
+      // has ended. We emulate the old behavior by forcing it to zero
+      // if streaming is not active.
+      server->currentGame = 0;
+    }
+    ret = GS_OK;
 
-  if (serverCodecModeSupportText != NULL)
-    free(serverCodecModeSupportText);
+    cleanup:
+    if (data != NULL)
+      http_free_data(data);
+
+    if (pairedText != NULL)
+      free(pairedText);
+
+    if (currentGameText != NULL)
+      free(currentGameText);
+
+    if (versionText != NULL)
+      free(versionText);
+
+    if (heightText != NULL)
+      free(heightText);
+
+    if (serverCodecModeSupportText != NULL)
+      free(serverCodecModeSupportText);
+
+    i++;
+  } while (ret != GS_OK && i < 2);
 
   return ret;
 }
@@ -561,7 +581,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 
   srand(time(NULL));
   char url[4096];
-  u_int32_t rikeyid = 1;
+  u_int32_t rikeyid = 0;
   char rikey_hex[33];
   bytes_to_hex(config->remoteInputAesKey, rikey_hex, 16);
 
@@ -583,10 +603,10 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   else
     goto cleanup;
 
-  if ((ret = xml_search(data->memory, data->size, "cancel", &result)) != GS_OK)
+  if ((ret = xml_search(data->memory, data->size, "gamesession", &result)) != GS_OK)
     goto cleanup;
 
-  if (atoi(result) == 0) {
+  if (!strcmp(result, "0")) {
     ret = GS_FAILED;
     goto cleanup;
   }

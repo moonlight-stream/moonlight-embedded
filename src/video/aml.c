@@ -23,14 +23,51 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <amcodec/codec.h>
 
+typedef enum {
+  MODEL_UNKNOWN = 0,
+  MODEL_C1,
+  MODEL_C2
+} PlatformModel;
+
 static codec_para_t codecParam = { 0 };
-const size_t EXTERNAL_PTS = (1);
-const size_t SYNC_OUTSIDE = (2);
+static PlatformModel model;
+
+const size_t EXTERNAL_PTS = 0x01;
+const size_t SYNC_OUTSIDE = 0x02;
+const size_t USE_IDR_FRAMERATE = 0x04;
+const size_t UCODE_IP_ONLY_PARAM = 0x08;
+const size_t MAX_REFER_BUF = 0x10;
+const size_t ERROR_RECOVERY_MODE_IN = 0x20;
+
+PlatformModel DetectModel() {
+  PlatformModel result = MODEL_UNKNOWN;
+
+  FILE* cpuinfo = fopen("/proc/cpuinfo", "r");
+  if(cpuinfo != NULL) {
+    char line[256];
+    while(fgets(line, 256, cpuinfo)) {
+      if(strstr(line, "ODROIDC") != 0) {
+        result = MODEL_C1;
+        break;
+      }
+
+      if(strstr(line, "ODROID-C2") != 0) {
+        result = MODEL_C2;
+        break;
+      }
+    }
+
+  fclose(cpuinfo);
+  }
+
+  return result;
+}
 
 int osd_blank(char *path,int cmd) {
   int fd;
@@ -64,31 +101,58 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   fprintf(stderr, "\nvideoFormat=%d nwidth=%d, height=%d, redrawRate=%d, context=%p, drFlags=%x\n",
     videoFormat, width, height, redrawRate, context, drFlags);
 
+  model = DetectModel();
+
+  printf("Detected Model: ");
+  switch(model) {
+    case MODEL_UNKNOWN:
+      printf("Unknown\n");
+      break;
+
+    case MODEL_C1:
+      printf("ODROID-C1\n");
+      break;
+
+    case MODEL_C2:
+      printf("ODROID-C2\n");
+      break;
+
+    default:
+      printf("error\n");
+      exit(1);
+  }
+
   init_display();
 
   codecParam.stream_type = STREAM_TYPE_ES_VIDEO;
   codecParam.has_video = 1;
   codecParam.noblock = 0;
+  codecParam.am_sysinfo.param = 0;
   
   switch (videoFormat) {
-    case VIDEO_FORMAT_H264:	// 1
+    case VIDEO_FORMAT_H264:
       if (width > 1920 || height > 1080) {
         codecParam.video_type = VFORMAT_H264_4K2K;
-        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264_4K2K; ///< video format, such as H264, MPEG2...
+        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264_4K2K;
       } else {
         codecParam.video_type = VFORMAT_H264;
-        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264;  ///< video format, such as H264, MPEG2...
+        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264;
+
+        // Workaround for decoding special case of C1, 1080p, H264
+        if (model == MODEL_C1 && width == 1920 && height == 1080) {
+          codecParam.am_sysinfo.param = (void*)UCODE_IP_ONLY_PARAM;
+        }
       }
 
       fprintf(stdout, "Decoding H264 video.\n");
-	  break;
-    case VIDEO_FORMAT_H265: // 2
+      break;
+    case VIDEO_FORMAT_H265:
 
       codecParam.video_type = VFORMAT_HEVC;
-      codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;  ///< video format, such as H264, MPEG2...
+      codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;
 
       fprintf(stdout, "Decoding HEVC video.\n");
-	  break;
+      break;
     default:
       printf("Unsupported video format.\n");
       exit(1);
@@ -96,8 +160,8 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
 
   codecParam.am_sysinfo.width = width;   //< video source width
   codecParam.am_sysinfo.height = height;  //< video source height
-  codecParam.am_sysinfo.rate = (96000 / (redrawRate));    //< video source frame duration
-  codecParam.am_sysinfo.param = (void *)(EXTERNAL_PTS | SYNC_OUTSIDE);   //< other parameters for video decoder
+  codecParam.am_sysinfo.rate = (96000 / redrawRate);    //< video source frame duration
+  codecParam.am_sysinfo.param = (void*)((size_t)codecParam.am_sysinfo.param | SYNC_OUTSIDE);    //< other parameters for video decoder
  
   int api = codec_init(&codecParam);
   fprintf(stdout, "codec_init=%x\n", api);

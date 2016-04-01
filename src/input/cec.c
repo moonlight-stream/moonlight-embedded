@@ -19,7 +19,7 @@
 
 #ifdef HAVE_LIBCEC
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <ceccloader.h>
 

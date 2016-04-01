@@ -17,6 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;

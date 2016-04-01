@@ -21,7 +21,7 @@
 
 #include "xml.h"
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <stdbool.h>
 

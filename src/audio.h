@@ -19,7 +19,7 @@
 
 #include <stdbool.h>
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 extern const char* audio_device;
 

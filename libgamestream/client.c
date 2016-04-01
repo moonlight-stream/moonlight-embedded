@@ -336,7 +336,6 @@ static bool verifySignature(const char *data, int dataLength, const char *signat
     BIO_free(bio);
     
     if (!x509) {
-        printf("Invalid certificate\n");
         return false;
     }
     
@@ -350,7 +349,6 @@ static bool verifySignature(const char *data, int dataLength, const char *signat
     X509_free(x509);
     EVP_PKEY_free(pubKey);
     EVP_MD_CTX_destroy(mdctx);
-    printf("%d/%d = %d\n", dataLength, signatureLength, result);
     
     return result > 0;
 }

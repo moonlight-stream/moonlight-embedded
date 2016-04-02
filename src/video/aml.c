@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  * Copyright (C) 2016 OtherCrashOverride, Daniel Mehrwald
  *
  * Moonlight is free software; you can redistribute it and/or modify
@@ -29,88 +29,70 @@
 #include <amcodec/codec.h>
 
 static codec_para_t codecParam = { 0 };
-const size_t EXTERNAL_PTS = (1);
-const size_t SYNC_OUTSIDE = (2);
+static const size_t SYNC_OUTSIDE = (2);
 
-int osd_blank(char *path,int cmd) {
+static int osd_blank(char *path,int cmd) {
   int fd;
-  char  bcmd[16];
+  char bcmd[16];
 
   fd = open(path, O_CREAT|O_RDWR | O_TRUNC, 0644);
 
   if(fd>=0) {
     sprintf(bcmd,"%d",cmd);
-    if (write(fd,bcmd,strlen(bcmd)) < 0) {
-      printf("osd_blank error during write.\n");
+    int ret = write(fd,bcmd,strlen(bcmd));
+    if (ret < 0) {
+      printf("osd_blank error during write: %x\n", ret);
     }
     close(fd);
     return 0;
   }
 
   return -1;
-}  
-
-void init_display() {
-  osd_blank("/sys/class/graphics/fb0/blank",1);
-  osd_blank("/sys/class/graphics/fb1/blank",0);
-}
-
-void restore_display() {
-  osd_blank("/sys/class/graphics/fb0/blank",0);
-  osd_blank("/sys/class/graphics/fb1/blank",0);
 }
 
 void aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  fprintf(stderr, "\nvideoFormat=%d nwidth=%d, height=%d, redrawRate=%d, context=%p, drFlags=%x\n",
-    videoFormat, width, height, redrawRate, context, drFlags);
-
-  init_display();
+  osd_blank("/sys/class/graphics/fb0/blank",1);
+  osd_blank("/sys/class/graphics/fb1/blank",0);
 
   codecParam.stream_type = STREAM_TYPE_ES_VIDEO;
   codecParam.has_video = 1;
   codecParam.noblock = 0;
-  
+
   switch (videoFormat) {
-    case VIDEO_FORMAT_H264:	// 1
+    case VIDEO_FORMAT_H264:
       if (width > 1920 || height > 1080) {
         codecParam.video_type = VFORMAT_H264_4K2K;
-        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264_4K2K; ///< video format, such as H264, MPEG2...
+        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264_4K2K;
       } else {
         codecParam.video_type = VFORMAT_H264;
-        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264;  ///< video format, such as H264, MPEG2...
+        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264;
       }
-
-      fprintf(stdout, "Decoding H264 video.\n");
-	  break;
-    case VIDEO_FORMAT_H265: // 2
-
+      break;
+    case VIDEO_FORMAT_H265:
       codecParam.video_type = VFORMAT_HEVC;
-      codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;  ///< video format, such as H264, MPEG2...
-
-      fprintf(stdout, "Decoding HEVC video.\n");
-	  break;
+      codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;
+      break;
     default:
-      printf("Unsupported video format.\n");
+      printf("Video format not supported\n");
       exit(1);
   }
 
-  codecParam.am_sysinfo.width = width;   //< video source width
-  codecParam.am_sysinfo.height = height;  //< video source height
-  codecParam.am_sysinfo.rate = (96000 / (redrawRate));    //< video source frame duration
-  codecParam.am_sysinfo.param = (void *)(EXTERNAL_PTS | SYNC_OUTSIDE);   //< other parameters for video decoder
- 
-  int api = codec_init(&codecParam);
-  fprintf(stdout, "codec_init=%x\n", api);
+  codecParam.am_sysinfo.width = width;
+  codecParam.am_sysinfo.height = height;
+  codecParam.am_sysinfo.rate = 96000 / redrawRate;
+  codecParam.am_sysinfo.param = (void *)(SYNC_OUTSIDE);
 
+  int api = codec_init(&codecParam);
   if (api != 0) {
-    fprintf(stderr, "codec_init failed.\n");
+    fprintf(stderr, "codec_init error: %x\n", api);
     exit(1);
   }
 }
 
 void aml_cleanup() {
   int api = codec_close(&codecParam);
-  restore_display();
+  osd_blank("/sys/class/graphics/fb0/blank",0);
+  osd_blank("/sys/class/graphics/fb1/blank",0);
 }
 
 int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {

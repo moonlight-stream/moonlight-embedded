@@ -181,6 +181,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Platform '%s' not found\n", config.platform);
     exit(-1);
   }
+  config.stream.supportsHevc = config.stream.supportsHevc || platform_supports_hevc(system);
   
   if (strcmp("map", config.action) == 0) {
     if (config.address == NULL) {

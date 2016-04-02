@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 #include "platform.h"
 #include "audio.h"
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -111,4 +110,12 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
     return &audio_callbacks_alsa;
   }
   return NULL;
+}
+
+bool platform_supports_hevc(enum platform system) {
+  switch (system) {
+  case AML:
+    return true;
+  }
+  return false;
 }

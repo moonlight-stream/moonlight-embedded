@@ -1,8 +1,8 @@
 Compile using older version (3.0) of CMake
-Index: moonlight-embedded/CMakeLists.txt
+Index: moonlight-embedded-debian/CMakeLists.txt
 ===================================================================
---- moonlight-embedded.orig/CMakeLists.txt
-+++ moonlight-embedded/CMakeLists.txt
+--- moonlight-embedded-debian.orig/CMakeLists.txt
++++ moonlight-embedded-debian/CMakeLists.txt
 @@ -1,5 +1,5 @@
  project(moonlight-embedded C)
 -cmake_minimum_required(VERSION 3.1)
@@ -10,7 +10,7 @@ Index: moonlight-embedded/CMakeLists.txt
  SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
  include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
  
-@@ -81,7 +81,7 @@ add_subdirectory(libgamestream)
+@@ -82,7 +82,7 @@ add_subdirectory(libgamestream)
  
  add_executable(moonlight ${SRC_LIST})
  target_link_libraries(moonlight gamestream)
@@ -19,10 +19,10 @@ Index: moonlight-embedded/CMakeLists.txt
  
  if (CEC_FOUND)
    list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
-Index: moonlight-embedded/libgamestream/CMakeLists.txt
+Index: moonlight-embedded-debian/libgamestream/CMakeLists.txt
 ===================================================================
---- moonlight-embedded.orig/libgamestream/CMakeLists.txt
-+++ moonlight-embedded/libgamestream/CMakeLists.txt
+--- moonlight-embedded-debian.orig/libgamestream/CMakeLists.txt
++++ moonlight-embedded-debian/libgamestream/CMakeLists.txt
 @@ -15,7 +15,7 @@ aux_source_directory(../third_party/moon
  add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
  

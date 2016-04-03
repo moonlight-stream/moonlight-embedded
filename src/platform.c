@@ -100,7 +100,8 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
   #endif
   #ifdef HAVE_PI
   case PI:
-    return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
+    if (audio_device == NULL || strcmp(audio_device, "local") == 0 || strcmp(audio_device, "hdmi") == 0)
+      return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
   #endif
   default:
     #ifdef HAVE_PULSE

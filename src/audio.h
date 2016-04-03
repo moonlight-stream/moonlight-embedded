@@ -19,7 +19,7 @@
 
 #include <stdbool.h>
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 extern const char* audio_device;
 
@@ -30,4 +30,7 @@ extern AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl;
 #ifdef HAVE_PULSE
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
 bool audio_pulse_init();
+#endif
+#ifdef HAVE_PI
+extern AUDIO_RENDERER_CALLBACKS audio_callbacks_omx;
 #endif

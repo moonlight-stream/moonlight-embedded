@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -83,7 +83,12 @@ bool video_imx_init() {
   return vpu_Init(NULL) == RETCODE_SUCCESS;
 }
 
-static void decoder_renderer_setup(int width, int height, int redrawRate, void* context, int drFlags) {
+static void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+  if (videoFormat != VIDEO_FORMAT_H264) {
+    fprintf(stderr, "Video format not supported\n");
+    exit(1);
+  }
+
   struct mxcfb_gbl_alpha alpha;
 
   dbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;

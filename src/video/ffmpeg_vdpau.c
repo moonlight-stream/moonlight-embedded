@@ -64,23 +64,22 @@ struct vdpau_render_state* vdp_get_free_render_state() {
   return render_state;
 }
 
-static int vdp_get_buffer(AVCodecContext* context, AVFrame* frame) {
+static void vdp_release_buffer(void* opaque, uint8_t *data) {
+  struct vdpau_render_state *render_state = (struct vdpau_render_state *) data;
+  render_state->state = 0;
+}
+
+static int vdp_get_buffer(AVCodecContext* context, AVFrame* frame, int flags) {
   struct vdpau_render_state* pRenderState = vdp_get_free_render_state();
   frame->data[0] = (uint8_t*) pRenderState;
-  frame->type = FF_BUFFER_TYPE_USER;
+  frame->buf[0] = av_buffer_create(frame->data[0], 0, vdp_release_buffer, NULL, 0);
 
   pRenderState->state |= FF_VDPAU_STATE_USED_FOR_RENDER;
   return 0;
 }
 
-static void vdp_release_buffer(AVCodecContext* context, AVFrame* frame) {
-  struct vdpau_render_state *render_state = (struct vdpau_render_state *)frame->data[0];
-  render_state->state = 0;
-  frame->data[0] = 0;
-}
-
 static enum AVPixelFormat vdp_get_format(AVCodecContext* context, const enum AVPixelFormat* pixel_format) {
-  return PIX_FMT_VDPAU_H264;
+  return AV_PIX_FMT_VDPAU_H264;
 }
 
 static void vdp_draw_horiz_band(struct AVCodecContext* context, const AVFrame* frame, int offset[4], int y, int type, int height) {
@@ -108,8 +107,7 @@ int vdpau_init(AVCodecContext* decoder_ctx, int width, int height) {
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_DECODER_CREATE, (void**)&vdp_decoder_create);
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_VIDEO_MIXER_CREATE, (void**)&vdp_video_mixer_create);
 
-  decoder_ctx->get_buffer = vdp_get_buffer;
-  decoder_ctx->release_buffer = vdp_release_buffer;
+  decoder_ctx->get_buffer2 = vdp_get_buffer;
   decoder_ctx->draw_horiz_band = vdp_draw_horiz_band;
   decoder_ctx->get_format = vdp_get_format;
   decoder_ctx->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
@@ -119,7 +117,7 @@ int vdpau_init(AVCodecContext* decoder_ctx, int width, int height) {
     printf("Couldn't allocate frame\n");
     return -1;
   }
-  cpu_frame->format = PIX_FMT_YUV420P;
+  cpu_frame->format = AV_PIX_FMT_YUV420P;
   cpu_frame->width = width;
   cpu_frame->height = height;
   av_frame_get_buffer(cpu_frame, 32);

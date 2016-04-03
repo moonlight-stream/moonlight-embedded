@@ -34,7 +34,7 @@
 // Uses hardware acceleration
 #define HARDWARE_ACCELERATION 0x40
 
-int ffmpeg_init(int width, int height, int perf_lvl, int thread_count);
+int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int thread_count);
 void ffmpeg_destroy(void);
 
 int ffmpeg_draw_frame(AVFrame *pict);

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #include "input/cec.h"
 #include "input/sdlinput.h"
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -121,6 +121,7 @@ static void help() {
   printf("\n Actions\n\n");
   printf("\tmap\t\t\tCreate mapping file for gamepad\n");
   printf("\tpair\t\t\tPair device with computer\n");
+  printf("\tunpair\t\t\tUnpair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
   printf("\tlist\t\t\tList available games and applications\n");
   printf("\tquit\t\t\tQuit the application or game being streamed\n");
@@ -137,6 +138,7 @@ static void help() {
   printf("\t-60fps\t\t\tUse 60fps [default]\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
+  printf("\t-forcehevc\t\tUse high efficiency video decoding (HEVC)\n");
   printf("\t-remote\t\t\tEnable remote optimizations\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
@@ -151,7 +153,7 @@ static void help() {
   printf("\n I/O options\n\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
-  printf("\t-audio <device>\t\tUse <device> as ALSA audio output device (default sysdefault)\n");
+  printf("\t-audio <device>\t\tUse <device> as audio output device\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
@@ -179,6 +181,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Platform '%s' not found\n", config.platform);
     exit(-1);
   }
+  config.stream.supportsHevc = config.stream.supportsHevc || platform_supports_hevc(system);
   
   if (strcmp("map", config.action) == 0) {
     if (config.address == NULL) {
@@ -200,6 +203,7 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
     config.address[0] = 0;
+    printf("Searching for server...\n");
     gs_discover_server(config.address);
     if (config.address[0] == 0) {
       fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
@@ -223,10 +227,17 @@ int main(int argc, char* argv[]) {
   } else if (ret == GS_INVALID) {
     fprintf(stderr, "Invalid data received from server: %s\n", config.address, gs_error);
     exit(-1);
+  } else if (ret == GS_UNSUPPORTED_VERSION) {
+    if (!config.unsupported_version) {
+      fprintf(stderr, "Unsupported version: %s\n", gs_error);
+      exit(-1);
+    }
   } else if (ret != GS_OK) {
     fprintf(stderr, "Can't connect to server %s\n", config.address);
     exit(-1);
   }
+
+  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.gfeVersion, server.serverMajorVersion);
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);
@@ -259,6 +270,12 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "Failed to pair to server: %s\n", gs_error);
     } else {
       printf("Succesfully paired\n");
+    }
+  } else if (strcmp("unpair", config.action) == 0) {
+    if (gs_unpair(&server) != GS_OK) {
+      fprintf(stderr, "Failed to unpair to server: %s\n", gs_error);
+    } else {
+      printf("Succesfully unpaired\n");
     }
   } else if (strcmp("quit", config.action) == 0) {
     pair_check(&server);

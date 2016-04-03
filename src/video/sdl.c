@@ -21,7 +21,7 @@
 #include "../sdl.h"
 #include "ffmpeg.h"
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <SDL.h>
 #include <SDL_thread.h>
@@ -32,9 +32,12 @@
 
 static char* ffmpeg_buffer;
 
-static void sdl_setup(int width, int height, int redrawRate, void* context, int drFlags) {
+static void sdl_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
-  if (ffmpeg_init(width, height, avc_flags, 2) < 0) {
+  if (drFlags & FORCE_HARDWARE_ACCELERATION)
+    avc_flags |= HARDWARE_ACCELERATION;
+
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     exit(1);
   }

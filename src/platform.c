@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,9 @@
 #include "platform.h"
 #include "audio.h"
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <dlfcn.h>
 
 typedef bool(*ImxInit)();
@@ -46,6 +46,13 @@ enum platform platform_check(char* name) {
     void *handle = dlopen("libmoonlight-pi.so", RTLD_NOW | RTLD_GLOBAL);
     if (handle != NULL && dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
       return PI;
+  }
+  #endif
+  #ifdef HAVE_AML
+  if (std || strcmp(name, "aml") == 0) {
+    void *handle = dlopen("libmoonlight-aml.so", RTLD_NOW | RTLD_GLOBAL);
+    if (handle != NULL && access("/dev/amvideo", F_OK) != -1)
+      return AML;
   }
   #endif
   #ifdef HAVE_SDL
@@ -73,6 +80,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   case PI:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_pi");
   #endif
+  #ifdef HAVE_AML
+  case AML:
+    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_aml");
+  #endif
   #ifdef HAVE_FAKE
   case FAKE:
     return &decoder_callbacks_fake;
@@ -87,6 +98,11 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
   case SDL:
     return &audio_callbacks_sdl;
   #endif
+  #ifdef HAVE_PI
+  case PI:
+    if (audio_device == NULL || strcmp(audio_device, "local") == 0 || strcmp(audio_device, "hdmi") == 0)
+      return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
+  #endif
   default:
     #ifdef HAVE_PULSE
     if (audio_pulse_init())
@@ -95,4 +111,12 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
     return &audio_callbacks_alsa;
   }
   return NULL;
+}
+
+bool platform_supports_hevc(enum platform system) {
+  switch (system) {
+  case AML:
+    return true;
+  }
+  return false;
 }

@@ -2,7 +2,7 @@ Source: moonlight-embedded
 Section: games
 Priority: extra
 Maintainer: Iwan Timmer <irtimmer@gmail.com>
-Build-Depends: debhelper (>= 8.0.0), quilt, cmake, uuid-dev, libopus-dev, libexpat1-dev, libasound2-dev, libudev-dev, libavahi-client-dev, libssl-dev, libcurl4-openssl-dev, libevdev-dev, libraspberrypi-dev | rbp-userland-dev-osmc
+Build-Depends: debhelper (>= 8.0.0), quilt, cmake, uuid-dev, libenet-dev, libopus-dev, libexpat1-dev, libasound2-dev, libudev-dev, libavahi-client-dev, libssl-dev, libcurl4-openssl-dev, libevdev-dev, libraspberrypi-dev | rbp-userland-dev-osmc
 Standards-Version: 3.9.3
 Homepage: https://github.com/irtimmer/moonlight-embedded
 

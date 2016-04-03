@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +17,21 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <dlfcn.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
 
-enum platform { NONE, SDL, PI, IMX, FAKE };
+enum platform { NONE, SDL, PI, IMX, AML, FAKE };
 
 enum platform platform_check(char*);
 PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
 PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
+bool platform_supports_hevc(enum platform system);
 
 #ifdef HAVE_FAKE
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;

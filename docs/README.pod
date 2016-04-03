@@ -19,6 +19,10 @@ Create a mapping file for a gamepad.
 
 Pair this computer with the host.
 
+=item B<unpair>
+
+Unpair this computer with the host.
+
 =item B<stream>
 
 Stream game from host to this computer.
@@ -95,6 +99,11 @@ Change the network packetsize to I<PACKETSIZE>.
 The packetsize should the smaller than the MTU of the network.
 By default a safe value of 1024 is used.
 
+=item B<-forcehevc>
+
+Request a h265/HEVC from the server.
+Will still use h264 if server doesn't support HEVC.
+
 =item B<-remote>
 
 Enable the optimizations for remote connections in GFE.
@@ -132,7 +141,7 @@ To use a different gamepad mapping then the default the B<-mapping> should be sp
 =item B<-audio> [I<DEVICE>]
 
 Use <DEVICE> as audio output device.
-The default value is 'sysdefault'
+The default value is 'sysdefault' for ALSA and 'hdmi' for OMX on the Raspberry Pi.
 
 =back
 

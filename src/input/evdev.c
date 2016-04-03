@@ -24,7 +24,7 @@
 #include "mapping.h"
 
 #include "libevdev/libevdev.h"
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #include <libudev.h>
 #include <stdio.h>
@@ -106,9 +106,9 @@ static short evdev_convert_value(struct input_event *ev, struct input_device *de
   else if (ev->value < parms->min)
     return reverse?SHRT_MAX:SHRT_MIN;
   else if (reverse)
-    return (parms->max - (ev->value<parms->avg?parms->flat*2:0) - ev->value) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) + SHRT_MIN;
+    return (long long)(parms->max - (ev->value<parms->avg?parms->flat*2:0) - ev->value) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) + SHRT_MIN;
   else
-    return (ev->value - (ev->value>parms->avg?parms->flat*2:0) - parms->min) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) + SHRT_MIN;
+    return (long long)(ev->value - (ev->value>parms->avg?parms->flat*2:0) - parms->min) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) + SHRT_MIN;
 }
 
 static char evdev_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms) {

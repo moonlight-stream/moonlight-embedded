@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015, 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 
 bool inputAdded = false;
 static bool mapped = true;
+const char* audio_device = NULL;
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
@@ -63,6 +64,8 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
+  {"forcehevc", no_argument, NULL, 'x'},
+  {"unsupported", no_argument, NULL, 'y'},
   {0, 0, 0, 0},
 };
 
@@ -199,6 +202,13 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'w':
     config->forcehw = true;
+    break;
+  case 'x':
+    config->stream.supportsHevc = true;
+    break;
+  case 'y':
+    config->unsupported_version = true;
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -280,6 +290,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
+  config->stream.supportsHevc = false;
 
   config->platform = "default";
   config->app = "Steam";
@@ -289,6 +300,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
+  config->unsupported_version = false;
 
   config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
@@ -306,7 +318,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w:xy", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

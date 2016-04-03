@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "limelight-common/Limelight.h"
+#include <Limelight.h>
 
 #define GS_SPS_BITSTREAM_FIXUP 0x01
 #define GS_SPS_BASELINE_HACK 0x02

@@ -1,0 +1,14 @@
+Index: moonlight-embedded-debian/third_party/moonlight-common-c/src/ControlStream.c
+===================================================================
+--- moonlight-embedded-debian.orig/third_party/moonlight-common-c/src/ControlStream.c
++++ moonlight-embedded-debian/third_party/moonlight-common-c/src/ControlStream.c
+@@ -654,9 +654,6 @@ int startControlStream(void) {
+ 
+         // Ensure the connect verify ACK is sent immediately
+         enet_host_flush(client);
+-        
+-        // Set the max peer timeout to 10 seconds
+-        enet_peer_timeout(peer, ENET_PEER_TIMEOUT_LIMIT, ENET_PEER_TIMEOUT_MINIMUM, 10000);
+     }
+     else {
+         ctlSock = connectTcpSocket(&RemoteAddr, RemoteAddrLen,

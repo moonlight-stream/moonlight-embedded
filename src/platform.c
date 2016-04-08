@@ -59,10 +59,9 @@ enum platform platform_check(char* name) {
   if (std || strcmp(name, "sdl") == 0)
     return SDL;
   #endif
-  #ifdef HAVE_FAKE
-  if (std || strcmp(name, "fake") == 0)
+  if (strcmp(name, "fake") == 0)
     return FAKE;
-  #endif
+
   return 0;
 }
 
@@ -84,10 +83,8 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   case AML:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_aml");
   #endif
-  #ifdef HAVE_FAKE
   case FAKE:
     return &decoder_callbacks_fake;
-  #endif
   }
   return NULL;
 }
@@ -109,6 +106,8 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
       return &audio_callbacks_pulse;
     #endif
     return &audio_callbacks_alsa;
+  case FAKE:
+    return &audio_callbacks_fake;
   }
   return NULL;
 }

@@ -45,9 +45,8 @@ SET(MOONLIGHT_COMMON_INCLUDE_DIR ./third_party/moonlight-common-c/src)
 SET(GAMESTREAM_INCLUDE_DIR ./libgamestream)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  list(APPEND SRC_LIST ./src/video/fake.c)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_FAKE LC_DEBUG)
-  list(APPEND MOONLIGHT_OPTIONS FAKE DEBUG)
+  list(APPEND MOONLIGHT_DEFINITIONS LC_DEBUG)
+  list(APPEND MOONLIGHT_OPTIONS DEBUG)
 elseif(NOT AMLOGIC_FOUND AND NOT BROADCOM_FOUND AND NOT FREESCALE_FOUND AND NOT SOFTWARE_FOUND)
   message(FATAL_ERROR "No video output available")
 endif()
@@ -76,7 +75,7 @@ endif()
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-list(APPEND SRC_LIST ./src/audio/alsa.c)
+list(APPEND SRC_LIST ./src/audio/alsa.c ./src/audio/fake.c ./src/video/fake.c)
 
 add_subdirectory(libgamestream)
 

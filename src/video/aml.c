@@ -20,6 +20,7 @@
 
 #include <Limelight.h>
 
+#include <sys/utsname.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -28,8 +29,10 @@
 #include <unistd.h>
 #include <amcodec/codec.h>
 
+#define SYNC_OUTSIDE 0x02
+#define UCODE_IP_ONLY_PARAM 0x08
+
 static codec_para_t codecParam = { 0 };
-static const size_t SYNC_OUTSIDE = (2);
 
 static int osd_blank(char *path,int cmd) {
   int fd;
@@ -57,6 +60,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   codecParam.stream_type = STREAM_TYPE_ES_VIDEO;
   codecParam.has_video = 1;
   codecParam.noblock = 0;
+  codecParam.am_sysinfo.param = 0;
 
   switch (videoFormat) {
     case VIDEO_FORMAT_H264:
@@ -66,6 +70,14 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
       } else {
         codecParam.video_type = VFORMAT_H264;
         codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264;
+
+        // Workaround for decoding special case of C1, 1080p, H264
+        int major, minor;
+        struct utsname name;
+        uname(&name);
+        int ret = sscanf(name.release, "%d.%d", &major, &minor);
+        if (!(major > 3 || (major == 3 && minor >= 14)) && width == 1920 && height == 1080)
+            codecParam.am_sysinfo.param = UCODE_IP_ONLY_PARAM;
       }
       break;
     case VIDEO_FORMAT_H265:
@@ -80,7 +92,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   codecParam.am_sysinfo.width = width;
   codecParam.am_sysinfo.height = height;
   codecParam.am_sysinfo.rate = 96000 / redrawRate;
-  codecParam.am_sysinfo.param = (void *)(SYNC_OUTSIDE);
+  codecParam.am_sysinfo.param |= SYNC_OUTSIDE;
 
   int api = codec_init(&codecParam);
   if (api != 0) {

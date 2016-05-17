@@ -337,7 +337,7 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
   return result;
 }
 
-static bool verifySignature(const char *data, int dataLength, const char *signature, int signatureLength, const char *cert) {
+static bool verifySignature(const char *data, int dataLength, char *signature, int signatureLength, const char *cert) {
     X509* x509;
     BIO* bio = BIO_new(BIO_s_mem());
     BIO_puts(bio, cert);

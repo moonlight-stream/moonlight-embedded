@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 static FILE* fd;
-static const char* fileName = "fake.h264";
+static const char* fileName = "ux0:data/moonlight/fake.h264";
 
 void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   fd = fopen(fileName, "w");

@@ -1,148 +1,103 @@
-project(moonlight-embedded C)
-cmake_minimum_required(VERSION 3.1)
-SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
+cmake_minimum_required(VERSION 2.8)
 
-set(MOONLIGHT_MAJOR_VERSION 2)
-set(MOONLIGHT_MINOR_VERSION 2)
-set(MOONLIGHT_PATCH_VERSION 0)
-set(MOONLIGHT_VERSION ${MOONLIGHT_MAJOR_VERSION}.${MOONLIGHT_MINOR_VERSION}.${MOONLIGHT_PATCH_VERSION})
+set(CMAKE_SYSTEM_NAME "Generic")
+set(CMAKE_C_COMPILER "arm-vita-eabi-gcc")
+set(CMAKE_CXX_COMPILER "arm-vita-eabi-g++")
 
-aux_source_directory(./src SRC_LIST)
-aux_source_directory(./src/input SRC_LIST)
+project(moonlight)
+set(TITLE_ID "XYZZ00002")
 
-set(MOONLIGHT_DEFINITIONS)
+set(CMAKE_C_FLAGS "-Wl,-q -O3 -g -std=c99 -Dntohs=__builtin_bswap16 -Dhtons=__builtin_bswap16 -Dntohl=__builtin_bswap32 -Dhtonl=__builtin_bswap32 -DENET_DEBUG=1")
 
-find_package(ALSA REQUIRED)
-find_package(Opus REQUIRED)
-find_package(Broadcom)
-find_package(Freescale)
-find_package(Amlogic)
+include_directories(
+	third_party/moonlight-common-c/src/
+	libgamestream/
+	third_party/libuuid/src/
+	third_party/h264bitstream/
+	third_party/enet/include/
+)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(EVDEV REQUIRED libevdev)
-pkg_check_modules(UDEV REQUIRED libudev)
-pkg_check_modules(SDL sdl2>=2.0.4)
-pkg_check_modules(AVCODEC libavcodec)
-pkg_check_modules(AVUTIL libavutil)
-pkg_check_modules(XLIB x11-xcb)
-pkg_check_modules(LIBVA vdpau)
-pkg_check_modules(PULSE libpulse-simple)
-pkg_check_modules(CEC libcec>=3.0.0)
+add_executable(${PROJECT_NAME}.elf
+	src/connection.c
+	src/global.c
+	src/loop.c
+	src/main.c
+	src/platform.c
+	src/sdl.c
 
-if(AVCODEC_FOUND AND AVUTIL_FOUND AND SDL_FOUND)
-  set(SOFTWARE_FOUND TRUE)
-  if(XLIB_FOUND AND LIBVA_FOUND)
-    set(VDPAU_FOUND TRUE)
-  else()
-    set(VDPAU_FOUND FALSE)
-  endif()
-else()
-  set(SOFTWARE_FOUND FALSE)
-endif()
+	src/video/vita.c
+	src/graphics.c
+	src/font.c
 
-SET(MOONLIGHT_COMMON_INCLUDE_DIR ./third_party/moonlight-common-c/src)
-SET(GAMESTREAM_INCLUDE_DIR ./libgamestream)
+	libgamestream/client.c
+	libgamestream/http.c
+	libgamestream/mkcert.c
+	libgamestream/sps.c
+	libgamestream/xml.c
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  list(APPEND SRC_LIST ./src/video/fake.c)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_FAKE LC_DEBUG)
-  list(APPEND MOONLIGHT_OPTIONS FAKE DEBUG)
-elseif(NOT AMLOGIC_FOUND AND NOT BROADCOM_FOUND AND NOT FREESCALE_FOUND AND NOT SOFTWARE_FOUND)
-  message(FATAL_ERROR "No video output available")
-endif()
+	third_party/libuuid/src/clear.c
+	third_party/libuuid/src/compare.c
+	third_party/libuuid/src/copy.c
+	third_party/libuuid/src/gen_uuid.c
+	third_party/libuuid/src/isnull.c
+	third_party/libuuid/src/pack.c
+	third_party/libuuid/src/parse.c
+	third_party/libuuid/src/unpack.c
+	third_party/libuuid/src/unparse.c
+	third_party/libuuid/src/uuid_time.c
 
-if (SOFTWARE_FOUND)
-  list(APPEND SRC_LIST ./src/video/ffmpeg.c ./src/video/sdl.c ./src/audio/sdl.c)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_SDL)
-  list(APPEND MOONLIGHT_OPTIONS SDL)
-  if(VDPAU_FOUND)
-    list(APPEND SRC_LIST ./src/video/ffmpeg_vdpau.c)
-    list(APPEND MOONLIGHT_DEFINITIONS HAVE_VDPAU)
-    list(APPEND MOONLIGHT_OPTIONS VDPAU)
-  endif()
-endif()
+	third_party/h264bitstream/h264_nal.c
+	third_party/h264bitstream/h264_sei.c
+	third_party/h264bitstream/h264_stream.c
 
-if (AMLOGIC_FOUND OR BROADCOM_FOUND OR FREESCALE_FOUND OR CMAKE_BUILD_TYPE MATCHES Debug)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_EMBEDDED)
-  list(APPEND MOONLIGHT_OPTIONS EMBEDDED)
-endif()
+	third_party/moonlight-common-c/src/AudioStream.c
+	third_party/moonlight-common-c/src/ByteBuffer.c
+	third_party/moonlight-common-c/src/Connection.c
+	third_party/moonlight-common-c/src/ControlStream.c
+	third_party/moonlight-common-c/src/FakeCallbacks.c
+	third_party/moonlight-common-c/src/InputStream.c
+	third_party/moonlight-common-c/src/LinkedBlockingQueue.c
+	third_party/moonlight-common-c/src/Misc.c
+	third_party/moonlight-common-c/src/Platform.c
+	third_party/moonlight-common-c/src/PlatformSockets.c
+	third_party/moonlight-common-c/src/RtpReorderQueue.c
+	third_party/moonlight-common-c/src/RtspConnection.c
+	third_party/moonlight-common-c/src/RtspParser.c
+	third_party/moonlight-common-c/src/SdpGenerator.c
+	third_party/moonlight-common-c/src/VideoDepacketizer.c
+	third_party/moonlight-common-c/src/VideoStream.c
 
-if (PULSE_FOUND)
-  list(APPEND SRC_LIST ./src/audio/pulse.c)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_PULSE)
-  list(APPEND MOONLIGHT_OPTIONS PULSE)
-endif()
+	third_party/enet/callbacks.c
+	third_party/enet/compress.c
+	third_party/enet/host.c
+	third_party/enet/list.c
+	third_party/enet/packet.c
+	third_party/enet/peer.c
+	third_party/enet/protocol.c
+	third_party/enet/vita.c
+)
 
-include_directories("${PROJECT_BINARY_DIR}")
+target_link_libraries(${PROJECT_NAME}.elf
+	-lcrypto
+	-lexpat
+	-lcurl
+	-lz
+	-lssl
 
-list(APPEND SRC_LIST ./src/audio/alsa.c)
+	-lSceDisplay_stub
+	-lSceCtrl_stub
+	-lSceReg_stub
+	-lSceNet_stub
+	-lSceSysmodule_stub
+	-lSceNetCtl_stub
+	-lSceVideodec_stub
+	-lSceCommonDialog_stub
+)
 
-add_subdirectory(libgamestream)
-
-add_executable(moonlight ${SRC_LIST})
-target_link_libraries(moonlight gamestream)
-set_property(TARGET moonlight PROPERTY C_STANDARD 99)
-
-if (CEC_FOUND)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
-  list(APPEND MOONLIGHT_OPTIONS CEC)
-  target_include_directories(moonlight PRIVATE ./third_party/libcec ${CEC_INCLUDE_DIRS})
-  target_link_libraries(moonlight ${CEC_LIBRARIES})
-endif()
-
-if(AMLOGIC_FOUND)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_AML)
-  list(APPEND MOONLIGHT_OPTIONS AML)
-  add_library(moonlight-aml SHARED ./src/video/aml.c ${ILCLIENT_SRC_LIST})
-  target_include_directories(moonlight-aml PRIVATE ${AMLOGIC_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR})
-  target_link_libraries(moonlight-aml gamestream ${AMLOGIC_LIBRARIES})
-  set_property(TARGET moonlight-aml PROPERTY COMPILE_DEFINITIONS ${AMLOGIC_DEFINITIONS})
-  install(TARGETS moonlight-aml DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
-
-if(BROADCOM_FOUND)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_PI)
-  list(APPEND MOONLIGHT_OPTIONS PI)
-  aux_source_directory(./third_party/ilclient ILCLIENT_SRC_LIST)
-  add_library(moonlight-pi SHARED ./src/video/pi.c ./src/audio/omx.c ${ILCLIENT_SRC_LIST})
-  target_include_directories(moonlight-pi PRIVATE ./third_party/ilclient ${BROADCOM_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS})
-  target_link_libraries(moonlight-pi gamestream ${BROADCOM_LIBRARIES} ${OPUS_LIBRARY})
-  set_property(TARGET moonlight-pi PROPERTY COMPILE_DEFINITIONS ${BROADCOM_DEFINITIONS})
-  install(TARGETS moonlight-pi DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
-
-if(FREESCALE_FOUND)
-  list(APPEND MOONLIGHT_DEFINITIONS HAVE_IMX)
-  list(APPEND MOONLIGHT_OPTIONS IMX)
-  add_library(moonlight-imx SHARED ./src/video/imx.c)
-  target_include_directories(moonlight-imx PRIVATE ${FREESCALE_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR})
-  target_link_libraries(moonlight-imx gamestream ${FREESCALE_LIBRARIES})
-  install(TARGETS moonlight-imx DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
-
-if (SOFTWARE_FOUND)
-  target_include_directories(moonlight PRIVATE ${SDL_INCLUDE_DIRS} ${AVCODEC_INCLUDE_DIRS} ${AVUTIL_INCLUDE_DIRS})
-  target_link_libraries(moonlight ${SDL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVUTIL_LIBRARIES})
-  if(VDPAU_FOUND)
-    target_include_directories(moonlight PRIVATE ${XLIB_INCLUDE_DIRS} ${LIBVA_INCLUDE_DIRS})
-    target_link_libraries(moonlight ${XLIB_LIBRARIES} ${LIBVA_LIBRARIES})
-  endif()
-endif()
-
-if (PULSE_FOUND)
-  target_include_directories(moonlight PRIVATE ${PULSE_INCLUDE_DIRS})
-  target_link_libraries(moonlight ${PULSE_LIBRARIES})
-endif()
-
-configure_file("./src/configuration.h.in" "${PROJECT_BINARY_DIR}/configuration.h")
-
-set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
-target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
-target_link_libraries(moonlight ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
-
-add_subdirectory(docs)
-
-install(TARGETS moonlight DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(DIRECTORY mappings DESTINATION ${CMAKE_INSTALL_DATADIR}/moonlight)
-install(FILES moonlight.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
+add_custom_target(${PROJECT_NAME}.vpk ALL
+	COMMAND vita-elf-create ${PROJECT_NAME}.elf ${PROJECT_NAME}.velf
+	COMMAND vita-make-fself ${PROJECT_NAME}.velf eboot.bin
+	COMMAND vita-mksfoex -s TITLE_ID=${TITLE_ID} "${PROJECT_NAME}" param.sfo
+	COMMAND vita-pack-vpk -s param.sfo -b eboot.bin ${PROJECT_NAME}.vpk
+)
+add_dependencies(${PROJECT_NAME}.vpk ${PROJECT_NAME}.elf)

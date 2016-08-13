@@ -17,8 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <pthread.h>
+#define VERSION_MAJOR 2
+#define VERSION_MINOR 2
+#define VERSION_PATCH 0
 
-// extern pthread_t main_thread_id;
-
-void quit();
+#define COMPILE_OPTIONS "VITA"

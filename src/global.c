@@ -20,8 +20,8 @@
 #include <signal.h>
 #include <pthread.h>
 
-pthread_t main_thread_id;
+// pthread_t main_thread_id;
 
 void quit() {
-  pthread_kill(main_thread_id, SIGTERM);
+  // pthread_kill(main_thread_id, SIGTERM);
 }

@@ -29,7 +29,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <uuid/uuid.h>
+#include <uuid.h>
 #include <openssl/sha.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
@@ -57,6 +57,10 @@ static EVP_PKEY *privateKey;
 
 const char* gs_error;
 
+#ifdef __vita__
+#include "../src/graphics.h"
+#endif
+
 static int mkdirtree(const char* directory) {
   char buffer[1024];
   char* p = buffer;
@@ -75,7 +79,8 @@ static int mkdirtree(const char* directory) {
     *p = 0;
 
     // Create the directory if it doesn't exist already
-    if (mkdir(buffer, 0775) == -1 && errno != EEXIST) {
+    int ret = sceIoMkdir(buffer, 0777);
+    if (ret < 0 && ret != 0x8001000d && ret != 0x80010011) {
         return -1;
     }
 
@@ -120,6 +125,7 @@ static int load_cert(const char* keyDirectory) {
   FILE *fd = fopen(certificateFilePath, "r");
   if (fd == NULL) {
     printf("Generating certificate...");
+    printf(" this is only done once and can take a long time on Vita, allow up to 5 minutes... ");
     CERT_KEY_PAIR cert = mkcert_generate();
     printf("done\n");
 
@@ -299,10 +305,14 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
     return GS_FAILED;
 
   const EVP_MD *md = EVP_get_digestbyname("SHA256");
-  if (md == NULL)
+  if (md == NULL) {
+        printf("openssl error 0x%x\n", ERR_peek_last_error());
+
     goto cleanup;
+  }
 
   int rc = EVP_DigestInit_ex(ctx, md, NULL);
+  printf("rc = %d\n", rc);
   if (rc != 1)
     goto cleanup;
 
@@ -647,13 +657,15 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 
   srand(time(NULL));
   char url[4096];
-  u_int32_t rikeyid = 0;
+  uint32_t rikeyid = 0;
   char rikey_hex[33];
   bytes_to_hex(config->remoteInputAesKey, rikey_hex, 16);
 
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
+
+  printf("gs_start_app\n");
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
@@ -668,6 +680,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
     server->currentGame = appId;
   else
     goto cleanup;
+  printf("ret = 0x%x\n", ret);
 
   if ((ret = xml_search(data->memory, data->size, "gamesession", &result)) != GS_OK)
     goto cleanup;

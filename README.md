@@ -1,51 +1,54 @@
-# Moonlight Embedded
+# Vita port
 
-Moonlight Embedded is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield, but built for Linux.
+This is a vita port.
 
-Moonlight Embedded allows you to stream your full collection of Steam games from
-your powerful Windows desktop to your (embedded) Linux system, like Raspberry Pi, CuBox-i and ODROID.
+# Build deps
 
-## Documentation
+## OpenSSL
 
-More information about installing and runnning Moonlight Embedded is available on the [wiki](https://github.com/irtimmer/moonlight-embedded/wiki).
+https://github.com/xyzz/vita-openssl branch `vita-1_0_2`
 
-## Requirements
+```
+./Configure no-threads --prefix=$VITASDK/arm-vita-eabi/ vita-cross
+make depend
+make -j8
+make install
+```
 
-* [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GTX 600/700/900 series GPU (for the PC you're streaming from)
-* High-end wireless router (802.11n dual-band recommended) or wired network
-* Geforce Experience 2.1.1 or higher
+## curl
 
-## Quick Start
+https://github.com/xyzz/vita-curl branch `vita`
 
-* Ensure your GFE server and client are on the same network
-* Turn on Shield Streaming in the GFE settings
-* Pair Moonlight Embedded with the GFE server
-* Accept the pairing confirmation on your PC
-* Connect to the GFE Server with Moonlight Embedded
-* Play games!
 
-## Bugs
+```
+./buildconf
+./configure --host=arm-vita-eabi --with-ssl=$VITASDK/arm-vita-eabi/ --disable-shared --disable-ftp --disable-ldap --disable-imap --disable-ipv6 --disable-rtsp --disable-dict --disable-file --disable-gopher --disable-pop3 --disable-smtp --disable-telnet --disable-tftp --enable-https --disable-smb --disable-smbs --prefix=$VITASDK/arm-vita-eabi/
+make -j8
+make install
+```
 
-Please check the fora, wiki and old bug reports before submitting a new bug report.
+## expat
 
-Bugs can be reported to the [issue tracker](https://github.com/irtimmer/moonlight-embedded/issues).
+(Tested and working commit 25c6393829d03930dbcceb81a298841a700f04dc)
 
-## See also
+```
+git clone git://git.code.sf.net/p/expat/code_git expat
+cd expat
+git checkout 25c6393829d03930dbcceb81a298841a700f04dc
+```
 
-[Moonlight-common-c](https://github.com/moonlight-stream/moonlight-common-c) is the shared codebase between
-different C implementations of Moonlight
+remove line `add_custom_command(TARGET expat PRE_BUILD COMMAND $(MAKE) -C doc xmlwf.1)` in `CMakeLists.txt`
 
-[Moonlight-common-c](https://github.com/irtimmer/moonlight-common-c) is the fork used by Moonlight Embedded
+```
+cmake .. -DCMAKE_SYSTEM_NAME="Generic" -DCMAKE_C_COMPILER="arm-vita-eabi-gcc" -DBUILD_tools=0 -DBUILD_examples=0 -DBUILD_tests=0 -DBUILD_shared=0 -DCMAKE_INSTALL_PREFIX=$VITASDK/arm-vita-eabi/
+make -j8
+make install
+```
 
-## Discussion
+# Build Moonlight
 
-[XDA](http://forum.xda-developers.com/showthread.php?t=2505510) Moonlight in General  
-[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878) Moonlight Embedded for Raspberry Pi  
-[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173) Moonlight Embedded for Cubox-i and Hummingboard  
-[ODROID Forum](http://forum.odroid.com/viewtopic.php?f=91&t=15456) Moonlight Embedded on ODROID  
-
-## Contribute
-
-1. Fork us
-2. Write code
-3. Send Pull Requests
+```
+mkdir build && cd build
+cmake ..
+make
+```

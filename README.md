@@ -48,6 +48,8 @@ make install
 # Build Moonlight
 
 ```
+# if you do git pull, make sure submodules are updated first
+git submodule update --init
 mkdir build && cd build
 cmake ..
 make

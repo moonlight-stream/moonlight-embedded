@@ -24,36 +24,14 @@
 #include <psp2/audioout.h>
 
 #define FRAME_SIZE 240
-#define VITA_SAMPLES 64
-#define BUFFER_SAMPLES 1024
-#define BUFFER_SIZE (2 * BUFFER_SAMPLES)
+#define VITA_SAMPLES 960
+#define BUFFER_SIZE (2 * VITA_SAMPLES)
+static int decode_offset;
+static int port;
 
 static OpusMSDecoder* decoder;
 
-// circular buffer
 static short buffer[BUFFER_SIZE];
-static size_t decode_offset;
-static size_t output_offset;
-
-static int port;
-
-static void buffer_push(short *b, size_t samples) {
-  for (int i = 0; i < 2 * samples; ++i)
-    buffer[(decode_offset + i) % BUFFER_SIZE] = b[i];
-  decode_offset = (decode_offset + 2 * samples) % BUFFER_SIZE;
-}
-
-static void buffer_pull(short *b, size_t samples) {
-  for (int i = 0; i < 2 * samples; ++i)
-    b[i] = buffer[(output_offset + i) % BUFFER_SIZE];
-  output_offset = (output_offset + 2 * samples) % BUFFER_SIZE;
-}
-
-static size_t buffer_avail(void) {
-  if (decode_offset >= output_offset)
-    return (decode_offset - output_offset) / 2;
-  return decode_offset / 2 + (BUFFER_SIZE - output_offset) / 2;
-}
 
 static void vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc;
@@ -63,8 +41,6 @@ static void vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
                                             opusConfig->coupledStreams,
                                             opusConfig->mapping,
                                             &rc);
-
-  sceClibPrintf("decoder: 0x%x\n", decoder);
 
   port = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, VITA_SAMPLES, 48000, SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO);
   sceClibPrintf("open port 0x%x\n", port);
@@ -76,18 +52,18 @@ static void vita_renderer_cleanup() {
 }
 
 static void vita_renderer_decode_and_play_sample(char* data, int length) {
-  short tmp_buffer[2 * FRAME_SIZE];
-
   if (!data)
     return;
 
-  int decodeLen = opus_multistream_decode(decoder, data, length, tmp_buffer, FRAME_SIZE, 0);
+  int decodeLen = opus_multistream_decode(decoder, data, length, buffer + 2 * decode_offset, FRAME_SIZE, 0);
   if (decodeLen > 0) {
-    buffer_push(tmp_buffer, decodeLen);
+    if (decodeLen != FRAME_SIZE)
+      return;
+    decode_offset += decodeLen;
 
-    while (buffer_avail() >= VITA_SAMPLES) {
-      buffer_pull(tmp_buffer, VITA_SAMPLES);
-      sceAudioOutOutput(port, tmp_buffer);
+    if (decode_offset == VITA_SAMPLES) {
+      decode_offset = 0;
+      sceAudioOutOutput(port, buffer);
     }
   } else {
     printf("Opus error from decode: %d\n", decodeLen);

@@ -40,6 +40,7 @@ git checkout 25c6393829d03930dbcceb81a298841a700f04dc
 remove line `add_custom_command(TARGET expat PRE_BUILD COMMAND $(MAKE) -C doc xmlwf.1)` in `CMakeLists.txt`
 
 ```
+mkdir build && cd build
 cmake .. -DCMAKE_SYSTEM_NAME="Generic" -DCMAKE_C_COMPILER="arm-vita-eabi-gcc" -DBUILD_tools=0 -DBUILD_examples=0 -DBUILD_tests=0 -DBUILD_shared=0 -DCMAKE_INSTALL_PREFIX=$VITASDK/arm-vita-eabi/
 make -j8
 make install

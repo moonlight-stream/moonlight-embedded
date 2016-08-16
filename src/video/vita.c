@@ -259,7 +259,7 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     ret = sceAvcdecDecode(&decoder, &au, &array_picture);
     if (ret < 0)
       printf("sceAvcdecDecode (len=0x%x): 0x%x numOfOutput %d\n", decodeUnit->fullLength, ret, array_picture.numOfOutput);
-    if (ret == 0x80620003) {
+    if (ret < 0) {
       return DR_NEED_IDR;
     }
 

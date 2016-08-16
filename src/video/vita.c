@@ -180,8 +180,8 @@ static void vita_setup(int videoFormat, int width, int height, int redrawRate, v
 
   struct SceVideodecQueryInitInfoHwAvcdec init = {0};
   init.size = sizeof(init);
-  init.horizontal = 1280;
-  init.vertical = 720;
+  init.horizontal = width;
+  init.vertical = height;
   init.numOfRefFrames = 5;
   init.numOfStreams = 1;
 

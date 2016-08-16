@@ -138,7 +138,6 @@ struct SceAvcdecArrayPicture {
 
 
 struct SceAvcdecCtrl decoder = {0};
-void *decode_result;
 
 static FILE* fd;
 static const char* fileName = "ux0:data/moonlight/fake.h264";
@@ -208,11 +207,6 @@ static void vita_setup(int videoFormat, int width, int height, int redrawRate, v
 
   ret = sceAvcdecCreateDecoder(0x1001, &decoder, &decoder_info);
   printf("sceAvcdecCreateDecoder 0x%x\n", ret);
-
-  int decode_result_id = sceKernelAllocMemBlock("decode_result", SCE_KERNEL_MEMBLOCK_TYPE_USER_MAIN_PHYCONT_NC_RW, 3 * 1024 * 1024, NULL);
-  printf("decode_result_id: 0x%08x\n", decode_result_id);
-  sceKernelGetMemBlockBase(decode_result_id, &decode_result);
-  printf("base: 0x%08x\n", decode_result_id);
 }
 
 static void vita_cleanup() {
@@ -243,7 +237,7 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   picture.frame.framePitch = LINE_SIZE;
   picture.frame.frameWidth = SCREEN_WIDTH;
   picture.frame.frameHeight = SCREEN_HEIGHT;
-  picture.frame.pPicture[0] = decode_result;
+  picture.frame.pPicture[0] = framebuffer[backbuffer];
   
   if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
     PLENTRY entry = gs_sps_fix(&decodeUnit->bufferList, 0);
@@ -270,7 +264,14 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     }
 
     if (array_picture.numOfOutput == 1) {
-      memcpy(framebuffer[backbuffer], decode_result, FRAMEBUFFER_SIZE);
+#if 0
+      static uint64_t prev_frame;
+      uint64_t cur_frame;
+      sceRtcGetCurrentTick(&cur_frame);
+      sceClibPrintf("got frame in %d us\n", (int)(cur_frame - prev_frame));
+      prev_frame = cur_frame;
+#endif
+
       SceDisplayFrameBuf framebuf = { 0 };
       framebuf.size = sizeof(framebuf);
       framebuf.base = framebuffer[backbuffer];

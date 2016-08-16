@@ -23,8 +23,8 @@ add_executable(${PROJECT_NAME}.elf
 	src/loop.c
 	src/main.c
 	src/platform.c
-	src/sdl.c
 
+	src/audio/vita.c
 	src/video/vita.c
 	src/graphics.c
 	src/font.c
@@ -83,6 +83,7 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lcurl
 	-lz
 	-lssl
+	-lopus
 
 	-lSceDisplay_stub
 	-lSceCtrl_stub
@@ -92,6 +93,7 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lSceNetCtl_stub
 	-lSceVideodec_stub
 	-lSceCommonDialog_stub
+	-lSceAudio_stub
 )
 
 add_custom_target(${PROJECT_NAME}.vpk ALL

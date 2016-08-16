@@ -98,6 +98,9 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
 }
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
+  #ifdef __vita__
+  return &audio_callbacks_vita;
+  #endif
   switch (system) {
   #ifdef HAVE_SDL
   case SDL:
@@ -113,7 +116,7 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
     if (audio_pulse_init())
       return &audio_callbacks_pulse;
     #endif
-    // return &audio_callbacks_alsa;
+    return &audio_callbacks_alsa;
     return NULL;
   }
   return NULL;

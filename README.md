@@ -45,6 +45,16 @@ make -j8
 make install
 ```
 
+## opus
+
+Patch opus_defines.h: `#define __opus_check_int_ptr(ptr) (ptr) // ((ptr) + ((ptr) - (opus_int32*)(ptr)))`
+
+```
+./configure --host=arm-vita-eabi --enable-fixed-point --prefix=$VITASDK/arm-vita-eabi
+make -j8
+make install
+```
+
 # Build Moonlight
 
 ```

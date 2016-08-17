@@ -132,11 +132,18 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   int appId = get_app_id(server, "Steam");
 #endif
 
-  config->stream.width = 1280;
-  config->stream.height = 720;
-  config->stream.fps = 30;
+  FILE *fin = fopen("ux0:data/moonlight/settings.txt", "r");
+  fscanf(fin, "%d%d%d%d", &config->stream.width, &config->stream.height, &config->stream.fps, &config->stream.bitrate);
+  fclose(fin);
+
+  printf("Got configuration: width %d height %d fps %d bitrate %d\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
+
+  // config->stream.width = 960;
+  // config->stream.height = 544;
+  // config->stream.fps = 60;
+  // config->stream.bitrate = 4000;
+
   config->stream.packetSize = 1024;
-  config->stream.bitrate = 2000;
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)

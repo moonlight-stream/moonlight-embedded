@@ -49,6 +49,7 @@
 #include <psp2/sysmodule.h>
 
 #include <psp2/ctrl.h>
+#include <psp2/touch.h>
 
 #include "graphics.h"
 
@@ -90,12 +91,36 @@ static short a2m(unsigned char in) {
 #define BTN(x, y) \
   if (pad.buttons & x) \
     btn |= y;
+
+#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
+
+#define TOUCH_LEFT(scr) \
+  ((scr).reportNum > 0 && (lerp((scr).report[0].x, 1919, 960) - 50) < 480)
+
+#define TOUCH_RIGHT(scr) \
+  ((scr).reportNum > 0 && (lerp((scr).report[0].x, 1919, 960) - 50) >= 480)
+
+#define TOUCH_LEFT_BTN(scr, y) \
+  if (TOUCH_LEFT((scr))) \
+    btn |= y
+
+#define TOUCH_RIGHT_BTN(scr, y) \
+  if (TOUCH_RIGHT((scr))) \
+    btn |= y
+
 static void vita_process_input(void) {
   sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
+
   SceCtrlData pad;
+  SceTouchData front;
+  SceTouchData back;
   while (1) {
     memset(&pad, 0, sizeof(pad));
     sceCtrlPeekBufferPositive(0, &pad, 1);
+    sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
+    sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
 
     short btn = 0;
     BTN(SCE_CTRL_UP, UP_FLAG);
@@ -114,7 +139,10 @@ static void vita_process_input(void) {
     BTN(SCE_CTRL_CROSS, A_FLAG);
     BTN(SCE_CTRL_SQUARE, X_FLAG);
 
-    LiSendControllerEvent(btn, 0, 0, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
+    TOUCH_LEFT_BTN(front, LS_CLK_FLAG);
+    TOUCH_RIGHT_BTN(front, RS_CLK_FLAG);
+
+    LiSendControllerEvent(btn, TOUCH_LEFT(back) ? 0xff : 0, TOUCH_RIGHT(back) ? 0xff : 0, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
 
     sceKernelDelayThread(1 * 1000); // 1 ms
   }

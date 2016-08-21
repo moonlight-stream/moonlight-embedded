@@ -94,18 +94,26 @@ static short a2m(unsigned char in) {
 
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
-#define TOUCH_LEFT(scr) \
-  ((scr).reportNum > 0 && (lerp((scr).report[0].x, 1919, 960) - 50) < 480)
+#define TOUCH_TOP(scr) \
+   ((lerp((scr).report[0].y, 1087, 544) - 56) < 272)
 
-#define TOUCH_RIGHT(scr) \
-  ((scr).reportNum > 0 && (lerp((scr).report[0].x, 1919, 960) - 50) >= 480)
+#define TOUCH_BUTTOM(scr) \
+   ((lerp((scr).report[0].y, 1087, 544) - 56) >= 272)
 
-#define TOUCH_LEFT_BTN(scr, y) \
-  if (TOUCH_LEFT((scr))) \
+#define TOUCH_LEFT(scr, top) \
+  ((scr).reportNum > 0 && (lerp((scr).report[0].x, 1919, 960) - 50) < 480 && \
+   (top ? TOUCH_TOP((scr)) : TOUCH_BUTTOM((scr))))
+
+#define TOUCH_RIGHT(scr, top) \
+  ((scr).reportNum > 0 && (lerp((scr).report[0].x, 1919, 960) - 50) >= 480 && \
+   (top ? TOUCH_TOP((scr)) : TOUCH_BUTTOM((scr))))
+
+#define TOUCH_LEFT_BTN(scr, top, y) \
+  if (TOUCH_LEFT((scr), (top))) \
     btn |= y
 
-#define TOUCH_RIGHT_BTN(scr, y) \
-  if (TOUCH_RIGHT((scr))) \
+#define TOUCH_RIGHT_BTN(scr, top, y) \
+  if (TOUCH_RIGHT((scr), (top))) \
     btn |= y
 
 static void vita_process_input(void) {
@@ -114,12 +122,12 @@ static void vita_process_input(void) {
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
   SceCtrlData pad;
-  SceTouchData front;
+  //SceTouchData front;
   SceTouchData back;
   while (1) {
     memset(&pad, 0, sizeof(pad));
     sceCtrlPeekBufferPositive(0, &pad, 1);
-    sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
+    //sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
     sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
 
     short btn = 0;
@@ -139,10 +147,10 @@ static void vita_process_input(void) {
     BTN(SCE_CTRL_CROSS, A_FLAG);
     BTN(SCE_CTRL_SQUARE, X_FLAG);
 
-    TOUCH_LEFT_BTN(front, LS_CLK_FLAG);
-    TOUCH_RIGHT_BTN(front, RS_CLK_FLAG);
+    TOUCH_LEFT_BTN(back, false, LS_CLK_FLAG);
+    TOUCH_RIGHT_BTN(back, false, RS_CLK_FLAG);
 
-    LiSendControllerEvent(btn, TOUCH_LEFT(back) ? 0xff : 0, TOUCH_RIGHT(back) ? 0xff : 0, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
+    LiSendControllerEvent(btn, TOUCH_LEFT(back, true) ? 0xff : 0, TOUCH_RIGHT(back, true) ? 0xff : 0, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
 
     sceKernelDelayThread(1 * 1000); // 1 ms
   }

@@ -50,6 +50,7 @@
 
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
+#include <psp2/rtc.h>
 
 #include "graphics.h"
 
@@ -108,19 +109,120 @@ static bool TOUCH(SceTouchData scr, int lx, int ly, int rx, int ry) {
   if (TOUCH((scr), (lx), (ly), (rx), (ry))) \
     btn |= y
 
+#define TOUCH_DELAY 100000 // 100ms
+
+static bool mouse_click(short finger_count, bool press) {
+    int mode;
+
+    if (press) {
+        mode = BUTTON_ACTION_PRESS;
+    } else {
+        mode = BUTTON_ACTION_RELEASE;
+    }
+
+    switch (finger_count) {
+        case 1:
+            LiSendMouseButtonEvent(mode, BUTTON_LEFT);
+            return true;
+        case 2:
+            LiSendMouseButtonEvent(mode, BUTTON_RIGHT);
+            return true;
+    }
+    return false;
+}
+
+static void move_mouse(SceTouchData old, SceTouchData cur) {
+    int delta_x = (cur.report[0].x - old.report[0].x) / 2;
+    int delta_y = (cur.report[0].y - old.report[0].y) / 2;
+
+    if (!delta_x && !delta_y) {
+        return;
+    }
+    LiSendMouseMoveEvent(delta_x, delta_y);
+}
+
+static void move_wheel(SceTouchData old, SceTouchData cur) {
+    int old_y = (old.report[0].y + old.report[1].y) / 2;
+    int cur_y = (cur.report[0].y + cur.report[1].y) / 2;
+    int delta_y = (cur_y - old_y) / 2;
+    if (!delta_y) {
+        return;
+    }
+    LiSendScrollEvent(delta_y);
+}
+
 static void vita_process_input(void) {
   sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
   SceCtrlData pad;
-  //SceTouchData front;
+  SceTouchData front;
+  SceTouchData front_old;
   SceTouchData back;
+
+  bool on_move = false;
+  bool on_press = false;
+  bool need_mouse_button_release = false;
+  short finger_count = 0;
+
+  SceRtcTick current, until;
+
   while (1) {
     memset(&pad, 0, sizeof(pad));
+
     sceCtrlPeekBufferPositive(0, &pad, 1);
-    //sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
+    sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
     sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
+    sceRtcGetCurrentTick(&current);
+
+    if (need_mouse_button_release) {
+      if (sceRtcCompareTick(&current, &until) >= 0) {
+        mouse_click(finger_count, false);
+        need_mouse_button_release = false;
+      }
+    } else if (!on_press) {
+      if (front.reportNum > 0) {
+        on_press = true;
+        finger_count = front.reportNum;
+        sceRtcTickAddMicroseconds(&until, &current, TOUCH_DELAY);
+      }
+    } else if (on_press) {
+      if (sceRtcCompareTick(&current, &until) < 0) {
+        if (front.reportNum < finger_count) {
+          // TAP
+          if (mouse_click(finger_count, true)) {
+            need_mouse_button_release = true;
+            sceRtcTickAddMicroseconds(&until, &current, 100000);
+          }
+          on_press = false;
+          on_move = false;
+        } else if (front.reportNum > finger_count) {
+          // finger count changed
+          finger_count = front.reportNum;
+        }
+      } else {
+        if (front.reportNum > 0) {
+          // MOVE
+          if (on_move) {
+            switch (front.reportNum) {
+              case 1:
+                move_mouse(front_old, front);
+                break;
+              case 2:
+                move_wheel(front_old, front);
+            }
+          } else {
+            on_move = true;
+          }
+          memcpy(&front_old, &front, sizeof(front_old));
+        } else {
+          // MOVE END
+          on_press = false;
+          on_move = false;
+        }
+      }
+    }
 
     short btn = 0;
     BTN(SCE_CTRL_UP, UP_FLAG);

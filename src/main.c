@@ -50,6 +50,7 @@
 
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
+#include <psp2/rtc.h>
 
 #include "graphics.h"
 
@@ -95,18 +96,68 @@ static short a2m(unsigned char in) {
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
 static bool TOUCH(SceTouchData scr, int lx, int ly, int rx, int ry) {
-    for (int i = 0; i < scr.reportNum; i++) {
-        int x = lerp(scr.report[i].x, 1919, 960);
-        int y = lerp(scr.report[i].y, 1087, 544);
-        if (x < lx || x > rx || y < ly || y > ry) continue;
-        return true;
-    }
-    return false;
+  for (int i = 0; i < scr.reportNum; i++) {
+    int x = lerp(scr.report[i].x, 1919, 960);
+    int y = lerp(scr.report[i].y, 1087, 544);
+    if (x < lx || x > rx || y < ly || y > ry) continue;
+    return true;
+  }
+  return false;
 }
 
 #define TOUCH_BTN(scr, lx, ly, rx, ry, y) \
   if (TOUCH((scr), (lx), (ly), (rx), (ry))) \
     btn |= y
+
+#define MOUSE_ACTION_DELAY 100000 // 100ms
+
+static bool mouse_click(short finger_count, bool press) {
+  int mode;
+
+  if (press) {
+    mode = BUTTON_ACTION_PRESS;
+  } else {
+    mode = BUTTON_ACTION_RELEASE;
+  }
+
+  switch (finger_count) {
+    case 1:
+      LiSendMouseButtonEvent(mode, BUTTON_LEFT);
+      return true;
+    case 2:
+      LiSendMouseButtonEvent(mode, BUTTON_RIGHT);
+      return true;
+  }
+  return false;
+}
+
+static void move_mouse(SceTouchData old, SceTouchData cur) {
+  int delta_x = (cur.report[0].x - old.report[0].x) / 2;
+  int delta_y = (cur.report[0].y - old.report[0].y) / 2;
+
+  if (!delta_x && !delta_y) {
+    return;
+  }
+  LiSendMouseMoveEvent(delta_x, delta_y);
+}
+
+static void move_wheel(SceTouchData old, SceTouchData cur) {
+  int old_y = (old.report[0].y + old.report[1].y) / 2;
+  int cur_y = (cur.report[0].y + cur.report[1].y) / 2;
+  int delta_y = (cur_y - old_y) / 2;
+  if (!delta_y) {
+    return;
+  }
+  LiSendScrollEvent(delta_y);
+}
+
+enum {
+  NO_TOUCH_ACTION = 0,
+  ON_SCREEN_TOUCH,
+  SCREEN_TAP,
+  SWIPE_START,
+  ON_SCREEN_SWIPE
+} TouchScreenState;
 
 static void vita_process_input(void) {
   sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
@@ -114,13 +165,73 @@ static void vita_process_input(void) {
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
   SceCtrlData pad;
-  //SceTouchData front;
+  SceTouchData front;
+  SceTouchData front_old;
   SceTouchData back;
+
+  int front_state = NO_TOUCH_ACTION;
+  short finger_count = 0;
+  SceRtcTick current, until;
+
   while (1) {
     memset(&pad, 0, sizeof(pad));
+
     sceCtrlPeekBufferPositive(0, &pad, 1);
-    //sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
+    sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
     sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
+    sceRtcGetCurrentTick(&current);
+
+    switch (front_state) {
+      case NO_TOUCH_ACTION:
+        if (front.reportNum > 0) {
+          front_state = ON_SCREEN_TOUCH;
+          finger_count = front.reportNum;
+          sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+        }
+        break;
+      case ON_SCREEN_TOUCH:
+        if (sceRtcCompareTick(&current, &until) < 0) {
+          if (front.reportNum < finger_count) {
+            // TAP
+            if (mouse_click(finger_count, true)) {
+              front_state = SCREEN_TAP;
+              sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+            } else {
+              front_state = NO_TOUCH_ACTION;
+            }
+          } else if (front.reportNum > finger_count) {
+            // finger count changed
+            finger_count = front.reportNum;
+          }
+        } else {
+          front_state = SWIPE_START;
+        }
+        break;
+      case SCREEN_TAP:
+        if (sceRtcCompareTick(&current, &until) >= 0) {
+          mouse_click(finger_count, false);
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+      case SWIPE_START:
+        memcpy(&front_old, &front, sizeof(front_old));
+        front_state = ON_SCREEN_SWIPE;
+        break;
+      case ON_SCREEN_SWIPE:
+        if (front.reportNum > 0) {
+          switch (front.reportNum) {
+            case 1:
+              move_mouse(front_old, front);
+              break;
+            case 2:
+              move_wheel(front_old, front);
+          }
+          memcpy(&front_old, &front, sizeof(front_old));
+        } else {
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+    }
 
     short btn = 0;
     BTN(SCE_CTRL_UP, UP_FLAG);

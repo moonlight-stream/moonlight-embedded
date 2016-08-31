@@ -38,16 +38,24 @@ CERT_KEY_PAIR mkcert_generate() {
     X509 *x509 = NULL;
     EVP_PKEY *pkey = NULL;
     PKCS12 *p12 = NULL;
+
+    printf("mkcert_generate\n");
    
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+    printf("bio_err %d 0x%x\n", bio_err, bio_err);
     
     SSLeay_add_all_algorithms();
+    printf("add all algorithms\n");
     ERR_load_crypto_strings();
+    printf("load crypto strings\n");
     
     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
+    printf("mkcert done\n");
 
     p12 = PKCS12_create("limelight", "GameStream", pkey, x509, NULL, 0, 0, 0, 0, 0);
+    printf("p12 = 0x%x\n", p12);
 
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
@@ -89,6 +97,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     
     if (*pkeyp == NULL) {
         if ((pk=EVP_PKEY_new()) == NULL) {
+            printf("abort1\n");
             abort();
             return(0);
         }
@@ -98,6 +107,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     
     if (*x509p == NULL) {
         if ((x = X509_new()) == NULL) {
+            printf("goto err\n");
             goto err;
         }
     } else {
@@ -105,7 +115,16 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     }
     
     rsa = RSA_generate_key(bits, RSA_F4, NULL, NULL);
+    if (!rsa) {
+        const char *file, *data;
+        int flags = ERR_TXT_STRING;
+        int line;
+        ERR_peek_last_error_line_data(&file, &line, &data, &flags);
+        printf("openssl error 0x%x => %s:%d %s\n", ERR_peek_last_error(), file, line, data);
+    }
+    printf("gen rsa %x\n", rsa);
     if (!EVP_PKEY_assign_RSA(pk, rsa)) {
+        printf("abort 2\n");
         abort();
         goto err;
     }

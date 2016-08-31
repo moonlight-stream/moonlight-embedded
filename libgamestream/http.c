@@ -23,6 +23,9 @@
 #include <string.h>
 #include <curl/curl.h>
 
+#include <psp2/sysmodule.h>
+#include "../src/graphics.h"
+
 static CURL *curl;
 
 static const char *pCertFile = "./client.pem";
@@ -72,6 +75,10 @@ int http_request(char* url, PHTTP_DATA data) {
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
+  char url_tiny[64] = {0};
+  strncpy(url_tiny, url, sizeof(url_tiny) - 1);
+  printf("GET %s\n", url_tiny);
+
   if (data->size > 0) {
     free(data->memory);
     data->memory = malloc(1);
@@ -88,7 +95,7 @@ int http_request(char* url, PHTTP_DATA data) {
   } else if (data->memory == NULL) {
     return GS_OUT_OF_MEMORY;
   }
-  
+
   return GS_OK;
 }
 

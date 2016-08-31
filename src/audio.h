@@ -34,3 +34,6 @@ bool audio_pulse_init();
 #ifdef HAVE_PI
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_omx;
 #endif
+#ifdef __vita__
+extern AUDIO_RENDERER_CALLBACKS audio_callbacks_vita;
+#endif

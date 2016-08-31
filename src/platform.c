@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <dlfcn.h>
+// #include <dlfcn.h>
 
 typedef bool(*ImxInit)();
 
@@ -63,6 +63,8 @@ enum platform platform_check(char* name) {
   if (std || strcmp(name, "fake") == 0)
     return FAKE;
   #endif
+  if (strcmp(name, "vita") == 0)
+    return VITA;
   return 0;
 }
 
@@ -89,10 +91,16 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
     return &decoder_callbacks_fake;
   #endif
   }
+  #ifdef __vita__
+  return &decoder_callbacks_vita;
+  #endif
   return NULL;
 }
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
+  #ifdef __vita__
+  return &audio_callbacks_vita;
+  #endif
   switch (system) {
   #ifdef HAVE_SDL
   case SDL:
@@ -109,6 +117,7 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
       return &audio_callbacks_pulse;
     #endif
     return &audio_callbacks_alsa;
+    return NULL;
   }
   return NULL;
 }
@@ -120,3 +129,29 @@ bool platform_supports_hevc(enum platform system) {
   }
   return false;
 }
+
+#ifdef __vita__
+int shutdown(int s, int how) {
+  return sceNetShutdown(s, how);
+}
+
+int chmod(const char *path, mode_t mode) {
+  return 0;
+}
+
+uid_t getuid(void) {
+  return 1;
+}
+
+uid_t geteuid(void) {
+  return 1;
+}
+
+uid_t getgid(void) {
+  return 1;
+}
+
+uid_t getegid(void) {
+  return 1;
+}
+#endif

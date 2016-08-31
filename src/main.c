@@ -41,11 +41,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <ctype.h>
+
+#include <psp2/net/net.h>
+#include <psp2/sysmodule.h>
+
+#include <psp2/ctrl.h>
+#include <psp2/touch.h>
+#include <psp2/rtc.h>
+
+#include "graphics.h"
 
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list = NULL;
@@ -76,13 +83,206 @@ static int get_app_id(PSERVER_DATA server, const char *name) {
   return -1;
 }
 
+// analog2moonlight
+static short a2m(unsigned char in) {
+  int value = in * 256 - (1 << 15) + 128;
+  return (short)value;
+}
+
+#define BTN(x, y) \
+  if (pad.buttons & x) \
+    btn |= y;
+
+#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
+
+static bool TOUCH(SceTouchData scr, int lx, int ly, int rx, int ry) {
+  for (int i = 0; i < scr.reportNum; i++) {
+    int x = lerp(scr.report[i].x, 1919, 960);
+    int y = lerp(scr.report[i].y, 1087, 544);
+    if (x < lx || x > rx || y < ly || y > ry) continue;
+    return true;
+  }
+  return false;
+}
+
+#define TOUCH_BTN(scr, lx, ly, rx, ry, y) \
+  if (TOUCH((scr), (lx), (ly), (rx), (ry))) \
+    btn |= y
+
+#define MOUSE_ACTION_DELAY 100000 // 100ms
+
+static bool mouse_click(short finger_count, bool press) {
+  int mode;
+
+  if (press) {
+    mode = BUTTON_ACTION_PRESS;
+  } else {
+    mode = BUTTON_ACTION_RELEASE;
+  }
+
+  switch (finger_count) {
+    case 1:
+      LiSendMouseButtonEvent(mode, BUTTON_LEFT);
+      return true;
+    case 2:
+      LiSendMouseButtonEvent(mode, BUTTON_RIGHT);
+      return true;
+  }
+  return false;
+}
+
+static void move_mouse(SceTouchData old, SceTouchData cur) {
+  int delta_x = (cur.report[0].x - old.report[0].x) / 2;
+  int delta_y = (cur.report[0].y - old.report[0].y) / 2;
+
+  if (!delta_x && !delta_y) {
+    return;
+  }
+  LiSendMouseMoveEvent(delta_x, delta_y);
+}
+
+static void move_wheel(SceTouchData old, SceTouchData cur) {
+  int old_y = (old.report[0].y + old.report[1].y) / 2;
+  int cur_y = (cur.report[0].y + cur.report[1].y) / 2;
+  int delta_y = (cur_y - old_y) / 2;
+  if (!delta_y) {
+    return;
+  }
+  LiSendScrollEvent(delta_y);
+}
+
+enum {
+  NO_TOUCH_ACTION = 0,
+  ON_SCREEN_TOUCH,
+  SCREEN_TAP,
+  SWIPE_START,
+  ON_SCREEN_SWIPE
+} TouchScreenState;
+
+static void vita_process_input(void) {
+  sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
+
+  SceCtrlData pad;
+  SceTouchData front;
+  SceTouchData front_old;
+  SceTouchData back;
+
+  int front_state = NO_TOUCH_ACTION;
+  short finger_count = 0;
+  SceRtcTick current, until;
+
+  while (1) {
+    memset(&pad, 0, sizeof(pad));
+
+    sceCtrlPeekBufferPositive(0, &pad, 1);
+    sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
+    sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
+    sceRtcGetCurrentTick(&current);
+
+    switch (front_state) {
+      case NO_TOUCH_ACTION:
+        if (front.reportNum > 0) {
+          front_state = ON_SCREEN_TOUCH;
+          finger_count = front.reportNum;
+          sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+        }
+        break;
+      case ON_SCREEN_TOUCH:
+        if (sceRtcCompareTick(&current, &until) < 0) {
+          if (front.reportNum < finger_count) {
+            // TAP
+            if (mouse_click(finger_count, true)) {
+              front_state = SCREEN_TAP;
+              sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+            } else {
+              front_state = NO_TOUCH_ACTION;
+            }
+          } else if (front.reportNum > finger_count) {
+            // finger count changed
+            finger_count = front.reportNum;
+          }
+        } else {
+          front_state = SWIPE_START;
+        }
+        break;
+      case SCREEN_TAP:
+        if (sceRtcCompareTick(&current, &until) >= 0) {
+          mouse_click(finger_count, false);
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+      case SWIPE_START:
+        memcpy(&front_old, &front, sizeof(front_old));
+        front_state = ON_SCREEN_SWIPE;
+        break;
+      case ON_SCREEN_SWIPE:
+        if (front.reportNum > 0) {
+          switch (front.reportNum) {
+            case 1:
+              move_mouse(front_old, front);
+              break;
+            case 2:
+              move_wheel(front_old, front);
+          }
+          memcpy(&front_old, &front, sizeof(front_old));
+        } else {
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+    }
+
+    short btn = 0;
+    BTN(SCE_CTRL_UP, UP_FLAG);
+    BTN(SCE_CTRL_LEFT, LEFT_FLAG);
+    BTN(SCE_CTRL_DOWN, DOWN_FLAG);
+    BTN(SCE_CTRL_RIGHT, RIGHT_FLAG);
+
+    BTN(SCE_CTRL_START, PLAY_FLAG);
+    BTN(SCE_CTRL_SELECT, BACK_FLAG);
+
+    BTN(SCE_CTRL_LTRIGGER, LB_FLAG);
+    BTN(SCE_CTRL_RTRIGGER, RB_FLAG);
+
+    BTN(SCE_CTRL_TRIANGLE, Y_FLAG);
+    BTN(SCE_CTRL_CIRCLE, B_FLAG);
+    BTN(SCE_CTRL_CROSS, A_FLAG);
+    BTN(SCE_CTRL_SQUARE, X_FLAG);
+
+    TOUCH_BTN(back, 0, 272, 480, 544, LS_CLK_FLAG);
+    TOUCH_BTN(back, 480, 272, 960, 544, RS_CLK_FLAG);
+
+    LiSendControllerEvent(btn, TOUCH(back, 0, 0, 480, 272) ? 0xff : 0, TOUCH(back, 480, 0, 960, 272) ? 0xff : 0, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
+
+    sceKernelDelayThread(1 * 1000); // 1 ms
+  }
+}
+#undef BTN
+
 static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
+#if 0
   int appId = get_app_id(server, config->app);
   if (appId<0) {
     fprintf(stderr, "Can't find app %s\n", config->app);
     exit(-1);
   }
+#else
+  int appId = get_app_id(server, "Steam");
+#endif
 
+  FILE *fin = fopen("ux0:data/moonlight/settings.txt", "r");
+  fscanf(fin, "%d%d%d%d", &config->stream.width, &config->stream.height, &config->stream.fps, &config->stream.bitrate);
+  fclose(fin);
+
+  printf("Got configuration: width %d height %d fps %d bitrate %d\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
+
+  // config->stream.width = 960;
+  // config->stream.height = 544;
+  // config->stream.fps = 60;
+  // config->stream.bitrate = 4000;
+
+  config->stream.packetSize = 1024;
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -98,19 +298,10 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
 
   if (config->forcehw)
     drFlags |= FORCE_HARDWARE_ACCELERATION;
-
   printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
   LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags, server->serverMajorVersion);
 
-  if (IS_EMBEDDED(system)) {
-    evdev_start();
-    loop_main();
-    evdev_stop();
-  }
-  #ifdef HAVE_SDL
-  else if (system == SDL)
-    sdl_loop();
-  #endif
+  vita_process_input();
 
   LiStopConnection();
 }
@@ -167,119 +358,163 @@ static void pair_check(PSERVER_DATA server) {
   }
 }
 
-int main(int argc, char* argv[]) {
+static void vita_init() {
+  // Seed OpenSSL with Sony-grade random number generator
+  char random_seed[0x40] = {0};
+  sceKernelGetRandomNumber(random_seed, sizeof(random_seed));
+  RAND_seed(random_seed, sizeof(random_seed));
+  OpenSSL_add_all_algorithms();
+
+  // This is only used for PIN codes, doesn't really matter
+  srand(time(NULL));
+
   printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
-  CONFIGURATION config;
-  config_parse(argc, argv, &config);
+  int ret = 0;
 
-  if (config.action == NULL || strcmp("help", config.action) == 0)
-    help();
-  
-  enum platform system = platform_check(config.platform);
-  if (system == 0) {
-    fprintf(stderr, "Platform '%s' not found\n", config.platform);
-    exit(-1);
-  }
-  config.stream.supportsHevc = config.stream.supportsHevc || platform_supports_hevc(system);
-  
-  if (strcmp("map", config.action) == 0) {
-    if (config.address == NULL) {
-      perror("No filename for mapping");
-      exit(-1);
-    }
-    udev_init(!inputAdded, config.mapping);
-    for (int i=0;i<config.inputsCount;i++)
-      evdev_create(config.inputs[i].path, config.inputs[i].mapping);
-    
-    evdev_map(config.address);
-    exit(0);
-  }
+  ret = sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 
-  if (config.address == NULL) {
-    config.address = malloc(MAX_ADDRESS_SIZE);
-    if (config.address == NULL) {
-      perror("Not enough memory");
-      exit(-1);
-    }
-    config.address[0] = 0;
-    printf("Searching for server...\n");
-    gs_discover_server(config.address);
-    if (config.address[0] == 0) {
-      fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
-      exit(-1);
-    }
+  size_t net_mem_sz = 100 * 1024;
+  SceNetInitParam net_param = {0};
+  net_param.memory = calloc(net_mem_sz, 1);
+  net_param.size = net_mem_sz;
+  ret = sceNetInit(&net_param);
+
+  ret = sceNetCtlInit();
+  // TODO(xyz): cURL breaks when socket FD is too big, very hacky workaround below!
+  int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+  sceNetSocketClose(s);
+  if (s >= 20) {
+    printf("Cycling sockets...\n");
+    int c = 0;
+    do {
+      c = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+      sceNetSocketClose(c);
+    } while (c >= 5);
   }
+}
+
+void loop_forever(void) {
+  while (1) {
+    sceKernelDelayThread(100 * 1000);
+  }
+}
+
+static unsigned buttons[] = {
+  SCE_CTRL_SELECT,
+  SCE_CTRL_START,
+  SCE_CTRL_UP,
+  SCE_CTRL_RIGHT,
+  SCE_CTRL_DOWN,
+  SCE_CTRL_LEFT,
+  SCE_CTRL_LTRIGGER,
+  SCE_CTRL_RTRIGGER,
+  SCE_CTRL_TRIANGLE,
+  SCE_CTRL_CIRCLE,
+  SCE_CTRL_CROSS,
+  SCE_CTRL_SQUARE,
+};
+
+static int get_key(void) {
+  static unsigned prev = 0;
+  SceCtrlData pad;
+  while (1) {
+    memset(&pad, 0, sizeof(pad));
+    sceCtrlPeekBufferPositive(0, &pad, 1);
+    unsigned new = prev ^ (pad.buttons & prev);
+    prev = pad.buttons;
+    for (int i = 0; i < sizeof(buttons)/sizeof(*buttons); ++i)
+      if (new & buttons[i])
+        return buttons[i];
+
+    sceKernelDelayThread(1000); // 1ms
+  }
+}
+
+static void vita_pair(SERVER_DATA *server) {
+  char pin[5];
+  sprintf(pin, "%d%d%d%d", (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
+  psvDebugScreenSetFgColor(COLOR_BLACK);
+  psvDebugScreenSetBgColor(COLOR_WHITE);
+  printf("Please enter the following PIN on the target PC: %s\n", pin);
+  psvDebugScreenSetFgColor(COLOR_WHITE);
+  psvDebugScreenSetBgColor(COLOR_BLACK);
+  int ret = gs_pair(server, &pin[0]);
+  if (ret == 0) {
+    psvDebugScreenSetFgColor(COLOR_GREEN);
+    printf("Paired successfully\n");
+    psvDebugScreenSetFgColor(COLOR_WHITE);
+  } else {
+    printf("Error pairing: 0x%x %s\n", ret, gs_error);
+  }
+}
+
+int main(int argc, char* argv[]) {
+  int ret = 0;
+
+  psvDebugScreenInit();
+  vita_init();
   
-  char host_config_file[128];
-  sprintf(host_config_file, "hosts/%s.conf", config.address);
-  if (access(host_config_file, R_OK) != -1)
-    config_file_parse(host_config_file, &config);
+  CONFIGURATION config = {0};
+  config.platform = "vita";
+  strcpy(config.key_dir, "ux0:data/moonlight/");
 
   SERVER_DATA server;
-  server.address = config.address;
-  printf("Connect to %s...\n", server.address);
 
-  int ret;
+  // get host address
+  char server_addr[256] = {0};
+  FILE *fin = fopen("ux0:data/moonlight/server.txt", "r");
+  if (!fin) {
+    printf("You should write server address to ux0:data/moonlight/server.txt\n");
+    loop_forever();
+  }
+  fread(server_addr, 128, 1, fin);
+  fclose(fin);
+  int len = strlen(server_addr);
+  while (isspace(server_addr[len - 1])) {
+    --len;
+    server_addr[len] = 0;
+  }
+
+  server.address = server_addr;
+  psvDebugScreenSetFgColor(COLOR_GREEN);
+  printf("Server address: %s\n", server.address);
+  psvDebugScreenSetFgColor(COLOR_WHITE);
+  enum platform system = VITA;
+
   if ((ret = gs_init(&server, config.key_dir)) == GS_OUT_OF_MEMORY) {
-    fprintf(stderr, "Not enough memory\n");
-    exit(-1);
+    printf("Not enough memory\n");
+    loop_forever();
   } else if (ret == GS_INVALID) {
-    fprintf(stderr, "Invalid data received from server: %s\n", config.address, gs_error);
-    exit(-1);
+    printf("Invalid data received from server: %s\n", config.address, gs_error);
+    loop_forever();
   } else if (ret == GS_UNSUPPORTED_VERSION) {
     if (!config.unsupported_version) {
-      fprintf(stderr, "Unsupported version: %s\n", gs_error);
-      exit(-1);
+      printf("Unsupported version: %s\n", gs_error);
+      loop_forever();
     }
   } else if (ret != GS_OK) {
-    fprintf(stderr, "Can't connect to server %s\n", config.address);
-    exit(-1);
+    printf("Can't connect to server %s\n", config.address);
+    loop_forever();
   }
 
   printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.gfeVersion, server.serverMajorVersion);
+  printf("\n");
 
-  if (strcmp("list", config.action) == 0) {
-    pair_check(&server);
-    applist(&server);
-  } else if (strcmp("stream", config.action) == 0) {
-    pair_check(&server);
-    if (IS_EMBEDDED(system)) {
-      for (int i=0;i<config.inputsCount;i++) {
-        printf("Add input %s (mapping %s)...\n", config.inputs[i].path, config.inputs[i].mapping);
-        evdev_create(config.inputs[i].path, config.inputs[i].mapping);
-      }
+again:
+  printf("Press X to pair (You need to do it once)\n");
+  printf("Press O to launch steam\n");
 
-      udev_init(!inputAdded, config.mapping);
-      evdev_init();
-      #ifdef HAVE_LIBCEC
-      cec_init();
-      #endif /* HAVE_LIBCEC */
-    }
-    #ifdef HAVE_SDL
-    else if (system == SDL)
-      sdl_init(config.stream.width, config.stream.height, config.fullscreen);
-    #endif
-
+  switch(get_key()) {
+  case SCE_CTRL_CROSS:
+    vita_pair(&server);
+    goto again;
+  case SCE_CTRL_CIRCLE:
     stream(&server, &config, system);
-  } else if (strcmp("pair", config.action) == 0) {
-    char pin[5];
-    sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
-    printf("Please enter the following PIN on the target PC: %s\n", pin);
-    if (gs_pair(&server, &pin[0]) != GS_OK) {
-      fprintf(stderr, "Failed to pair to server: %s\n", gs_error);
-    } else {
-      printf("Succesfully paired\n");
-    }
-  } else if (strcmp("unpair", config.action) == 0) {
-    if (gs_unpair(&server) != GS_OK) {
-      fprintf(stderr, "Failed to unpair to server: %s\n", gs_error);
-    } else {
-      printf("Succesfully unpaired\n");
-    }
-  } else if (strcmp("quit", config.action) == 0) {
-    pair_check(&server);
-    gs_quit_app(&server);
-  } else
-    fprintf(stderr, "%s is not a valid action\n", config.action);
+    goto again; // but we won't get here
+  default:
+    goto again;
+  }
+
+  loop_forever();
 }

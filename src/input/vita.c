@@ -208,7 +208,7 @@ void vitainput_loop(void) {
     sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
     sceRtcGetCurrentTick(&current);
 
-    if (config.use_fronttouchscreen == false) {
+    if (config.fronttouchscreen_buttons == false) {
       switch (front_state) {
         case NO_TOUCH_ACTION:
           if (front.reportNum > 0) {
@@ -266,7 +266,7 @@ void vitainput_loop(void) {
     }
 
     short btn = 0;
-    SceTouchData buttons_screen = config.use_fronttouchscreen ? front : back;
+    SceTouchData buttons_screen = config.fronttouchscreen_buttons ? front : back;
 
     INPUT(map.btn_dpad_up, UP_FLAG);
     INPUT(map.btn_dpad_up, UP_FLAG);

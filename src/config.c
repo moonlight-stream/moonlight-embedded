@@ -245,7 +245,7 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
       } else if (strcmp(key, "localaudio") == 0) {
         config->localaudio = strcmp("true", value) == 0;
       } else if (strcmp(key, "fronttouchscreen_buttons") == 0) {
-        config->use_fronttouchscreen = strcmp("true", value) == 0;
+        config->fronttouchscreen_buttons = strcmp("true", value) == 0;
       } else if (strcmp(key, "backtouchscreen_deadzone") == 0) {
         int left, top, bottom, right;
         sscanf(value, 

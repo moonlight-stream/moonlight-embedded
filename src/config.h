@@ -46,7 +46,7 @@ typedef struct _CONFIGURATION {
   bool fullscreen;
   bool forcehw;
   bool unsupported_version;
-  bool use_fronttouchscreen;
+  bool fronttouchscreen_buttons;
   struct touchscreen_deadzone back_deadzone;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;

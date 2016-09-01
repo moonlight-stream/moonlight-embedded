@@ -32,6 +32,7 @@
 #include "input/udev.h"
 #include "input/cec.h"
 #include "input/sdlinput.h"
+#include "input/vita.h"
 
 #include <Limelight.h>
 
@@ -85,216 +86,6 @@ static int get_app_id(PSERVER_DATA server, const char *name) {
   return -1;
 }
 
-// analog2moonlight
-static short a2m(unsigned char in) {
-  int value = in * 256 - (1 << 15) + 128;
-  return (short)value;
-}
-
-#define BTN(x, y) \
-  if (pad.buttons & x) \
-    btn |= y;
-
-#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
-
-static bool TOUCH(SceTouchData scr, int lx, int ly, int rx, int ry) {
-  for (int i = 0; i < scr.reportNum; i++) {
-    int x = lerp(scr.report[i].x, 1919, 960);
-    int y = lerp(scr.report[i].y, 1087, 544);
-    if (x < lx || x > rx || y < ly || y > ry) continue;
-    return true;
-  }
-  return false;
-}
-
-#define TOUCH_BTN(scr, lx, ly, rx, ry, y) \
-  if (TOUCH((scr), (lx), (ly), (rx), (ry))) \
-    btn |= y
-
-#define MOUSE_ACTION_DELAY 100000 // 100ms
-
-static bool mouse_click(short finger_count, bool press) {
-  int mode;
-
-  if (press) {
-    mode = BUTTON_ACTION_PRESS;
-  } else {
-    mode = BUTTON_ACTION_RELEASE;
-  }
-
-  switch (finger_count) {
-    case 1:
-      LiSendMouseButtonEvent(mode, BUTTON_LEFT);
-      return true;
-    case 2:
-      LiSendMouseButtonEvent(mode, BUTTON_RIGHT);
-      return true;
-  }
-  return false;
-}
-
-static void move_mouse(SceTouchData old, SceTouchData cur) {
-  int delta_x = (cur.report[0].x - old.report[0].x) / 2;
-  int delta_y = (cur.report[0].y - old.report[0].y) / 2;
-
-  if (!delta_x && !delta_y) {
-    return;
-  }
-  LiSendMouseMoveEvent(delta_x, delta_y);
-}
-
-static void move_wheel(SceTouchData old, SceTouchData cur) {
-  int old_y = (old.report[0].y + old.report[1].y) / 2;
-  int cur_y = (cur.report[0].y + cur.report[1].y) / 2;
-  int delta_y = (cur_y - old_y) / 2;
-  if (!delta_y) {
-    return;
-  }
-  LiSendScrollEvent(delta_y);
-}
-
-enum {
-  NO_TOUCH_ACTION = 0,
-  ON_SCREEN_TOUCH,
-  SCREEN_TAP,
-  SWIPE_START,
-  ON_SCREEN_SWIPE
-} TouchScreenState;
-
-static void vita_process_input(void) {
-  sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
-  sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
-  sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
-
-  SceCtrlData pad;
-  SceTouchData front;
-  SceTouchData front_old;
-  SceTouchData back;
-
-  int front_state = NO_TOUCH_ACTION;
-  short finger_count = 0;
-  SceRtcTick current, until;
-
-  while (1) {
-    memset(&pad, 0, sizeof(pad));
-
-    sceCtrlPeekBufferPositive(0, &pad, 1);
-    sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
-    sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
-    sceRtcGetCurrentTick(&current);
-
-    if (config.use_fronttouchscreen == false) {
-      switch (front_state) {
-        case NO_TOUCH_ACTION:
-          if (front.reportNum > 0) {
-            front_state = ON_SCREEN_TOUCH;
-            finger_count = front.reportNum;
-            sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-          }
-          break;
-        case ON_SCREEN_TOUCH:
-          if (sceRtcCompareTick(&current, &until) < 0) {
-            if (front.reportNum < finger_count) {
-              // TAP
-              if (mouse_click(finger_count, true)) {
-                front_state = SCREEN_TAP;
-                sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-              } else {
-                front_state = NO_TOUCH_ACTION;
-              }
-            } else if (front.reportNum > finger_count) {
-              // finger count changed
-              finger_count = front.reportNum;
-            }
-          } else {
-            front_state = SWIPE_START;
-          }
-          break;
-        case SCREEN_TAP:
-          if (sceRtcCompareTick(&current, &until) >= 0) {
-            mouse_click(finger_count, false);
-            front_state = NO_TOUCH_ACTION;
-          }
-          break;
-        case SWIPE_START:
-          memcpy(&front_old, &front, sizeof(front_old));
-          front_state = ON_SCREEN_SWIPE;
-          break;
-        case ON_SCREEN_SWIPE:
-          if (front.reportNum > 0) {
-            switch (front.reportNum) {
-              case 1:
-                move_mouse(front_old, front);
-                break;
-              case 2:
-                move_wheel(front_old, front);
-            }
-            memcpy(&front_old, &front, sizeof(front_old));
-          } else {
-            front_state = NO_TOUCH_ACTION;
-          }
-          break;
-      }
-    }
-
-    short btn = 0;
-    BTN(SCE_CTRL_UP, UP_FLAG);
-    BTN(SCE_CTRL_LEFT, LEFT_FLAG);
-    BTN(SCE_CTRL_DOWN, DOWN_FLAG);
-    BTN(SCE_CTRL_RIGHT, RIGHT_FLAG);
-
-    BTN(SCE_CTRL_START, PLAY_FLAG);
-    BTN(SCE_CTRL_SELECT, BACK_FLAG);
-
-    BTN(SCE_CTRL_TRIANGLE, Y_FLAG);
-    BTN(SCE_CTRL_CIRCLE, B_FLAG);
-    BTN(SCE_CTRL_CROSS, A_FLAG);
-    BTN(SCE_CTRL_SQUARE, X_FLAG);
-
-    SceTouchData buttons_screen = config.use_fronttouchscreen ? front : back;
-
-    TOUCH_BTN(buttons_screen, 0, 272, 480, 544, LS_CLK_FLAG);
-    TOUCH_BTN(buttons_screen, 480, 272, 960, 544, RS_CLK_FLAG);
-
-    char left_trigger_value = 0;
-    char right_trigger_value = 0;
-
-    if (config.swap_triggerbumper) {
-      if (TOUCH(buttons_screen, 0, 0, 480, 272)) {
-        btn |= LB_FLAG;
-      }
-
-      if (TOUCH(buttons_screen, 480, 0, 960, 272)) {
-        btn |= RB_FLAG;
-      }
-
-      if (pad.buttons & SCE_CTRL_LTRIGGER) {
-        left_trigger_value = 0xff;
-      } 
-
-      if (pad.buttons & SCE_CTRL_RTRIGGER) {
-        right_trigger_value = 0xff;
-      } 
-    } else {
-      BTN(SCE_CTRL_LTRIGGER, LB_FLAG);
-      BTN(SCE_CTRL_RTRIGGER, RB_FLAG);
-
-      if (TOUCH(buttons_screen, 0, 0, 480, 272)) {
-        left_trigger_value = 0xff;
-      }
-
-      if (TOUCH(buttons_screen, 480, 0, 960, 272)) {
-        right_trigger_value = 0xff;
-      }
-    }
-
-    LiSendControllerEvent(btn, left_trigger_value, right_trigger_value, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
-
-    sceKernelDelayThread(1 * 1000); // 1 ms
-  }
-}
-#undef BTN
-
 static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
   int appId = get_app_id(server, config->app);
   if (appId<0) {
@@ -324,7 +115,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
   LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags, server->serverMajorVersion);
 
-  vita_process_input();
+  vitainput_loop();
 
   LiStopConnection();
 }
@@ -482,6 +273,10 @@ int main(int argc, char* argv[]) {
   config_parse(argc, argv, &config);
   config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
+
+  if (!vitainput_init(config)) {
+    loop_forever();
+  }
 
   SERVER_DATA server;
   server.address = malloc(sizeof(char)*256);

@@ -28,6 +28,10 @@ struct input_config {
   char* mapping;
 };
 
+struct touchscreen_deadzone {
+  int top, bottom, left, right;
+};
+
 typedef struct _CONFIGURATION {
   STREAM_CONFIGURATION stream;
   char* app;
@@ -42,8 +46,8 @@ typedef struct _CONFIGURATION {
   bool fullscreen;
   bool forcehw;
   bool unsupported_version;
-  bool swap_triggerbumper;
   bool use_fronttouchscreen;
+  struct touchscreen_deadzone back_deadzone;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
 } CONFIGURATION, *PCONFIGURATION;

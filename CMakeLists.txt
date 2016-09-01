@@ -19,6 +19,7 @@ include_directories(
 
 add_executable(${PROJECT_NAME}.elf
 	src/config.c
+	src/input/mapping.c
 	src/connection.c
 	src/global.c
 	src/loop.c
@@ -27,6 +28,7 @@ add_executable(${PROJECT_NAME}.elf
 
 	src/audio/vita.c
 	src/video/vita.c
+	src/input/vita.c
 	src/graphics.c
 	src/font.c
 

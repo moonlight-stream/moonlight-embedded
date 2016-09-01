@@ -70,7 +70,7 @@ static struct option long_options[] = {
   {0, 0, 0, 0},
 };
 
-char* get_path(char* name, char* extra_data_dirs) {
+char* __get_path(char* name, char* extra_data_dirs) {
   const char *xdg_config_dir = getenv("XDG_CONFIG_DIR");
   const char *home_dir = getenv("HOME");
 
@@ -159,7 +159,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     mapped = true;
     break;
   case 'k':
-    config->mapping = get_path(value, getenv("XDG_DATA_DIRS"));
+    config->mapping = value;
     if (config->mapping == NULL) {
       fprintf(stderr, "Unable to open custom mapping file: %s\n", value);
       exit(-1);
@@ -244,10 +244,16 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
         config->sops = strcmp("true", value) == 0;
       } else if (strcmp(key, "localaudio") == 0) {
         config->localaudio = strcmp("true", value) == 0;
-      } else if (strcmp(key, "swap_triggerbumper") == 0) {
-        config->swap_triggerbumper = strcmp("true", value) == 0;
-      } else if (strcmp(key, "use_fronttouchscreen") == 0) {
+      } else if (strcmp(key, "fronttouchscreen_buttons") == 0) {
         config->use_fronttouchscreen = strcmp("true", value) == 0;
+      } else if (strcmp(key, "backtouchscreen_deadzone") == 0) {
+        int left, top, bottom, right;
+        sscanf(value, 
+            "%d,%d,%d,%d", 
+            &config->back_deadzone.top, 
+            &config->back_deadzone.right, 
+            &config->back_deadzone.bottom, 
+            &config->back_deadzone.left);
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
           if (long_options[i].has_arg == required_argument && strcmp(long_options[i].name, key) == 0) {

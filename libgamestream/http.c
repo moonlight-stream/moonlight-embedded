@@ -75,7 +75,7 @@ int http_request(char* url, PHTTP_DATA data) {
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
-  char url_tiny[64] = {0};
+  char url_tiny[48] = {0};
   strncpy(url_tiny, url, sizeof(url_tiny) - 1);
   printf("GET %s\n", url_tiny);
 

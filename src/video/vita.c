@@ -241,13 +241,13 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   
   if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
     PLENTRY entry = gs_sps_fix(&decodeUnit->bufferList, 0);
-    // PLENTRY entry = decodeUnit->bufferList;
     int length = 0;
     while (entry != NULL) {
       memcpy(ffmpeg_buffer+length, entry->data, entry->length);
       length += entry->length;
       entry = entry->next;
     }
+
     au.es.pBuf = ffmpeg_buffer;
     au.es.size = decodeUnit->fullLength;
     au.dts.lower = 0xFFFFFFFF;

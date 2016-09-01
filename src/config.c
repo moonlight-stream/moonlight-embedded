@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
+#include "graphics.h"
 
 #define MOONLIGHT_PATH "/moonlight"
 #define USER_PATHS "."
@@ -224,22 +225,29 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
 bool config_file_parse(char* filename, PCONFIGURATION config) {
   FILE* fd = fopen(filename, "r");
   if (fd == NULL) {
-    fprintf(stderr, "Can't open configuration file: %s\n", filename);
+    printf("Can't open configuration file: %s\n", filename);
     return false;
   }
 
   char *line = NULL;
   size_t len = 0;
 
-  while (getline(&line, &len, fd) != -1) {
-    char *key = NULL, *value = NULL;
-    if (sscanf(line, "%ms = %m[^\n]", &key, &value) == 2) {
+  while (__getline(&line, &len, fd) != -1) {
+    char key[256], scan_value[256];
+    if (sscanf(line, "%s = %s\n", &key, &scan_value) == 2) {
+      char *value = malloc(sizeof(char) * strlen(scan_value));
+      strcpy(value, scan_value);
       if (strcmp(key, "address") == 0) {
-        config->address = value;
+        config->address = malloc(sizeof(char)*strlen(value));
+        strcpy(config->address, value);
       } else if (strcmp(key, "sops") == 0) {
         config->sops = strcmp("true", value) == 0;
       } else if (strcmp(key, "localaudio") == 0) {
         config->localaudio = strcmp("true", value) == 0;
+      } else if (strcmp(key, "swap_triggerbumper") == 0) {
+        config->swap_triggerbumper = strcmp("true", value) == 0;
+      } else if (strcmp(key, "use_fronttouchscreen") == 0) {
+        config->use_fronttouchscreen = strcmp("true", value) == 0;
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
           if (long_options[i].has_arg == required_argument && strcmp(long_options[i].name, key) == 0) {
@@ -303,13 +311,14 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported_version = false;
 
   config->inputsCount = 0;
-  config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
+  //config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
   config->key_dir[0] = 0;
 
-  char* config_file = get_path("moonlight.conf", "/etc");
-  if (config_file)
+  //char* config_file = get_path("moonlight.conf", "ux0:data/moonlight/");
+  char* config_file = "ux0:data/moonlight/moonlight.conf";
+  if (config_file) {
     config_file_parse(config_file, config);
-  
+  }
   if (argc == 2 && access(argv[1], F_OK) == 0) {
     config->action = "stream";
     if (!config_file_parse(argv[1], config))

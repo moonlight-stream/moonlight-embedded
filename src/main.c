@@ -54,6 +54,8 @@
 
 #include "graphics.h"
 
+static CONFIGURATION config = {0};
+
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list = NULL;
   if (gs_applist(server, &list) != GS_OK) {
@@ -70,7 +72,7 @@ static void applist(PSERVER_DATA server) {
 static int get_app_id(PSERVER_DATA server, const char *name) {
   PAPP_LIST list = NULL;
   if (gs_applist(server, &list) != GS_OK) {
-    fprintf(stderr, "Can't get app list\n");
+    printf("Can't get app list\n");
     return -1;
   }
 
@@ -181,56 +183,58 @@ static void vita_process_input(void) {
     sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
     sceRtcGetCurrentTick(&current);
 
-    switch (front_state) {
-      case NO_TOUCH_ACTION:
-        if (front.reportNum > 0) {
-          front_state = ON_SCREEN_TOUCH;
-          finger_count = front.reportNum;
-          sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-        }
-        break;
-      case ON_SCREEN_TOUCH:
-        if (sceRtcCompareTick(&current, &until) < 0) {
-          if (front.reportNum < finger_count) {
-            // TAP
-            if (mouse_click(finger_count, true)) {
-              front_state = SCREEN_TAP;
-              sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-            } else {
-              front_state = NO_TOUCH_ACTION;
-            }
-          } else if (front.reportNum > finger_count) {
-            // finger count changed
+    if (config.use_fronttouchscreen == false) {
+      switch (front_state) {
+        case NO_TOUCH_ACTION:
+          if (front.reportNum > 0) {
+            front_state = ON_SCREEN_TOUCH;
             finger_count = front.reportNum;
+            sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
           }
-        } else {
-          front_state = SWIPE_START;
-        }
-        break;
-      case SCREEN_TAP:
-        if (sceRtcCompareTick(&current, &until) >= 0) {
-          mouse_click(finger_count, false);
-          front_state = NO_TOUCH_ACTION;
-        }
-        break;
-      case SWIPE_START:
-        memcpy(&front_old, &front, sizeof(front_old));
-        front_state = ON_SCREEN_SWIPE;
-        break;
-      case ON_SCREEN_SWIPE:
-        if (front.reportNum > 0) {
-          switch (front.reportNum) {
-            case 1:
-              move_mouse(front_old, front);
-              break;
-            case 2:
-              move_wheel(front_old, front);
+          break;
+        case ON_SCREEN_TOUCH:
+          if (sceRtcCompareTick(&current, &until) < 0) {
+            if (front.reportNum < finger_count) {
+              // TAP
+              if (mouse_click(finger_count, true)) {
+                front_state = SCREEN_TAP;
+                sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+              } else {
+                front_state = NO_TOUCH_ACTION;
+              }
+            } else if (front.reportNum > finger_count) {
+              // finger count changed
+              finger_count = front.reportNum;
+            }
+          } else {
+            front_state = SWIPE_START;
           }
+          break;
+        case SCREEN_TAP:
+          if (sceRtcCompareTick(&current, &until) >= 0) {
+            mouse_click(finger_count, false);
+            front_state = NO_TOUCH_ACTION;
+          }
+          break;
+        case SWIPE_START:
           memcpy(&front_old, &front, sizeof(front_old));
-        } else {
-          front_state = NO_TOUCH_ACTION;
-        }
-        break;
+          front_state = ON_SCREEN_SWIPE;
+          break;
+        case ON_SCREEN_SWIPE:
+          if (front.reportNum > 0) {
+            switch (front.reportNum) {
+              case 1:
+                move_mouse(front_old, front);
+                break;
+              case 2:
+                move_wheel(front_old, front);
+            }
+            memcpy(&front_old, &front, sizeof(front_old));
+          } else {
+            front_state = NO_TOUCH_ACTION;
+          }
+          break;
+      }
     }
 
     short btn = 0;
@@ -242,18 +246,49 @@ static void vita_process_input(void) {
     BTN(SCE_CTRL_START, PLAY_FLAG);
     BTN(SCE_CTRL_SELECT, BACK_FLAG);
 
-    BTN(SCE_CTRL_LTRIGGER, LB_FLAG);
-    BTN(SCE_CTRL_RTRIGGER, RB_FLAG);
-
     BTN(SCE_CTRL_TRIANGLE, Y_FLAG);
     BTN(SCE_CTRL_CIRCLE, B_FLAG);
     BTN(SCE_CTRL_CROSS, A_FLAG);
     BTN(SCE_CTRL_SQUARE, X_FLAG);
 
-    TOUCH_BTN(back, 0, 272, 480, 544, LS_CLK_FLAG);
-    TOUCH_BTN(back, 480, 272, 960, 544, RS_CLK_FLAG);
+    SceTouchData buttons_screen = config.use_fronttouchscreen ? front : back;
 
-    LiSendControllerEvent(btn, TOUCH(back, 0, 0, 480, 272) ? 0xff : 0, TOUCH(back, 480, 0, 960, 272) ? 0xff : 0, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
+    TOUCH_BTN(buttons_screen, 0, 272, 480, 544, LS_CLK_FLAG);
+    TOUCH_BTN(buttons_screen, 480, 272, 960, 544, RS_CLK_FLAG);
+
+    char left_trigger_value = 0;
+    char right_trigger_value = 0;
+
+    if (config.swap_triggerbumper) {
+      if (TOUCH(buttons_screen, 0, 0, 480, 272)) {
+        btn |= LB_FLAG;
+      }
+
+      if (TOUCH(buttons_screen, 480, 0, 960, 272)) {
+        btn |= RB_FLAG;
+      }
+
+      if (pad.buttons & SCE_CTRL_LTRIGGER) {
+        left_trigger_value = 0xff;
+      } 
+
+      if (pad.buttons & SCE_CTRL_RTRIGGER) {
+        right_trigger_value = 0xff;
+      } 
+    } else {
+      BTN(SCE_CTRL_LTRIGGER, LB_FLAG);
+      BTN(SCE_CTRL_RTRIGGER, RB_FLAG);
+
+      if (TOUCH(buttons_screen, 0, 0, 480, 272)) {
+        left_trigger_value = 0xff;
+      }
+
+      if (TOUCH(buttons_screen, 480, 0, 960, 272)) {
+        right_trigger_value = 0xff;
+      }
+    }
+
+    LiSendControllerEvent(btn, left_trigger_value, right_trigger_value, a2m(pad.lx), -a2m(pad.ly), a2m(pad.rx), -a2m(pad.ry));
 
     sceKernelDelayThread(1 * 1000); // 1 ms
   }
@@ -261,34 +296,22 @@ static void vita_process_input(void) {
 #undef BTN
 
 static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
-#if 0
   int appId = get_app_id(server, config->app);
   if (appId<0) {
-    fprintf(stderr, "Can't find app %s\n", config->app);
+    printf("Can't find app %s\n", config->app);
+    loop_forever();
     exit(-1);
   }
-#else
-  int appId = get_app_id(server, "Steam");
-#endif
-
-  FILE *fin = fopen("ux0:data/moonlight/settings.txt", "r");
-  fscanf(fin, "%d%d%d%d", &config->stream.width, &config->stream.height, &config->stream.fps, &config->stream.bitrate);
-  fclose(fin);
 
   printf("Got configuration: width %d height %d fps %d bitrate %d\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-
-  // config->stream.width = 960;
-  // config->stream.height = 544;
-  // config->stream.fps = 60;
-  // config->stream.bitrate = 4000;
-
-  config->stream.packetSize = 1024;
   int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
-      fprintf(stderr, "Server doesn't support 4K\n");
+      printf("Server doesn't support 4K\n");
     else
-      fprintf(stderr, "Errorcode starting app: %d\n", ret);
+      printf("Errorcode starting app: %d\n", ret);
+
+    loop_forever();
     exit(-1);
   }
 
@@ -455,28 +478,15 @@ int main(int argc, char* argv[]) {
   psvDebugScreenInit();
   vita_init();
   
-  CONFIGURATION config = {0};
+  printf("Attempting to parse config\n");
+  config_parse(argc, argv, &config);
   config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
   SERVER_DATA server;
+  server.address = malloc(sizeof(char)*256);
+  strcpy(server.address, config.address);
 
-  // get host address
-  char server_addr[256] = {0};
-  FILE *fin = fopen("ux0:data/moonlight/server.txt", "r");
-  if (!fin) {
-    printf("You should write server address to ux0:data/moonlight/server.txt\n");
-    loop_forever();
-  }
-  fread(server_addr, 128, 1, fin);
-  fclose(fin);
-  int len = strlen(server_addr);
-  while (isspace(server_addr[len - 1])) {
-    --len;
-    server_addr[len] = 0;
-  }
-
-  server.address = server_addr;
   psvDebugScreenSetFgColor(COLOR_GREEN);
   printf("Server address: %s\n", server.address);
   psvDebugScreenSetFgColor(COLOR_WHITE);

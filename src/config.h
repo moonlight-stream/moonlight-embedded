@@ -42,6 +42,8 @@ typedef struct _CONFIGURATION {
   bool fullscreen;
   bool forcehw;
   bool unsupported_version;
+  bool swap_triggerbumper;
+  bool use_fronttouchscreen;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
 } CONFIGURATION, *PCONFIGURATION;

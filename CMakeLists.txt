@@ -18,6 +18,7 @@ include_directories(
 )
 
 add_executable(${PROJECT_NAME}.elf
+	src/config.c
 	src/connection.c
 	src/global.c
 	src/loop.c

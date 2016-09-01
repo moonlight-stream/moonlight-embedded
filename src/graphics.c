@@ -105,19 +105,21 @@ static void printTextScreen(const char * text)
 	Color *vram_ptr;
 	Color *vram;
 
+	int fontSize = 16;
+	float zoom = (float) fontSize / 8;
 	for (c = 0; c < strlen(text); c++) {
-		if (gX + 8 > SCREEN_WIDTH) {
-			gY += 8;
+		if (gX + fontSize > SCREEN_WIDTH) {
+			gY += fontSize;
 			gX = 0;
 		}
-		if (gY + 8 > SCREEN_HEIGHT) {
+		if (gY + fontSize > SCREEN_HEIGHT) {
 			gY = 0;
 			psvDebugScreenClear(g_bg_color);
 		}
 		char ch = text[c];
 		if (ch == '\n') {
 			gX = 0;
-			gY += 8;
+			gY += fontSize;
 			continue;
 		} else if (ch == '\r') {
 			gX = 0;
@@ -126,17 +128,17 @@ static void printTextScreen(const char * text)
 
 		vram = getVramDisplayBuffer() + gX + gY * LINE_SIZE;
 
-		font = &msx[ (int)ch * 8];
-		for (i = l = 0; i < 8; i++, l += 8, font++) {
+		for (i = l = 0; i < fontSize; i++, l += fontSize) {
+			font = &msx[ (int)ch * 8] + (int) (i / zoom);
 			vram_ptr  = vram;
-			for (j = 0; j < 8; j++) {
-				if ((*font & (128 >> j))) *vram_ptr = g_fg_color;
+			for (j = 0; j < fontSize; j++) {
+				if ((*font & (128 >> (int) (j/zoom)))) *vram_ptr = g_fg_color;
 				else *vram_ptr = g_bg_color;
 				vram_ptr++;
 			}
 			vram += LINE_SIZE;
 		}
-		gX += 8;
+		gX += fontSize;
 	}
 }
 

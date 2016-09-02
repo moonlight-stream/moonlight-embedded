@@ -55,7 +55,7 @@
 
 #include "graphics.h"
 
-static CONFIGURATION config = {0};
+CONFIGURATION config = {0};
 
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list = NULL;

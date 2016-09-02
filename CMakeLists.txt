@@ -29,6 +29,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/audio/vita.c
 	src/video/vita.c
 	src/input/vita.c
+	src/power/vita.c
 	src/graphics.c
 	src/font.c
 
@@ -98,6 +99,8 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lSceVideodec_stub
 	-lSceCommonDialog_stub
 	-lSceAudio_stub
+	-lSceKernel_stub
+	-lScePower_stub
 )
 
 add_custom_target(${PROJECT_NAME}.vpk ALL

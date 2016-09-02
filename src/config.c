@@ -254,6 +254,8 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
             &config->back_deadzone.right, 
             &config->back_deadzone.bottom, 
             &config->back_deadzone.left);
+      } else if (strcmp(key, "disable_powersave") == 0) {
+        config->disable_powersave = strcmp("true", value) == 0;
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
           if (long_options[i].has_arg == required_argument && strcmp(long_options[i].name, key) == 0) {
@@ -315,6 +317,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->localaudio = false;
   config->fullscreen = true;
   config->unsupported_version = false;
+  config->disable_powersave = true;
 
   config->inputsCount = 0;
   //config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));

@@ -48,9 +48,12 @@ typedef struct _CONFIGURATION {
   bool unsupported_version;
   bool fronttouchscreen_buttons;
   struct touchscreen_deadzone back_deadzone;
+  bool disable_powersave;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
 } CONFIGURATION, *PCONFIGURATION;
+
+extern CONFIGURATION config;
 
 bool inputAdded;
 

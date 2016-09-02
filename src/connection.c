@@ -19,8 +19,18 @@
 
 #include "connection.h"
 #include "global.h"
+#include "config.h"
+#include "power/vita.h"
 
 #include <stdio.h>
+
+void connection_connection_started()
+{
+  vitapower_init();
+  if (config.disable_powersave) {
+    vitapower_disable_powersave();
+  }
+}
 
 void connection_connection_terminated()
 {
@@ -41,7 +51,7 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = NULL,
   .stageComplete = NULL,
   .stageFailed = NULL,
-  .connectionStarted = NULL,
+  .connectionStarted = connection_connection_started,
   .connectionTerminated = connection_connection_terminated,
   .displayMessage = connection_display_message,
   .displayTransientMessage = connection_display_transient_message,

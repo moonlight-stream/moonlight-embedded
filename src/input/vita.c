@@ -62,7 +62,6 @@ enum {
   RIGHTY
 } PadSection;
 
-static CONFIGURATION config = {0};
 static struct mapping map = {0};
 
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)

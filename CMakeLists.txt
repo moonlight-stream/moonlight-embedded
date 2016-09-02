@@ -102,7 +102,7 @@ target_link_libraries(${PROJECT_NAME}.elf
 
 add_custom_target(${PROJECT_NAME}.vpk ALL
 	COMMAND vita-elf-create ${PROJECT_NAME}.elf ${PROJECT_NAME}.velf
-	COMMAND vita-make-fself ${PROJECT_NAME}.velf eboot.bin
+	COMMAND vita-make-fself -s ${PROJECT_NAME}.velf eboot.bin
 	COMMAND vita-mksfoex -s TITLE_ID=${TITLE_ID} "${PROJECT_NAME}" param.sfo
 	COMMAND vita-pack-vpk -s param.sfo -b eboot.bin ${PROJECT_NAME}.vpk
 )

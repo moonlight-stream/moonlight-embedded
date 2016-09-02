@@ -175,12 +175,36 @@ bool check_input(short identifier, SceCtrlData pad, SceTouchData screen) {
 bool vitainput_init(CONFIGURATION conf) {
     config = conf;
 
-    char config_path[256];
-    sprintf(config_path, "ux0:data/moonlight/%s", config.mapping);
-    mapping_load(config_path, &map);
-    if (map.btn_south == 0) {
-      printf("Failed to load mapping %s!\n", config_path);
-      return false;
+    if (config.mapping) {
+      char config_path[256];
+      sprintf(config_path, "ux0:data/moonlight/%s", config.mapping);
+      printf("Loading mapping at %s\n", config_path);
+      mapping_load(config_path, &map);
+      if (map.btn_south == 0) {
+        printf("Failed to load mapping %s!\n", config_path);
+        return false;
+      }
+    } else {
+      map.abs_x = 0;
+      map.abs_y = 1;
+      map.abs_rx = 2;
+      map.abs_ry = 3;
+      map.btn_south = 16383;
+      map.btn_east = 8191;
+      map.btn_north = 4095;
+      map.btn_west = 32767;
+      map.btn_select = 0;
+      map.btn_start = 7;
+      map.btn_thumbl = 255;
+      map.btn_thumbr = 511;
+      map.btn_dpad_up = 15;
+      map.btn_dpad_down = 63;
+      map.btn_dpad_left = 127;
+      map.btn_dpad_right = 31;
+      map.btn_tl = 2;
+      map.btn_tr = 3;
+      map.btn_tl2 = 4;
+      map.btn_tr2 = 5;
     }
 
     return true;

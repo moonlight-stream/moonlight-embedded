@@ -29,15 +29,14 @@
 void mapping_load(char* fileName, struct mapping* map) {
   FILE* fd = fopen(fileName, "r");
   if (fd == NULL) {
-    fprintf(stderr, "Can't open mapping file: %s\n", fileName);
-    exit(EXIT_FAILURE);
+    printf("Can't open mapping file: %s\n", fileName);
   }
 
   char *line = NULL;
   size_t len = 0;
-  while (getline(&line, &len, fd) != -1) {
-    char *key = NULL, *value = NULL;
-    if (sscanf(line, "%ms = %ms", &key, &value) == 2) {
+  while (__getline(&line, &len, fd) != -1) {
+    char key[256], value[256];
+    if (sscanf(line, "%s = %s", &key, &value) == 2) {
       long int_value = strtol(value, NULL, 10);
       if (strcmp("abs_x", key) == 0)
         map->abs_x = int_value;
@@ -106,11 +105,6 @@ void mapping_load(char* fileName, struct mapping* map) {
       else
         fprintf(stderr, "Can't map (%s)\n", key);
     }
-    if (key != NULL)
-      free(key);
-
-    if (value != NULL)
-      free(value);
   }
   free(line);
 }

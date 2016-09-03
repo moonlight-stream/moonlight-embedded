@@ -32,6 +32,9 @@ add_executable(${PROJECT_NAME}.elf
 	src/power/vita.c
 	src/graphics.c
 	src/font.c
+	src/gui/guilib.c
+	src/gui/ui.c
+	src/gui/ime.c
 
 	libgamestream/client.c
 	libgamestream/http.c
@@ -96,16 +99,30 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lSceNet_stub
 	-lSceSysmodule_stub
 	-lSceNetCtl_stub
+	-lScePower_stub
 	-lSceVideodec_stub
 	-lSceCommonDialog_stub
 	-lSceAudio_stub
+	-lSceIme_stub
+
+	-lvita2d
 	-lSceKernel_stub
-	-lScePower_stub
+	-lSceGxm_stub
+	-lScePgf_stub
+	-lSceCommonDialog_stub 
+	-lfreetype 
+	-lpng 
+	-ljpeg 
+	-lz 
+	-lm 
+	-lc
+
+
 )
 
 add_custom_target(${PROJECT_NAME}.vpk ALL
 	COMMAND vita-elf-create ${PROJECT_NAME}.elf ${PROJECT_NAME}.velf
-	COMMAND vita-make-fself -s ${PROJECT_NAME}.velf eboot.bin
+	COMMAND vita-make-fself ${PROJECT_NAME}.velf eboot.bin
 	COMMAND vita-mksfoex -s TITLE_ID=${TITLE_ID} "${PROJECT_NAME}" param.sfo
 	COMMAND vita-pack-vpk -s param.sfo -b eboot.bin ${PROJECT_NAME}.vpk
 )

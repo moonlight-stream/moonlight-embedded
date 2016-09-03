@@ -37,6 +37,8 @@
 #define write_config_int(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 
+CONFIGURATION config;
+
 bool inputAdded = false;
 static bool mapped = true;
 const char* audio_device = NULL;
@@ -275,6 +277,8 @@ void config_save(char* filename, PCONFIGURATION config) {
     exit(EXIT_FAILURE);
   }
 
+  write_config_string(fd, "address", config->address);
+
   if (config->stream.width != 1280)
     write_config_int(fd, "width", config->stream.width);
   if (config->stream.height != 720)
@@ -293,6 +297,19 @@ void config_save(char* filename, PCONFIGURATION config) {
   if (strcmp(config->app, "Steam") != 0)
     write_config_string(fd, "app", config->app);
 
+  write_config_bool(fd, "fronttouchscreen_buttons", config->fronttouchscreen_buttons);
+  write_config_bool(fd, "disable_powersave", config->disable_powersave);
+
+  char deadzone[256];
+  sprintf(
+      deadzone, 
+      "%d,%d,%d,%d", 
+      config->back_deadzone.top,
+      config->back_deadzone.right,
+      config->back_deadzone.bottom,
+      config->back_deadzone.left);
+
+  write_config_string(fd, "backtouchscreen_deadzone", deadzone);
   fclose(fd);
 }
 

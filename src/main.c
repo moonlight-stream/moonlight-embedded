@@ -54,71 +54,7 @@
 #include <psp2/rtc.h>
 
 #include "graphics.h"
-
-CONFIGURATION config = {0};
-
-static void applist(PSERVER_DATA server) {
-  PAPP_LIST list = NULL;
-  if (gs_applist(server, &list) != GS_OK) {
-    fprintf(stderr, "Can't get app list\n");
-    return;
-  }
-
-  for (int i = 1;list != NULL;i++) {
-    printf("%d. %s\n", i, list->name);
-    list = list->next;
-  }
-}
-
-static int get_app_id(PSERVER_DATA server, const char *name) {
-  PAPP_LIST list = NULL;
-  if (gs_applist(server, &list) != GS_OK) {
-    printf("Can't get app list\n");
-    return -1;
-  }
-
-  while (list != NULL) {
-    if (strcmp(list->name, name) == 0)
-      return list->id;
-
-    list = list->next;
-  }
-  return -1;
-}
-
-static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
-  int appId = get_app_id(server, config->app);
-  if (appId<0) {
-    printf("Can't find app %s\n", config->app);
-    loop_forever();
-    exit(-1);
-  }
-
-  printf("Got configuration: width %d height %d fps %d bitrate %d\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-  int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
-  if (ret < 0) {
-    if (ret == GS_NOT_SUPPORTED_4K)
-      printf("Server doesn't support 4K\n");
-    else
-      printf("Errorcode starting app: %d\n", ret);
-
-    loop_forever();
-    exit(-1);
-  }
-
-  int drFlags = 0;
-  if (config->fullscreen)
-    drFlags |= DISPLAY_FULLSCREEN;
-
-  if (config->forcehw)
-    drFlags |= FORCE_HARDWARE_ACCELERATION;
-  printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags, server->serverMajorVersion);
-
-  vitainput_loop();
-
-  LiStopConnection();
-}
+#include "gui/ui.h"
 
 static void help() {
   printf("Usage: moonlight [action] (options) [host]\n");
@@ -163,13 +99,6 @@ static void help() {
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);
-}
-
-static void pair_check(PSERVER_DATA server) {
-  if (!server->paired) {
-    fprintf(stderr, "You must pair with the PC first\n");
-    exit(-1);
-  }
 }
 
 static void vita_init() {
@@ -268,7 +197,7 @@ int main(int argc, char* argv[]) {
 
   psvDebugScreenInit();
   vita_init();
-  
+
   printf("Attempting to parse config\n");
   config_parse(argc, argv, &config);
   config.platform = "vita";
@@ -278,34 +207,8 @@ int main(int argc, char* argv[]) {
     loop_forever();
   }
 
-  SERVER_DATA server;
-  server.address = malloc(sizeof(char)*256);
-  strcpy(server.address, config.address);
-
-  psvDebugScreenSetFgColor(COLOR_GREEN);
-  printf("Server address: %s\n", server.address);
-  psvDebugScreenSetFgColor(COLOR_WHITE);
-  enum platform system = VITA;
-
-  if ((ret = gs_init(&server, config.key_dir)) == GS_OUT_OF_MEMORY) {
-    printf("Not enough memory\n");
-    loop_forever();
-  } else if (ret == GS_INVALID) {
-    printf("Invalid data received from server: %s\n", config.address, gs_error);
-    loop_forever();
-  } else if (ret == GS_UNSUPPORTED_VERSION) {
-    if (!config.unsupported_version) {
-      printf("Unsupported version: %s\n", gs_error);
-      loop_forever();
-    }
-  } else if (ret != GS_OK) {
-    printf("Can't connect to server %s\n", config.address);
-    loop_forever();
-  }
-
-  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.gfeVersion, server.serverMajorVersion);
-  printf("\n");
-
+  gui_loop();
+  /*
 again:
   printf("Press X to pair (You need to do it once)\n");
   printf("Press O to launch steam\n");
@@ -320,6 +223,7 @@ again:
   default:
     goto again;
   }
+  */
 
   loop_forever();
 }

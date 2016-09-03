@@ -143,37 +143,6 @@ void loop_forever(void) {
   }
 }
 
-static unsigned buttons[] = {
-  SCE_CTRL_SELECT,
-  SCE_CTRL_START,
-  SCE_CTRL_UP,
-  SCE_CTRL_RIGHT,
-  SCE_CTRL_DOWN,
-  SCE_CTRL_LEFT,
-  SCE_CTRL_LTRIGGER,
-  SCE_CTRL_RTRIGGER,
-  SCE_CTRL_TRIANGLE,
-  SCE_CTRL_CIRCLE,
-  SCE_CTRL_CROSS,
-  SCE_CTRL_SQUARE,
-};
-
-static int get_key(void) {
-  static unsigned prev = 0;
-  SceCtrlData pad;
-  while (1) {
-    memset(&pad, 0, sizeof(pad));
-    sceCtrlPeekBufferPositive(0, &pad, 1);
-    unsigned new = prev ^ (pad.buttons & prev);
-    prev = pad.buttons;
-    for (int i = 0; i < sizeof(buttons)/sizeof(*buttons); ++i)
-      if (new & buttons[i])
-        return buttons[i];
-
-    sceKernelDelayThread(1000); // 1ms
-  }
-}
-
 static void vita_pair(SERVER_DATA *server) {
   char pin[5];
   sprintf(pin, "%d%d%d%d", (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
@@ -198,7 +167,7 @@ int main(int argc, char* argv[]) {
   psvDebugScreenInit();
   vita_init();
 
-  printf("Attempting to parse config\n");
+  config_path = "ux0:data/moonlight/moonlight.conf";
   config_parse(argc, argv, &config);
   config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
@@ -208,6 +177,8 @@ int main(int argc, char* argv[]) {
   }
 
   gui_loop();
+  loop_forever();
+
   /*
 again:
   printf("Press X to pair (You need to do it once)\n");
@@ -224,6 +195,4 @@ again:
     goto again;
   }
   */
-
-  loop_forever();
 }

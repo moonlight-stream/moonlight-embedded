@@ -97,15 +97,18 @@ void oslOskGetText(char *text){
 }
 
 
-int ime_dialog(char *text) {
+int ime_dialog(char *text, char *title, char *def) {
   sceCommonDialogSetConfigParam(&(SceCommonDialogConfigParam){});
 
   int shown_dial = 0;
-  char userText[512] = "192.168.";
+  char userText[512];
+  if (def) {
+    strcpy(userText, def);
+  }
 
   while (1) {
     if(!shown_dial){
-      initImeDialog("Enter IP address:", userText, 128);
+      initImeDialog(title, userText, 128);
       shown_dial=1;
     }
 

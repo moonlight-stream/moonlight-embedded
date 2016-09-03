@@ -1,2 +1,2 @@
 
-int ime_dialog(char *result);
+int ime_dialog(char *text, char *title, char *def);

@@ -16,6 +16,15 @@
 
 #include "../input/vita.h"
 
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <ctype.h>
+
 #include <psp2/ctrl.h>
 #include <vita2d.h>
 
@@ -36,72 +45,238 @@ int main_menu_loop(int cursor, void *context) {
   if (was_button_pressed(SCE_CTRL_CROSS)) {
     switch (cursor) {
       case MAIN_MENU_CONNECT:
-        gui_ctrl_end();
         __connect_ip();
         break;
       case MAIN_MENU_CONNECT_SAVED:
-        gui_ctrl_end();
         __connect_saved();
         break;
       case MAIN_MENU_SETTINGS:
-        gui_ctrl_end();
         __settings();
         break;
       case MAIN_MENU_QUIT:
         exit(0);
         break;
-      case 200:
-        if (true) {
-          gui_ctrl_end();
-          char *captions[] = {"foo", "bar", 0, 0};
-          display_alert("dis is ALERT", captions, 4, 0);
-          display_error("dis is error");
-        }
-        break;
     }
   }
 
   return 0;
 }
 
-void __main_menu() {
+int main_menu_back(void *context) {
+  return 1;
+}
+
+int __main_menu() {
   struct menu_entry menu[16];
-  menu[0] = (struct menu_entry) { .name = "connect to ip", .id = MAIN_MENU_CONNECT };
-  char prev[256];
-  sprintf(prev, "connect to %s", config.address ? config.address : "none");
+  int idx = 0;
 
-  menu[1] = (struct menu_entry) { .name = prev, .id = MAIN_MENU_CONNECT_SAVED };
-  menu[2] = (struct menu_entry) { .name = "", .disabled = true, .separator = true };
-  menu[3] = (struct menu_entry) { .name = "settings", .id = MAIN_MENU_SETTINGS };
-  menu[4] = (struct menu_entry) { .name = "test", .id = 200 };
-  menu[5] = (struct menu_entry) { .name = "quit", .id = MAIN_MENU_QUIT };
+  if (config.address) {
+    char prev[256];
+    sprintf(prev, "Connect to %s", config.address ? config.address : "none");
+    menu[idx++] = (struct menu_entry) { .name = prev, .id = MAIN_MENU_CONNECT_SAVED };
+  }
+  menu[idx++] = (struct menu_entry) { .name = "Connect to ...", .id = MAIN_MENU_CONNECT };
+  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .separator = true };
+  menu[idx++] = (struct menu_entry) { .name = "Settings", .id = MAIN_MENU_SETTINGS };
+  menu[idx++] = (struct menu_entry) { .name = "Quit", .id = MAIN_MENU_QUIT };
 
-  display_menu(menu, 6, &main_menu_loop, 0);
+  return display_menu(menu, idx, &main_menu_loop, &main_menu_back, NULL);
+}
+
+/*
+ * Settings
+ */
+
+int move_idx_in_array(char *array[], int count, char *find, int index_dist) {
+  int i = 0;
+  for (; i < count; i++) {
+    if (strcmp(find, array[i]) == 0) {
+      i += index_dist;
+      break;
+    }
+  }
+
+  if (i >= count) {
+    return count - 1;
+  } else if (i < 0) {
+    return 0;
+  } else {
+    return i;
+  }
+}
+
+void settings_save_config() {
+  config_save(config_path, &config);
 }
 
 enum {
-  CONNECT_START = 100,
-  CONNECT_PAIRUNPAIR
+  SETTINGS_RESOLUTION = 100,
+  SETTINGS_FPS,
+  SETTINGS_BITRATE,
+  SETTINGS_FRONTTOUCHSCREEN,
+  SETTINGS_DISABLE_POWERSAVE
 };
 
+enum {
+  SETTINGS_VIEW_RESOLUTION = 1,
+  SETTINGS_VIEW_FPS,
+  SETTINGS_VIEW_BITRATE,
+  SETTINGS_VIEW_FRONTTOUCHSCREEN = 5,
+  SETTINGS_VIEW_DISABLE_POWERSAVE
+};
+
+static bool settings_loop_setup = 1;
+int settings_loop(int id, void *context) {
+  struct menu_entry *menu = context;
+  bool did_change = 0;
+  bool left, right;
+  switch (id) {
+    case SETTINGS_RESOLUTION:
+      left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
+      if (left || right) {
+        char *resolutions[] = {"960x544", "1280x720", "1920x1080"};
+        char current[256];
+        sprintf(current, "%dx%d", config.stream.width, config.stream.height);
+
+        int new_idx = move_idx_in_array(
+            resolutions,
+            3,
+            current,
+            left ? -1 : +1
+            );
+
+        switch (new_idx) {
+          case 0: config.stream.width = 960; config.stream.height = 544; break;
+          case 1: config.stream.width = 1280; config.stream.height = 720; break;
+          case 2: config.stream.width = 1920; config.stream.height = 1080; break;
+        }
+
+        did_change = 1;
+      } break;
+    case SETTINGS_FPS:
+      left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
+      if (left || right) {
+        char *settings[] = {"30", "60"};
+        char current[256];
+        sprintf(current, "%d", config.stream.fps);
+        int new_idx = move_idx_in_array(
+            settings,
+            2,
+            current,
+            left ? -1 : +1
+            );
+
+        switch (new_idx) {
+          case 0: config.stream.fps = 30; break;
+          case 1: config.stream.fps = 60; break;
+        }
+
+        did_change = 1;
+      } break;
+    case SETTINGS_BITRATE:
+      if (was_button_pressed(SCE_CTRL_CROSS)) {
+        char value[512];
+        if (ime_dialog(&value, "Enter bitrate: ", 0) == 0) {
+          int bitrate = atoi(value);
+          if (bitrate) {
+            config.stream.bitrate = bitrate;
+            did_change = 1;
+          } else {
+            display_error("Incorrect bitrate entered: %s", value);
+          }
+        }
+      } break;
+    case SETTINGS_FRONTTOUCHSCREEN:
+      if (was_button_pressed(SCE_CTRL_CROSS)) {
+        did_change = 1;
+        config.fronttouchscreen_buttons = !config.fronttouchscreen_buttons;
+      } break;
+    case SETTINGS_DISABLE_POWERSAVE:
+      if (was_button_pressed(SCE_CTRL_CROSS)) {
+        did_change = 1;
+        config.disable_powersave = !config.disable_powersave;
+      } break;
+  }
+
+  if (did_change) {
+    settings_save_config();
+  }
+
+  if (did_change || settings_loop_setup) {
+    settings_loop_setup = 0;
+    char current[256];
+
+    sprintf(current, "%dx%d", config.stream.width, config.stream.height);
+    strcpy(menu[SETTINGS_VIEW_RESOLUTION].subname, current);
+
+    sprintf(current, "%d", config.stream.fps);
+    strcpy(menu[SETTINGS_VIEW_FPS].subname, current);
+
+    sprintf(current, "%d", config.stream.bitrate);
+    strcpy(menu[SETTINGS_VIEW_BITRATE].subname, current);
+
+    sprintf(current, "%s", config.fronttouchscreen_buttons ? "yes" : "no");
+    strcpy(menu[SETTINGS_VIEW_FRONTTOUCHSCREEN].subname, current);
+
+    sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
+    strcpy(menu[SETTINGS_VIEW_DISABLE_POWERSAVE].subname, current);
+  }
+
+  return 0;
+}
+
+int __settings() {
+  struct menu_entry menu[16];
+  menu[0] = (struct menu_entry) { .name = "Stream", .disabled = true, .separator = true};
+  menu[SETTINGS_VIEW_RESOLUTION] = (struct menu_entry) { .name = "Resolution", .id = SETTINGS_RESOLUTION };
+  menu[SETTINGS_VIEW_FPS] = (struct menu_entry) { .name = "FPS", .id = SETTINGS_FPS };
+  menu[SETTINGS_VIEW_BITRATE] = (struct menu_entry) { .name = "Bitrate", .id = SETTINGS_BITRATE };
+
+  // ---------
+  menu[4] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
+  menu[SETTINGS_VIEW_FRONTTOUCHSCREEN] = (struct menu_entry) { .name = "Use front touchscreen for buttons", .id = SETTINGS_FRONTTOUCHSCREEN };
+  menu[SETTINGS_VIEW_DISABLE_POWERSAVE] = (struct menu_entry) { .name = "Disable power save", .id = SETTINGS_DISABLE_POWERSAVE };
+
+  settings_loop_setup = 1;
+  return display_menu(menu, 7, &settings_loop, NULL, &menu);
+}
 
 /*
  * Connect
  */
 
-int connect_loop(int cursor, void *context) {
-  if (was_button_pressed(SCE_CTRL_CROSS)) {
-    enum platform system = VITA;
+enum {
+  CONNECT_PAIRUNPAIR = 13,
+  CONNECT_QUITAPP
+};
 
-    switch (cursor) {
-      case CONNECT_START:
-        gui_ctrl_end();
-        flash_message("Stream starting...");
-        stream(&server, &config, system);
-        break;
+#define QUIT_RELOAD 2
+
+int connect_loop(int id, void *context) {
+  if (was_button_pressed(SCE_CTRL_CROSS)) {
+    switch (id) {
       case CONNECT_PAIRUNPAIR:
-        gui_ctrl_end();
-        display_error("not implemented");
+        if (server.paired) {
+          flash_message("Unpairing...");
+          int ret = gs_unpair(&server);
+          if (ret == GS_OK)
+            return QUIT_RELOAD;
+          else
+            display_error("Unpairing failed: %d", ret);
+        } else {
+          display_error("not implemented");
+        } break;
+      case CONNECT_QUITAPP:
+        flash_message("Quitting...");
+        int ret = gs_quit_app(&server);
+        if (ret == GS_OK)
+          return QUIT_RELOAD;
+        else
+          display_error("Quitting failed: %d", ret);
+        break;
+      default:
+        flash_message("Stream starting...");
+        stream(&server, id);
         break;
     }
   }
@@ -109,7 +284,7 @@ int connect_loop(int cursor, void *context) {
   return 0;
 }
 
-void __connect(char *address) {
+int __connect(char *address) {
   server.address = malloc(sizeof(char)*256);
   strcpy(server.address, address);
 
@@ -131,128 +306,81 @@ void __connect(char *address) {
     return;
   }
 
-  struct menu_entry menu[16];
-  menu[0] = (struct menu_entry) { .name = "Connected to the server:", .disabled = 1 };
-  menu[1] = (struct menu_entry) { .name = address, .disabled = 1 };
-
-  char server_stats[256];
-  sprintf(server_stats, "%sPAIRED, %s", server.paired ? "" : "NOT", server.currentGame != 0 ? "STREAMING" : "NOT STREAMING");
-  menu[2] = (struct menu_entry) { .name = server_stats, .disabled = 1 };
-  menu[3] = (struct menu_entry) { .name = "", .disabled = true, .separator = true };
-  menu[4] = (struct menu_entry) { .name = "Start streaming", .disabled = !server.paired, .id = CONNECT_START };
-
-  if (server.paired) {
-    menu[5] = (struct menu_entry) { .name = "Unpair", .id = CONNECT_PAIRUNPAIR };
-  } else {
-    menu[5] = (struct menu_entry) { .name = "Pair", .id = CONNECT_PAIRUNPAIR };
+  PAPP_LIST list = NULL;
+  if (gs_applist(&server, &list) != GS_OK) {
+    display_error("Can't get applist!");
+    return;
   }
 
-  display_menu(menu, 6, &connect_loop, 0);
+  struct menu_entry menu[32];
+
+  int idx = 0;
+
+  //header
+  menu[idx++] = (struct menu_entry) { .name = "Connected to the server:", .disabled = 1 };
+  char server_info[256];
+  sprintf(server_info, "IP: %s, GPU %s, API v%d", address, server.gpuType, server.serverMajorVersion);
+  menu[idx++] = (struct menu_entry) { .name = server_info, .disabled = 1 };
+
+  // current stream
+  if (server.currentGame != 0) {
+    char current_appname[256];
+    char current_status[256];
+
+    if (!get_app_name(list, server.currentGame, &current_appname)) {
+      strcpy(current_appname, "unknown");
+    }
+    sprintf(current_status, "Streaming %s", current_appname);
+
+    menu[idx++] = (struct menu_entry) { .name = current_status, .disabled = true, .separator = true };
+    menu[idx++] = (struct menu_entry) { .name = "Resume", .id = server.currentGame };
+    menu[idx++] = (struct menu_entry) { .name = "Quit", .id = CONNECT_QUITAPP };
+  }
+
+  // pairing
+  menu[idx++] = (struct menu_entry) { .name = server.paired ? "Paired" : "Not paired", .disabled = true, .separator = true };
+  if (server.paired) {
+    menu[idx++] = (struct menu_entry) { .name = "Unpair", .id = CONNECT_PAIRUNPAIR };
+  } else {
+    menu[idx++] = (struct menu_entry) { .name = "Pair", .id = CONNECT_PAIRUNPAIR };
+  }
+
+  // app list
+  if (list != NULL) {
+    menu[idx++] = (struct menu_entry) { .name = "Applications", .disabled = true, .separator = true };
+
+    while (list) {
+      menu[idx++] = (struct menu_entry) { .name = list->name, .id = list->id };
+      list = list->next;
+    }
+  }
+
+  assert(idx < 32);
+  return display_menu(menu, idx, &connect_loop, NULL, NULL);
 }
 
 void __connect_saved() {
-  __connect(config.address);
+  while (__connect(config.address) == 2);
 }
 
 void __connect_ip() {
-  char ip[256];
-  switch (ime_dialog(&ip)) {
+  char ip[512];
+  switch (ime_dialog(&ip, "Enter IP:", "192.168.")) {
     case 0:
-      gui_ctrl_end();
+      config.address = malloc(sizeof(char) * strlen(ip));
       strcpy(config.address, ip);
+      settings_save_config();
       __connect_saved();
       break;
     default:
       return;
   }
 }
-
-/*
- * Settings
- */
-
-enum {
-  RESOLUTION = 100
-};
-
-int settings_loop(int id, void *context) {
-  switch (id) {
-    case RESOLUTION:
-      if (true) {
-
-        int count = 3;
-        char *resolution[count];
-        resolution[0] = "960x544";
-        resolution[1] = "1280x720";
-        resolution[2] = "1920x1080";
-        char current[256];
-        sprintf(current, "%dx%d", config.stream.width, config.stream.height);
-
-        bool left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
-        if (left || right) {
-          gui_ctrl_end();
-          int i = 0;
-          for (; i < count; i++) {
-            if (strcmp(current, resolution[i]) == 0) {
-              i += right ? 1 : (left ? -1 : 0);
-              break;
-            }
-          }
-
-          if (i >= count || i < 0) {
-            break;
-          } else {
-            switch (i) {
-              case 0:
-                config.stream.width = 960;
-                config.stream.height = 544;
-                break;
-              case 1:
-                config.stream.width = 1280;
-                config.stream.height = 720;
-                break;
-              case 2:
-                config.stream.width = 1920;
-                config.stream.height = 1080;
-                break;
-            }
-          }
-
-          display_error("%dx%d", config.stream.width, config.stream.height);
-        }
-
-      }
-      break;
-  }
-
-  return 0;
-}
-
-void __settings() {
-  struct menu_entry menu[16];
-  menu[0] = (struct menu_entry) { .name = "Stream", .disabled = true, .separator = true};
-  menu[1] = (struct menu_entry) { .name = "Resolution", .id = RESOLUTION };
-  menu[2] = (struct menu_entry) { .name = "FPS" };
-  menu[3] = (struct menu_entry) { .name = "Bitrate" };
-
-  menu[3] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
-  menu[4] = (struct menu_entry) { .name = "Use front touchscreen for buttons" };
-  menu[5] = (struct menu_entry) { .name = "Disable power save" };
-
-  display_menu(menu, 6, &settings_loop, 0);
-}
-
 /*
  * Actions
  */
 
-int get_app_id(PSERVER_DATA server, const char *name) {
-  PAPP_LIST list = NULL;
-  if (gs_applist(server, &list) != GS_OK) {
-    printf("Can't get app list\n");
-    return -1;
-  }
-
+int get_app_id(PAPP_LIST list, char *name) {
   while (list != NULL) {
     if (strcmp(list->name, name) == 0)
       return list->id;
@@ -262,13 +390,21 @@ int get_app_id(PSERVER_DATA server, const char *name) {
   return -1;
 }
 
-void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
-  int appId = get_app_id(server, config->app);
-  if (appId<0) {
-    return display_error("Can't find app %s\n", config->app);
+int get_app_name(PAPP_LIST list, int id, char *name) {
+  while (list != NULL) {
+    if (list->id == id) {
+      strcpy(name, list->name);
+      return 1;
+    }
+
+    list = list->next;
   }
 
-  int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
+  return 0;
+}
+
+void stream(PSERVER_DATA server, int appId) {
+  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       display_error("Server doesn't support 4K\n");
@@ -278,15 +414,17 @@ void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
     return;
   }
 
+  enum platform system = VITA;
   int drFlags = 0;
-  if (config->fullscreen)
+
+  if (config.fullscreen)
     drFlags |= DISPLAY_FULLSCREEN;
-  if (config->forcehw)
+  if (config.forcehw)
     drFlags |= FORCE_HARDWARE_ACCELERATION;
 
   LiStartConnection(
       server->address,
-      &config->stream,
+      &config.stream,
       &connection_callbacks,
       platform_get_video(system),
       platform_get_audio(system),

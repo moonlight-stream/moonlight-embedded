@@ -38,6 +38,7 @@
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 
 CONFIGURATION config;
+char *config_path;
 
 bool inputAdded = false;
 static bool mapped = true;
@@ -277,7 +278,8 @@ void config_save(char* filename, PCONFIGURATION config) {
     exit(EXIT_FAILURE);
   }
 
-  write_config_string(fd, "address", config->address);
+  if (config->address)
+    write_config_string(fd, "address", config->address);
 
   if (config->stream.width != 1280)
     write_config_int(fd, "width", config->stream.width);
@@ -302,8 +304,8 @@ void config_save(char* filename, PCONFIGURATION config) {
 
   char deadzone[256];
   sprintf(
-      deadzone, 
-      "%d,%d,%d,%d", 
+      deadzone,
+      "%d,%d,%d,%d",
       config->back_deadzone.top,
       config->back_deadzone.right,
       config->back_deadzone.bottom,
@@ -341,7 +343,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->key_dir[0] = 0;
 
   //char* config_file = get_path("moonlight.conf", "ux0:data/moonlight/");
-  char* config_file = "ux0:data/moonlight/moonlight.conf";
+  char* config_file = config_path;
   if (config_file) {
     config_file_parse(config_file, config);
   }

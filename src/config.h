@@ -54,6 +54,7 @@ typedef struct _CONFIGURATION {
 } CONFIGURATION, *PCONFIGURATION;
 
 extern CONFIGURATION config;
+extern char *config_path;
 
 bool inputAdded;
 

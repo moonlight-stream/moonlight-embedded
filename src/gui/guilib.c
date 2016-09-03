@@ -28,6 +28,18 @@ struct menu_geom make_geom_centered(int w, int h) {
   return geom;
 }
 
+void draw_border(struct menu_geom geom, unsigned int border_color) {
+  vita2d_draw_line(geom.x, geom.y, geom.x+geom.width, geom.y, border_color);
+  vita2d_draw_line(geom.x, geom.y, geom.x, geom.y+geom.height, border_color);
+  vita2d_draw_line(geom.x+geom.width, geom.y, geom.x+geom.width, geom.y+geom.height, border_color);
+  vita2d_draw_line(geom.x, geom.y+geom.height, geom.x+geom.width, geom.y+geom.height, border_color);
+}
+
+void draw_text_hcentered(int x, int y, unsigned int color, char *text) {
+  int width = vita2d_pgf_text_width(gui_font, 1.f, text);
+  vita2d_pgf_draw_text(gui_font, x - width / 2, y, color, 1.f, text);
+}
+
 SceCtrlData ctrl_old_pad;
 SceCtrlData ctrl_new_pad;
 
@@ -42,6 +54,9 @@ bool is_button_down(short id) {
 void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom geom, int cursor, int offset) {
   vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0xff101010);
 
+  long border_color = 0xff006000;
+  draw_border(geom, border_color);
+
   for (int i = 0, cursor_idx = 0; i < total_elements; i++) {
     long color = 0xffffffff;
     if (cursor == cursor_idx) {
@@ -55,7 +70,7 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
     }
 
     int el_x = geom.x + 10,
-        el_y = geom.y + i * geom.el - offset;
+        el_y = geom.y + i * geom.el - offset + 10;
 
     if (el_y < geom.y || el_y > geom.total_y - geom.el)
       continue;
@@ -71,7 +86,7 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
           el_y + height,
           el_x + geom.width - 10 * 2,
           el_y + height,
-          0xffaaaaaa
+          border_color
           );
     }
 
@@ -83,6 +98,18 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
         1.0f,
         menu[i].name
         );
+
+    if (menu[i].subname) {
+      int text_width = vita2d_pgf_text_width(gui_font, 1.f, menu[i].subname);
+      vita2d_pgf_draw_text(
+          gui_font,
+          el_x + geom.width - text_width - 20,
+          el_y + text_height,
+          color,
+          1.f,
+          menu[i].subname
+          );
+    }
   }
 
   char dbg[256];
@@ -93,14 +120,17 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
 void draw_alert(char *message, struct menu_geom geom, char *buttons_captions[], int buttons_count) {
   vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0xff101010);
 
+  long border_color = 0xff006000;
+  draw_border(geom, border_color);
+
   char *buf = malloc(sizeof(char) * (strlen(message) + 1));
-  int x_border = 10, y = 20;
+  int x_border = 10, y = 30;
   for (int i = 0, idx = 0; i < strlen(message); i++) {
     buf[idx] = message[i];
     buf[idx+1] = 0;
 
-    if (vita2d_pgf_text_width(gui_font, 1.f, buf) > geom.width - x_border*2) {
-      vita2d_pgf_draw_text(gui_font, geom.x + x_border, y + geom.y, 0xffffffff, 1.f, buf);
+    if (message[i] == '\n' || vita2d_pgf_text_width(gui_font, 1.f, buf) > geom.width - x_border*2) {
+      draw_text_hcentered(geom.x + geom.width / 2, y + geom.y, 0xffffffff, buf);
       y += vita2d_pgf_text_height(gui_font, 1.f, buf);
       idx = 0;
     } else {
@@ -109,32 +139,31 @@ void draw_alert(char *message, struct menu_geom geom, char *buttons_captions[], 
   }
 
   if (strlen(buf)) {
-    vita2d_pgf_draw_text(gui_font, geom.x + x_border, y + geom.y, 0xffffffff, 1.f, buf);
+    draw_text_hcentered(geom.x + geom.width / 2, y + geom.y, 0xffffffff, buf);
   }
 
   free(buf);
 
   char caption[256];
-  if (buttons_count) {
-    char *icons[4] = {"x", "o", "t", "s"};
-    char *default_captions[4] = {"ok", "cancel", "options", "delete"};
-    for (int i = 0; i < buttons_count; i++) {
-      char single_button_caption[64];
-      char button_caption[256];
-      if (buttons_captions && buttons_captions[i]) {
-        strcpy(button_caption, buttons_captions[i]);
-      } else {
-        strcpy(button_caption, default_captions[i]);
-      }
+  strcpy(caption, "");
 
-      sprintf(single_button_caption, "%s %s ", icons[i], button_caption);
-      strcat(caption, single_button_caption);
+  char *icons[4] = {"x", "◯", "△", "□"};
+  char *default_captions[4] = {"Ok", "Cancel", "Options", "Delete"};
+  for (int i = 0; i < buttons_count; i++) {
+    char single_button_caption[64];
+    char button_caption[256];
+    if (buttons_captions && buttons_captions[i]) {
+      strcpy(button_caption, buttons_captions[i]);
+    } else {
+      strcpy(button_caption, default_captions[i]);
     }
-  } else {
-    strcpy(caption, "x ok");
+
+    sprintf(single_button_caption, "%s %s ", icons[i], button_caption);
+    strcat(caption, single_button_caption);
   }
 
-  vita2d_pgf_draw_text(gui_font, geom.x, geom.total_y, 0xffffffff, 1.f, caption);
+  int caption_width = vita2d_pgf_text_width(gui_font, 1.f, caption);
+  vita2d_pgf_draw_text(gui_font, geom.x + geom.width - caption_width, geom.total_y - 5, 0xffffffff, 1.f, caption);
 }
 
 void gui_ctrl_begin() {
@@ -165,13 +194,22 @@ void gui_ctrl_offset(int *offset_ptr, struct menu_geom geom, int cursor) {
   int offset = *offset_ptr;
 
   int cursor_y = geom.y + (cursor * geom.el) - offset;
-  offset -= cursor_y < geom.y ? 1 : 0;
-  offset -= cursor_y > geom.total_y - geom.el * 2 ? -1 : 0;
+  int speed = 9;
+  offset -= cursor_y < geom.y ? speed : 0;
+  offset -= cursor_y > geom.total_y - geom.el * 2 ? -speed : 0;
 
   *offset_ptr = offset;
 }
 
-void display_menu(struct menu_entry menu[], int total_elements, int (*cb)(int, void *), void *context) {
+int display_menu(
+    struct menu_entry menu[],
+    int total_elements,
+    gui_loop_callback cb,
+    gui_back_callback back_cb,
+    void *context
+    ) {
+  gui_ctrl_end();
+
   int offset = 0;
   int cursor = 0;
   int active_elements = 0;
@@ -182,48 +220,52 @@ void display_menu(struct menu_entry menu[], int total_elements, int (*cb)(int, v
   struct menu_geom geom = make_geom_centered(600, 400);
   geom.el = 25;
 
+  int exit_code = 0;
   while (true) {
     vita2d_start_drawing();
     vita2d_clear_screen();
     draw_menu(menu, total_elements, geom, cursor, offset);
 
-    gui_ctrl_begin();
-    gui_ctrl_cursor(&cursor, active_elements);
-    gui_ctrl_offset(&offset, geom, cursor);
-
-    if (cb) {
-      short id = -1;
-      for (int i = 0, c = 0; i < total_elements; i++) {
-        if (!menu[i].disabled) {
-          if (cursor == c) {
-            id = menu[i].id;
-            break;
-          }
-
-          c++;
+    int real_cursor = 0;
+    for (int c = 0; real_cursor < total_elements; real_cursor++) {
+      if (!menu[real_cursor].disabled) {
+        if (cursor == c) {
+          break;
         }
-      }
 
-      switch(cb(id, context)) {
-        case 1:
-          gui_ctrl_end();
-          return;
+        c++;
       }
     }
 
+    gui_ctrl_begin();
+    gui_ctrl_cursor(&cursor, active_elements);
+    gui_ctrl_offset(&offset, geom, cursor == 0 ? 0 : real_cursor);
+
+    if (cb) {
+      exit_code = cb(menu[real_cursor].id, context);
+    }
+
     if (was_button_pressed(SCE_CTRL_CIRCLE)) {
-      gui_ctrl_end();
-      return;
+      if (!back_cb || back_cb(context) == 0) {
+        exit_code = 1;
+      }
     }
 
     gui_ctrl_end();
     vita2d_end_drawing();
     vita2d_swap_buffers();
     sceKernelDelayThread(16 * 1000);
+    if (exit_code) {
+      return exit_code;
+    }
   }
+
+  return 0;
 }
 
-void display_alert(char *message, char *button_captions[], int buttons_count, int (*cb)(int)) {
+void display_alert(char *message, char *button_captions[], int buttons_count, gui_loop_callback cb, void *context) {
+  gui_ctrl_end();
+
   struct menu_geom alert_geom = make_geom_centered(400, 200);
   while (true) {
     vita2d_start_drawing();
@@ -244,7 +286,7 @@ void display_alert(char *message, char *button_captions[], int buttons_count, in
     }
 
     if (cb && result != -1 && result < buttons_count) {
-      switch(cb(result)) {
+      switch(cb(result, context)) {
         case 1:
           gui_ctrl_end();
           return;
@@ -266,7 +308,7 @@ void display_error(char *format, ...) {
   va_list opt;
   va_start(opt, format);
   vsnprintf(buf, sizeof(buf), format, opt);
-  display_alert(buf, 0, 1, 0);
+  display_alert(buf, NULL, 1, NULL, NULL);
   va_end(opt);
 }
 
@@ -282,7 +324,7 @@ void flash_message(char *format, ...) {
   vita2d_start_drawing();
   vita2d_clear_screen();
   vita2d_draw_rectangle(0, 0, WIDTH, HEIGHT, 0xff000000);
-  draw_alert(buf, alert_geom, 0, 1);
+  draw_alert(buf, alert_geom, NULL, 0);
   vita2d_end_drawing();
   vita2d_swap_buffers();
 }

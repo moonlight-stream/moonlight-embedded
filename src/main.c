@@ -114,10 +114,6 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     drFlags |= FORCE_HARDWARE_ACCELERATION;
   printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
   LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags, server->serverMajorVersion);
-
-  vitainput_loop();
-
-  LiStopConnection();
 }
 
 static void help() {
@@ -209,7 +205,7 @@ static void vita_init() {
 }
 
 void loop_forever(void) {
-  while (1) {
+  while (connection_is_ready()) {
     sceKernelDelayThread(100 * 1000);
   }
 }
@@ -268,13 +264,16 @@ int main(int argc, char* argv[]) {
 
   psvDebugScreenInit();
   vita_init();
-  
+
   printf("Attempting to parse config\n");
   config_parse(argc, argv, &config);
   config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
   if (!vitainput_init(config)) {
+    loop_forever();
+  }
+  if (!vitapower_init(config)) {
     loop_forever();
   }
 
@@ -310,16 +309,16 @@ again:
   printf("Press X to pair (You need to do it once)\n");
   printf("Press O to launch steam\n");
 
+  connection_reset();
+
   switch(get_key()) {
   case SCE_CTRL_CROSS:
     vita_pair(&server);
-    goto again;
+    break;
   case SCE_CTRL_CIRCLE:
     stream(&server, &config, system);
-    goto again; // but we won't get here
-  default:
-    goto again;
+    loop_forever();
+    break;
   }
-
-  loop_forever();
+  goto again;
 }

@@ -17,5 +17,28 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+enum {
+  NO_TOUCH_ACTION = 0,
+  ON_SCREEN_TOUCH,
+  SCREEN_TAP,
+  SWIPE_START,
+  ON_SCREEN_SWIPE
+} TouchScreenState;
+
+enum {
+  NORTHWEST = 3,
+  NORTHEAST,
+  SOUTHWEST,
+  SOUTHEAST
+} TouchScreenSection;
+
+enum {
+  LEFTX,
+  LEFTY,
+  RIGHTX,
+  RIGHTY
+} PadSection;
+
 bool vitainput_init(CONFIGURATION config);
-void vitainput_loop(void);
+void vitainput_start(void);
+void vitainput_stop(void);

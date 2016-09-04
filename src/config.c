@@ -281,6 +281,9 @@ void config_save(char* filename, PCONFIGURATION config) {
   if (config->address)
     write_config_string(fd, "address", config->address);
 
+  if (config->mapping)
+    write_config_string(fd, "mapping", config->mapping);
+
   if (config->stream.width != 1280)
     write_config_int(fd, "width", config->stream.width);
   if (config->stream.height != 720)

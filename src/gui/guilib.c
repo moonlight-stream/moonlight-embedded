@@ -52,7 +52,7 @@ bool is_button_down(short id) {
 }
 
 void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom geom, int cursor, int offset) {
-  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0xff101010);
+  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0x10ffffff);
 
   long border_color = 0xff006000;
   draw_border(geom, border_color);
@@ -66,7 +66,11 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
     if (!menu[i].disabled) {
       cursor_idx++;
     } else {
-        color = 0xffaaaaaa;
+      color = 0xffaaaaaa;
+    }
+
+    if (menu[i].color) {
+      color = menu[i].color;
     }
 
     int el_x = geom.x + 10,
@@ -86,24 +90,41 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
           el_y + height,
           el_x + geom.width - 10 * 2,
           el_y + height,
-          border_color
+          0xffaaaaaa
           );
     }
 
-    vita2d_pgf_draw_text(
-        gui_font,
-        el_x + 2,
-        el_y + text_height,
-        color,
-        1.0f,
-        menu[i].name
-        );
+    if (menu[i].name) {
+      vita2d_pgf_draw_text(
+          gui_font,
+          el_x + 2,
+          el_y + text_height,
+          color,
+          1.0f,
+          menu[i].name
+          );
+    }
+
+    int right_x_offset = 20;
+    if (menu[i].suffix) {
+      int text_width = vita2d_pgf_text_width(gui_font, 1.f, menu[i].suffix);
+      vita2d_pgf_draw_text(
+          gui_font,
+          el_x + geom.width - text_width - right_x_offset,
+          el_y + text_height,
+          color,
+          1.f,
+          menu[i].suffix
+          );
+
+      right_x_offset += text_width + 10;
+    }
 
     if (menu[i].subname) {
       int text_width = vita2d_pgf_text_width(gui_font, 1.f, menu[i].subname);
       vita2d_pgf_draw_text(
           gui_font,
-          el_x + geom.width - text_width - 20,
+          el_x + geom.width - text_width - right_x_offset,
           el_y + text_height,
           color,
           1.f,
@@ -111,14 +132,10 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
           );
     }
   }
-
-  char dbg[256];
-  sprintf(&dbg, "total: %d els, cur: %d, off: %d", total_elements, cursor, offset);
-  vita2d_pgf_draw_text(gui_font, 0, 20, 0xffffffff, 1.f, dbg);
 }
 
 void draw_alert(char *message, struct menu_geom geom, char *buttons_captions[], int buttons_count) {
-  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0xff101010);
+  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0x10ffffff);
 
   long border_color = 0xff006000;
   draw_border(geom, border_color);
@@ -184,8 +201,8 @@ void gui_ctrl_cursor(int *cursor_ptr, int total_elements) {
     cursor -= 1;
   }
 
-  cursor = cursor < 0 ? 0 : cursor;
-  cursor = cursor > total_elements - 1 ? total_elements - 1 : cursor;
+  cursor = cursor < 0 ? total_elements-1 : cursor;
+  cursor = cursor > total_elements - 1 ? 0 : cursor;
 
   *cursor_ptr = cursor;
 }
@@ -194,7 +211,8 @@ void gui_ctrl_offset(int *offset_ptr, struct menu_geom geom, int cursor) {
   int offset = *offset_ptr;
 
   int cursor_y = geom.y + (cursor * geom.el) - offset;
-  int speed = 9;
+
+  int speed = 8;
   offset -= cursor_y < geom.y ? speed : 0;
   offset -= cursor_y > geom.total_y - geom.el * 2 ? -speed : 0;
 
@@ -204,11 +222,12 @@ void gui_ctrl_offset(int *offset_ptr, struct menu_geom geom, int cursor) {
 int display_menu(
     struct menu_entry menu[],
     int total_elements,
+    struct menu_geom *geom_ptr,
     gui_loop_callback cb,
     gui_back_callback back_cb,
+    gui_draw_callback draw_callback,
     void *context
     ) {
-  gui_ctrl_end();
 
   int offset = 0;
   int cursor = 0;
@@ -217,13 +236,22 @@ int display_menu(
       active_elements += menu[i].disabled ? 0 : 1;
   }
 
-  struct menu_geom geom = make_geom_centered(600, 400);
-  geom.el = 25;
+  struct menu_geom geom;
+  if (!geom_ptr) {
+    geom = make_geom_centered(600, 400);
+    geom.el = 24;
+  } else {
+    geom = *geom_ptr;
+  }
 
+  bool first_tick = false;
   int exit_code = 0;
   while (true) {
     vita2d_start_drawing();
     vita2d_clear_screen();
+    if (draw_callback && !first_tick) {
+      draw_callback();
+    }
     draw_menu(menu, total_elements, geom, cursor, offset);
 
     int real_cursor = 0;
@@ -252,9 +280,11 @@ int display_menu(
     }
 
     gui_ctrl_end();
+
     vita2d_end_drawing();
     vita2d_swap_buffers();
-    sceKernelDelayThread(16 * 1000);
+    sceDisplayWaitVblankStart();
+    first_tick = false;
     if (exit_code) {
       return exit_code;
     }
@@ -262,6 +292,7 @@ int display_menu(
 
   return 0;
 }
+
 
 void display_alert(char *message, char *button_captions[], int buttons_count, gui_loop_callback cb, void *context) {
   gui_ctrl_end();
@@ -319,6 +350,9 @@ void flash_message(char *format, ...) {
   va_start(opt, format);
   vsnprintf(buf, sizeof(buf), format, opt);
   va_end(opt);
+
+  vita2d_end_drawing();
+  vita2d_swap_buffers();
 
   struct menu_geom alert_geom = make_geom_centered(400, 200);
   vita2d_start_drawing();

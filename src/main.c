@@ -143,27 +143,7 @@ void loop_forever(void) {
   }
 }
 
-static void vita_pair(SERVER_DATA *server) {
-  char pin[5];
-  sprintf(pin, "%d%d%d%d", (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
-  psvDebugScreenSetFgColor(COLOR_BLACK);
-  psvDebugScreenSetBgColor(COLOR_WHITE);
-  printf("Please enter the following PIN on the target PC: %s\n", pin);
-  psvDebugScreenSetFgColor(COLOR_WHITE);
-  psvDebugScreenSetBgColor(COLOR_BLACK);
-  int ret = gs_pair(server, &pin[0]);
-  if (ret == 0) {
-    psvDebugScreenSetFgColor(COLOR_GREEN);
-    printf("Paired successfully\n");
-    psvDebugScreenSetFgColor(COLOR_WHITE);
-  } else {
-    printf("Error pairing: 0x%x %s\n", ret, gs_error);
-  }
-}
-
 int main(int argc, char* argv[]) {
-  int ret = 0;
-
   psvDebugScreenInit();
   vita_init();
 
@@ -172,14 +152,26 @@ int main(int argc, char* argv[]) {
   config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
-  if (!vitainput_init(config)) {
-    loop_forever();
-  }
-
   gui_loop();
-  loop_forever();
 
   /*
+  int ret = 0;
+
+   // cURL socket bug reprod
+  SERVER_DATA server;
+  server.address = "192.168.12.252";
+
+  gs_init(&server, config.key_dir);
+
+  while (true) {
+    __stream(&server, 999999);
+    sceKernelDelayThread(2000 * 1000);
+  }
+  */
+
+
+  /*
+   *
 again:
   printf("Press X to pair (You need to do it once)\n");
   printf("Press O to launch steam\n");
@@ -195,4 +187,47 @@ again:
     goto again;
   }
   */
+}
+
+ //cURL sockets bug reproduction
+void __stream(PSERVER_DATA server, int appId) {
+  int ret;
+
+  ret = sceNetCtlInit();
+  ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
+  if (ret < 0) {
+    if (ret == GS_NOT_SUPPORTED_4K)
+      printf("Server doesn't support 4K\n");
+    else
+      printf("Errorcode starting app: %d\n", ret);
+
+    return;
+  }
+
+  enum platform system = VITA;
+  int drFlags = 0;
+
+  if (config.fullscreen)
+    drFlags |= DISPLAY_FULLSCREEN;
+  if (config.forcehw)
+    drFlags |= FORCE_HARDWARE_ACCELERATION;
+
+  printf("\nStart connection...\n");
+  ret = LiStartConnection(
+      server->address,
+      &config.stream,
+      &connection_callbacks,
+      platform_get_video(system),
+      platform_get_audio(system),
+      NULL,
+      drFlags,
+      server->serverMajorVersion
+      );
+  if (ret == 0) {
+    vitainput_loop();
+    LiStopConnection();
+  } else {
+    printf("\nFAILED CONNECTING\n");
+  }
+
 }

@@ -6,7 +6,9 @@
 
 struct menu_entry {
   int id;
-  char *name, subname[1024];
+  unsigned int color;
+  char *name, *suffix;
+  char subname[1024];
   bool disabled, separator;
 };
 
@@ -20,6 +22,7 @@ struct menu_geom make_geom_centered(int w, int h);
 
 typedef int (*gui_loop_callback) (int, void *);
 typedef int (*gui_back_callback) (void *);
+typedef void (*gui_draw_callback) (void);
 
 bool was_button_pressed(short id);
 bool is_button_down(short id);
@@ -27,8 +30,10 @@ bool is_button_down(short id);
 int display_menu(
         struct menu_entry menu[],
         int total_elements,
+        struct menu_geom *geom_ptr,
         gui_loop_callback loop_callback,
         gui_back_callback back_callback,
+        gui_draw_callback draw_callback,
         void *context
         );
 

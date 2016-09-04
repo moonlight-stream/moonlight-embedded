@@ -25,7 +25,10 @@
 #include <sys/types.h>
 #include <ctype.h>
 
+#include <psp2/net/net.h>
 #include <psp2/ctrl.h>
+#include <psp2/rtc.h>
+#include <psp2/touch.h>
 #include <vita2d.h>
 
 static SERVER_DATA server;
@@ -70,6 +73,7 @@ int __main_menu() {
   struct menu_entry menu[16];
   int idx = 0;
 
+  menu[idx++] = (struct menu_entry) { .name = "", .subname = "Moonlight Alpha", .disabled = true, .color = 0xff00aa00 };
   if (config.address) {
     char prev[256];
     sprintf(prev, "Connect to %s", config.address ? config.address : "none");
@@ -80,7 +84,7 @@ int __main_menu() {
   menu[idx++] = (struct menu_entry) { .name = "Settings", .id = MAIN_MENU_SETTINGS };
   menu[idx++] = (struct menu_entry) { .name = "Quit", .id = MAIN_MENU_QUIT };
 
-  return display_menu(menu, idx, &main_menu_loop, &main_menu_back, NULL);
+  return display_menu(menu, idx, NULL, &main_menu_loop, &main_menu_back, NULL, NULL);
 }
 
 /*
@@ -114,7 +118,9 @@ enum {
   SETTINGS_FPS,
   SETTINGS_BITRATE,
   SETTINGS_FRONTTOUCHSCREEN,
-  SETTINGS_DISABLE_POWERSAVE
+  SETTINGS_DISABLE_POWERSAVE,
+  SETTINGS_ENABLE_MAPPING,
+  SETTINGS_BACK_DEADZONE
 };
 
 enum {
@@ -122,7 +128,9 @@ enum {
   SETTINGS_VIEW_FPS,
   SETTINGS_VIEW_BITRATE,
   SETTINGS_VIEW_FRONTTOUCHSCREEN = 5,
-  SETTINGS_VIEW_DISABLE_POWERSAVE
+  SETTINGS_VIEW_DISABLE_POWERSAVE,
+  SETTINGS_VIEW_ENABLE_MAPPING,
+  SETTINGS_VIEW_BACK_DEADZONE = 10
 };
 
 static bool settings_loop_setup = 1;
@@ -176,7 +184,8 @@ int settings_loop(int id, void *context) {
     case SETTINGS_BITRATE:
       if (was_button_pressed(SCE_CTRL_CROSS)) {
         char value[512];
-        if (ime_dialog(&value, "Enter bitrate: ", 0) == 0) {
+        int ret;
+        if ((ret = ime_dialog(&value, "Enter bitrate: ", "")) == 0) {
           int bitrate = atoi(value);
           if (bitrate) {
             config.stream.bitrate = bitrate;
@@ -196,10 +205,20 @@ int settings_loop(int id, void *context) {
         did_change = 1;
         config.disable_powersave = !config.disable_powersave;
       } break;
-  }
-
-  if (did_change) {
-    settings_save_config();
+    case SETTINGS_ENABLE_MAPPING:
+      if (was_button_pressed(SCE_CTRL_CROSS)) {
+        did_change = 1;
+        if (config.mapping) {
+          config.mapping = 0;
+        } else {
+          config.mapping = "mappings/vita.conf";
+        }
+      } break;
+    case SETTINGS_BACK_DEADZONE:
+      if (was_button_pressed(SCE_CTRL_CROSS)) {
+        __deadzone_settings();
+        did_change = 1;
+      } break;
   }
 
   if (did_change || settings_loop_setup) {
@@ -220,25 +239,127 @@ int settings_loop(int id, void *context) {
 
     sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
     strcpy(menu[SETTINGS_VIEW_DISABLE_POWERSAVE].subname, current);
+
+    sprintf(current, "%s", config.mapping != 0 ? "yes" : "no");
+    strcpy(menu[SETTINGS_VIEW_ENABLE_MAPPING].subname, current);
+
+    sprintf(
+        current,
+        "%dpx,%dpx,%dpx,%dpx",
+        config.back_deadzone.top,
+        config.back_deadzone.right,
+        config.back_deadzone.bottom,
+        config.back_deadzone.left);
+    strcpy(menu[SETTINGS_VIEW_BACK_DEADZONE].subname, current);
   }
 
   return 0;
 }
 
+int settings_back(void *context) {
+  settings_save_config();
+  return 0;
+}
+
 int __settings() {
   struct menu_entry menu[16];
-  menu[0] = (struct menu_entry) { .name = "Stream", .disabled = true, .separator = true};
-  menu[SETTINGS_VIEW_RESOLUTION] = (struct menu_entry) { .name = "Resolution", .id = SETTINGS_RESOLUTION };
-  menu[SETTINGS_VIEW_FPS] = (struct menu_entry) { .name = "FPS", .id = SETTINGS_FPS };
-  menu[SETTINGS_VIEW_BITRATE] = (struct menu_entry) { .name = "Bitrate", .id = SETTINGS_BITRATE };
+  int idx = 0;
+  menu[idx++] = (struct menu_entry) { .name = "Stream", .disabled = true, .separator = true};
+  idx++; menu[SETTINGS_VIEW_RESOLUTION] = (struct menu_entry) { .name = "Resolution", .id = SETTINGS_RESOLUTION, .suffix = "←→"};
+  idx++; menu[SETTINGS_VIEW_FPS] = (struct menu_entry) { .name = "FPS", .id = SETTINGS_FPS, .suffix = "←→" };
+  idx++; menu[SETTINGS_VIEW_BITRATE] = (struct menu_entry) { .name = "Bitrate", .id = SETTINGS_BITRATE };
 
   // ---------
-  menu[4] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
-  menu[SETTINGS_VIEW_FRONTTOUCHSCREEN] = (struct menu_entry) { .name = "Use front touchscreen for buttons", .id = SETTINGS_FRONTTOUCHSCREEN };
-  menu[SETTINGS_VIEW_DISABLE_POWERSAVE] = (struct menu_entry) { .name = "Disable power save", .id = SETTINGS_DISABLE_POWERSAVE };
+  menu[idx++] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
+  idx++; menu[SETTINGS_VIEW_FRONTTOUCHSCREEN] = (struct menu_entry) { .name = "Use front touchscreen for buttons", .id = SETTINGS_FRONTTOUCHSCREEN };
+  idx++; menu[SETTINGS_VIEW_DISABLE_POWERSAVE] = (struct menu_entry) { .name = "Disable power save", .id = SETTINGS_DISABLE_POWERSAVE };
+  idx++; menu[SETTINGS_VIEW_ENABLE_MAPPING] = (struct menu_entry) { .name = "Enable mapping file", .id = SETTINGS_ENABLE_MAPPING };
+
+  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .subname = "Located at ux0:data/moonlight/mappings/vita.conf" };
+  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .subname = "Example in github repo." };
+  idx++; menu[SETTINGS_VIEW_BACK_DEADZONE] = (struct menu_entry) { .name = "Back touchscreen deadzone", .id = SETTINGS_BACK_DEADZONE };
 
   settings_loop_setup = 1;
-  return display_menu(menu, 7, &settings_loop, NULL, &menu);
+  assert(idx < 16);
+  return display_menu(menu, idx, NULL, &settings_loop, &settings_back, NULL, &menu);
+}
+
+#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
+void deadzone_draw() {
+  int vertical = (WIDTH - config.back_deadzone.left - config.back_deadzone.right) / 2 + config.back_deadzone.left,
+      horizontal = (HEIGHT - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
+
+  vita2d_draw_rectangle(
+      config.back_deadzone.left,
+      config.back_deadzone.top,
+      WIDTH - config.back_deadzone.right - config.back_deadzone.left,
+      HEIGHT - config.back_deadzone.bottom - config.back_deadzone.top,
+      0x3000ff00
+      );
+
+  vita2d_draw_line(vertical, config.back_deadzone.top, vertical, HEIGHT - config.back_deadzone.bottom, 0xffffffff);
+  vita2d_draw_line(config.back_deadzone.left, horizontal, WIDTH - config.back_deadzone.right, horizontal, 0xffffffff);
+
+  SceTouchData touch_data;
+  sceTouchPeek(SCE_TOUCH_PORT_BACK, &touch_data, 1);
+
+  for (int i = 0; i < touch_data.reportNum; i++) {
+    int x = lerp(touch_data.report[i].x, 1919, 960);
+    int y = lerp(touch_data.report[i].y, 1087, 544);
+    if (x < config.back_deadzone.left || x > WIDTH - config.back_deadzone.right)
+      continue;
+
+    if (y < config.back_deadzone.top || y > HEIGHT - config.back_deadzone.bottom)
+      continue;
+
+    vita2d_draw_fill_circle(x, y, 30, 0xffffffff);
+  }
+}
+
+int deadzone_loop(int cursor, void *context) {
+  struct menu_entry *menu = context;
+  int did_change = 1;
+
+  bool left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
+  if (left || right) {
+    int delta = left ? -15 : (right ? 15 : 0);
+    switch (cursor) {
+      case 0: config.back_deadzone.top += delta; break;
+      case 1: config.back_deadzone.right += delta; break;
+      case 2: config.back_deadzone.bottom += delta; break;
+      case 3: config.back_deadzone.left += delta; break;
+    }
+  }
+
+  if (did_change) {
+    settings_loop_setup = 0;
+    char current[256];
+
+    int numbers[] = {config.back_deadzone.top, config.back_deadzone.right, config.back_deadzone.bottom, config.back_deadzone.left };
+    for (int i = 0; i < 4; i++) {
+      sprintf(current, "%dpx", numbers[i]);
+      strcpy(menu[i].subname, current);
+    }
+  }
+
+  return 0;
+}
+
+int __deadzone_settings() {
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
+
+  struct menu_entry menu[16];
+  int idx = 0;
+  menu[idx++] = (struct menu_entry) { .name = "Top: ", .disabled = false, .id = 0, .suffix = "←→" };
+  menu[idx++] = (struct menu_entry) { .name = "Left: ", .disabled = false, .id = 1, .suffix = "←→" };
+  menu[idx++] = (struct menu_entry) { .name = "Bottom: ", .disabled = false, .id = 2, .suffix = "←→" };
+  menu[idx++] = (struct menu_entry) { .name = "Right: ", .disabled = false, .id = 3, .suffix = "←→" };
+
+  struct menu_geom geom = make_geom_centered(250, 120);
+  geom.x = 50;
+  geom.y = 50;
+  geom.el = 25;
+  return display_menu(menu, idx, &geom, &deadzone_loop, NULL, &deadzone_draw, &menu);
 }
 
 /*
@@ -264,7 +385,17 @@ int connect_loop(int id, void *context) {
           else
             display_error("Unpairing failed: %d", ret);
         } else {
-          display_error("not implemented");
+          char pin[5];
+          char message[256];
+          sprintf(pin, "%d%d%d%d", (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
+          flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
+
+          int ret = gs_pair(&server, &pin[0]);
+          if (ret == 0) {
+            return QUIT_RELOAD;
+          } else {
+            display_error("Pairing failed: %d", ret);
+          }
         } break;
       case CONNECT_QUITAPP:
         flash_message("Quitting...");
@@ -277,6 +408,7 @@ int connect_loop(int id, void *context) {
       default:
         flash_message("Stream starting...");
         stream(&server, id);
+        return QUIT_RELOAD;
         break;
     }
   }
@@ -285,25 +417,27 @@ int connect_loop(int id, void *context) {
 }
 
 int __connect(char *address) {
-  server.address = malloc(sizeof(char)*256);
-  strcpy(server.address, address);
+  if (!server.address) {
+    server.address = malloc(sizeof(char)*256);
+    strcpy(server.address, address);
 
-  flash_message("Connecting to %s...", server.address);
-  int ret = gs_init(&server, config.key_dir);
-  if (ret == GS_OUT_OF_MEMORY) {
-    display_error("Not enough memory");
-    return;
-  } else if (ret == GS_INVALID) {
-    display_error("Invalid data received from server: %s\n", config.address, gs_error);
-    return;
-  } else if (ret == GS_UNSUPPORTED_VERSION) {
-    if (!config.unsupported_version) {
-      display_error("Unsupported version: %s\n", gs_error);
+    flash_message("Connecting to:\n %s...", server.address);
+    int ret = gs_init(&server, config.key_dir);
+    if (ret == GS_OUT_OF_MEMORY) {
+      display_error("Not enough memory");
+      return;
+    } else if (ret == GS_INVALID) {
+      display_error("Invalid data received from server: %s\n", config.address, gs_error);
+      return;
+    } else if (ret == GS_UNSUPPORTED_VERSION) {
+      if (!config.unsupported_version) {
+        display_error("Unsupported version: %s\n", gs_error);
+        return;
+      }
+    } else if (ret != GS_OK) {
+      display_error("Can't connect to server\n%s", config.address);
       return;
     }
-  } else if (ret != GS_OK) {
-    display_error("Can't connect to server %s\n", config.address);
-    return;
   }
 
   PAPP_LIST list = NULL;
@@ -317,10 +451,11 @@ int __connect(char *address) {
   int idx = 0;
 
   //header
-  menu[idx++] = (struct menu_entry) { .name = "Connected to the server:", .disabled = 1 };
+  menu[idx++] = (struct menu_entry) { .name = "Connected to the server:", .disabled = 1, .color = 0xffffffff };
   char server_info[256];
   sprintf(server_info, "IP: %s, GPU %s, API v%d", address, server.gpuType, server.serverMajorVersion);
-  menu[idx++] = (struct menu_entry) { .name = server_info, .disabled = 1 };
+  menu[idx++] = (struct menu_entry) { .name = server_info, .disabled = 1, .color = 0xffffffff };
+  menu[idx++] = (struct menu_entry) { .name = "", .disabled = 1 };
 
   // current stream
   if (server.currentGame != 0) {
@@ -356,7 +491,7 @@ int __connect(char *address) {
   }
 
   assert(idx < 32);
-  return display_menu(menu, idx, &connect_loop, NULL, NULL);
+  return display_menu(menu, idx, NULL, &connect_loop, NULL, NULL, NULL);
 }
 
 void __connect_saved() {
@@ -433,8 +568,16 @@ void stream(PSERVER_DATA server, int appId) {
       server->serverMajorVersion
       );
 
+  vitainput_init(config);
   vitainput_loop();
   LiStopConnection();
+
+  // TODO: i dont know what im doing
+  int c = 0;
+  do {
+    c = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+    sceNetSocketClose(c);
+  } while (c >= 5);
 }
 
 void gui_init() {

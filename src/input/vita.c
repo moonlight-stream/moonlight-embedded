@@ -77,15 +77,17 @@ static bool check_touch(SceTouchData scr, int lx, int ly, int rx, int ry) {
 }
 
 static bool check_touch_sector(SceTouchData scr, int section) {
+  int vertical = (960 - config.back_deadzone.left - config.back_deadzone.right) / 2 + config.back_deadzone.left,
+      horizontal = (544 - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
   switch (section) {
     case NORTHWEST:
-      return check_touch(scr, config.back_deadzone.left, config.back_deadzone.top, 480, 272);
+      return check_touch(scr, config.back_deadzone.left, config.back_deadzone.top, vertical, horizontal);
     case NORTHEAST:
-      return check_touch(scr, 480, config.back_deadzone.top, 960 - config.back_deadzone.right, 272);
+      return check_touch(scr, vertical, config.back_deadzone.top, 960 - config.back_deadzone.right, horizontal);
     case SOUTHWEST:
-      return check_touch(scr, config.back_deadzone.left, 272, 480, 544 - config.back_deadzone.bottom);
+      return check_touch(scr, config.back_deadzone.left, horizontal, vertical, 544 - config.back_deadzone.bottom);
     case SOUTHEAST:
-      return check_touch(scr, 480, 272, 960 - config.back_deadzone.left, 544 - config.back_deadzone.bottom);
+      return check_touch(scr, vertical, horizontal, 960 - config.back_deadzone.left, 544 - config.back_deadzone.bottom);
     default:
       return false;
   }
@@ -172,41 +174,36 @@ bool check_input(short identifier, SceCtrlData pad, SceTouchData screen) {
 #define INPUT(id, flag) if (check_input((id), pad, buttons_screen)) btn |= (flag);
 
 bool vitainput_init(CONFIGURATION conf) {
-    config = conf;
+  map.abs_x = 0;
+  map.abs_y = 1;
+  map.abs_rx = 2;
+  map.abs_ry = 3;
+  map.btn_south = 16383;
+  map.btn_east = 8191;
+  map.btn_north = 4095;
+  map.btn_west = 32767;
+  map.btn_select = 0;
+  map.btn_start = 7;
+  map.btn_thumbl = 255;
+  map.btn_thumbr = 511;
+  map.btn_dpad_up = 15;
+  map.btn_dpad_down = 63;
+  map.btn_dpad_left = 127;
+  map.btn_dpad_right = 31;
+  map.btn_tl = 2;
+  map.btn_tr = 3;
+  map.btn_tl2 = 4;
+  map.btn_tr2 = 5;
 
-    if (config.mapping) {
-      char config_path[256];
-      sprintf(config_path, "ux0:data/moonlight/%s", config.mapping);
-      printf("Loading mapping at %s\n", config_path);
-      mapping_load(config_path, &map);
-      if (map.btn_south == 0) {
-        printf("Failed to load mapping %s!\n", config_path);
-        return false;
-      }
-    } else {
-      map.abs_x = 0;
-      map.abs_y = 1;
-      map.abs_rx = 2;
-      map.abs_ry = 3;
-      map.btn_south = 16383;
-      map.btn_east = 8191;
-      map.btn_north = 4095;
-      map.btn_west = 32767;
-      map.btn_select = 0;
-      map.btn_start = 7;
-      map.btn_thumbl = 255;
-      map.btn_thumbr = 511;
-      map.btn_dpad_up = 15;
-      map.btn_dpad_down = 63;
-      map.btn_dpad_left = 127;
-      map.btn_dpad_right = 31;
-      map.btn_tl = 2;
-      map.btn_tr = 3;
-      map.btn_tl2 = 4;
-      map.btn_tr2 = 5;
-    }
+  config = conf;
 
-    return true;
+  if (config.mapping) {
+    char config_path[256];
+    sprintf(config_path, "ux0:data/moonlight/%s", config.mapping);
+    mapping_load(config_path, &map);
+  }
+
+  return true;
 }
 
 void vitainput_loop(void) {
@@ -321,6 +318,15 @@ void vitainput_loop(void) {
           ry = pad_value(pad, map.abs_ry);
 
     LiSendControllerEvent(btn, left_trigger_value, right_trigger_value, lx, -ly, rx, -ry);
+
+    SceRtcTick before, after;
+    sceRtcGetCurrentTick(&before);
     sceKernelDelayThread(1 * 1000); // 1 ms
+    sceRtcGetCurrentTick(&after);
+
+    // TODO: less hacky way?
+    if (after.tick - before.tick > 50 * 1000) {
+      return;
+    }
   }
 }

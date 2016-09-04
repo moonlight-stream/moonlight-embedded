@@ -211,6 +211,8 @@ static void vita_setup(int videoFormat, int width, int height, int redrawRate, v
 
 static void vita_cleanup() {
   fclose(fd);
+
+  free(ffmpeg_buffer);
   #warning TODO cleanup
 }
 
@@ -283,6 +285,7 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       backbuffer = (backbuffer + 1) % 2;
       if (ret < 0)
         printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
+
     }
   } else {
     printf("Video decode buffer too small");

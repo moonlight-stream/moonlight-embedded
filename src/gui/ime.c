@@ -100,18 +100,15 @@ void oslOskGetText(char *text){
 int ime_dialog(char *text, char *title, char *def) {
   sceCommonDialogSetConfigParam(&(SceCommonDialogConfigParam){});
 
-  int shown_dial = 0;
   char userText[512];
   if (def) {
     strcpy(userText, def);
   }
 
-  while (1) {
-    if(!shown_dial){
-      initImeDialog(title, userText, 128);
-      shown_dial=1;
-    }
+  int ret = 0;
+  initImeDialog(title, userText, 128);
 
+  while (1) {
     vita2d_start_drawing();
     vita2d_clear_screen();
 
@@ -123,16 +120,14 @@ int ime_dialog(char *text, char *title, char *def) {
 
       if (result.button == SCE_IME_DIALOG_BUTTON_CLOSE) {
         status = IME_DIALOG_RESULT_CANCELED;
-        return -1;
+        ret = -1;
+        break;
       } else {
         oslOskGetText(userText);
       }
 
-      sceImeDialogTerm();
-      shown_dial = 0;
-
       strcpy(text, userText);
-      return 0;
+      break;
     }
 
     vita2d_end_drawing();
@@ -140,4 +135,7 @@ int ime_dialog(char *text, char *title, char *def) {
     vita2d_swap_buffers();
     sceDisplayWaitVblankStart();
   }
+
+  sceImeDialogTerm();
+  return ret;
 }

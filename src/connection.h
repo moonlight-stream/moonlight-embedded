@@ -17,6 +17,16 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include <Limelight.h>
 
+enum {
+  LI_DISCONNECTED = 0,
+  LI_READY = 1,
+  LI_CONNECTED = 2,
+};
+
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
+
+void connection_reset();
+bool connection_is_ready();

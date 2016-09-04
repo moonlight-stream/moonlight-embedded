@@ -53,7 +53,7 @@ enum {
   TOUCHSEC_NORTHEAST,
   TOUCHSEC_SOUTHWEST,
   TOUCHSEC_SOUTHEAST,
-  TOUCHSEC_SPECIAL
+  TOUCHSEC_SPECIAL = 700
 } TouchScreenSection;
 
 enum {
@@ -91,7 +91,7 @@ static bool check_touch_sector(SceTouchData scr, int section) {
       return check_touch(scr, vertical, horizontal, 960 - config.back_deadzone.left, 544 - config.back_deadzone.bottom);
     case TOUCHSEC_SPECIAL:
       if (true) {
-        int offset = 50;
+        int offset = 30;
         int size = 200;
         return check_touch(scr, offset, 544 - size - offset, size + offset, 544 - offset);
       }
@@ -163,24 +163,19 @@ static short pad_value(SceCtrlData pad, int sec) {
   return (short) (value * 256 - (1 << 15) + 128);
 }
 
-bool check_input(short identifier, SceCtrlData pad, SceTouchData screen) {
-  if (identifier >= TOUCHSEC_NORTHWEST && identifier <= TOUCHSEC_SPECIAL) {
-    if (check_touch_sector(screen, identifier)) {
-      return true;
-    }
+bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouchData front, SceTouchData back) {
+  if (identifier >= TOUCHSEC_NORTHWEST && identifier < TOUCHSEC_SPECIAL) {
+    return check_touch_sector(identifier == TOUCHSEC_SPECIAL ? front : screen, identifier);
+  } else if (identifier >= TOUCHSEC_SPECIAL && identifier <= TOUCHSEC_SPECIAL) {
+    return check_touch_sector(front, identifier);
   } else {
     identifier = identifier + 1;
-    if (pad.buttons & identifier) {
-      return true;
-    }
+    return pad.buttons & identifier;
   }
-
-  return false;
 }
 
-#define CHECK_INPUT(id) check_input((id), pad, buttons_screen)
-#define INPUT(id, flag) if (check_input((id), pad, buttons_screen)) btn |= (flag);
-#define INPUT_SCREEN(screen, id, flag) if (check_input((id), pad, (screen))) btn |= (flag);
+#define CHECK_INPUT(id) check_input((id), pad, buttons_screen, front, back)
+#define INPUT(id, flag) if (check_input((id), pad, buttons_screen, front, back)) btn |= (flag);
 
 bool vitainput_init(CONFIGURATION conf) {
   map.abs_x = 0;
@@ -188,24 +183,24 @@ bool vitainput_init(CONFIGURATION conf) {
   map.abs_rx = 2;
   map.abs_ry = 3;
 
-  map.btn_south = 16383;
-  map.btn_east = 8191;
-  map.btn_north = 4095;
-  map.btn_west = 32767;
-  map.btn_select = 0;
-  map.btn_start = 7;
-  map.btn_thumbl = 255;
-  map.btn_thumbr = 511;
-  map.btn_dpad_up = 15;
-  map.btn_dpad_down = 63;
-  map.btn_dpad_left = 127;
-  map.btn_dpad_right = 31;
+  map.btn_south = SCE_CTRL_CROSS - 1;
+  map.btn_east = SCE_CTRL_CIRCLE - 1;
+  map.btn_north = SCE_CTRL_TRIANGLE - 1;
+  map.btn_west = SCE_CTRL_SQUARE - 1;
+  map.btn_select = SCE_CTRL_SELECT - 1;
+  map.btn_start = SCE_CTRL_START - 1;
+  map.btn_thumbl = SCE_CTRL_LTRIGGER - 1;
+  map.btn_thumbr = SCE_CTRL_RTRIGGER - 1;
+  map.btn_dpad_up = SCE_CTRL_UP - 1;
+  map.btn_dpad_down = SCE_CTRL_DOWN - 1;
+  map.btn_dpad_left = SCE_CTRL_LEFT - 1;
+  map.btn_dpad_right = SCE_CTRL_RIGHT - 1;
 
-  map.btn_tl = 600;
-  map.btn_tr = 601;
-  map.btn_tl2 = 602;
-  map.btn_tr2 = 603;
-  map.btn_mode = 604;
+  map.btn_tl = TOUCHSEC_NORTHWEST;
+  map.btn_tr = TOUCHSEC_NORTHEAST;
+  map.btn_tl2 = TOUCHSEC_SOUTHWEST;
+  map.btn_tr2 = TOUCHSEC_SOUTHEAST;
+  map.btn_mode = TOUCHSEC_SPECIAL;
 
   config = conf;
 
@@ -321,8 +316,7 @@ void vitainput_loop(void) {
     INPUT(map.btn_thumbl, LB_FLAG);
     INPUT(map.btn_thumbr, RB_FLAG);
 
-    // SPECIAL
-    INPUT_SCREEN(front, map.btn_mode, SPECIAL_FLAG);
+    INPUT(map.btn_mode, SPECIAL_FLAG);
 
     // TRIGGERS
     char left_trigger_value = CHECK_INPUT(map.btn_tl) ? 0xff : 0;

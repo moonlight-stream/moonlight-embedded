@@ -29,39 +29,16 @@
 
 #include "../graphics.h"
 #include "../config.h"
+#include "vita.h"
 #include "mapping.h"
 
 #include <Limelight.h>
 
 #include <psp2/net/net.h>
-#include <psp2/sysmodule.h>
 
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
-
-enum {
-  NO_TOUCH_ACTION = 0,
-  ON_SCREEN_TOUCH,
-  SCREEN_TAP,
-  SWIPE_START,
-  ON_SCREEN_SWIPE
-} TouchScreenState;
-
-enum {
-  TOUCHSEC_NORTHWEST = 600,
-  TOUCHSEC_NORTHEAST,
-  TOUCHSEC_SOUTHWEST,
-  TOUCHSEC_SOUTHEAST,
-  TOUCHSEC_SPECIAL = 700
-} TouchScreenSection;
-
-enum {
-  LEFTX,
-  LEFTY,
-  RIGHTX,
-  RIGHTY
-} PadSection;
 
 static struct mapping map = {0};
 
@@ -177,7 +154,143 @@ bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouc
 #define CHECK_INPUT(id) check_input((id), pad, buttons_screen, front, back)
 #define INPUT(id, flag) if (check_input((id), pad, buttons_screen, front, back)) btn |= (flag);
 
-bool vitainput_init(CONFIGURATION conf) {
+static SceCtrlData pad;
+static SceTouchData front;
+static SceTouchData front_old;
+static SceTouchData back;
+
+static int front_state = NO_TOUCH_ACTION;
+static short finger_count = 0;
+static SceRtcTick current, until;
+
+void vitainput_process(void) {
+  memset(&pad, 0, sizeof(pad));
+
+  sceCtrlPeekBufferPositive(0, &pad, 1);
+  sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
+  sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
+  sceRtcGetCurrentTick(&current);
+
+  if (config.fronttouchscreen_buttons == false) {
+    switch (front_state) {
+      case NO_TOUCH_ACTION:
+        if (front.reportNum > 0) {
+          front_state = ON_SCREEN_TOUCH;
+          finger_count = front.reportNum;
+          sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+        }
+        break;
+      case ON_SCREEN_TOUCH:
+        if (sceRtcCompareTick(&current, &until) < 0) {
+          if (front.reportNum < finger_count) {
+            // TAP
+            if (!check_touch_sector(front, TOUCHSEC_SPECIAL) && mouse_click(finger_count, true)) {
+              front_state = SCREEN_TAP;
+              sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+            } else {
+              front_state = NO_TOUCH_ACTION;
+            }
+          } else if (front.reportNum > finger_count) {
+            // finger count changed
+            finger_count = front.reportNum;
+          }
+        } else {
+          front_state = SWIPE_START;
+        }
+        break;
+      case SCREEN_TAP:
+        if (sceRtcCompareTick(&current, &until) >= 0) {
+          if (!check_touch_sector(front, TOUCHSEC_SPECIAL)) {
+            mouse_click(finger_count, false);
+          }
+
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+      case SWIPE_START:
+        memcpy(&front_old, &front, sizeof(front_old));
+        front_state = ON_SCREEN_SWIPE;
+        break;
+      case ON_SCREEN_SWIPE:
+        if (front.reportNum > 0) {
+          switch (front.reportNum) {
+            case 1:
+              move_mouse(front_old, front);
+              break;
+            case 3:
+              LiSendControllerEvent((short) (0 | SPECIAL_FLAG), 0, 0, 0, 0, 0, 0);
+              break;
+            case 2:
+              move_wheel(front_old, front);
+          }
+          memcpy(&front_old, &front, sizeof(front_old));
+        } else {
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+    }
+  }
+
+  short btn = 0;
+  SceTouchData buttons_screen = config.fronttouchscreen_buttons ? front : back;
+
+  INPUT(map.btn_dpad_up, UP_FLAG);
+  INPUT(map.btn_dpad_up, UP_FLAG);
+  INPUT(map.btn_dpad_left, LEFT_FLAG);
+  INPUT(map.btn_dpad_down, DOWN_FLAG);
+  INPUT(map.btn_dpad_right, RIGHT_FLAG);
+
+  INPUT(map.btn_start, PLAY_FLAG);
+  INPUT(map.btn_select, BACK_FLAG);
+
+  INPUT(map.btn_north, Y_FLAG);
+  INPUT(map.btn_east, B_FLAG);
+  INPUT(map.btn_south, A_FLAG);
+  INPUT(map.btn_west, X_FLAG);
+
+  INPUT(map.btn_tl2, LS_CLK_FLAG);
+  INPUT(map.btn_tr2, RS_CLK_FLAG);
+
+  INPUT(map.btn_thumbl, LB_FLAG);
+  INPUT(map.btn_thumbr, RB_FLAG);
+  INPUT(map.btn_mode, SPECIAL_FLAG);
+
+  // TRIGGERS
+  char left_trigger_value = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
+  char right_trigger_value = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
+
+  short lx = pad_value(pad, map.abs_x),
+        ly = pad_value(pad, map.abs_y),
+        rx = pad_value(pad, map.abs_rx),
+        ry = pad_value(pad, map.abs_ry);
+
+  LiSendControllerEvent(btn, left_trigger_value, right_trigger_value, lx, -ly, rx, -ry);
+}
+
+static uint8_t active_input_thread = 0;
+
+int vitainput_thread(SceSize args, void *argp) {
+  while (1) {
+    if (active_input_thread) {
+      vitainput_process();
+    }
+
+    SceRtcTick before, after;
+    sceRtcGetCurrentTick(&before);
+    sceKernelDelayThread(1 * 1000); // 1 ms
+    sceRtcGetCurrentTick(&after);
+
+    // TODO: less hacky way?
+    if (after.tick - before.tick > 50 * 1000) {
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+SceUID vitainput_init(CONFIGURATION conf) {
+  config = conf;
   map.abs_x = 0;
   map.abs_y = 1;
   map.abs_rx = 2;
@@ -202,141 +315,30 @@ bool vitainput_init(CONFIGURATION conf) {
   map.btn_tr2 = TOUCHSEC_SOUTHEAST;
   map.btn_mode = TOUCHSEC_SPECIAL;
 
-  config = conf;
-
   if (config.mapping) {
     char config_path[256];
     sprintf(config_path, "ux0:data/moonlight/%s", config.mapping);
+    printf("Loading mapping at %s\n", config_path);
     mapping_load(config_path, &map);
   }
 
-  return true;
-}
-
-void vitainput_loop(void) {
   sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
-  SceCtrlData pad;
-  SceTouchData front;
-  SceTouchData front_old;
-  SceTouchData back;
-
-  int front_state = NO_TOUCH_ACTION;
-  short finger_count = 0;
-  SceRtcTick current, until;
-
-  while (1) {
-    memset(&pad, 0, sizeof(pad));
-
-    sceCtrlPeekBufferPositive(0, &pad, 1);
-    sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
-    sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
-    sceRtcGetCurrentTick(&current);
-
-    if (config.fronttouchscreen_buttons == false) {
-      switch (front_state) {
-        case NO_TOUCH_ACTION:
-          if (front.reportNum > 0) {
-            front_state = ON_SCREEN_TOUCH;
-            finger_count = front.reportNum;
-            sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-          }
-          break;
-        case ON_SCREEN_TOUCH:
-          if (sceRtcCompareTick(&current, &until) < 0) {
-            if (front.reportNum < finger_count && !check_touch_sector(front, TOUCHSEC_SPECIAL)) {
-              // TAP
-              if (mouse_click(finger_count, true)) {
-                front_state = SCREEN_TAP;
-                sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-              } else {
-                front_state = NO_TOUCH_ACTION;
-              }
-            } else if (front.reportNum > finger_count) {
-              // finger count changed
-              finger_count = front.reportNum;
-            }
-          } else {
-            front_state = SWIPE_START;
-          }
-          break;
-        case SCREEN_TAP:
-          if (sceRtcCompareTick(&current, &until) >= 0) {
-            if (!check_touch_sector(front, TOUCHSEC_SPECIAL)) {
-              mouse_click(finger_count, false);
-            }
-
-            front_state = NO_TOUCH_ACTION;
-          }
-          break;
-        case SWIPE_START:
-          memcpy(&front_old, &front, sizeof(front_old));
-          front_state = ON_SCREEN_SWIPE;
-          break;
-        case ON_SCREEN_SWIPE:
-          if (front.reportNum > 0) {
-            switch (front.reportNum) {
-              case 1:
-                move_mouse(front_old, front);
-                break;
-              case 2:
-                move_wheel(front_old, front);
-                break;
-            }
-            memcpy(&front_old, &front, sizeof(front_old));
-          } else {
-            front_state = NO_TOUCH_ACTION;
-          }
-          break;
-      }
-    }
-
-    SceTouchData buttons_screen = config.fronttouchscreen_buttons ? front : back;
-
-    short btn = 0;
-    INPUT(map.btn_dpad_up, UP_FLAG);
-    INPUT(map.btn_dpad_up, UP_FLAG);
-    INPUT(map.btn_dpad_left, LEFT_FLAG);
-    INPUT(map.btn_dpad_down, DOWN_FLAG);
-    INPUT(map.btn_dpad_right, RIGHT_FLAG);
-
-    INPUT(map.btn_start, PLAY_FLAG);
-    INPUT(map.btn_select, BACK_FLAG);
-
-    INPUT(map.btn_north, Y_FLAG);
-    INPUT(map.btn_east, B_FLAG);
-    INPUT(map.btn_south, A_FLAG);
-    INPUT(map.btn_west, X_FLAG);
-
-    INPUT(map.btn_tl2, LS_CLK_FLAG);
-    INPUT(map.btn_tr2, RS_CLK_FLAG);
-
-    INPUT(map.btn_thumbl, LB_FLAG);
-    INPUT(map.btn_thumbr, RB_FLAG);
-
-    INPUT(map.btn_mode, SPECIAL_FLAG);
-
-    // TRIGGERS
-    char left_trigger_value = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
-    char right_trigger_value = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
-
-    short lx = pad_value(pad, map.abs_x),
-          ly = pad_value(pad, map.abs_y),
-          rx = pad_value(pad, map.abs_rx),
-          ry = pad_value(pad, map.abs_ry);
-
-    LiSendControllerEvent(btn, left_trigger_value, right_trigger_value, lx, -ly, rx, -ry);
-
-    SceRtcTick before, after;
-    sceRtcGetCurrentTick(&before);
-    sceKernelDelayThread(1 * 1000); // 1 ms
-    sceRtcGetCurrentTick(&after);
-
-    // TODO: less hacky way?
-    if (after.tick - before.tick > 50 * 1000) {
-      return;
-    }
+  SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0x10000100, 0x40000, 0, 0, NULL);
+  if (thid >= 0) {
+    sceKernelStartThread(thid, 0, NULL);
+    return thid;
   }
+
+  return -1;
+}
+
+void vitainput_start(void) {
+  active_input_thread = true;
+}
+
+void vitainput_stop(void) {
+  active_input_thread = false;
 }

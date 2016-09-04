@@ -17,5 +17,31 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-bool vitainput_init(CONFIGURATION config);
-void vitainput_loop(void);
+#include <psp2/sysmodule.h>
+
+enum {
+  NO_TOUCH_ACTION = 0,
+  ON_SCREEN_TOUCH,
+  SCREEN_TAP,
+  SWIPE_START,
+  ON_SCREEN_SWIPE
+} TouchScreenState;
+
+enum {
+  TOUCHSEC_NORTHWEST = 600,
+  TOUCHSEC_NORTHEAST,
+  TOUCHSEC_SOUTHWEST,
+  TOUCHSEC_SOUTHEAST,
+  TOUCHSEC_SPECIAL = 700
+} TouchScreenSection;
+
+enum {
+  LEFTX,
+  LEFTY,
+  RIGHTX,
+  RIGHTY
+} PadSection;
+
+SceUID vitainput_init(CONFIGURATION config);
+void vitainput_start(void);
+void vitainput_stop(void);

@@ -17,5 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-void vitapower_init();
-void vitapower_disable_powersave();
+bool vitapower_init(CONFIGURATION config);
+void vitapower_start();
+void vitapower_stop();

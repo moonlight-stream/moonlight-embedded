@@ -31,6 +31,10 @@
 #include <psp2/touch.h>
 #include <vita2d.h>
 
+static SERVER_DATA server;
+static PAPP_LIST server_applist;
+static bool server_connected;
+
 /*
  * Main menu
  */
@@ -47,9 +51,11 @@ int main_menu_loop(int cursor, void *context) {
     switch (cursor) {
       case MAIN_MENU_CONNECT:
         __connect_ip();
+        return 2;
         break;
       case MAIN_MENU_CONNECT_SAVED:
         __connect_saved();
+        return 2;
         break;
       case MAIN_MENU_SETTINGS:
         __settings();
@@ -72,10 +78,14 @@ int __main_menu() {
   int idx = 0;
 
   menu[idx++] = (struct menu_entry) { .name = "", .subname = "Moonlight Alpha", .disabled = true, .color = 0xff00aa00 };
-  if (config.address) {
-    char prev[256];
-    sprintf(prev, "Connect to %s", config.address ? config.address : "none");
-    menu[idx++] = (struct menu_entry) { .name = prev, .id = MAIN_MENU_CONNECT_SAVED };
+  if (server_connected) {
+    char name[256];
+    sprintf(name, "Resume connection to %s", server.address);
+    menu[idx++] = (struct menu_entry) { .name = name, .id = MAIN_MENU_CONNECT_SAVED };
+  } else if (config.address) {
+    char name[256];
+    sprintf(name, "Connect to %s", config.address ? config.address : "none");
+    menu[idx++] = (struct menu_entry) { .name = name, .id = MAIN_MENU_CONNECT_SAVED };
   }
   menu[idx++] = (struct menu_entry) { .name = "Connect to ...", .id = MAIN_MENU_CONNECT };
   menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .separator = true };
@@ -364,17 +374,12 @@ int __deadzone_settings() {
  * Connect
  */
 
-static SERVER_DATA server;
-static PAPP_LIST server_applist;
-static bool server_connected;
-
 enum {
   CONNECT_PAIRUNPAIR = 13,
   CONNECT_DISCONNECT,
   CONNECT_QUITAPP
 };
 
-#define QUIT
 #define QUIT_RELOAD 2
 
 int connect_loop(int id, void *context) {
@@ -409,7 +414,7 @@ int connect_loop(int id, void *context) {
         flash_message("Quitting...");
         int ret = gs_quit_app(&server);
         if (ret == GS_OK) {
-          server_connected = false;
+          server.currentGame = 0;
           return QUIT_RELOAD;
         } else {
           display_error("Quitting failed: %d", ret);
@@ -417,6 +422,7 @@ int connect_loop(int id, void *context) {
         break;
       default:
         flash_message("Stream starting...");
+        server.currentGame = id;
         stream(&server, id);
         return QUIT_RELOAD;
         break;
@@ -583,16 +589,16 @@ void stream(PSERVER_DATA server, int appId) {
       server->serverMajorVersion
       );
 
+  /*
   vitainput_init(config);
-  vitainput_loop();
-  LiStopConnection();
+  vitainput_start();
+  */
 
-  // TODO: i dont know what im doing
-  int c = 0;
-  do {
-    c = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
-    sceNetSocketClose(c);
-  } while (c >= 5);
+  while (true) {
+    sceKernelDelayThread(2000 * 1000);
+  }
+
+  LiStopConnection();
 }
 
 void gui_init() {
@@ -601,7 +607,8 @@ void gui_init() {
 
 void gui_loop() {
   gui_init();
-  __main_menu();
+
+  while (__main_menu() == 2);
 
   vita2d_fini();
 }

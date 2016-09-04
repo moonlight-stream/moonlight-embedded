@@ -138,7 +138,7 @@ static void vita_init() {
 }
 
 void loop_forever(void) {
-  while (1) {
+  while (connection_is_ready()) {
     sceKernelDelayThread(100 * 1000);
   }
 }
@@ -153,6 +153,16 @@ int main(int argc, char* argv[]) {
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
   gui_loop();
+  /*
+=======
+  if (!vitainput_init(config)) {
+    loop_forever();
+  }
+  if (!vitapower_init(config)) {
+    loop_forever();
+  }
+>>>>>>> vita
+*/
 
   /*
   int ret = 0;
@@ -176,16 +186,18 @@ again:
   printf("Press X to pair (You need to do it once)\n");
   printf("Press O to launch steam\n");
 
+  connection_reset();
+
   switch(get_key()) {
   case SCE_CTRL_CROSS:
     vita_pair(&server);
-    goto again;
+    break;
   case SCE_CTRL_CIRCLE:
     stream(&server, &config, system);
-    goto again; // but we won't get here
-  default:
-    goto again;
+    loop_forever();
+    break;
   }
+<<<<<<< HEAD
   */
 }
 
@@ -224,10 +236,9 @@ void __stream(PSERVER_DATA server, int appId) {
       server->serverMajorVersion
       );
   if (ret == 0) {
-    vitainput_loop();
+    //vitainput_loop();
     LiStopConnection();
   } else {
     printf("\nFAILED CONNECTING\n");
   }
-
 }

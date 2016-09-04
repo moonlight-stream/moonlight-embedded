@@ -228,6 +228,9 @@ int display_menu(
     gui_draw_callback draw_callback,
     void *context
     ) {
+  vita2d_end_drawing();
+  vita2d_swap_buffers();
+  gui_ctrl_end();
 
   int offset = 0;
   int cursor = 0;

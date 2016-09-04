@@ -49,10 +49,11 @@ enum {
 } TouchScreenState;
 
 enum {
-  NORTHWEST = 3,
-  NORTHEAST,
-  SOUTHWEST,
-  SOUTHEAST
+  TOUCHSEC_NORTHWEST = 600,
+  TOUCHSEC_NORTHEAST,
+  TOUCHSEC_SOUTHWEST,
+  TOUCHSEC_SOUTHEAST,
+  TOUCHSEC_SPECIAL
 } TouchScreenSection;
 
 enum {
@@ -80,14 +81,21 @@ static bool check_touch_sector(SceTouchData scr, int section) {
   int vertical = (960 - config.back_deadzone.left - config.back_deadzone.right) / 2 + config.back_deadzone.left,
       horizontal = (544 - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
   switch (section) {
-    case NORTHWEST:
+    case TOUCHSEC_NORTHWEST:
       return check_touch(scr, config.back_deadzone.left, config.back_deadzone.top, vertical, horizontal);
-    case NORTHEAST:
+    case TOUCHSEC_NORTHEAST:
       return check_touch(scr, vertical, config.back_deadzone.top, 960 - config.back_deadzone.right, horizontal);
-    case SOUTHWEST:
+    case TOUCHSEC_SOUTHWEST:
       return check_touch(scr, config.back_deadzone.left, horizontal, vertical, 544 - config.back_deadzone.bottom);
-    case SOUTHEAST:
+    case TOUCHSEC_SOUTHEAST:
       return check_touch(scr, vertical, horizontal, 960 - config.back_deadzone.left, 544 - config.back_deadzone.bottom);
+    case TOUCHSEC_SPECIAL:
+      if (true) {
+        int offset = 50;
+        int size = 200;
+        return check_touch(scr, offset, 544 - size - offset, size + offset, 544 - offset);
+      }
+
     default:
       return false;
   }
@@ -156,12 +164,12 @@ static short pad_value(SceCtrlData pad, int sec) {
 }
 
 bool check_input(short identifier, SceCtrlData pad, SceTouchData screen) {
-  identifier = identifier + 1;
-  if (identifier >= 3 && identifier <= 6) {
+  if (identifier >= TOUCHSEC_NORTHWEST && identifier <= TOUCHSEC_SPECIAL) {
     if (check_touch_sector(screen, identifier)) {
       return true;
     }
   } else {
+    identifier = identifier + 1;
     if (pad.buttons & identifier) {
       return true;
     }
@@ -172,12 +180,14 @@ bool check_input(short identifier, SceCtrlData pad, SceTouchData screen) {
 
 #define CHECK_INPUT(id) check_input((id), pad, buttons_screen)
 #define INPUT(id, flag) if (check_input((id), pad, buttons_screen)) btn |= (flag);
+#define INPUT_SCREEN(screen, id, flag) if (check_input((id), pad, (screen))) btn |= (flag);
 
 bool vitainput_init(CONFIGURATION conf) {
   map.abs_x = 0;
   map.abs_y = 1;
   map.abs_rx = 2;
   map.abs_ry = 3;
+
   map.btn_south = 16383;
   map.btn_east = 8191;
   map.btn_north = 4095;
@@ -190,10 +200,12 @@ bool vitainput_init(CONFIGURATION conf) {
   map.btn_dpad_down = 63;
   map.btn_dpad_left = 127;
   map.btn_dpad_right = 31;
-  map.btn_tl = 2;
-  map.btn_tr = 3;
-  map.btn_tl2 = 4;
-  map.btn_tr2 = 5;
+
+  map.btn_tl = 600;
+  map.btn_tr = 601;
+  map.btn_tl2 = 602;
+  map.btn_tr2 = 603;
+  map.btn_mode = 604;
 
   config = conf;
 
@@ -239,7 +251,7 @@ void vitainput_loop(void) {
           break;
         case ON_SCREEN_TOUCH:
           if (sceRtcCompareTick(&current, &until) < 0) {
-            if (front.reportNum < finger_count) {
+            if (front.reportNum < finger_count && !check_touch_sector(front, TOUCHSEC_SPECIAL)) {
               // TAP
               if (mouse_click(finger_count, true)) {
                 front_state = SCREEN_TAP;
@@ -257,7 +269,10 @@ void vitainput_loop(void) {
           break;
         case SCREEN_TAP:
           if (sceRtcCompareTick(&current, &until) >= 0) {
-            mouse_click(finger_count, false);
+            if (!check_touch_sector(front, TOUCHSEC_SPECIAL)) {
+              mouse_click(finger_count, false);
+            }
+
             front_state = NO_TOUCH_ACTION;
           }
           break;
@@ -271,11 +286,9 @@ void vitainput_loop(void) {
               case 1:
                 move_mouse(front_old, front);
                 break;
-              case 3:
-                LiSendControllerEvent((short) (0 | SPECIAL_FLAG), 0, 0, 0, 0, 0, 0);
-                break;
               case 2:
                 move_wheel(front_old, front);
+                break;
             }
             memcpy(&front_old, &front, sizeof(front_old));
           } else {
@@ -285,9 +298,9 @@ void vitainput_loop(void) {
       }
     }
 
-    short btn = 0;
     SceTouchData buttons_screen = config.fronttouchscreen_buttons ? front : back;
 
+    short btn = 0;
     INPUT(map.btn_dpad_up, UP_FLAG);
     INPUT(map.btn_dpad_up, UP_FLAG);
     INPUT(map.btn_dpad_left, LEFT_FLAG);
@@ -307,6 +320,9 @@ void vitainput_loop(void) {
 
     INPUT(map.btn_thumbl, LB_FLAG);
     INPUT(map.btn_thumbr, RB_FLAG);
+
+    // SPECIAL
+    INPUT_SCREEN(front, map.btn_mode, SPECIAL_FLAG);
 
     // TRIGGERS
     char left_trigger_value = CHECK_INPUT(map.btn_tl) ? 0xff : 0;

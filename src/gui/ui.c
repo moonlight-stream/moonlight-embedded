@@ -31,8 +31,6 @@
 #include <psp2/touch.h>
 #include <vita2d.h>
 
-static SERVER_DATA server;
-
 /*
  * Main menu
  */
@@ -366,11 +364,17 @@ int __deadzone_settings() {
  * Connect
  */
 
+static SERVER_DATA server;
+static PAPP_LIST server_applist;
+static bool server_connected;
+
 enum {
   CONNECT_PAIRUNPAIR = 13,
+  CONNECT_DISCONNECT,
   CONNECT_QUITAPP
 };
 
+#define QUIT
 #define QUIT_RELOAD 2
 
 int connect_loop(int id, void *context) {
@@ -392,18 +396,24 @@ int connect_loop(int id, void *context) {
 
           int ret = gs_pair(&server, &pin[0]);
           if (ret == 0) {
+            server_connected = false;
             return QUIT_RELOAD;
           } else {
             display_error("Pairing failed: %d", ret);
           }
         } break;
+      case CONNECT_DISCONNECT:
+        server_connected = false;
+        return 1;
       case CONNECT_QUITAPP:
         flash_message("Quitting...");
         int ret = gs_quit_app(&server);
-        if (ret == GS_OK)
+        if (ret == GS_OK) {
+          server_connected = false;
           return QUIT_RELOAD;
-        else
+        } else {
           display_error("Quitting failed: %d", ret);
+        }
         break;
       default:
         flash_message("Stream starting...");
@@ -417,7 +427,7 @@ int connect_loop(int id, void *context) {
 }
 
 int __connect(char *address) {
-  if (!server.address) {
+  if (!server_connected) {
     server.address = malloc(sizeof(char)*256);
     strcpy(server.address, address);
 
@@ -438,12 +448,14 @@ int __connect(char *address) {
       display_error("Can't connect to server\n%s", config.address);
       return;
     }
-  }
 
-  PAPP_LIST list = NULL;
-  if (gs_applist(&server, &list) != GS_OK) {
-    display_error("Can't get applist!");
-    return;
+    if (gs_applist(&server, &server_applist) != GS_OK) {
+      display_error("Can't get applist!");
+      return;
+    }
+
+
+    server_connected = true;
   }
 
   struct menu_entry menu[32];
@@ -462,7 +474,7 @@ int __connect(char *address) {
     char current_appname[256];
     char current_status[256];
 
-    if (!get_app_name(list, server.currentGame, &current_appname)) {
+    if (!get_app_name(server_applist, server.currentGame, &current_appname)) {
       strcpy(current_appname, "unknown");
     }
     sprintf(current_status, "Streaming %s", current_appname);
@@ -479,11 +491,13 @@ int __connect(char *address) {
   } else {
     menu[idx++] = (struct menu_entry) { .name = "Pair", .id = CONNECT_PAIRUNPAIR };
   }
+  menu[idx++] = (struct menu_entry) { .name = "Disconnect", .id = CONNECT_DISCONNECT };
 
   // app list
-  if (list != NULL) {
+  if (server_applist != NULL) {
     menu[idx++] = (struct menu_entry) { .name = "Applications", .disabled = true, .separator = true };
 
+    PAPP_LIST list = server_applist;
     while (list) {
       menu[idx++] = (struct menu_entry) { .name = list->name, .id = list->id };
       list = list->next;
@@ -502,6 +516,7 @@ void __connect_ip() {
   char ip[512];
   switch (ime_dialog(&ip, "Enter IP:", "192.168.")) {
     case 0:
+      server_connected = false;
       config.address = malloc(sizeof(char) * strlen(ip));
       strcpy(config.address, ip);
       settings_save_config();

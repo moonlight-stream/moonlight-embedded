@@ -563,8 +563,8 @@ void stream(PSERVER_DATA server, int appId) {
   vitapower_config(config);
   vitainput_config(config);
 
-  int ret = sceNetCtlInit();
-  ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
+  //int ret = sceNetCtlInit();
+  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       display_error("Server doesn't support 4K\n");

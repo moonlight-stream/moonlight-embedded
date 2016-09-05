@@ -71,7 +71,18 @@ int http_init(const char* keyDirectory) {
   return GS_OK;
 }
 
+void __cycle() {
+  int c = 0;
+  do {
+    c = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+    sceNetSocketClose(c);
+  } while (c >= 5);
+}
+
+
 int http_request(char* url, PHTTP_DATA data) {
+  __cycle();
+
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
   curl_easy_setopt(curl, CURLOPT_URL, url);
 

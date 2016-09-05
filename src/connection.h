@@ -27,7 +27,8 @@ enum {
 };
 
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
-extern int connection_status;
+extern int connection_failed_stage;
+extern long connection_failed_stage_code;
 
 void connection_reset();
 

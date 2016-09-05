@@ -161,17 +161,10 @@ int main(int argc, char* argv[]) {
   config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
+  vitapower_config(config);
+  vitainput_config(config);
+
   gui_loop();
-  /*
-=======
-  if (!vitainput_init(config)) {
-    loop_forever();
-  }
-  if (!vitapower_init(config)) {
-    loop_forever();
-  }
->>>>>>> vita
-*/
 
   /*
   int ret = 0;

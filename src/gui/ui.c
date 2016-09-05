@@ -560,7 +560,11 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
 }
 
 void stream(PSERVER_DATA server, int appId) {
-  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
+  vitapower_config(config);
+  vitainput_config(config);
+
+  int ret = sceNetCtlInit();
+  ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       display_error("Server doesn't support 4K\n");
@@ -589,16 +593,27 @@ void stream(PSERVER_DATA server, int appId) {
       server->serverMajorVersion
       );
 
-  if (ret < 0) {
-    display_error("Error: %d", ret);
+  if (ret == 0) {
+    while (connection_is_active()) {
+      sceKernelDelayThread(1000 * 1000);
+    }
+  } else {
+    char *stage;
+    switch (connection_failed_stage) {
+      case STAGE_PLATFORM_INIT: stage = "Platform init"; break;
+      case STAGE_NAME_RESOLUTION: stage = "Name resolution"; break;
+      case STAGE_RTSP_HANDSHAKE: stage = "RTSP handshake"; break;
+      case STAGE_CONTROL_STREAM_INIT: stage = "Control stream init"; break;
+      case STAGE_VIDEO_STREAM_INIT: stage = "Video stream init"; break;
+      case STAGE_AUDIO_STREAM_INIT: stage = "Audio stream init"; break;
+      case STAGE_CONTROL_STREAM_START: stage = "Control stream start"; break;
+      case STAGE_VIDEO_STREAM_START: stage = "Video stream start"; break;
+      case STAGE_AUDIO_STREAM_START: stage = "Audio stream start"; break;
+      case STAGE_INPUT_STREAM_START: stage = "Input stream start"; break;
+    }
+
+    display_error("Failed to start stream: error code %d\nFailed stage: %s\n(error code %d)", ret, stage, connection_failed_stage_code);
     return;
-  }
-
-  vitapower_config(config);
-  vitainput_config(config);
-
-  while (connection_is_active()) {
-    sceKernelDelayThread(1000 * 1000);
   }
 }
 

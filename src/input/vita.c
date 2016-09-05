@@ -41,14 +41,17 @@
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
 
+#define WIDTH 960
+#define HEIGHT 544
+
 static struct mapping map = {0};
 
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
 static bool check_touch(SceTouchData scr, int lx, int ly, int rx, int ry) {
   for (int i = 0; i < scr.reportNum; i++) {
-    int x = lerp(scr.report[i].x, 1919, 960);
-    int y = lerp(scr.report[i].y, 1087, 544);
+    int x = lerp(scr.report[i].x, 1919, WIDTH);
+    int y = lerp(scr.report[i].y, 1087, HEIGHT);
     if (x < lx || x > rx || y < ly || y > ry) continue;
     return true;
   }
@@ -56,23 +59,53 @@ static bool check_touch(SceTouchData scr, int lx, int ly, int rx, int ry) {
 }
 
 static bool check_touch_sector(SceTouchData scr, int section) {
-  int vertical = (960 - config.back_deadzone.left - config.back_deadzone.right) / 2 + config.back_deadzone.left,
-      horizontal = (544 - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
+  int vertical = (WIDTH - config.back_deadzone.left - config.back_deadzone.right) / 2 + config.back_deadzone.left,
+      horizontal = (HEIGHT - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
+
+  int special_offset = 30,
+      special_size = 200;
+
   switch (section) {
     case TOUCHSEC_NORTHWEST:
       return check_touch(scr, config.back_deadzone.left, config.back_deadzone.top, vertical, horizontal);
     case TOUCHSEC_NORTHEAST:
-      return check_touch(scr, vertical, config.back_deadzone.top, 960 - config.back_deadzone.right, horizontal);
+      return check_touch(scr, vertical, config.back_deadzone.top, WIDTH - config.back_deadzone.right, horizontal);
     case TOUCHSEC_SOUTHWEST:
-      return check_touch(scr, config.back_deadzone.left, horizontal, vertical, 544 - config.back_deadzone.bottom);
+      return check_touch(scr, config.back_deadzone.left, horizontal, vertical, HEIGHT - config.back_deadzone.bottom);
     case TOUCHSEC_SOUTHEAST:
-      return check_touch(scr, vertical, horizontal, 960 - config.back_deadzone.left, 544 - config.back_deadzone.bottom);
-    case TOUCHSEC_SPECIAL:
-      if (true) {
-        int offset = 30;
-        int size = 200;
-        return check_touch(scr, offset, 544 - size - offset, size + offset, 544 - offset);
-      }
+      return check_touch(scr, vertical, horizontal, WIDTH - config.back_deadzone.left, HEIGHT - config.back_deadzone.bottom);
+    case TOUCHSEC_SPECIAL_SW:
+      return check_touch(
+          scr,
+          special_offset,
+          HEIGHT - special_size - special_offset,
+          special_size + special_offset,
+          HEIGHT - special_offset
+          );
+    case TOUCHSEC_SPECIAL_SE:
+      return check_touch(
+          scr,
+          WIDTH - special_size - special_offset,
+          HEIGHT - special_size - special_offset,
+          WIDTH - special_offset,
+          HEIGHT - special_offset
+          );
+    case TOUCHSEC_SPECIAL_NW:
+      return check_touch(
+          scr,
+          special_offset,
+          special_offset,
+          special_offset + special_size,
+          special_offset + special_size
+          );
+    case TOUCHSEC_SPECIAL_NE:
+      return check_touch(
+          scr,
+          WIDTH - special_size - special_offset,
+          special_offset,
+          WIDTH - special_offset,
+          special_offset + special_size
+          );
 
     default:
       return false;
@@ -81,8 +114,14 @@ static bool check_touch_sector(SceTouchData scr, int section) {
 
 #define MOUSE_ACTION_DELAY 100000 // 100ms
 
-static bool mouse_click(short finger_count, bool press) {
+static bool mouse_click(SceTouchData screen, short finger_count, bool press) {
   int mode;
+
+  for (int i = TOUCHSEC_SPECIAL_SW; i < TOUCHSEC_SPECIAL_NE; i++) {
+    if (check_touch_sector(screen, i)) {
+      return false;
+    }
+  }
 
   if (press) {
     mode = BUTTON_ACTION_PRESS;
@@ -142,9 +181,9 @@ static short pad_value(SceCtrlData pad, int sec) {
 }
 
 bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouchData front, SceTouchData back) {
-  if (identifier >= TOUCHSEC_NORTHWEST && identifier < TOUCHSEC_SPECIAL) {
-    return check_touch_sector(identifier == TOUCHSEC_SPECIAL ? front : screen, identifier);
-  } else if (identifier >= TOUCHSEC_SPECIAL && identifier <= TOUCHSEC_SPECIAL) {
+  if (identifier >= TOUCHSEC_NORTHWEST && identifier < TOUCHSEC_SPECIAL_SW) {
+    return check_touch_sector(identifier == TOUCHSEC_SPECIAL_SW ? front : screen, identifier);
+  } else if (identifier >= TOUCHSEC_SPECIAL_SW && identifier <= TOUCHSEC_SPECIAL_SW) {
     return check_touch_sector(front, identifier);
   } else {
     identifier = identifier + 1;
@@ -185,7 +224,7 @@ void vitainput_process(void) {
         if (sceRtcCompareTick(&current, &until) < 0) {
           if (front.reportNum < finger_count) {
             // TAP
-            if (!check_touch_sector(front, TOUCHSEC_SPECIAL) && mouse_click(finger_count, true)) {
+            if (mouse_click(front, finger_count, true)) {
               front_state = SCREEN_TAP;
               sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
             } else {
@@ -201,9 +240,7 @@ void vitainput_process(void) {
         break;
       case SCREEN_TAP:
         if (sceRtcCompareTick(&current, &until) >= 0) {
-          if (!check_touch_sector(front, TOUCHSEC_SPECIAL)) {
-            mouse_click(finger_count, false);
-          }
+          mouse_click(front, finger_count, false);
 
           front_state = NO_TOUCH_ACTION;
         }
@@ -281,10 +318,12 @@ int vitainput_thread(SceSize args, void *argp) {
     sceKernelDelayThread(1 * 1000); // 1 ms
     sceRtcGetCurrentTick(&after);
 
+    /*
     if (after.tick - before.tick > 50 * 1000) {
       LiStopConnection();
       connection_reset();
     }
+    */
   }
 
   return 0;
@@ -327,7 +366,7 @@ void vitainput_config(CONFIGURATION config) {
   map.btn_tr = TOUCHSEC_NORTHEAST;
   map.btn_tl2 = TOUCHSEC_SOUTHWEST;
   map.btn_tr2 = TOUCHSEC_SOUTHEAST;
-  map.btn_mode = TOUCHSEC_SPECIAL;
+  map.btn_mode = TOUCHSEC_SPECIAL_SW;
 
   if (config.mapping) {
     char config_path[256];

@@ -26,7 +26,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-int connection_status = LI_READY;
+static int connection_status = LI_READY;
+
+int connection_failed_stage = 0;
+long connection_failed_stage_code = 0;
 
 void connection_connection_started()
 {
@@ -57,6 +60,11 @@ void connection_reset() {
   connection_status = LI_READY;
 }
 
+void stage_failed(int stage, long code) {
+  connection_failed_stage = stage;
+  connection_failed_stage_code = code;
+}
+
 bool connection_is_ready() {
   return connection_status != LI_DISCONNECTED;
 }
@@ -68,7 +76,7 @@ bool connection_is_active() {
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = NULL,
   .stageComplete = NULL,
-  .stageFailed = NULL,
+  .stageFailed = stage_failed,
   .connectionStarted = connection_connection_started,
   .connectionTerminated = connection_connection_terminated,
   .displayMessage = connection_display_message,

@@ -17,8 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <psp2/sysmodule.h>
-
 enum {
   NO_TOUCH_ACTION = 0,
   ON_SCREEN_TOUCH,
@@ -42,6 +40,8 @@ enum {
   RIGHTY
 } PadSection;
 
-SceUID vitainput_init(CONFIGURATION config);
+bool vitainput_init();
+void vitainput_config(CONFIGURATION config);
+
 void vitainput_start(void);
 void vitainput_stop(void);

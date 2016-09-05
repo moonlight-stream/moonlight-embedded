@@ -45,19 +45,24 @@ int vitapower_thread(SceSize args, void *argp) {
     }
     sceKernelDelayThread(10 * 1000 * 1000);
   }
+
   return 0;
 }
 
-bool vitapower_init(CONFIGURATION config) {
+bool vitapower_init() {
   SceUID thid = sceKernelCreateThread("vitapower_thread", vitapower_thread, 0x10000100, 0x40000, 0, 0, NULL);
   if (thid >= 0)
     sceKernelStartThread(thid, 0, NULL);
 
+  return true;
+}
+
+void vitapower_config(CONFIGURATION config) {
+  powermode = ENABLE_ALL;
+
   if (config.disable_powersave) {
     powermode |= DISABLE_SUSPEND;
   }
-
-  return true;
 }
 
 void vitapower_start() {

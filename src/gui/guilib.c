@@ -180,7 +180,7 @@ void draw_alert(char *message, struct menu_geom geom, char *buttons_captions[], 
   }
 
   int caption_width = vita2d_pgf_text_width(gui_font, 1.f, caption);
-  vita2d_pgf_draw_text(gui_font, geom.x + geom.width - caption_width, geom.total_y - 5, 0xffffffff, 1.f, caption);
+  vita2d_pgf_draw_text(gui_font, geom.x + geom.width - caption_width, geom.total_y - 10, 0xffffffff, 1.f, caption);
 }
 
 void gui_ctrl_begin() {

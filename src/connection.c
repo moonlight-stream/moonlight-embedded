@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-static int connection_status = LI_READY;
+int connection_status = LI_READY;
 
 void connection_connection_started()
 {
@@ -40,7 +40,6 @@ void connection_connection_terminated()
   vitainput_stop();
   vitapower_stop();
   connection_status = LI_DISCONNECTED;
-  quit();
 }
 
 void connection_display_message(char *msg)
@@ -54,11 +53,16 @@ void connection_display_transient_message(char *msg)
 }
 
 void connection_reset() {
+  connection_connection_terminated();
   connection_status = LI_READY;
 }
 
 bool connection_is_ready() {
   return connection_status != LI_DISCONNECTED;
+}
+
+bool connection_is_active() {
+  return connection_status == LI_CONNECTED;
 }
 
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {

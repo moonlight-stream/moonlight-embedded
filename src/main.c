@@ -146,6 +146,15 @@ void loop_forever(void) {
 int main(int argc, char* argv[]) {
   psvDebugScreenInit();
   vita_init();
+  if (!vitapower_init()) {
+    printf("Failed to init power!");
+    loop_forever();
+  }
+
+  if (!vitainput_init()) {
+    printf("Failed to init input!");
+    loop_forever();
+  }
 
   config_path = "ux0:data/moonlight/moonlight.conf";
   config_parse(argc, argv, &config);

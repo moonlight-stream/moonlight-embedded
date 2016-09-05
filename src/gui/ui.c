@@ -578,7 +578,7 @@ void stream(PSERVER_DATA server, int appId) {
   if (config.forcehw)
     drFlags |= FORCE_HARDWARE_ACCELERATION;
 
-  LiStartConnection(
+  ret = LiStartConnection(
       server->address,
       &config.stream,
       &connection_callbacks,
@@ -589,16 +589,17 @@ void stream(PSERVER_DATA server, int appId) {
       server->serverMajorVersion
       );
 
-  /*
-  vitainput_init(config);
-  vitainput_start();
-  */
-
-  while (true) {
-    sceKernelDelayThread(2000 * 1000);
+  if (ret < 0) {
+    display_error("Error: %d", ret);
+    return;
   }
 
-  LiStopConnection();
+  vitapower_config(config);
+  vitainput_config(config);
+
+  while (connection_is_active()) {
+    sceKernelDelayThread(1000 * 1000);
+  }
 }
 
 void gui_init() {

@@ -35,6 +35,7 @@
 #include <Limelight.h>
 
 #include <psp2/net/net.h>
+#include <psp2/sysmodule.h>
 
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
@@ -280,17 +281,30 @@ int vitainput_thread(SceSize args, void *argp) {
     sceKernelDelayThread(1 * 1000); // 1 ms
     sceRtcGetCurrentTick(&after);
 
-    // TODO: less hacky way?
     if (after.tick - before.tick > 50 * 1000) {
-      return 0;
+      LiStopConnection();
+      connection_reset();
     }
   }
 
   return 0;
 }
 
-SceUID vitainput_init(CONFIGURATION conf) {
-  config = conf;
+bool vitainput_init() {
+  sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
+
+  SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0x10000100, 0x40000, 0, 0, NULL);
+  if (thid >= 0) {
+    sceKernelStartThread(thid, 0, NULL);
+    return true;
+  }
+
+  return false;
+}
+
+void vitainput_config(CONFIGURATION config) {
   map.abs_x = 0;
   map.abs_y = 1;
   map.abs_rx = 2;
@@ -321,18 +335,6 @@ SceUID vitainput_init(CONFIGURATION conf) {
     printf("Loading mapping at %s\n", config_path);
     mapping_load(config_path, &map);
   }
-
-  sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
-  sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
-  sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
-
-  SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0x10000100, 0x40000, 0, 0, NULL);
-  if (thid >= 0) {
-    sceKernelStartThread(thid, 0, NULL);
-    return thid;
-  }
-
-  return -1;
 }
 
 void vitainput_start(void) {

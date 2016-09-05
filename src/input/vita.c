@@ -63,7 +63,7 @@ static bool check_touch_sector(SceTouchData scr, int section) {
       horizontal = (HEIGHT - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
 
   int special_offset = 30,
-      special_size = 200;
+      special_size = 150;
 
   switch (section) {
     case TOUCHSEC_NORTHWEST:
@@ -116,12 +116,6 @@ static bool check_touch_sector(SceTouchData scr, int section) {
 
 static bool mouse_click(SceTouchData screen, short finger_count, bool press) {
   int mode;
-
-  for (int i = TOUCHSEC_SPECIAL_SW; i < TOUCHSEC_SPECIAL_NE; i++) {
-    if (check_touch_sector(screen, i)) {
-      return false;
-    }
-  }
 
   if (press) {
     mode = BUTTON_ACTION_PRESS;
@@ -182,8 +176,8 @@ static short pad_value(SceCtrlData pad, int sec) {
 
 bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouchData front, SceTouchData back) {
   if (identifier >= TOUCHSEC_NORTHWEST && identifier < TOUCHSEC_SPECIAL_SW) {
-    return check_touch_sector(identifier == TOUCHSEC_SPECIAL_SW ? front : screen, identifier);
-  } else if (identifier >= TOUCHSEC_SPECIAL_SW && identifier <= TOUCHSEC_SPECIAL_SW) {
+    return check_touch_sector(screen, identifier);
+  } else if (identifier >= TOUCHSEC_SPECIAL_SW && identifier <= TOUCHSEC_SPECIAL_NE) {
     return check_touch_sector(front, identifier);
   } else {
     identifier = identifier + 1;
@@ -203,6 +197,8 @@ static int front_state = NO_TOUCH_ACTION;
 static short finger_count = 0;
 static SceRtcTick current, until;
 
+
+static int special_status;
 void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
 
@@ -212,6 +208,7 @@ void vitainput_process(void) {
   sceRtcGetCurrentTick(&current);
 
   if (config.fronttouchscreen_buttons == false) {
+
     switch (front_state) {
       case NO_TOUCH_ACTION:
         if (front.reportNum > 0) {
@@ -267,6 +264,12 @@ void vitainput_process(void) {
         }
         break;
     }
+
+    for (int i = TOUCHSEC_SPECIAL_SW; i <= TOUCHSEC_SPECIAL_NE; i++) {
+      if (check_touch_sector(front, i)) {
+        front_state = NO_TOUCH_ACTION;
+      }
+    }
   }
 
   short btn = 0;
@@ -318,12 +321,12 @@ int vitainput_thread(SceSize args, void *argp) {
     sceKernelDelayThread(1 * 1000); // 1 ms
     sceRtcGetCurrentTick(&after);
 
-    /*
-    if (after.tick - before.tick > 50 * 1000) {
-      LiStopConnection();
-      connection_reset();
+    if (active_input_thread) {
+      if (after.tick - before.tick > 150 * 1000) {
+        LiStopConnection();
+        connection_reset();
+      }
     }
-    */
   }
 
   return 0;

@@ -125,6 +125,7 @@ static void vita_init() {
 
   ret = sceNetCtlInit();
   // TODO(xyz): cURL breaks when socket FD is too big, very hacky workaround below!
+  /*
   int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
   sceNetSocketClose(s);
   if (s >= 20) {
@@ -135,6 +136,7 @@ static void vita_init() {
       sceNetSocketClose(c);
     } while (c >= 5);
   }
+  */
 }
 
 void loop_forever(void) {
@@ -146,6 +148,8 @@ void loop_forever(void) {
 int main(int argc, char* argv[]) {
   psvDebugScreenInit();
   vita_init();
+  sceNetCtlInit();
+
   if (!vitapower_init()) {
     printf("Failed to init power!");
     loop_forever();
@@ -167,39 +171,24 @@ int main(int argc, char* argv[]) {
   gui_loop();
 
   /*
+  // cURL socket bug reprod
   int ret = 0;
 
-   // cURL socket bug reprod
   SERVER_DATA server;
   server.address = "192.168.12.252";
 
-  gs_init(&server, config.key_dir);
+  // this gonna break after 63 successful requests
+  for (int i = 0; i < 100; i++) {
+    printf("%d ", i);
+    gs_init(&server, config.key_dir);
+    //sceKernelDelayThread(100 * 1000);
+  }
 
+  // this gonna break after 5-8 successful reconnects
+  gs_init(&server, config.key_dir);
   while (true) {
     __stream(&server, 999999);
-    sceKernelDelayThread(2000 * 1000);
   }
-  */
-
-
-  /*
-   *
-again:
-  printf("Press X to pair (You need to do it once)\n");
-  printf("Press O to launch steam\n");
-
-  connection_reset();
-
-  switch(get_key()) {
-  case SCE_CTRL_CROSS:
-    vita_pair(&server);
-    break;
-  case SCE_CTRL_CIRCLE:
-    stream(&server, &config, system);
-    loop_forever();
-    break;
-  }
-<<<<<<< HEAD
   */
 }
 
@@ -207,7 +196,7 @@ again:
 void __stream(PSERVER_DATA server, int appId) {
   int ret;
 
-  ret = sceNetCtlInit();
+  //__cycle();
   ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -238,8 +227,10 @@ void __stream(PSERVER_DATA server, int appId) {
       server->serverMajorVersion
       );
   if (ret == 0) {
-    //vitainput_loop();
-    LiStopConnection();
+
+    while (connection_is_active()) {
+      sceKernelDelayThread(1000 * 1000);
+    }
   } else {
     printf("\nFAILED CONNECTING\n");
   }

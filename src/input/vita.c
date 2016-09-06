@@ -296,6 +296,10 @@ void vitainput_process(void) {
   INPUT(map.btn_thumbr, RB_FLAG);
   INPUT(map.btn_mode, SPECIAL_FLAG);
 
+  if (CHECK_INPUT(TOUCHSEC_SPECIAL_NW)) {
+    connection_minimize();
+  }
+
   // TRIGGERS
   char left_trigger_value = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
   char right_trigger_value = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
@@ -323,8 +327,7 @@ int vitainput_thread(SceSize args, void *argp) {
 
     if (active_input_thread) {
       if (after.tick - before.tick > 150 * 1000) {
-        LiStopConnection();
-        connection_reset();
+        connection_terminate();
       }
     }
   }

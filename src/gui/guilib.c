@@ -17,6 +17,7 @@
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
+#include <psp2/power.h>
 
 struct menu_geom make_geom_centered(int w, int h) {
   struct menu_geom geom = {0};
@@ -40,6 +41,65 @@ void draw_text_hcentered(int x, int y, unsigned int color, char *text) {
   vita2d_pgf_draw_text(gui_font, x - width / 2, y, color, 1.f, text);
 }
 
+static int battery_percent;
+static bool battery_charging;
+static SceRtcTick battery_tick;
+
+void draw_statusbar(struct menu_geom geom) {
+  SceRtcTick current_tick;
+  sceRtcGetCurrentTick(&current_tick);
+  if (current_tick.tick - battery_tick.tick > 10 * 1000 * 1000) {
+    battery_percent = scePowerGetBatteryLifePercent();
+    battery_charging = scePowerIsBatteryCharging();
+
+    battery_tick = current_tick;
+  }
+
+  SceDateTime time;
+  sceRtcGetCurrentClockLocalTime(&time);
+
+  char dt_text[256];
+  sprintf(dt_text, "%02d:%02d", time.hour, time.minute, battery_percent);
+  int dt_width = vita2d_pgf_text_width(gui_font, 1.f, dt_text);
+  int battery_width = 40,
+      battery_height = 16,
+      battery_padding = 2,
+      battery_plus_height = 4,
+      battery_y_offset = 4,
+      battery_charge_width = (float) battery_percent / 100 * battery_width;
+
+  vita2d_pgf_draw_text(gui_font, geom.x + geom.width - dt_width - battery_width - 5, geom.y - 5, 0xffffffff, 1.f, dt_text);
+
+  vita2d_draw_rectangle(
+      geom.x + geom.width - battery_width,
+      geom.y - battery_height - battery_y_offset,
+      battery_width,
+      battery_height,
+      0xffffffff);
+
+  vita2d_draw_rectangle(
+      geom.x + geom.width - battery_width - battery_padding,
+      geom.y - battery_y_offset - ((float) battery_height / 2 + (float) battery_plus_height / 2),
+      battery_padding,
+      battery_plus_height,
+      0xffffffff
+      );
+
+  vita2d_draw_rectangle(
+      geom.x + geom.width - battery_width + battery_padding,
+      geom.y - battery_height + battery_padding - battery_y_offset,
+      battery_width - battery_padding * 2,
+      battery_height - battery_padding * 2,
+      0xff000000);
+
+  vita2d_draw_rectangle(
+      geom.x + geom.width - battery_charge_width + battery_padding,
+      geom.y - battery_height + battery_padding - battery_y_offset,
+      battery_charge_width - battery_padding * 2,
+      battery_height - battery_padding * 2,
+      !battery_charging ? 0xff00ff00 : 0xff99ffff);
+}
+
 SceCtrlData ctrl_old_pad;
 SceCtrlData ctrl_new_pad;
 
@@ -56,6 +116,7 @@ void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom ge
 
   long border_color = 0xff006000;
   draw_border(geom, border_color);
+  draw_statusbar(geom);
 
   for (int i = 0, cursor_idx = 0; i < total_elements; i++) {
     long color = 0xffffffff;

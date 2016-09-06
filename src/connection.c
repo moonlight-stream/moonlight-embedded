@@ -22,6 +22,7 @@
 #include "config.h"
 #include "power/vita.h"
 #include "input/vita.h"
+#include "video/vita.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -36,12 +37,14 @@ void connection_connection_started()
   connection_status = LI_CONNECTED;
   vitainput_start();
   vitapower_start();
+  vitavideo_start();
 }
 
 void connection_connection_terminated()
 {
   vitainput_stop();
   vitapower_stop();
+  vitavideo_stop();
   connection_status = LI_DISCONNECTED;
 }
 
@@ -60,6 +63,26 @@ void connection_reset() {
   connection_status = LI_READY;
 }
 
+void connection_minimize() {
+  vitainput_stop();
+  vitapower_stop();
+  vitavideo_stop();
+  connection_status = LI_MINIMIZED;
+}
+
+void connection_resume() {
+  vitainput_start();
+  vitapower_start();
+  vitavideo_start();
+  connection_status = LI_CONNECTED;
+}
+
+void connection_terminate() {
+  connection_connection_terminated();
+  LiStopConnection();
+  connection_status = LI_READY;
+}
+
 void stage_failed(int stage, long code) {
   connection_failed_stage = stage;
   connection_failed_stage_code = code;
@@ -69,8 +92,8 @@ bool connection_is_ready() {
   return connection_status != LI_DISCONNECTED;
 }
 
-bool connection_is_active() {
-  return connection_status == LI_CONNECTED;
+int connection_get_status() {
+  return connection_status;
 }
 
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {

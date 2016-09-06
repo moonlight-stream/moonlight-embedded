@@ -407,9 +407,12 @@ int connect_loop(int id, void *context) {
             display_error("Pairing failed: %d", ret);
           }
         } break;
+
       case CONNECT_DISCONNECT:
         server_connected = false;
+        connection_terminate();
         return 1;
+
       case CONNECT_QUITAPP:
         flash_message("Quitting...");
         int ret = gs_quit_app(&server);
@@ -418,14 +421,23 @@ int connect_loop(int id, void *context) {
           return QUIT_RELOAD;
         } else {
           display_error("Quitting failed: %d", ret);
-        }
-        break;
+        } break;
+
       default:
-        flash_message("Stream starting...");
-        server.currentGame = id;
-        stream(&server, id);
-        return QUIT_RELOAD;
-        break;
+        if (connection_get_status() == LI_READY ||
+            connection_get_status() == LI_MINIMIZED && server.currentGame != id) {
+          flash_message("Stream starting...");
+          server.currentGame = id;
+          stream(&server, id);
+        } else if (connection_get_status() == LI_MINIMIZED) {
+          connection_resume();
+        }
+
+        while (connection_get_status() == LI_CONNECTED) {
+          sceKernelDelayThread(1000 * 1000);
+        }
+
+        return QUIT_RELOAD; break;
     }
   }
 
@@ -594,9 +606,6 @@ void stream(PSERVER_DATA server, int appId) {
       );
 
   if (ret == 0) {
-    while (connection_is_active()) {
-      sceKernelDelayThread(1000 * 1000);
-    }
   } else {
     char *stage;
     switch (connection_failed_stage) {

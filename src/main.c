@@ -167,6 +167,13 @@ int main(int argc, char* argv[]) {
 
   gui_loop();
 
+  SERVER_DATA server;
+  server.address = "192.168.12.252";
+  gs_init(&server, config.key_dir);
+  while (true) {
+    __stream(&server, 999999);
+  }
+
   /*
   // cURL socket bug reprod
   int ret = 0;
@@ -225,7 +232,7 @@ void __stream(PSERVER_DATA server, int appId) {
       );
   if (ret == 0) {
 
-    while (connection_is_active()) {
+    while (connection_is_ready()) {
       sceKernelDelayThread(1000 * 1000);
     }
   } else {

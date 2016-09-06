@@ -217,8 +217,13 @@ static void vita_cleanup() {
 }
 
 static unsigned numframes;
+static bool active_video_thread = false;
 
 static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
+  if (!active_video_thread) {
+    return DR_OK;
+  }
+
   #if 0
   PLENTRY entry = decodeUnit->bufferList;
   while (entry != NULL) {
@@ -296,6 +301,14 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   //   return DR_NEED_IDR;
 
   return DR_OK;
+}
+
+void vitavideo_start() {
+  active_video_thread = true;
+}
+
+void vitavideo_stop() {
+  active_video_thread = false;
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {

@@ -320,6 +320,9 @@ int vitainput_thread(SceSize args, void *argp) {
       vitainput_process();
     }
 
+    sceKernelDelayThread(1 * 1000); // 1 ms
+
+    /*
     SceRtcTick before, after;
     sceRtcGetCurrentTick(&before);
     sceKernelDelayThread(1 * 1000); // 1 ms
@@ -329,7 +332,7 @@ int vitainput_thread(SceSize args, void *argp) {
       if (after.tick - before.tick > 150 * 1000) {
         connection_terminate();
       }
-    }
+    } */
   }
 
   return 0;

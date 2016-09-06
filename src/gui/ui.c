@@ -424,6 +424,9 @@ int connect_loop(int id, void *context) {
         } break;
 
       default:
+        vitapower_config(config);
+        vitainput_config(config);
+
         if (connection_get_status() == LI_READY ||
             connection_get_status() == LI_MINIMIZED && server.currentGame != id) {
           flash_message("Stream starting...");
@@ -434,7 +437,7 @@ int connect_loop(int id, void *context) {
         }
 
         while (connection_get_status() == LI_CONNECTED) {
-          sceKernelDelayThread(1000 * 1000);
+          sceKernelDelayThread(500 * 1000);
         }
 
         return QUIT_RELOAD; break;
@@ -572,9 +575,6 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
 }
 
 void stream(PSERVER_DATA server, int appId) {
-  vitapower_config(config);
-  vitainput_config(config);
-
   //int ret = sceNetCtlInit();
   int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
   if (ret < 0) {

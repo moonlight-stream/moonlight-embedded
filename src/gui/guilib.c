@@ -59,7 +59,7 @@ void draw_statusbar(struct menu_geom geom) {
   sceRtcGetCurrentClockLocalTime(&time);
 
   char dt_text[256];
-  sprintf(dt_text, "%02d:%02d", time.hour, time.minute, battery_percent);
+  sprintf(dt_text, "%02d:%02d", time.hour, time.minute);
   int dt_width = vita2d_pgf_text_width(gui_font, 1.f, dt_text);
   int battery_width = 40,
       battery_height = 16,

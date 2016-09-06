@@ -217,7 +217,7 @@ static void vita_cleanup() {
 }
 
 static unsigned numframes;
-static bool active_video_thread = false;
+static bool active_video_thread = true;
 
 static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   if (!active_video_thread) {

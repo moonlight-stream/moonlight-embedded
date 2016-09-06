@@ -202,7 +202,8 @@ void draw_alert(char *message, struct menu_geom geom, char *buttons_captions[], 
   draw_border(geom, border_color);
 
   char *buf = malloc(sizeof(char) * (strlen(message) + 1));
-  int x_border = 10, y = 30;
+  int top_padding = 30;
+  int x_border = 10, y = top_padding;
   for (int i = 0, idx = 0; i < strlen(message); i++) {
     buf[idx] = message[i];
     buf[idx+1] = 0;
@@ -217,6 +218,11 @@ void draw_alert(char *message, struct menu_geom geom, char *buttons_captions[], 
   }
 
   if (strlen(buf)) {
+    if (y == top_padding) {
+      int text_height = vita2d_pgf_text_height(gui_font, 1.f, buf);
+      y = geom.height / 2 - text_height / 2;
+    }
+
     draw_text_hcentered(geom.x + geom.width / 2, y + geom.y, 0xffffffff, buf);
   }
 

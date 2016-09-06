@@ -409,8 +409,10 @@ int connect_loop(int id, void *context) {
         } break;
 
       case CONNECT_DISCONNECT:
+        flash_message("Disconnecting...");
         server_connected = false;
         connection_terminate();
+        sceKernelDelayThread(1000 * 1000);
         return 1;
 
       case CONNECT_QUITAPP:
@@ -430,9 +432,9 @@ int connect_loop(int id, void *context) {
         if (connection_get_status() == LI_READY ||
             connection_get_status() == LI_MINIMIZED && server.currentGame != id) {
           flash_message("Stream starting...");
-          server.currentGame = id;
           stream(&server, id);
         } else if (connection_get_status() == LI_MINIMIZED) {
+          sceKernelDelayThread(500 * 1000);
           connection_resume();
         }
 
@@ -575,7 +577,6 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
 }
 
 void stream(PSERVER_DATA server, int appId) {
-  //int ret = sceNetCtlInit();
   int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -606,6 +607,7 @@ void stream(PSERVER_DATA server, int appId) {
       );
 
   if (ret == 0) {
+    server->currentGame = appId;
   } else {
     char *stage;
     switch (connection_failed_stage) {

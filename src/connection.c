@@ -45,7 +45,7 @@ void connection_connection_terminated()
   vitainput_stop();
   vitapower_stop();
   vitavideo_stop();
-  connection_status = LI_DISCONNECTED;
+  connection_status = LI_READY;
 }
 
 void connection_display_message(char *msg)

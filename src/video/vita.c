@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdarg.h>
+
 #define DECODER_BUFFER_SIZE 92*1024
 
 static char* ffmpeg_buffer;
@@ -299,6 +301,40 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   //   return DR_NEED_IDR;
 
   return DR_OK;
+}
+
+extern unsigned char msx[];
+void display_message(int gX, int gY, char *format, ...) {
+  char text[0x1000];
+
+  va_list opt;
+  va_start(opt, format);
+  vsnprintf(text, sizeof(text), format, opt);
+  va_end(opt);
+
+  int c, i, j, l;
+  unsigned char *font;
+  unsigned int *vram_ptr;
+  unsigned int *vram;
+
+  int fontSize = 8;
+  float zoom = (float) fontSize / 8;
+  for (c = 0; c < strlen(text); c++) {
+    char ch = text[c];
+    vram = framebuffer[backbuffer] + (gX + gY * 960) * 4;
+
+    for (i = l = 0; i < fontSize; i++, l += fontSize) {
+      font = &msx[ (int)ch * 8] + (int) (i / zoom);
+      vram_ptr  = vram;
+      for (j = 0; j < fontSize; j++) {
+        if ((*font & (128 >> (int) (j/zoom)))) *vram_ptr = 0xffffffff;
+        vram_ptr++;
+      }
+      vram += 960;
+    }
+
+    gX += fontSize;
+  }
 }
 
 void vitavideo_start() {

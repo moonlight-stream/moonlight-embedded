@@ -289,7 +289,7 @@ int __settings() {
   idx++; menu[SETTINGS_VIEW_BACK_DEADZONE] = (struct menu_entry) { .name = "Back touchscreen deadzone", .id = SETTINGS_BACK_DEADZONE };
 
   settings_loop_setup = 1;
-  assert(idx < 16);
+  assert(idx < 32);
   return display_menu(menu, idx, NULL, &settings_loop, &settings_back, NULL, &menu);
 }
 

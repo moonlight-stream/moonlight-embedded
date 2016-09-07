@@ -178,7 +178,11 @@ bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouc
   if (identifier >= TOUCHSEC_NORTHWEST && identifier < TOUCHSEC_SPECIAL_SW) {
     return check_touch_sector(screen, identifier);
   } else if (identifier >= TOUCHSEC_SPECIAL_SW && identifier <= TOUCHSEC_SPECIAL_NE) {
-    return check_touch_sector(front, identifier);
+    if (config.fronttouchscreen_buttons == true) {
+      return false;
+    } else {
+      return check_touch_sector(front, identifier);
+    }
   } else {
     identifier = identifier + 1;
     return pad.buttons & identifier;
@@ -208,7 +212,6 @@ void vitainput_process(void) {
   sceRtcGetCurrentTick(&current);
 
   if (config.fronttouchscreen_buttons == false) {
-
     switch (front_state) {
       case NO_TOUCH_ACTION:
         if (front.reportNum > 0) {

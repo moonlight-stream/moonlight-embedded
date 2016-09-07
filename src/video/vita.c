@@ -220,10 +220,6 @@ static unsigned numframes;
 static bool active_video_thread = true;
 
 static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  if (!active_video_thread) {
-    return DR_OK;
-  }
-
   #if 0
   PLENTRY entry = decodeUnit->bufferList;
   while (entry != NULL) {
@@ -279,18 +275,20 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       prev_frame = cur_frame;
 #endif
 
-      SceDisplayFrameBuf framebuf = { 0 };
-      framebuf.size = sizeof(framebuf);
-      framebuf.base = framebuffer[backbuffer];
-      framebuf.pitch = SCREEN_WIDTH;
-      framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
-      framebuf.width = SCREEN_WIDTH;
-      framebuf.height = SCREEN_HEIGHT;
-      int ret = sceDisplaySetFrameBuf(&framebuf, 1);
-      backbuffer = (backbuffer + 1) % 2;
-      if (ret < 0)
-        printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
+      if (active_video_thread) {
+        SceDisplayFrameBuf framebuf = { 0 };
+        framebuf.size = sizeof(framebuf);
+        framebuf.base = framebuffer[backbuffer];
+        framebuf.pitch = SCREEN_WIDTH;
+        framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
+        framebuf.width = SCREEN_WIDTH;
+        framebuf.height = SCREEN_HEIGHT;
 
+        int ret = sceDisplaySetFrameBuf(&framebuf, 1);
+        backbuffer = (backbuffer + 1) % 2;
+        if (ret < 0)
+          printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
+      }
     }
   } else {
     printf("Video decode buffer too small");

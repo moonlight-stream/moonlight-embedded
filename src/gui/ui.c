@@ -136,9 +136,9 @@ enum {
   SETTINGS_VIEW_FPS,
   SETTINGS_VIEW_BITRATE,
   SETTINGS_VIEW_FRONTTOUCHSCREEN = 5,
-  SETTINGS_VIEW_DISABLE_POWERSAVE,
+  SETTINGS_VIEW_DISABLE_POWERSAVE = 7,
   SETTINGS_VIEW_ENABLE_MAPPING,
-  SETTINGS_VIEW_BACK_DEADZONE = 10
+  SETTINGS_VIEW_BACK_DEADZONE = 11
 };
 
 static bool settings_loop_setup = 1;
@@ -270,7 +270,7 @@ int settings_back(void *context) {
 }
 
 int __settings() {
-  struct menu_entry menu[16];
+  struct menu_entry menu[32];
   int idx = 0;
   menu[idx++] = (struct menu_entry) { .name = "Stream", .disabled = true, .separator = true};
   idx++; menu[SETTINGS_VIEW_RESOLUTION] = (struct menu_entry) { .name = "Resolution", .id = SETTINGS_RESOLUTION, .suffix = "←→"};
@@ -280,6 +280,7 @@ int __settings() {
   // ---------
   menu[idx++] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
   idx++; menu[SETTINGS_VIEW_FRONTTOUCHSCREEN] = (struct menu_entry) { .name = "Use front touchscreen for buttons", .id = SETTINGS_FRONTTOUCHSCREEN };
+  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .subname = "Disables mouse input and special keys." };
   idx++; menu[SETTINGS_VIEW_DISABLE_POWERSAVE] = (struct menu_entry) { .name = "Disable power save", .id = SETTINGS_DISABLE_POWERSAVE };
   idx++; menu[SETTINGS_VIEW_ENABLE_MAPPING] = (struct menu_entry) { .name = "Enable mapping file", .id = SETTINGS_ENABLE_MAPPING };
 

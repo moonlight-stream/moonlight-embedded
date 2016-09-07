@@ -61,7 +61,7 @@ void draw_statusbar(struct menu_geom geom) {
   char dt_text[256];
   sprintf(dt_text, "%02d:%02d", time.hour, time.minute);
   int dt_width = vita2d_pgf_text_width(gui_font, 1.f, dt_text);
-  int battery_width = 40,
+  int battery_width = 30,
       battery_height = 16,
       battery_padding = 2,
       battery_plus_height = 4,
@@ -314,12 +314,13 @@ int display_menu(
     geom = *geom_ptr;
   }
 
-  bool first_tick = false;
+  int tick_number = 0;
   int exit_code = 0;
   while (true) {
     vita2d_start_drawing();
     vita2d_clear_screen();
-    if (draw_callback && !first_tick) {
+    tick_number++;
+    if (draw_callback && tick_number > 3) {
       draw_callback();
     }
     draw_menu(menu, total_elements, geom, cursor, offset);
@@ -354,7 +355,6 @@ int display_menu(
     vita2d_end_drawing();
     vita2d_swap_buffers();
     sceDisplayWaitVblankStart();
-    first_tick = false;
     if (exit_code) {
       return exit_code;
     }

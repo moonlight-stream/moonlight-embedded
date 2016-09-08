@@ -33,8 +33,9 @@ add_executable(${PROJECT_NAME}.elf
 	src/graphics.c
 	src/font.c
 	src/gui/guilib.c
-	src/gui/ui.c
 	src/gui/ime.c
+	src/gui/ui.c
+	src/gui/ui_settings.c
 
 	libgamestream/client.c
 	libgamestream/http.c

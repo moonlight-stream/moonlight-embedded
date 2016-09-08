@@ -250,13 +250,21 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
       } else if (strcmp(key, "fronttouchscreen_buttons") == 0) {
         config->fronttouchscreen_buttons = strcmp("true", value) == 0;
       } else if (strcmp(key, "backtouchscreen_deadzone") == 0) {
-        int left, top, bottom, right;
         sscanf(value, 
             "%d,%d,%d,%d", 
             &config->back_deadzone.top, 
             &config->back_deadzone.right, 
             &config->back_deadzone.bottom, 
             &config->back_deadzone.left);
+      } else if (strcmp(key, "special_keys") == 0) {
+        sscanf(value,
+            "%d,%d,%d,%d,%d,%d",
+            &config->special_keys.nw,
+            &config->special_keys.ne,
+            &config->special_keys.sw,
+            &config->special_keys.se,
+            &config->special_keys.offset,
+            &config->special_keys.size);
       } else if (strcmp(key, "disable_powersave") == 0) {
         config->disable_powersave = strcmp("true", value) == 0;
       } else {
@@ -305,16 +313,27 @@ void config_save(char* filename, PCONFIGURATION config) {
   write_config_bool(fd, "fronttouchscreen_buttons", config->fronttouchscreen_buttons);
   write_config_bool(fd, "disable_powersave", config->disable_powersave);
 
-  char deadzone[256];
+  char value[256];
   sprintf(
-      deadzone,
+      value,
       "%d,%d,%d,%d",
       config->back_deadzone.top,
       config->back_deadzone.right,
       config->back_deadzone.bottom,
       config->back_deadzone.left);
+  write_config_string(fd, "backtouchscreen_deadzone", value);
 
-  write_config_string(fd, "backtouchscreen_deadzone", deadzone);
+  sprintf(
+      value,
+      "%d,%d,%d,%d,%d,%d",
+      config->special_keys.nw,
+      config->special_keys.ne,
+      config->special_keys.sw,
+      config->special_keys.se,
+      config->special_keys.offset,
+      config->special_keys.size);
+  write_config_string(fd, "special_keys", value);
+
   fclose(fd);
 }
 
@@ -340,6 +359,11 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->fullscreen = true;
   config->unsupported_version = false;
   config->disable_powersave = true;
+
+  config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE;
+  config->special_keys.sw = INPUT_SPECIAL_KEY_MODE;
+  config->special_keys.offset = 0;
+  config->special_keys.size = 150;
 
   config->inputsCount = 0;
   //config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));

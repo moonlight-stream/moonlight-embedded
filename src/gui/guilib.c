@@ -26,6 +26,7 @@ struct menu_geom make_geom_centered(int w, int h) {
   geom.width = w;
   geom.height = h;
   geom.total_y = geom.y + geom.height;
+  geom.el = 24;
   return geom;
 }
 
@@ -67,6 +68,7 @@ void draw_statusbar(struct menu_geom geom) {
       battery_plus_height = 4,
       battery_y_offset = 4,
       battery_charge_width = (float) battery_percent / 100 * battery_width;
+  unsigned int battery_color = battery_charging ? 0xff99ffff : (battery_percent < 20 ? 0xff0000ff : 0xff00ff00);
 
   vita2d_pgf_draw_text(gui_font, geom.x + geom.width - dt_width - battery_width - 5, geom.y - 5, 0xffffffff, 1.f, dt_text);
 
@@ -97,7 +99,7 @@ void draw_statusbar(struct menu_geom geom) {
       geom.y - battery_height + battery_padding - battery_y_offset,
       battery_charge_width - battery_padding * 2,
       battery_height - battery_padding * 2,
-      !battery_charging ? 0xff00ff00 : 0xff99ffff);
+      battery_color);
 }
 
 SceCtrlData ctrl_old_pad;

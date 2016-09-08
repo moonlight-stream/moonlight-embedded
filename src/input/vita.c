@@ -189,6 +189,57 @@ bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouc
   }
 }
 
+static int special_input_config_code(short identifier) {
+  switch (identifier) {
+    case TOUCHSEC_SPECIAL_NW:
+      return config.special_keys.nw;
+    case TOUCHSEC_SPECIAL_NE:
+      return config.special_keys.ne;
+    case TOUCHSEC_SPECIAL_SW:
+      return config.special_keys.sw;
+    case TOUCHSEC_SPECIAL_SE:
+      return config.special_keys.se;
+    default:
+      return 0;
+  }
+}
+
+static bool special_input_status[4] = {0, 0, 0, 0};
+static void special_input(SceTouchData screen, int *btn) {
+  for (int identifier = TOUCHSEC_SPECIAL_NW; identifier <= TOUCHSEC_SPECIAL_SE; identifier++) {
+    int idx = identifier - TOUCHSEC_SPECIAL_NW;
+    bool current_status = special_input_status[idx];
+    int config_code = special_input_config_code(identifier);
+
+    if (check_touch_sector(screen, identifier) && !current_status) {
+      switch (config_code) {
+        case INPUT_SPECIAL_KEY_MODE:
+          *btn |= SPECIAL_FLAG;
+          break;
+        case INPUT_SPECIAL_KEY_PAUSE:
+          connection_minimize();
+          break;
+        default:
+          special_input_status[idx] = true;
+          LiSendKeyboardEvent(config_code, KEY_ACTION_DOWN, 0);
+          break;
+      }
+    } else if (!check_touch_sector(screen, identifier) && current_status) {
+      special_input_status[idx] = false;
+
+      switch (config_code) {
+        case INPUT_SPECIAL_KEY_MODE:
+          break;
+        case INPUT_SPECIAL_KEY_PAUSE:
+          break;
+        default:
+          LiSendKeyboardEvent(config_code, KEY_ACTION_UP, 0);
+          break;
+      }
+    }
+  }
+}
+
 #define CHECK_INPUT(id) check_input((id), pad, buttons_screen, front, back)
 #define INPUT(id, flag) if (check_input((id), pad, buttons_screen, front, back)) btn |= (flag);
 
@@ -297,11 +348,8 @@ void vitainput_process(void) {
 
   INPUT(map.btn_thumbl, LB_FLAG);
   INPUT(map.btn_thumbr, RB_FLAG);
-  INPUT(map.btn_mode, SPECIAL_FLAG);
 
-  if (CHECK_INPUT(TOUCHSEC_SPECIAL_NW)) {
-    connection_minimize();
-  }
+  special_input(front, &btn);
 
   // TRIGGERS
   char left_trigger_value = CHECK_INPUT(map.btn_tl) ? 0xff : 0;

@@ -32,6 +32,16 @@ struct touchscreen_deadzone {
   int top, bottom, left, right;
 };
 
+enum {
+  INPUT_SPECIAL_KEY_MODE = -10,
+  INPUT_SPECIAL_KEY_PAUSE
+};
+
+struct special_keys {
+  int size, offset;
+  int nw, ne, sw, se;
+};
+
 typedef struct _CONFIGURATION {
   STREAM_CONFIGURATION stream;
   char* app;
@@ -48,6 +58,7 @@ typedef struct _CONFIGURATION {
   bool unsupported_version;
   bool fronttouchscreen_buttons;
   struct touchscreen_deadzone back_deadzone;
+  struct special_keys special_keys;
   bool disable_powersave;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;

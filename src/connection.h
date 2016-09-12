@@ -31,6 +31,7 @@ extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
 extern int connection_failed_stage;
 extern long connection_failed_stage_code;
 
+void connection_terminate();
 void connection_reset();
 
 bool connection_is_ready();

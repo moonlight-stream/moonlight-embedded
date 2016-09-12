@@ -500,11 +500,11 @@ static int settings_loop(int id, void *context) {
 }
 
 static int settings_back(void *context) {
-  settings_save_config();
+  ui_settings_save_config();
   return 0;
 }
 
-int settings_menu() {
+int ui_settings_menu() {
   struct menu_entry menu[32];
   int idx = 0;
   menu[idx++] = (struct menu_entry) { .name = "Stream", .disabled = true, .separator = true };
@@ -529,7 +529,7 @@ int settings_menu() {
   return display_menu(menu, idx, NULL, &settings_loop, &settings_back, NULL, &menu);
 }
 
-void settings_save_config() {
+void ui_settings_save_config() {
   config_save(config_path, &config);
 }
 

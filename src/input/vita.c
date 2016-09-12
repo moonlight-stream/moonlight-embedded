@@ -62,8 +62,8 @@ static bool check_touch_sector(SceTouchData scr, int section) {
   int vertical = (WIDTH - config.back_deadzone.left - config.back_deadzone.right) / 2 + config.back_deadzone.left,
       horizontal = (HEIGHT - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
 
-  int special_offset = 0,
-      special_size = 150;
+  int special_offset = config.special_keys.offset,
+      special_size = config.special_keys.size;
 
   switch (section) {
     case TOUCHSEC_NORTHWEST:

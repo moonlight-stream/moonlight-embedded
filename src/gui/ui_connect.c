@@ -1,15 +1,14 @@
 #include "ui_connect.h"
+
 #include "guilib.h"
 #include "ime.h"
+
 #include "ui_settings.h"
 
-#include "../loop.h"
 #include "../connection.h"
 #include "../configuration.h"
-#include "../audio.h"
 #include "../video.h"
 #include "../config.h"
-#include "../sdl.h"
 
 #include "client.h"
 #include "discover.h"
@@ -27,10 +26,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#include <psp2/net/net.h>
 #include <psp2/ctrl.h>
-#include <psp2/rtc.h>
-#include <psp2/touch.h>
 #include <vita2d.h>
 
 int get_app_id(PAPP_LIST list, char *name) {

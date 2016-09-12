@@ -1,24 +1,13 @@
 #include "ui.h"
+
 #include "guilib.h"
 #include "ime.h"
+
 #include "ui_settings.h"
 #include "ui_connect.h"
 
-#include "../loop.h"
-#include "../connection.h"
-#include "../configuration.h"
-#include "../audio.h"
-#include "../video.h"
 #include "../config.h"
-#include "../sdl.h"
 
-#include "client.h"
-#include "discover.h"
-#include "../platform.h"
-
-#include "../input/vita.h"
-
-#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,15 +16,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#include <psp2/net/net.h>
 #include <psp2/ctrl.h>
-#include <psp2/rtc.h>
-#include <psp2/touch.h>
-#include <vita2d.h>
-
-/*
- * Main menu
- */
 
 enum {
   MAIN_MENU_CONNECT = 100,

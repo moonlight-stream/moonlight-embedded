@@ -86,7 +86,7 @@ void connection_terminate() {
   connection_status = LI_READY;
 }
 
-void stage_failed(int stage, long code) {
+void connection_stage_failed(int stage, long code) {
   connection_failed_stage = stage;
   connection_failed_stage_code = code;
 }
@@ -102,7 +102,7 @@ int connection_get_status() {
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = NULL,
   .stageComplete = NULL,
-  .stageFailed = stage_failed,
+  .stageFailed = connection_stage_failed,
   .connectionStarted = connection_connection_started,
   .connectionTerminated = connection_connection_terminated,
   .displayMessage = connection_display_message,

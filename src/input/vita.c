@@ -319,7 +319,7 @@ void vitainput_process(void) {
         break;
     }
 
-    for (int i = TOUCHSEC_SPECIAL_SW; i <= TOUCHSEC_SPECIAL_NE; i++) {
+    for (int i = TOUCHSEC_SPECIAL_NW; i <= TOUCHSEC_SPECIAL_SE; i++) {
       if (check_touch_sector(front, i)) {
         front_state = NO_TOUCH_ACTION;
       }

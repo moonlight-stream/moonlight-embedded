@@ -157,6 +157,7 @@ int main(int argc, char* argv[]) {
     loop_forever();
   }
 
+  sceIoMkdir("ux0:/data/moonlight", 0777);
   config_path = "ux0:data/moonlight/moonlight.conf";
   config_parse(argc, argv, &config);
   config.platform = "vita";

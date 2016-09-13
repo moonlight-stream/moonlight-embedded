@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdarg.h>
+
 #define DECODER_BUFFER_SIZE 92*1024
 
 static char* ffmpeg_buffer;
@@ -211,10 +213,13 @@ static void vita_setup(int videoFormat, int width, int height, int redrawRate, v
 
 static void vita_cleanup() {
   fclose(fd);
+
+  free(ffmpeg_buffer);
   #warning TODO cleanup
 }
 
 static unsigned numframes;
+static bool active_video_thread = true;
 
 static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   #if 0
@@ -272,17 +277,20 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       prev_frame = cur_frame;
 #endif
 
-      SceDisplayFrameBuf framebuf = { 0 };
-      framebuf.size = sizeof(framebuf);
-      framebuf.base = framebuffer[backbuffer];
-      framebuf.pitch = SCREEN_WIDTH;
-      framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
-      framebuf.width = SCREEN_WIDTH;
-      framebuf.height = SCREEN_HEIGHT;
-      int ret = sceDisplaySetFrameBuf(&framebuf, 1);
-      backbuffer = (backbuffer + 1) % 2;
-      if (ret < 0)
-        printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
+      if (active_video_thread) {
+        SceDisplayFrameBuf framebuf = { 0 };
+        framebuf.size = sizeof(framebuf);
+        framebuf.base = framebuffer[backbuffer];
+        framebuf.pitch = SCREEN_WIDTH;
+        framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
+        framebuf.width = SCREEN_WIDTH;
+        framebuf.height = SCREEN_HEIGHT;
+
+        int ret = sceDisplaySetFrameBuf(&framebuf, 1);
+        backbuffer = (backbuffer + 1) % 2;
+        if (ret < 0)
+          printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
+      }
     }
   } else {
     printf("Video decode buffer too small");
@@ -293,6 +301,48 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   //   return DR_NEED_IDR;
 
   return DR_OK;
+}
+
+extern unsigned char msx[];
+void display_message(int gX, int gY, char *format, ...) {
+  char text[0x1000];
+
+  va_list opt;
+  va_start(opt, format);
+  vsnprintf(text, sizeof(text), format, opt);
+  va_end(opt);
+
+  int c, i, j, l;
+  unsigned char *font;
+  unsigned int *vram_ptr;
+  unsigned int *vram;
+
+  int fontSize = 8;
+  float zoom = (float) fontSize / 8;
+  for (c = 0; c < strlen(text); c++) {
+    char ch = text[c];
+    vram = framebuffer[backbuffer] + (gX + gY * 960) * 4;
+
+    for (i = l = 0; i < fontSize; i++, l += fontSize) {
+      font = &msx[ (int)ch * 8] + (int) (i / zoom);
+      vram_ptr  = vram;
+      for (j = 0; j < fontSize; j++) {
+        if ((*font & (128 >> (int) (j/zoom)))) *vram_ptr = 0xffffffff;
+        vram_ptr++;
+      }
+      vram += 960;
+    }
+
+    gX += fontSize;
+  }
+}
+
+void vitavideo_start() {
+  active_video_thread = true;
+}
+
+void vitavideo_stop() {
+  active_video_thread = false;
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {

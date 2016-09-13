@@ -29,6 +29,7 @@
 static int decode_offset;
 static int port;
 
+static int active_audio_thread = true;
 static OpusMSDecoder* decoder;
 
 static short buffer[BUFFER_SIZE];
@@ -63,7 +64,9 @@ static void vita_renderer_decode_and_play_sample(char* data, int length) {
 
     if (decode_offset == VITA_SAMPLES) {
       decode_offset = 0;
-      sceAudioOutOutput(port, buffer);
+      if (active_audio_thread) {
+        sceAudioOutOutput(port, buffer);
+      }
     }
   } else {
     printf("Opus error from decode: %d\n", decodeLen);
@@ -76,3 +79,12 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_vita = {
   .decodeAndPlaySample = vita_renderer_decode_and_play_sample,
   .capabilities = CAPABILITY_DIRECT_SUBMIT,
 };
+
+
+void vitaaudio_start() {
+  active_audio_thread = true;
+}
+
+void vitaaudio_stop() {
+  active_audio_thread = false;
+}

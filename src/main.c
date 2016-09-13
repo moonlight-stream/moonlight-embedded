@@ -54,67 +54,7 @@
 #include <psp2/rtc.h>
 
 #include "graphics.h"
-
-CONFIGURATION config = {0};
-
-static void applist(PSERVER_DATA server) {
-  PAPP_LIST list = NULL;
-  if (gs_applist(server, &list) != GS_OK) {
-    fprintf(stderr, "Can't get app list\n");
-    return;
-  }
-
-  for (int i = 1;list != NULL;i++) {
-    printf("%d. %s\n", i, list->name);
-    list = list->next;
-  }
-}
-
-static int get_app_id(PSERVER_DATA server, const char *name) {
-  PAPP_LIST list = NULL;
-  if (gs_applist(server, &list) != GS_OK) {
-    printf("Can't get app list\n");
-    return -1;
-  }
-
-  while (list != NULL) {
-    if (strcmp(list->name, name) == 0)
-      return list->id;
-
-    list = list->next;
-  }
-  return -1;
-}
-
-static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
-  int appId = get_app_id(server, config->app);
-  if (appId<0) {
-    printf("Can't find app %s\n", config->app);
-    loop_forever();
-    exit(-1);
-  }
-
-  printf("Got configuration: width %d height %d fps %d bitrate %d\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-  int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
-  if (ret < 0) {
-    if (ret == GS_NOT_SUPPORTED_4K)
-      printf("Server doesn't support 4K\n");
-    else
-      printf("Errorcode starting app: %d\n", ret);
-
-    loop_forever();
-    exit(-1);
-  }
-
-  int drFlags = 0;
-  if (config->fullscreen)
-    drFlags |= DISPLAY_FULLSCREEN;
-
-  if (config->forcehw)
-    drFlags |= FORCE_HARDWARE_ACCELERATION;
-  printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags, server->serverMajorVersion);
-}
+#include "gui/ui.h"
 
 static void help() {
   printf("Usage: moonlight [action] (options) [host]\n");
@@ -161,13 +101,6 @@ static void help() {
   exit(0);
 }
 
-static void pair_check(PSERVER_DATA server) {
-  if (!server->paired) {
-    fprintf(stderr, "You must pair with the PC first\n");
-    exit(-1);
-  }
-}
-
 static void vita_init() {
   // Seed OpenSSL with Sony-grade random number generator
   char random_seed[0x40] = {0};
@@ -210,115 +143,27 @@ void loop_forever(void) {
   }
 }
 
-static unsigned buttons[] = {
-  SCE_CTRL_SELECT,
-  SCE_CTRL_START,
-  SCE_CTRL_UP,
-  SCE_CTRL_RIGHT,
-  SCE_CTRL_DOWN,
-  SCE_CTRL_LEFT,
-  SCE_CTRL_LTRIGGER,
-  SCE_CTRL_RTRIGGER,
-  SCE_CTRL_TRIANGLE,
-  SCE_CTRL_CIRCLE,
-  SCE_CTRL_CROSS,
-  SCE_CTRL_SQUARE,
-};
-
-static int get_key(void) {
-  static unsigned prev = 0;
-  SceCtrlData pad;
-  while (1) {
-    memset(&pad, 0, sizeof(pad));
-    sceCtrlPeekBufferPositive(0, &pad, 1);
-    unsigned new = prev ^ (pad.buttons & prev);
-    prev = pad.buttons;
-    for (int i = 0; i < sizeof(buttons)/sizeof(*buttons); ++i)
-      if (new & buttons[i])
-        return buttons[i];
-
-    sceKernelDelayThread(1000); // 1ms
-  }
-}
-
-static void vita_pair(SERVER_DATA *server) {
-  char pin[5];
-  sprintf(pin, "%d%d%d%d", (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
-  psvDebugScreenSetFgColor(COLOR_BLACK);
-  psvDebugScreenSetBgColor(COLOR_WHITE);
-  printf("Please enter the following PIN on the target PC: %s\n", pin);
-  psvDebugScreenSetFgColor(COLOR_WHITE);
-  psvDebugScreenSetBgColor(COLOR_BLACK);
-  int ret = gs_pair(server, &pin[0]);
-  if (ret == 0) {
-    psvDebugScreenSetFgColor(COLOR_GREEN);
-    printf("Paired successfully\n");
-    psvDebugScreenSetFgColor(COLOR_WHITE);
-  } else {
-    printf("Error pairing: 0x%x %s\n", ret, gs_error);
-  }
-}
-
 int main(int argc, char* argv[]) {
-  int ret = 0;
-
   psvDebugScreenInit();
   vita_init();
 
-  printf("Attempting to parse config\n");
+  if (!vitapower_init()) {
+    printf("Failed to init power!");
+    loop_forever();
+  }
+
+  if (!vitainput_init()) {
+    printf("Failed to init input!");
+    loop_forever();
+  }
+
+  config_path = "ux0:data/moonlight/moonlight.conf";
   config_parse(argc, argv, &config);
   config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
-  if (!vitainput_init(config)) {
-    loop_forever();
-  }
-  if (!vitapower_init(config)) {
-    loop_forever();
-  }
+  vitapower_config(config);
+  vitainput_config(config);
 
-  SERVER_DATA server;
-  server.address = malloc(sizeof(char)*256);
-  strcpy(server.address, config.address);
-
-  psvDebugScreenSetFgColor(COLOR_GREEN);
-  printf("Server address: %s\n", server.address);
-  psvDebugScreenSetFgColor(COLOR_WHITE);
-  enum platform system = VITA;
-
-  if ((ret = gs_init(&server, config.key_dir)) == GS_OUT_OF_MEMORY) {
-    printf("Not enough memory\n");
-    loop_forever();
-  } else if (ret == GS_INVALID) {
-    printf("Invalid data received from server: %s\n", config.address, gs_error);
-    loop_forever();
-  } else if (ret == GS_UNSUPPORTED_VERSION) {
-    if (!config.unsupported_version) {
-      printf("Unsupported version: %s\n", gs_error);
-      loop_forever();
-    }
-  } else if (ret != GS_OK) {
-    printf("Can't connect to server %s\n", config.address);
-    loop_forever();
-  }
-
-  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.gfeVersion, server.serverMajorVersion);
-  printf("\n");
-
-again:
-  printf("Press X to pair (You need to do it once)\n");
-  printf("Press O to launch steam\n");
-
-  connection_reset();
-
-  switch(get_key()) {
-  case SCE_CTRL_CROSS:
-    vita_pair(&server);
-    break;
-  case SCE_CTRL_CIRCLE:
-    stream(&server, &config, system);
-    loop_forever();
-    break;
-  }
-  goto again;
+  gui_loop();
 }

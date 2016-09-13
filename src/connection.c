@@ -22,49 +22,87 @@
 #include "config.h"
 #include "power/vita.h"
 #include "input/vita.h"
+#include "video/vita.h"
+#include "audio/vita.h"
 
 #include <stdio.h>
 #include <stdbool.h>
 
 static int connection_status = LI_READY;
 
-void connection_connection_started()
-{
-  connection_status = LI_CONNECTED;
-  vitainput_start();
-  vitapower_start();
-}
+int connection_failed_stage = 0;
+long connection_failed_stage_code = 0;
 
-void connection_connection_terminated()
-{
+void stop_output() {
   vitainput_stop();
   vitapower_stop();
-  connection_status = LI_DISCONNECTED;
-  quit();
+  vitavideo_stop();
+  vitaaudio_stop();
 }
 
-void connection_display_message(char *msg)
-{
+void start_output() {
+  vitainput_start();
+  vitapower_start();
+  vitavideo_start();
+  vitaaudio_start();
+}
+
+void connection_connection_started() {
+  connection_status = LI_CONNECTED;
+  start_output();
+}
+
+void connection_connection_terminated() {
+  stop_output();
+  connection_status = LI_READY;
+}
+
+void connection_display_message(char *msg) {
   printf("%s\n", msg);
 }
 
-void connection_display_transient_message(char *msg)
-{
+void connection_display_transient_message(char *msg) {
   printf("%s\n", msg);
 }
 
 void connection_reset() {
+  connection_connection_terminated();
   connection_status = LI_READY;
+}
+
+void connection_minimize() {
+  stop_output();
+  connection_status = LI_MINIMIZED;
+}
+
+void connection_resume() {
+  start_output();
+  connection_status = LI_CONNECTED;
+}
+
+void connection_terminate() {
+  connection_connection_terminated();
+  LiStopConnection();
+  connection_status = LI_READY;
+}
+
+void connection_stage_failed(int stage, long code) {
+  connection_failed_stage = stage;
+  connection_failed_stage_code = code;
 }
 
 bool connection_is_ready() {
   return connection_status != LI_DISCONNECTED;
 }
 
+int connection_get_status() {
+  return connection_status;
+}
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = NULL,
   .stageComplete = NULL,
-  .stageFailed = NULL,
+  .stageFailed = connection_stage_failed,
   .connectionStarted = connection_connection_started,
   .connectionTerminated = connection_connection_terminated,
   .displayMessage = connection_display_message,

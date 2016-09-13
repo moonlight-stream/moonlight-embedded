@@ -26,10 +26,14 @@ enum {
 } TouchScreenState;
 
 enum {
-  NORTHWEST = 3,
-  NORTHEAST,
-  SOUTHWEST,
-  SOUTHEAST
+  TOUCHSEC_NORTHWEST = 600,
+  TOUCHSEC_NORTHEAST,
+  TOUCHSEC_SOUTHWEST,
+  TOUCHSEC_SOUTHEAST,
+  TOUCHSEC_SPECIAL_NW = 700,
+  TOUCHSEC_SPECIAL_NE,
+  TOUCHSEC_SPECIAL_SW,
+  TOUCHSEC_SPECIAL_SE
 } TouchScreenSection;
 
 enum {
@@ -39,6 +43,8 @@ enum {
   RIGHTY
 } PadSection;
 
-bool vitainput_init(CONFIGURATION config);
+bool vitainput_init();
+void vitainput_config(CONFIGURATION config);
+
 void vitainput_start(void);
 void vitainput_stop(void);

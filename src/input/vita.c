@@ -426,7 +426,6 @@ void vitainput_config(CONFIGURATION config) {
   map.btn_tr = TOUCHSEC_NORTHEAST;
   map.btn_tl2 = TOUCHSEC_SOUTHWEST;
   map.btn_tr2 = TOUCHSEC_SOUTHEAST;
-  map.btn_mode = TOUCHSEC_SPECIAL_SW;
 
   if (config.mapping) {
     char config_path[256];

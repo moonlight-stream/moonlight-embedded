@@ -212,29 +212,18 @@ static void special_input(SceTouchData screen, int *btn) {
     int config_code = special_input_config_code(identifier);
 
     if (check_touch_sector(screen, identifier) && !current_status) {
-      switch (config_code) {
-        case INPUT_SPECIAL_KEY_PAUSE:
-          connection_minimize();
-          break;
-        case -0x8000 ... 0:
-          *btn |= -config_code;
-          break;
-        default:
-          special_input_status[idx] = true;
-          LiSendKeyboardEvent(config_code, KEY_ACTION_DOWN, 0);
-          break;
+      if (config_code == INPUT_SPECIAL_KEY_PAUSE) {
+        connection_minimize();
+      } else if (config_code < 0) {
+        *btn |= -config_code;
+      } else {
+        special_input_status[idx] = true;
+        LiSendKeyboardEvent(config_code, KEY_ACTION_DOWN, 0);
       }
     } else if (!check_touch_sector(screen, identifier) && current_status) {
       special_input_status[idx] = false;
-
-      switch (config_code) {
-        case INPUT_SPECIAL_KEY_PAUSE:
-          break;
-        case -0x8000 ... 0:
-          break;
-        default:
+      if (config_code > 0) {
           LiSendKeyboardEvent(config_code, KEY_ACTION_UP, 0);
-          break;
       }
     }
   }

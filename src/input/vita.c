@@ -213,11 +213,11 @@ static void special_input(SceTouchData screen, int *btn) {
 
     if (check_touch_sector(screen, identifier) && !current_status) {
       switch (config_code) {
-        case INPUT_SPECIAL_KEY_MODE:
-          *btn |= SPECIAL_FLAG;
-          break;
         case INPUT_SPECIAL_KEY_PAUSE:
           connection_minimize();
+          break;
+        case -0x8000 ... 0:
+          *btn |= -config_code;
           break;
         default:
           special_input_status[idx] = true;
@@ -228,9 +228,9 @@ static void special_input(SceTouchData screen, int *btn) {
       special_input_status[idx] = false;
 
       switch (config_code) {
-        case INPUT_SPECIAL_KEY_MODE:
-          break;
         case INPUT_SPECIAL_KEY_PAUSE:
+          break;
+        case -0x8000 ... 0:
           break;
         default:
           LiSendKeyboardEvent(config_code, KEY_ACTION_UP, 0);

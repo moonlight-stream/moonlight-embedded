@@ -361,7 +361,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->disable_powersave = true;
 
   config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE;
-  config->special_keys.sw = INPUT_SPECIAL_KEY_MODE;
+  config->special_keys.sw = -SPECIAL_FLAG;
   config->special_keys.offset = 0;
   config->special_keys.size = 150;
 

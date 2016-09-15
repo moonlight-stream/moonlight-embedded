@@ -241,7 +241,7 @@ static void special_input(SceTouchData screen, int *btn) {
 }
 
 #define CHECK_INPUT(id) check_input((id), pad, buttons_screen, front, back)
-#define INPUT(id, flag) if (check_input((id), pad, buttons_screen, front, back)) btn |= (flag);
+#define INPUT(id, flag) if (check_input((id), pad, buttons_screen, front, back)) input.button |= (flag);
 
 static SceCtrlData pad;
 static SceTouchData front;
@@ -254,6 +254,19 @@ static SceRtcTick current, until;
 
 
 static int special_status;
+
+typedef struct input_data {
+    short button;
+    char left_trigger;
+    char right_trigger;
+    short lx;
+    short ly;
+    short rx;
+    short ry;
+} input_data;
+
+static input_data old;
+
 void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
 
@@ -326,7 +339,8 @@ void vitainput_process(void) {
     }
   }
 
-  short btn = 0;
+  input_data input = {0};
+
   SceTouchData buttons_screen = config.fronttouchscreen_buttons ? front : back;
 
   INPUT(map.btn_dpad_up, UP_FLAG);
@@ -349,18 +363,22 @@ void vitainput_process(void) {
   INPUT(map.btn_thumbl, LB_FLAG);
   INPUT(map.btn_thumbr, RB_FLAG);
 
-  special_input(front, &btn);
+  special_input(front, &input.button);
 
   // TRIGGERS
-  char left_trigger_value = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
-  char right_trigger_value = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
+  input.left_trigger = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
+  input.right_trigger = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
 
-  short lx = pad_value(pad, map.abs_x),
-        ly = pad_value(pad, map.abs_y),
-        rx = pad_value(pad, map.abs_rx),
-        ry = pad_value(pad, map.abs_ry);
+  input.lx = pad_value(pad, map.abs_x),
+  input.ly = pad_value(pad, map.abs_y),
+  input.rx = pad_value(pad, map.abs_rx),
+  input.ry = pad_value(pad, map.abs_ry);
 
-  LiSendControllerEvent(btn, left_trigger_value, right_trigger_value, lx, -ly, rx, -ry);
+  if (memcmp(&input, &old, sizeof(input_data)) != 0) {
+    LiSendControllerEvent(input.button, input.left_trigger, input.right_trigger,
+                          input.lx, -1 * input.ly, input.rx, -1 * input.ry);
+    memcpy(&old, &input, sizeof(input_data));
+  }
 }
 
 static uint8_t active_input_thread = 0;
@@ -371,7 +389,7 @@ int vitainput_thread(SceSize args, void *argp) {
       vitainput_process();
     }
 
-    sceKernelDelayThread(1 * 1000); // 1 ms
+    sceKernelDelayThread(5000); // 5 ms
 
     /*
     SceRtcTick before, after;

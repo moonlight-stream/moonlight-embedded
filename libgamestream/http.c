@@ -67,6 +67,12 @@ int http_init(const char* keyDirectory) {
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_curl);
   curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+  curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
+  curl_easy_setopt(curl, CURLOPT_MAXCONNECTS, 0L);
+  curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1L);
+  curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
+  curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
   return GS_OK;
 }

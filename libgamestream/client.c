@@ -51,9 +51,9 @@
 #define CHANNEL_MASK_51_SURROUND 0xFC
 
 static char unique_id[UNIQUEID_CHARS+1];
-X509 *cert;
+static X509 *cert;
 static char cert_hex[4096];
-EVP_PKEY *privateKey;
+static EVP_PKEY *privateKey;
 
 const char* gs_error;
 

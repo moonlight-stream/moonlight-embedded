@@ -19,9 +19,13 @@
 
 #include "http.h"
 #include "errors.h"
+#include "client.h"
 
 #include <string.h>
 #include <curl/curl.h>
+#include <openssl/ssl.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
 
 #include <psp2/sysmodule.h>
 #include "../src/graphics.h"
@@ -30,6 +34,9 @@ static CURL *curl;
 
 static const char *pCertFile = "./client.pem";
 static const char *pKeyFile = "./key.pem";
+
+extern X509 *cert;
+extern EVP_PKEY *privateKey;
 
 static size_t _write_curl(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -45,6 +52,21 @@ static size_t _write_curl(void *contents, size_t size, size_t nmemb, void *userp
   mem->memory[mem->size] = 0;
  
   return realsize;
+}
+
+static CURLcode sslctx_function(CURL * curl, void * sslctx, void * parm)
+{
+  SSL_CTX* ctx = (SSL_CTX*)sslctx;
+
+  if(!SSL_CTX_use_certificate(ctx, cert)) {
+    // printf("SSL_CTX_use_certificate problem\n");
+  }
+
+  if(!SSL_CTX_use_PrivateKey(ctx, privateKey)) {
+    // printf("Use Key failed\n");
+  }
+
+  return CURLE_OK;
 }
 
 int http_init(const char* keyDirectory) {
@@ -67,6 +89,13 @@ int http_init(const char* keyDirectory) {
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_curl);
   curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+  curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, *sslctx_function);
+  curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
+  curl_easy_setopt(curl, CURLOPT_MAXCONNECTS, 0L);
+  curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1L);
+  curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
+  curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
   return GS_OK;
 }

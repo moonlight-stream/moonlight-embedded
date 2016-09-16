@@ -21,10 +21,10 @@
 #include <vita2d.h>
 
 static int settings_special_codes[] = {0, INPUT_SPECIAL_KEY_PAUSE,
-  -1024, -256, -512, -64, -128,
+  -1024, -256, -512, -64, -128, INPUT_SPECIAL_KEY_LMB, INPUT_SPECIAL_KEY_RMB, INPUT_SPECIAL_KEY_MMB,
   27,    73,  77,  9,     112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123 };
 static char *settings_special_names[] = {"None", "Pause stream",
-  "Special (XBox button)", "LB", "RB", "LS", "RS",
+  "Special (XBox button)", "LB", "RB", "LS", "RS", "LMB", "RMB", "MMB",
   "Esc", "I", "M", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12" };
 static bool settings_loop_setup = 1;
 

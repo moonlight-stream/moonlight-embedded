@@ -214,6 +214,9 @@ static void special_input(SceTouchData screen, int *btn) {
     if (check_touch_sector(screen, identifier) && !current_status) {
       if (config_code == INPUT_SPECIAL_KEY_PAUSE) {
         connection_minimize();
+      } else if (config_code <= INPUT_SPECIAL_KEY_LMB && config_code >= INPUT_SPECIAL_KEY_RMB) {
+        special_input_status[idx] = true;
+        LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, -config_code - 0xfff0);
       } else if (config_code < 0) {
         *btn |= -config_code;
       } else {
@@ -222,7 +225,9 @@ static void special_input(SceTouchData screen, int *btn) {
       }
     } else if (!check_touch_sector(screen, identifier) && current_status) {
       special_input_status[idx] = false;
-      if (config_code > 0) {
+      if (config_code <= INPUT_SPECIAL_KEY_LMB && config_code >= INPUT_SPECIAL_KEY_RMB) {
+        LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, -config_code - 0xfff0);
+      } else if (config_code > 0) {
           LiSendKeyboardEvent(config_code, KEY_ACTION_UP, 0);
       }
     }
@@ -308,11 +313,9 @@ void vitainput_process(void) {
             case 1:
               move_mouse(front_old, front);
               break;
-            case 3:
-              LiSendControllerEvent((short) (0 | SPECIAL_FLAG), 0, 0, 0, 0, 0, 0);
-              break;
             case 2:
               move_wheel(front_old, front);
+              break;
           }
           memcpy(&front_old, &front, sizeof(front_old));
         } else {

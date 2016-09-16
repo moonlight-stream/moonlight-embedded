@@ -33,7 +33,10 @@ struct touchscreen_deadzone {
 };
 
 enum {
-  INPUT_SPECIAL_KEY_PAUSE = -0xffff
+  INPUT_SPECIAL_KEY_PAUSE = -0xffff,
+  INPUT_SPECIAL_KEY_RMB = -0xfff3,
+  INPUT_SPECIAL_KEY_MMB = -0xfff2,
+  INPUT_SPECIAL_KEY_LMB = -0xfff1
 };
 
 struct special_keys {

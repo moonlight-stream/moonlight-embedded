@@ -209,31 +209,37 @@ static void special_input(SceTouchData screen, int *btn) {
   for (int identifier = TOUCHSEC_SPECIAL_NW; identifier <= TOUCHSEC_SPECIAL_SE; identifier++) {
     int idx = identifier - TOUCHSEC_SPECIAL_NW;
     bool current_status = special_input_status[idx];
-    int config_code = special_input_config_code(identifier);
+    unsigned int config_code = special_input_config_code(identifier);
 
+    unsigned int type = config_code & INPUT_TYPE_MASK;
+    unsigned int code = config_code & INPUT_VALUE_MASK;
     if (check_touch_sector(screen, identifier) && !current_status) {
-      switch (config_code) {
-        case INPUT_SPECIAL_KEY_MODE:
-          *btn |= SPECIAL_FLAG;
+      switch (type) {
+        case INPUT_TYPE_SPECIAL:
+          if (code == INPUT_SPECIAL_KEY_PAUSE) {
+            connection_minimize();
+          } break;
+        case INPUT_TYPE_GAMEPAD:
+          *btn |= code;
           break;
-        case INPUT_SPECIAL_KEY_PAUSE:
-          connection_minimize();
-          break;
-        default:
+        case INPUT_TYPE_MOUSE:
           special_input_status[idx] = true;
-          LiSendKeyboardEvent(config_code, KEY_ACTION_DOWN, 0);
+          LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, code);
+          break;
+        case INPUT_TYPE_KEYBOARD:
+          special_input_status[idx] = true;
+          LiSendKeyboardEvent(code, KEY_ACTION_DOWN, 0);
           break;
       }
     } else if (!check_touch_sector(screen, identifier) && current_status) {
       special_input_status[idx] = false;
 
-      switch (config_code) {
-        case INPUT_SPECIAL_KEY_MODE:
+      switch (type) {
+        case INPUT_TYPE_MOUSE:
+          LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, code);
           break;
-        case INPUT_SPECIAL_KEY_PAUSE:
-          break;
-        default:
-          LiSendKeyboardEvent(config_code, KEY_ACTION_UP, 0);
+        case INPUT_TYPE_KEYBOARD:
+          LiSendKeyboardEvent(code, KEY_ACTION_UP, 0);
           break;
       }
     }
@@ -319,11 +325,9 @@ void vitainput_process(void) {
             case 1:
               move_mouse(front_old, front);
               break;
-            case 3:
-              LiSendControllerEvent((short) (0 | SPECIAL_FLAG), 0, 0, 0, 0, 0, 0);
-              break;
             case 2:
               move_wheel(front_old, front);
+              break;
           }
           memcpy(&front_old, &front, sizeof(front_old));
         } else {

@@ -32,14 +32,9 @@ struct touchscreen_deadzone {
   int top, bottom, left, right;
 };
 
-enum {
-  INPUT_SPECIAL_KEY_MODE = -10,
-  INPUT_SPECIAL_KEY_PAUSE
-};
-
 struct special_keys {
   int size, offset;
-  int nw, ne, sw, se;
+  unsigned int nw, ne, sw, se;
 };
 
 typedef struct _CONFIGURATION {

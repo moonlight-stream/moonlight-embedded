@@ -36,3 +36,4 @@ void connection_reset();
 
 bool connection_is_ready();
 int connection_get_status();
+void connection_minimize();

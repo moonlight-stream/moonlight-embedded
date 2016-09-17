@@ -27,6 +27,7 @@
 #include <string.h>
 #include <getopt.h>
 #include "graphics.h"
+#include "input/vita.h"
 
 #define MOONLIGHT_PATH "/moonlight"
 #define USER_PATHS "."
@@ -258,7 +259,7 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
             &config->back_deadzone.left);
       } else if (strcmp(key, "special_keys") == 0) {
         sscanf(value,
-            "%d,%d,%d,%d,%d,%d",
+            "%x,%x,%x,%x,%d,%d",
             &config->special_keys.nw,
             &config->special_keys.ne,
             &config->special_keys.sw,
@@ -325,7 +326,7 @@ void config_save(char* filename, PCONFIGURATION config) {
 
   sprintf(
       value,
-      "%d,%d,%d,%d,%d,%d",
+      "%x,%x,%x,%x,%d,%d",
       config->special_keys.nw,
       config->special_keys.ne,
       config->special_keys.sw,
@@ -360,8 +361,8 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported_version = false;
   config->disable_powersave = true;
 
-  config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE;
-  config->special_keys.sw = INPUT_SPECIAL_KEY_MODE;
+  config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL;
+  config->special_keys.sw = SPECIAL_FLAG | INPUT_TYPE_GAMEPAD;
   config->special_keys.offset = 0;
   config->special_keys.size = 150;
 

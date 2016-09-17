@@ -43,6 +43,18 @@ enum {
   RIGHTY
 } PadSection;
 
+#define INPUT_TYPE_MASK 0xffff0000
+#define INPUT_VALUE_MASK 0x0000ffff
+
+#define INPUT_TYPE_KEYBOARD 0x00000000
+#define INPUT_TYPE_SPECIAL 0x00010000
+#define INPUT_TYPE_MOUSE 0x00020000
+#define INPUT_TYPE_GAMEPAD 0x00030000
+
+enum {
+  INPUT_SPECIAL_KEY_PAUSE
+};
+
 bool vitainput_init();
 void vitainput_config(CONFIGURATION config);
 

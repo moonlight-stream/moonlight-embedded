@@ -19,10 +19,21 @@
 #include <psp2/rtc.h>
 #include <psp2/touch.h>
 #include <vita2d.h>
+#include <Limelight.h>
 
-static int settings_special_codes[] = {0, INPUT_SPECIAL_KEY_PAUSE, INPUT_SPECIAL_KEY_MODE,
+static unsigned int settings_special_codes[] = {0, INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL,
+  1024 | INPUT_TYPE_GAMEPAD,
+  256 | INPUT_TYPE_GAMEPAD,
+  512 | INPUT_TYPE_GAMEPAD,
+  64 | INPUT_TYPE_GAMEPAD,
+  128 | INPUT_TYPE_GAMEPAD,
+  BUTTON_LEFT | INPUT_TYPE_MOUSE,
+  BUTTON_RIGHT | INPUT_TYPE_MOUSE,
+  BUTTON_MIDDLE | INPUT_TYPE_MOUSE,
   27,    73,  77,  9,     112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123 };
-static char *settings_special_names[] = {"None", "Pause stream", "Special (XBox button)",
+static char *settings_special_names[] = {"None", "Pause stream",
+  "Special (XBox button)", "LB", "RB", "LS", "RS",
+  "LMB", "RMB", "MMB",
   "Esc", "I", "M", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12" };
 static bool settings_loop_setup = 1;
 

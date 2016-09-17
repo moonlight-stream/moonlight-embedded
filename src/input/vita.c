@@ -46,6 +46,16 @@
 
 static struct mapping map = {0};
 
+typedef struct input_data {
+    short button;
+    char left_trigger;
+    char right_trigger;
+    short lx;
+    short ly;
+    short rx;
+    short ry;
+} input_data;
+
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
 static int check_touch(SceTouchData scr, int lx, int ly, int rx, int ry) {
@@ -174,15 +184,9 @@ static short pad_value(SceCtrlData pad, int sec) {
   return (short) (value * 256 - (1 << 15) + 128);
 }
 
-bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouchData front, SceTouchData back) {
-  if (identifier >= TOUCHSEC_NORTHWEST && identifier < TOUCHSEC_SPECIAL_SW) {
+bool check_input(short identifier, SceCtrlData pad, SceTouchData screen) {
+  if (identifier >= TOUCHSEC_NORTHWEST && identifier <= TOUCHSEC_SOUTHEAST) {
     return check_touch_sector(screen, identifier) != -1;
-  } else if (identifier >= TOUCHSEC_SPECIAL_SW && identifier <= TOUCHSEC_SPECIAL_NE) {
-    if (config.fronttouchscreen_buttons == true) {
-      return false;
-    } else {
-      return check_touch_sector(front, identifier) != -1;
-    }
   } else {
     identifier = identifier + 1;
     return pad.buttons & identifier;
@@ -205,7 +209,7 @@ static int special_input_config_code(short identifier) {
 }
 
 static bool special_input_status[4] = {0, 0, 0, 0};
-static void special_input(SceTouchData screen, int *btn) {
+static void special_input(SceTouchData screen, input_data *input) {
   for (int identifier = TOUCHSEC_SPECIAL_NW; identifier <= TOUCHSEC_SPECIAL_SE; identifier++) {
     int idx = identifier - TOUCHSEC_SPECIAL_NW;
     bool current_status = special_input_status[idx];
@@ -220,11 +224,21 @@ static void special_input(SceTouchData screen, int *btn) {
             connection_minimize();
           } break;
         case INPUT_TYPE_GAMEPAD:
-          *btn |= code;
+          input->button |= code;
           break;
         case INPUT_TYPE_MOUSE:
           special_input_status[idx] = true;
           LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, code);
+          break;
+        case INPUT_TYPE_AXIS:
+          switch (code) {
+            case LEFT_TRIGGER:
+              input->left_trigger = 0xff;
+              break;
+            case RIGHT_TRIGGER:
+              input->right_trigger = 0xff;
+              break;
+          }
           break;
         case INPUT_TYPE_KEYBOARD:
           special_input_status[idx] = true;
@@ -246,8 +260,8 @@ static void special_input(SceTouchData screen, int *btn) {
   }
 }
 
-#define CHECK_INPUT(id) check_input((id), pad, buttons_screen, front, back)
-#define INPUT(id, flag) if (check_input((id), pad, buttons_screen, front, back)) input.button |= (flag);
+#define CHECK_INPUT(id) check_input((id), pad, back)
+#define INPUT(id, flag) if (check_input((id), pad, back)) input.button |= (flag);
 
 static SceCtrlData pad;
 static SceTouchData front;
@@ -261,16 +275,6 @@ static SceRtcTick current, until;
 
 static int special_status;
 
-typedef struct input_data {
-    short button;
-    char left_trigger;
-    char right_trigger;
-    short lx;
-    short ly;
-    short rx;
-    short ry;
-} input_data;
-
 static input_data old;
 
 void vitainput_process(void) {
@@ -283,9 +287,40 @@ void vitainput_process(void) {
 
   input_data input = {0};
 
-  SceTouchData buttons_screen = config.fronttouchscreen_buttons ? front : back;
-  special_input(front, &input.button);
+  // buttons
+  INPUT(map.btn_dpad_up, UP_FLAG);
+  INPUT(map.btn_dpad_up, UP_FLAG);
+  INPUT(map.btn_dpad_left, LEFT_FLAG);
+  INPUT(map.btn_dpad_down, DOWN_FLAG);
+  INPUT(map.btn_dpad_right, RIGHT_FLAG);
 
+  INPUT(map.btn_start, PLAY_FLAG);
+  INPUT(map.btn_select, BACK_FLAG);
+
+  INPUT(map.btn_north, Y_FLAG);
+  INPUT(map.btn_east, B_FLAG);
+  INPUT(map.btn_south, A_FLAG);
+  INPUT(map.btn_west, X_FLAG);
+
+  INPUT(map.btn_tl2, LS_CLK_FLAG);
+  INPUT(map.btn_tr2, RS_CLK_FLAG);
+
+  INPUT(map.btn_thumbl, LB_FLAG);
+  INPUT(map.btn_thumbr, RB_FLAG);
+
+  // AXIS
+  input.left_trigger = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
+  input.right_trigger = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
+
+  input.lx = pad_value(pad, map.abs_x),
+  input.ly = pad_value(pad, map.abs_y),
+  input.rx = pad_value(pad, map.abs_rx),
+  input.ry = pad_value(pad, map.abs_ry);
+
+  // special touchscreen buttons
+  special_input(front, &input);
+
+  // remove touches for special actions
   for (int i = TOUCHSEC_SPECIAL_NW, touchIdx = -1; i <= TOUCHSEC_SPECIAL_SE; i++) {
     unsigned int config_code = special_input_config_code(i);
     if (config_code && (touchIdx = check_touch_sector(front, i)) != -1) {
@@ -299,6 +334,7 @@ void vitainput_process(void) {
     }
   }
 
+  // mouse
   switch (front_state) {
     case NO_TOUCH_ACTION:
       if (front.reportNum > 0) {
@@ -352,35 +388,6 @@ void vitainput_process(void) {
       }
       break;
   }
-
-  INPUT(map.btn_dpad_up, UP_FLAG);
-  INPUT(map.btn_dpad_up, UP_FLAG);
-  INPUT(map.btn_dpad_left, LEFT_FLAG);
-  INPUT(map.btn_dpad_down, DOWN_FLAG);
-  INPUT(map.btn_dpad_right, RIGHT_FLAG);
-
-  INPUT(map.btn_start, PLAY_FLAG);
-  INPUT(map.btn_select, BACK_FLAG);
-
-  INPUT(map.btn_north, Y_FLAG);
-  INPUT(map.btn_east, B_FLAG);
-  INPUT(map.btn_south, A_FLAG);
-  INPUT(map.btn_west, X_FLAG);
-
-  INPUT(map.btn_tl2, LS_CLK_FLAG);
-  INPUT(map.btn_tr2, RS_CLK_FLAG);
-
-  INPUT(map.btn_thumbl, LB_FLAG);
-  INPUT(map.btn_thumbr, RB_FLAG);
-
-  // TRIGGERS
-  input.left_trigger = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
-  input.right_trigger = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
-
-  input.lx = pad_value(pad, map.abs_x),
-  input.ly = pad_value(pad, map.abs_y),
-  input.rx = pad_value(pad, map.abs_rx),
-  input.ry = pad_value(pad, map.abs_ry);
 
   if (memcmp(&input, &old, sizeof(input_data)) != 0) {
     LiSendControllerEvent(input.button, input.left_trigger, input.right_trigger,

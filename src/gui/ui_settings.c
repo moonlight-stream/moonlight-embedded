@@ -22,17 +22,19 @@
 #include <Limelight.h>
 
 static unsigned int settings_special_codes[] = {0, INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL,
-  1024 | INPUT_TYPE_GAMEPAD,
-  256 | INPUT_TYPE_GAMEPAD,
-  512 | INPUT_TYPE_GAMEPAD,
-  64 | INPUT_TYPE_GAMEPAD,
-  128 | INPUT_TYPE_GAMEPAD,
+  SPECIAL_FLAG | INPUT_TYPE_GAMEPAD,
+  LB_FLAG | INPUT_TYPE_GAMEPAD,
+  RB_FLAG | INPUT_TYPE_GAMEPAD,
+  LS_CLK_FLAG | INPUT_TYPE_GAMEPAD,
+  RS_CLK_FLAG | INPUT_TYPE_GAMEPAD,
+  LEFT_TRIGGER | INPUT_TYPE_AXIS,
+  RIGHT_TRIGGER | INPUT_TYPE_AXIS,
   BUTTON_LEFT | INPUT_TYPE_MOUSE,
   BUTTON_RIGHT | INPUT_TYPE_MOUSE,
   BUTTON_MIDDLE | INPUT_TYPE_MOUSE,
   27,    73,  77,  9,     112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123 };
 static char *settings_special_names[] = {"None", "Pause stream",
-  "Special (XBox button)", "LB", "RB", "LS", "RS",
+  "Special (XBox button)", "LB", "RB", "LS", "RS", "LT", "RT",
   "LMB", "RMB", "MMB",
   "Esc", "I", "M", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12" };
 static bool settings_loop_setup = 1;
@@ -278,7 +280,7 @@ static void special_keys_draw() {
   int special_offset = config.special_keys.offset,
       special_size = config.special_keys.size;
 
-  unsigned int color = 0xffffffff;
+  unsigned int color = 0xff006000;
 
   for (int i = TOUCHSEC_SPECIAL_NW; i <= TOUCHSEC_SPECIAL_SE; i++) {
     switch (i) {

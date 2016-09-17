@@ -209,26 +209,38 @@ static void special_input(SceTouchData screen, int *btn) {
   for (int identifier = TOUCHSEC_SPECIAL_NW; identifier <= TOUCHSEC_SPECIAL_SE; identifier++) {
     int idx = identifier - TOUCHSEC_SPECIAL_NW;
     bool current_status = special_input_status[idx];
-    int config_code = special_input_config_code(identifier);
+    unsigned int config_code = special_input_config_code(identifier);
 
+    unsigned int type = config_code & INPUT_MASK;
+    unsigned int code = config_code & INPUT_VALUE_MASK;
     if (check_touch_sector(screen, identifier) && !current_status) {
-      if (config_code == INPUT_SPECIAL_KEY_PAUSE) {
-        connection_minimize();
-      } else if (config_code <= INPUT_SPECIAL_KEY_LMB && config_code >= INPUT_SPECIAL_KEY_RMB) {
-        special_input_status[idx] = true;
-        LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, -config_code - 0xfff0);
-      } else if (config_code < 0) {
-        *btn |= -config_code;
-      } else {
-        special_input_status[idx] = true;
-        LiSendKeyboardEvent(config_code, KEY_ACTION_DOWN, 0);
+      switch (type) {
+        case INPUT_SPECIAL_MASK:
+          if (code == INPUT_SPECIAL_KEY_PAUSE) {
+            connection_minimize();
+          } break;
+        case INPUT_GAMEPAD_MASK:
+          *btn |= code;
+          break;
+        case INPUT_MOUSE_MASK:
+          special_input_status[idx] = true;
+          LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, code);
+          break;
+        case INPUT_KEYBOARD_MASK:
+          special_input_status[idx] = true;
+          LiSendKeyboardEvent(code, KEY_ACTION_DOWN, 0);
+          break;
       }
     } else if (!check_touch_sector(screen, identifier) && current_status) {
       special_input_status[idx] = false;
-      if (config_code <= INPUT_SPECIAL_KEY_LMB && config_code >= INPUT_SPECIAL_KEY_RMB) {
-        LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, -config_code - 0xfff0);
-      } else if (config_code > 0) {
-          LiSendKeyboardEvent(config_code, KEY_ACTION_UP, 0);
+
+      switch (type) {
+        case INPUT_MOUSE_MASK:
+          LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, code);
+          break;
+        case INPUT_KEYBOARD_MASK:
+          LiSendKeyboardEvent(code, KEY_ACTION_UP, 0);
+          break;
       }
     }
   }

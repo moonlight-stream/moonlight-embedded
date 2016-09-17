@@ -258,7 +258,7 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
             &config->back_deadzone.left);
       } else if (strcmp(key, "special_keys") == 0) {
         sscanf(value,
-            "%d,%d,%d,%d,%d,%d",
+            "%x,%x,%x,%x,%d,%d",
             &config->special_keys.nw,
             &config->special_keys.ne,
             &config->special_keys.sw,
@@ -325,7 +325,7 @@ void config_save(char* filename, PCONFIGURATION config) {
 
   sprintf(
       value,
-      "%d,%d,%d,%d,%d,%d",
+      "%x,%x,%x,%x,%d,%d",
       config->special_keys.nw,
       config->special_keys.ne,
       config->special_keys.sw,
@@ -360,8 +360,8 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported_version = false;
   config->disable_powersave = true;
 
-  config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE;
-  config->special_keys.sw = -SPECIAL_FLAG;
+  config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE | INPUT_SPECIAL_MASK;
+  config->special_keys.sw = SPECIAL_FLAG | INPUT_GAMEPAD_MASK;
   config->special_keys.offset = 0;
   config->special_keys.size = 150;
 

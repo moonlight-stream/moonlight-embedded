@@ -338,7 +338,6 @@ enum {
   SETTINGS_RESOLUTION = 100,
   SETTINGS_FPS,
   SETTINGS_BITRATE,
-  SETTINGS_FRONTTOUCHSCREEN,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_ENABLE_MAPPING,
   SETTINGS_BACK_DEADZONE,
@@ -349,10 +348,9 @@ enum {
   SETTINGS_VIEW_RESOLUTION = 1,
   SETTINGS_VIEW_FPS,
   SETTINGS_VIEW_BITRATE,
-  SETTINGS_VIEW_FRONTTOUCHSCREEN = 5,
-  SETTINGS_VIEW_DISABLE_POWERSAVE = 7,
+  SETTINGS_VIEW_DISABLE_POWERSAVE = 5,
   SETTINGS_VIEW_ENABLE_MAPPING,
-  SETTINGS_VIEW_BACK_DEADZONE = 11
+  SETTINGS_VIEW_BACK_DEADZONE = 9
 };
 
 static int move_idx_in_array(char *array[], int count, char *find, int index_dist) {
@@ -434,11 +432,6 @@ static int settings_loop(int id, void *context) {
           }
         }
       } break;
-    case SETTINGS_FRONTTOUCHSCREEN:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        did_change = 1;
-        config.fronttouchscreen_buttons = !config.fronttouchscreen_buttons;
-      } break;
     case SETTINGS_DISABLE_POWERSAVE:
       if (was_button_pressed(SCE_CTRL_CROSS)) {
         did_change = 1;
@@ -477,9 +470,6 @@ static int settings_loop(int id, void *context) {
     sprintf(current, "%d", config.stream.bitrate);
     strcpy(menu[SETTINGS_VIEW_BITRATE].subname, current);
 
-    sprintf(current, "%s", config.fronttouchscreen_buttons ? "yes" : "no");
-    strcpy(menu[SETTINGS_VIEW_FRONTTOUCHSCREEN].subname, current);
-
     sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
     strcpy(menu[SETTINGS_VIEW_DISABLE_POWERSAVE].subname, current);
 
@@ -514,8 +504,6 @@ int ui_settings_menu() {
 
   // ---------
   menu[idx++] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
-  idx++; menu[SETTINGS_VIEW_FRONTTOUCHSCREEN] = (struct menu_entry) { .name = "Use front touchscreen for buttons", .id = SETTINGS_FRONTTOUCHSCREEN };
-  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .subname = "Disables mouse input and special keys." };
   idx++; menu[SETTINGS_VIEW_DISABLE_POWERSAVE] = (struct menu_entry) { .name = "Disable power save", .id = SETTINGS_DISABLE_POWERSAVE };
   idx++; menu[SETTINGS_VIEW_ENABLE_MAPPING] = (struct menu_entry) { .name = "Enable mapping file", .id = SETTINGS_ENABLE_MAPPING };
 

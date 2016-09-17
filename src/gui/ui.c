@@ -7,6 +7,7 @@
 #include "ui_connect.h"
 
 #include "../config.h"
+#include "../connection.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -77,8 +78,24 @@ int ui_main_menu() {
   return display_menu(menu, idx, &geom, &ui_main_menu_loop, &ui_main_menu_back, NULL, NULL);
 }
 
+int global_loop(int cursor, void *ctx) {
+  if (is_rectangle_touched(0, 0, 150, 150)) {
+    if (connection_get_status() == LI_MINIMIZED) {
+      vitapower_config(config);
+      vitainput_config(config);
+
+      sceKernelDelayThread(500 * 1000);
+      connection_resume();
+
+      while (connection_get_status() == LI_CONNECTED) {
+        sceKernelDelayThread(500 * 1000);
+      }
+    }
+  }
+}
+
 void gui_init() {
-  guilib_init();
+  guilib_init(&global_loop, NULL);
 }
 
 void gui_loop() {

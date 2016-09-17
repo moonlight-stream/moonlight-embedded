@@ -19,6 +19,8 @@
 #include <psp2/rtc.h>
 #include <psp2/power.h>
 
+#define BUTTON_DELAY 150 * 1000
+
 struct menu_geom make_geom_centered(int w, int h) {
   struct menu_geom geom = {0};
   geom.x = WIDTH  / 2 - w / 2;
@@ -102,11 +104,20 @@ void draw_statusbar(struct menu_geom geom) {
       battery_color);
 }
 
-SceCtrlData ctrl_old_pad;
 SceCtrlData ctrl_new_pad;
 
+static SceRtcTick button_current_tick, button_until_tick;
 bool was_button_pressed(short id) {
-  return ctrl_new_pad.buttons & id && !(ctrl_old_pad.buttons & id);
+  sceRtcGetCurrentTick(&button_current_tick);
+
+  if (ctrl_new_pad.buttons & id) {
+    if (sceRtcCompareTick(&button_current_tick, &button_until_tick) > 0) {
+      sceRtcTickAddMicroseconds(&button_until_tick, &button_current_tick, BUTTON_DELAY);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool is_button_down(short id) {
@@ -257,7 +268,6 @@ void gui_ctrl_begin() {
 }
 
 void gui_ctrl_end() {
-  sceCtrlPeekBufferPositive(0, &ctrl_old_pad, 1);
 }
 
 void gui_ctrl_cursor(int *cursor_ptr, int total_elements) {

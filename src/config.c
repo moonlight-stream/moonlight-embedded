@@ -361,8 +361,8 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported_version = false;
   config->disable_powersave = true;
 
-  config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE | INPUT_SPECIAL_MASK;
-  config->special_keys.sw = SPECIAL_FLAG | INPUT_GAMEPAD_MASK;
+  config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL;
+  config->special_keys.sw = SPECIAL_FLAG | INPUT_TYPE_GAMEPAD;
   config->special_keys.offset = 0;
   config->special_keys.size = 150;
 

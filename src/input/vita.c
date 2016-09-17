@@ -215,18 +215,18 @@ static void special_input(SceTouchData screen, int *btn) {
     unsigned int code = config_code & INPUT_VALUE_MASK;
     if (check_touch_sector(screen, identifier) && !current_status) {
       switch (type) {
-        case INPUT_SPECIAL_MASK:
+        case INPUT_TYPE_SPECIAL:
           if (code == INPUT_SPECIAL_KEY_PAUSE) {
             connection_minimize();
           } break;
-        case INPUT_GAMEPAD_MASK:
+        case INPUT_TYPE_GAMEPAD:
           *btn |= code;
           break;
-        case INPUT_MOUSE_MASK:
+        case INPUT_TYPE_MOUSE:
           special_input_status[idx] = true;
           LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, code);
           break;
-        case INPUT_KEYBOARD_MASK:
+        case INPUT_TYPE_KEYBOARD:
           special_input_status[idx] = true;
           LiSendKeyboardEvent(code, KEY_ACTION_DOWN, 0);
           break;
@@ -235,10 +235,10 @@ static void special_input(SceTouchData screen, int *btn) {
       special_input_status[idx] = false;
 
       switch (type) {
-        case INPUT_MOUSE_MASK:
+        case INPUT_TYPE_MOUSE:
           LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, code);
           break;
-        case INPUT_KEYBOARD_MASK:
+        case INPUT_TYPE_KEYBOARD:
           LiSendKeyboardEvent(code, KEY_ACTION_UP, 0);
           break;
       }

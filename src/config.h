@@ -32,18 +32,6 @@ struct touchscreen_deadzone {
   int top, bottom, left, right;
 };
 
-#define INPUT_MASK 0xffff0000
-#define INPUT_VALUE_MASK 0x0000ffff
-
-#define INPUT_KEYBOARD_MASK 0x00000000
-#define INPUT_SPECIAL_MASK 0x00010000
-#define INPUT_MOUSE_MASK 0x00020000
-#define INPUT_GAMEPAD_MASK 0x00030000
-
-enum {
-  INPUT_SPECIAL_KEY_PAUSE
-};
-
 struct special_keys {
   int size, offset;
   unsigned int nw, ne, sw, se;

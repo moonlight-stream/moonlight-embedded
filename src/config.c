@@ -27,6 +27,7 @@
 #include <string.h>
 #include <getopt.h>
 #include "graphics.h"
+#include "input/vita.h"
 
 #define MOONLIGHT_PATH "/moonlight"
 #define USER_PATHS "."

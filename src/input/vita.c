@@ -211,7 +211,7 @@ static void special_input(SceTouchData screen, int *btn) {
     bool current_status = special_input_status[idx];
     unsigned int config_code = special_input_config_code(identifier);
 
-    unsigned int type = config_code & INPUT_MASK;
+    unsigned int type = config_code & INPUT_TYPE_MASK;
     unsigned int code = config_code & INPUT_VALUE_MASK;
     if (check_touch_sector(screen, identifier) && !current_status) {
       switch (type) {

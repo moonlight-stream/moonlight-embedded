@@ -26,6 +26,7 @@ typedef void (*gui_draw_callback) (void);
 
 bool was_button_pressed(short id);
 bool is_button_down(short id);
+bool is_rectangle_touched(int lx, int ly, int rx, int ry);
 
 int display_menu(
         struct menu_entry menu[],
@@ -49,4 +50,4 @@ void display_error(char *format, ...);
 
 void flash_message(char *format, ...);
 
-void guilib_init();
+void guilib_init(gui_loop_callback global_loop_cb, gui_draw_callback global_draw_cb);

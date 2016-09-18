@@ -21,6 +21,9 @@
 
 #define BUTTON_DELAY 150 * 1000
 
+static gui_draw_callback gui_global_draw_callback;
+static gui_loop_callback gui_global_loop_callback;
+
 struct menu_geom make_geom_centered(int w, int h) {
   struct menu_geom geom = {0};
   geom.x = WIDTH  / 2 - w / 2;
@@ -104,6 +107,7 @@ void draw_statusbar(struct menu_geom geom) {
       battery_color);
 }
 
+SceTouchData touch_data;
 SceCtrlData ctrl_new_pad;
 
 static SceRtcTick button_current_tick, button_until_tick;
@@ -122,6 +126,18 @@ bool was_button_pressed(short id) {
 
 bool is_button_down(short id) {
   return ctrl_new_pad.buttons & id;
+}
+
+#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
+bool is_rectangle_touched(int lx, int ly, int rx, int ry) {
+  for (int i = 0; i < touch_data.reportNum; i++) {
+    int x = lerp(touch_data.report[i].x, 1919, WIDTH);
+    int y = lerp(touch_data.report[i].y, 1087, HEIGHT);
+    if (x < lx || x > rx || y < ly || y > ry) continue;
+    return true;
+  }
+
+  return false;
 }
 
 void draw_menu(struct menu_entry menu[], int total_elements, struct menu_geom geom, int cursor, int offset) {
@@ -265,6 +281,7 @@ void draw_alert(char *message, struct menu_geom geom, char *buttons_captions[], 
 
 void gui_ctrl_begin() {
   sceCtrlPeekBufferPositive(0, &ctrl_new_pad, 1);
+  sceTouchPeek(SCE_TOUCH_PORT_FRONT, &touch_data, 1);
 }
 
 void gui_ctrl_end() {
@@ -335,6 +352,11 @@ int display_menu(
     if (draw_callback && tick_number > 3) {
       draw_callback();
     }
+
+    if (gui_global_draw_callback && tick_number > 3) {
+      gui_global_draw_callback();
+    }
+
     draw_menu(menu, total_elements, geom, cursor, offset);
 
     int real_cursor = 0;
@@ -354,6 +376,10 @@ int display_menu(
 
     if (cb) {
       exit_code = cb(menu[real_cursor].id, context);
+    }
+
+    if (gui_global_loop_callback) {
+      gui_global_loop_callback(menu[real_cursor].id, context);
     }
 
     if (was_button_pressed(SCE_CTRL_CIRCLE)) {
@@ -445,8 +471,15 @@ void flash_message(char *format, ...) {
   vita2d_swap_buffers();
 }
 
-void guilib_init() {
+void drw() {
+  vita2d_draw_rectangle(0, 0, 150, 150, 0xffffffff);
+}
+
+void guilib_init(gui_loop_callback global_loop_cb, gui_draw_callback global_draw_cb) {
   vita2d_init();
   vita2d_set_clear_color(0xff000000);
   gui_font = vita2d_load_default_pgf();
+
+  gui_global_draw_callback = global_draw_cb;
+  gui_global_loop_callback = global_loop_cb;
 }

@@ -22,17 +22,19 @@
 #include <Limelight.h>
 
 static unsigned int settings_special_codes[] = {0, INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL,
-  1024 | INPUT_TYPE_GAMEPAD,
-  256 | INPUT_TYPE_GAMEPAD,
-  512 | INPUT_TYPE_GAMEPAD,
-  64 | INPUT_TYPE_GAMEPAD,
-  128 | INPUT_TYPE_GAMEPAD,
+  SPECIAL_FLAG | INPUT_TYPE_GAMEPAD,
+  LB_FLAG | INPUT_TYPE_GAMEPAD,
+  RB_FLAG | INPUT_TYPE_GAMEPAD,
+  LS_CLK_FLAG | INPUT_TYPE_GAMEPAD,
+  RS_CLK_FLAG | INPUT_TYPE_GAMEPAD,
+  LEFT_TRIGGER | INPUT_TYPE_AXIS,
+  RIGHT_TRIGGER | INPUT_TYPE_AXIS,
   BUTTON_LEFT | INPUT_TYPE_MOUSE,
   BUTTON_RIGHT | INPUT_TYPE_MOUSE,
   BUTTON_MIDDLE | INPUT_TYPE_MOUSE,
   27,    73,  77,  9,     112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123 };
 static char *settings_special_names[] = {"None", "Pause stream",
-  "Special (XBox button)", "LB", "RB", "LS", "RS",
+  "Special (XBox button)", "LB", "RB", "LS", "RS", "LT", "RT",
   "LMB", "RMB", "MMB",
   "Esc", "I", "M", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12" };
 static bool settings_loop_setup = 1;
@@ -278,7 +280,7 @@ static void special_keys_draw() {
   int special_offset = config.special_keys.offset,
       special_size = config.special_keys.size;
 
-  unsigned int color = 0xffffffff;
+  unsigned int color = 0xff006000;
 
   for (int i = TOUCHSEC_SPECIAL_NW; i <= TOUCHSEC_SPECIAL_SE; i++) {
     switch (i) {
@@ -338,7 +340,6 @@ enum {
   SETTINGS_RESOLUTION = 100,
   SETTINGS_FPS,
   SETTINGS_BITRATE,
-  SETTINGS_FRONTTOUCHSCREEN,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_ENABLE_MAPPING,
   SETTINGS_BACK_DEADZONE,
@@ -349,10 +350,9 @@ enum {
   SETTINGS_VIEW_RESOLUTION = 1,
   SETTINGS_VIEW_FPS,
   SETTINGS_VIEW_BITRATE,
-  SETTINGS_VIEW_FRONTTOUCHSCREEN = 5,
-  SETTINGS_VIEW_DISABLE_POWERSAVE = 7,
+  SETTINGS_VIEW_DISABLE_POWERSAVE = 5,
   SETTINGS_VIEW_ENABLE_MAPPING,
-  SETTINGS_VIEW_BACK_DEADZONE = 11
+  SETTINGS_VIEW_BACK_DEADZONE = 9
 };
 
 static int move_idx_in_array(char *array[], int count, char *find, int index_dist) {
@@ -434,11 +434,6 @@ static int settings_loop(int id, void *context) {
           }
         }
       } break;
-    case SETTINGS_FRONTTOUCHSCREEN:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        did_change = 1;
-        config.fronttouchscreen_buttons = !config.fronttouchscreen_buttons;
-      } break;
     case SETTINGS_DISABLE_POWERSAVE:
       if (was_button_pressed(SCE_CTRL_CROSS)) {
         did_change = 1;
@@ -477,9 +472,6 @@ static int settings_loop(int id, void *context) {
     sprintf(current, "%d", config.stream.bitrate);
     strcpy(menu[SETTINGS_VIEW_BITRATE].subname, current);
 
-    sprintf(current, "%s", config.fronttouchscreen_buttons ? "yes" : "no");
-    strcpy(menu[SETTINGS_VIEW_FRONTTOUCHSCREEN].subname, current);
-
     sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
     strcpy(menu[SETTINGS_VIEW_DISABLE_POWERSAVE].subname, current);
 
@@ -514,8 +506,6 @@ int ui_settings_menu() {
 
   // ---------
   menu[idx++] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
-  idx++; menu[SETTINGS_VIEW_FRONTTOUCHSCREEN] = (struct menu_entry) { .name = "Use front touchscreen for buttons", .id = SETTINGS_FRONTTOUCHSCREEN };
-  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .subname = "Disables mouse input and special keys." };
   idx++; menu[SETTINGS_VIEW_DISABLE_POWERSAVE] = (struct menu_entry) { .name = "Disable power save", .id = SETTINGS_DISABLE_POWERSAVE };
   idx++; menu[SETTINGS_VIEW_ENABLE_MAPPING] = (struct menu_entry) { .name = "Enable mapping file", .id = SETTINGS_ENABLE_MAPPING };
 

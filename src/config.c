@@ -248,8 +248,6 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
         config->sops = strcmp("true", value) == 0;
       } else if (strcmp(key, "localaudio") == 0) {
         config->localaudio = strcmp("true", value) == 0;
-      } else if (strcmp(key, "fronttouchscreen_buttons") == 0) {
-        config->fronttouchscreen_buttons = strcmp("true", value) == 0;
       } else if (strcmp(key, "backtouchscreen_deadzone") == 0) {
         sscanf(value, 
             "%d,%d,%d,%d", 
@@ -311,7 +309,6 @@ void config_save(char* filename, PCONFIGURATION config) {
   if (strcmp(config->app, "Steam") != 0)
     write_config_string(fd, "app", config->app);
 
-  write_config_bool(fd, "fronttouchscreen_buttons", config->fronttouchscreen_buttons);
   write_config_bool(fd, "disable_powersave", config->disable_powersave);
 
   char value[256];

@@ -46,19 +46,29 @@
 
 static struct mapping map = {0};
 
+typedef struct input_data {
+    short button;
+    char left_trigger;
+    char right_trigger;
+    short lx;
+    short ly;
+    short rx;
+    short ry;
+} input_data;
+
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
-static bool check_touch(SceTouchData scr, int lx, int ly, int rx, int ry) {
+static int check_touch(SceTouchData scr, int lx, int ly, int rx, int ry) {
   for (int i = 0; i < scr.reportNum; i++) {
     int x = lerp(scr.report[i].x, 1919, WIDTH);
     int y = lerp(scr.report[i].y, 1087, HEIGHT);
     if (x < lx || x > rx || y < ly || y > ry) continue;
-    return true;
+    return i;
   }
-  return false;
+  return -1;
 }
 
-static bool check_touch_sector(SceTouchData scr, int section) {
+int check_touch_sector(SceTouchData scr, int section) {
   int vertical = (WIDTH - config.back_deadzone.left - config.back_deadzone.right) / 2 + config.back_deadzone.left,
       horizontal = (HEIGHT - config.back_deadzone.top - config.back_deadzone.bottom) / 2 + config.back_deadzone.top;
 
@@ -174,15 +184,9 @@ static short pad_value(SceCtrlData pad, int sec) {
   return (short) (value * 256 - (1 << 15) + 128);
 }
 
-bool check_input(short identifier, SceCtrlData pad, SceTouchData screen, SceTouchData front, SceTouchData back) {
-  if (identifier >= TOUCHSEC_NORTHWEST && identifier < TOUCHSEC_SPECIAL_SW) {
-    return check_touch_sector(screen, identifier);
-  } else if (identifier >= TOUCHSEC_SPECIAL_SW && identifier <= TOUCHSEC_SPECIAL_NE) {
-    if (config.fronttouchscreen_buttons == true) {
-      return false;
-    } else {
-      return check_touch_sector(front, identifier);
-    }
+bool check_input(short identifier, SceCtrlData pad, SceTouchData screen) {
+  if (identifier >= TOUCHSEC_NORTHWEST && identifier <= TOUCHSEC_SOUTHEAST) {
+    return check_touch_sector(screen, identifier) != -1;
   } else {
     identifier = identifier + 1;
     return pad.buttons & identifier;
@@ -205,7 +209,7 @@ static int special_input_config_code(short identifier) {
 }
 
 static bool special_input_status[4] = {0, 0, 0, 0};
-static void special_input(SceTouchData screen, int *btn) {
+static void special_input(SceTouchData screen, input_data *input) {
   for (int identifier = TOUCHSEC_SPECIAL_NW; identifier <= TOUCHSEC_SPECIAL_SE; identifier++) {
     int idx = identifier - TOUCHSEC_SPECIAL_NW;
     bool current_status = special_input_status[idx];
@@ -213,25 +217,35 @@ static void special_input(SceTouchData screen, int *btn) {
 
     unsigned int type = config_code & INPUT_TYPE_MASK;
     unsigned int code = config_code & INPUT_VALUE_MASK;
-    if (check_touch_sector(screen, identifier) && !current_status) {
+    if (check_touch_sector(screen, identifier) != -1 && !current_status) {
       switch (type) {
         case INPUT_TYPE_SPECIAL:
           if (code == INPUT_SPECIAL_KEY_PAUSE) {
             connection_minimize();
           } break;
         case INPUT_TYPE_GAMEPAD:
-          *btn |= code;
+          input->button |= code;
           break;
         case INPUT_TYPE_MOUSE:
           special_input_status[idx] = true;
           LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, code);
+          break;
+        case INPUT_TYPE_AXIS:
+          switch (code) {
+            case LEFT_TRIGGER:
+              input->left_trigger = 0xff;
+              break;
+            case RIGHT_TRIGGER:
+              input->right_trigger = 0xff;
+              break;
+          }
           break;
         case INPUT_TYPE_KEYBOARD:
           special_input_status[idx] = true;
           LiSendKeyboardEvent(code, KEY_ACTION_DOWN, 0);
           break;
       }
-    } else if (!check_touch_sector(screen, identifier) && current_status) {
+    } else if (check_touch_sector(screen, identifier) == -1 && current_status) {
       special_input_status[idx] = false;
 
       switch (type) {
@@ -246,8 +260,8 @@ static void special_input(SceTouchData screen, int *btn) {
   }
 }
 
-#define CHECK_INPUT(id) check_input((id), pad, buttons_screen, front, back)
-#define INPUT(id, flag) if (check_input((id), pad, buttons_screen, front, back)) input.button |= (flag);
+#define CHECK_INPUT(id) check_input((id), pad, back)
+#define INPUT(id, flag) if (check_input((id), pad, back)) input.button |= (flag);
 
 static SceCtrlData pad;
 static SceTouchData front;
@@ -261,16 +275,6 @@ static SceRtcTick current, until;
 
 static int special_status;
 
-typedef struct input_data {
-    short button;
-    char left_trigger;
-    char right_trigger;
-    short lx;
-    short ly;
-    short rx;
-    short ry;
-} input_data;
-
 static input_data old;
 
 void vitainput_process(void) {
@@ -281,72 +285,9 @@ void vitainput_process(void) {
   sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
   sceRtcGetCurrentTick(&current);
 
-  if (config.fronttouchscreen_buttons == false) {
-    switch (front_state) {
-      case NO_TOUCH_ACTION:
-        if (front.reportNum > 0) {
-          front_state = ON_SCREEN_TOUCH;
-          finger_count = front.reportNum;
-          sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-        }
-        break;
-      case ON_SCREEN_TOUCH:
-        if (sceRtcCompareTick(&current, &until) < 0) {
-          if (front.reportNum < finger_count) {
-            // TAP
-            if (mouse_click(front, finger_count, true)) {
-              front_state = SCREEN_TAP;
-              sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-            } else {
-              front_state = NO_TOUCH_ACTION;
-            }
-          } else if (front.reportNum > finger_count) {
-            // finger count changed
-            finger_count = front.reportNum;
-          }
-        } else {
-          front_state = SWIPE_START;
-        }
-        break;
-      case SCREEN_TAP:
-        if (sceRtcCompareTick(&current, &until) >= 0) {
-          mouse_click(front, finger_count, false);
-
-          front_state = NO_TOUCH_ACTION;
-        }
-        break;
-      case SWIPE_START:
-        memcpy(&front_old, &front, sizeof(front_old));
-        front_state = ON_SCREEN_SWIPE;
-        break;
-      case ON_SCREEN_SWIPE:
-        if (front.reportNum > 0) {
-          switch (front.reportNum) {
-            case 1:
-              move_mouse(front_old, front);
-              break;
-            case 2:
-              move_wheel(front_old, front);
-              break;
-          }
-          memcpy(&front_old, &front, sizeof(front_old));
-        } else {
-          front_state = NO_TOUCH_ACTION;
-        }
-        break;
-    }
-
-    for (int i = TOUCHSEC_SPECIAL_NW; i <= TOUCHSEC_SPECIAL_SE; i++) {
-      if (check_touch_sector(front, i)) {
-        front_state = NO_TOUCH_ACTION;
-      }
-    }
-  }
-
   input_data input = {0};
 
-  SceTouchData buttons_screen = config.fronttouchscreen_buttons ? front : back;
-
+  // buttons
   INPUT(map.btn_dpad_up, UP_FLAG);
   INPUT(map.btn_dpad_up, UP_FLAG);
   INPUT(map.btn_dpad_left, LEFT_FLAG);
@@ -367,9 +308,7 @@ void vitainput_process(void) {
   INPUT(map.btn_thumbl, LB_FLAG);
   INPUT(map.btn_thumbr, RB_FLAG);
 
-  special_input(front, &input.button);
-
-  // TRIGGERS
+  // AXIS
   input.left_trigger = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
   input.right_trigger = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
 
@@ -377,6 +316,78 @@ void vitainput_process(void) {
   input.ly = pad_value(pad, map.abs_y),
   input.rx = pad_value(pad, map.abs_rx),
   input.ry = pad_value(pad, map.abs_ry);
+
+  // special touchscreen buttons
+  special_input(front, &input);
+
+  // remove touches for special actions
+  for (int i = TOUCHSEC_SPECIAL_NW, touchIdx = -1; i <= TOUCHSEC_SPECIAL_SE; i++) {
+    unsigned int config_code = special_input_config_code(i);
+    if (config_code && (touchIdx = check_touch_sector(front, i)) != -1) {
+      for (int n = 0, idx = 0; n < front.reportNum; n++) {
+        if (n != touchIdx) {
+          front.report[idx++] = front.report[n];
+        }
+      }
+
+      front.reportNum--;
+    }
+  }
+
+  // mouse
+  switch (front_state) {
+    case NO_TOUCH_ACTION:
+      if (front.reportNum > 0) {
+        front_state = ON_SCREEN_TOUCH;
+        finger_count = front.reportNum;
+        sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+      }
+      break;
+    case ON_SCREEN_TOUCH:
+      if (sceRtcCompareTick(&current, &until) < 0) {
+        if (front.reportNum < finger_count) {
+          // TAP
+          if (mouse_click(front, finger_count, true)) {
+            front_state = SCREEN_TAP;
+            sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+          } else {
+            front_state = NO_TOUCH_ACTION;
+          }
+        } else if (front.reportNum > finger_count) {
+          // finger count changed
+          finger_count = front.reportNum;
+        }
+      } else {
+        front_state = SWIPE_START;
+      }
+      break;
+    case SCREEN_TAP:
+      if (sceRtcCompareTick(&current, &until) >= 0) {
+        mouse_click(front, finger_count, false);
+
+        front_state = NO_TOUCH_ACTION;
+      }
+      break;
+    case SWIPE_START:
+      memcpy(&front_old, &front, sizeof(front_old));
+      front_state = ON_SCREEN_SWIPE;
+      break;
+    case ON_SCREEN_SWIPE:
+      if (front.reportNum > 0) {
+        switch (front.reportNum) {
+          case 1:
+            move_mouse(front_old, front);
+            break;
+          case 2:
+            move_wheel(front_old, front);
+            break;
+        }
+        memcpy(&front_old, &front, sizeof(front_old));
+      } else {
+        front_state = NO_TOUCH_ACTION;
+      }
+      break;
+  }
 
   if (memcmp(&input, &old, sizeof(input_data)) != 0) {
     LiSendControllerEvent(input.button, input.left_trigger, input.right_trigger,

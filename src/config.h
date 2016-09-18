@@ -51,7 +51,6 @@ typedef struct _CONFIGURATION {
   bool fullscreen;
   bool forcehw;
   bool unsupported_version;
-  bool fronttouchscreen_buttons;
   struct touchscreen_deadzone back_deadzone;
   struct special_keys special_keys;
   bool disable_powersave;

@@ -19,6 +19,7 @@
 
 #include <Limelight.h>
 
+#include <stdint.h>
 #include <stdbool.h>
 
 #define MAX_INPUTS 6
@@ -44,6 +45,7 @@ typedef struct _CONFIGURATION {
   char* address;
   char* mapping;
   char* platform;
+  uint32_t model;
   char* config_file;
   char key_dir[4096];
   bool sops;

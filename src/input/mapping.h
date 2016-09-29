@@ -21,8 +21,8 @@
 #include <stdbool.h>
 
 struct mapping {
-  short abs_x, abs_y, abs_z;
-  short abs_rx, abs_ry, abs_rz;
+  uint32_t abs_x, abs_y, abs_z;
+  uint32_t abs_rx, abs_ry, abs_rz;
 
   bool reverse_x, reverse_y;
   bool reverse_rx, reverse_ry;

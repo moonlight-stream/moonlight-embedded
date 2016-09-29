@@ -36,6 +36,7 @@
 
 #include <psp2/net/net.h>
 #include <psp2/sysmodule.h>
+#include <psp2/kernel/sysmem.h>
 
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
@@ -164,9 +165,34 @@ static void move_wheel(SceTouchData old, SceTouchData cur) {
   LiSendScrollEvent(delta_y);
 }
 
-static short pad_value(SceCtrlData pad, int sec) {
+bool check_input(uint32_t identifier, SceCtrlData pad, SceTouchData screen) {
+  uint32_t type = identifier & INPUT_TYPE_MASK;
+  int value = identifier & INPUT_VALUE_MASK;
+
+  switch (type) {
+    case INPUT_TYPE_TOUCHSCREEN:
+      if (value < TOUCHSEC_NORTHWEST || value > TOUCHSEC_SOUTHEAST) {
+        return false;
+      }
+      return check_touch_sector(screen, value) != -1;
+    case INPUT_TYPE_GAMEPAD:
+      return pad.buttons & value;
+  }
+  return false;
+}
+
+static short pad_analog_value(uint32_t identifier, SceCtrlData pad, SceTouchData screen) {
   unsigned char value = 0;
-  switch (sec) {
+
+  if ((identifier & INPUT_TYPE_MASK) != INPUT_TYPE_ANALOG) {
+    return check_input(identifier, pad, screen) ? 0xff : 0;
+  }
+
+  switch (identifier & INPUT_VALUE_MASK) {
+    case LEFT_TRIGGER:
+      return pad.lt;
+    case RIGHT_TRIGGER:
+      return pad.rt;
     case LEFTX:
       value = pad.lx;
       break;
@@ -182,22 +208,6 @@ static short pad_value(SceCtrlData pad, int sec) {
   }
 
   return (short) (value * 256 - (1 << 15) + 128);
-}
-
-bool check_input(uint32_t identifier, SceCtrlData pad, SceTouchData screen) {
-  uint32_t type = identifier & INPUT_TYPE_MASK;
-  int value = identifier & INPUT_VALUE_MASK;
-
-  switch (type) {
-    case INPUT_TYPE_TOUCHSCREEN:
-      if (value < TOUCHSEC_NORTHWEST || value > TOUCHSEC_SOUTHEAST) {
-        return false;
-      }
-      return check_touch_sector(screen, value) != -1;
-    case INPUT_TYPE_GAMEPAD:
-      return pad.buttons & value;
-  }
-  return false;
 }
 
 static int special_input_config_code(short identifier) {
@@ -237,7 +247,7 @@ static void special_input(SceTouchData screen, input_data *input) {
           special_input_status[idx] = true;
           LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, code);
           break;
-        case INPUT_TYPE_AXIS:
+        case INPUT_TYPE_ANALOG:
           switch (code) {
             case LEFT_TRIGGER:
               input->left_trigger = 0xff;
@@ -267,8 +277,8 @@ static void special_input(SceTouchData screen, input_data *input) {
   }
 }
 
-#define CHECK_INPUT(id) check_input((id), pad, back)
-#define INPUT(id, flag) if (check_input((id), pad, back)) input.button |= (flag);
+#define INPUT_BUTTON(id, flag)  if (check_input((id), pad, back)) input.button |= (flag);
+#define INPUT_ANALOG(id)        pad_analog_value((id), pad, back)
 
 static SceCtrlData pad;
 static SceTouchData front;
@@ -283,11 +293,13 @@ static SceRtcTick current, until;
 static int special_status;
 
 static input_data old;
+static int controller_port;
 
 void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
 
-  sceCtrlPeekBufferPositive(0, &pad, 1);
+  sceCtrlReadBufferPositiveExt2(controller_port, &pad, 1);
+
   sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
   sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
   sceRtcGetCurrentTick(&current);
@@ -295,33 +307,33 @@ void vitainput_process(void) {
   input_data input = {0};
 
   // buttons
-  INPUT(map.btn_dpad_up,    UP_FLAG);
-  INPUT(map.btn_dpad_left,  LEFT_FLAG);
-  INPUT(map.btn_dpad_down,  DOWN_FLAG);
-  INPUT(map.btn_dpad_right, RIGHT_FLAG);
+  INPUT_BUTTON(map.btn_dpad_up,     UP_FLAG);
+  INPUT_BUTTON(map.btn_dpad_left,   LEFT_FLAG);
+  INPUT_BUTTON(map.btn_dpad_down,   DOWN_FLAG);
+  INPUT_BUTTON(map.btn_dpad_right,  RIGHT_FLAG);
 
-  INPUT(map.btn_start,      PLAY_FLAG);
-  INPUT(map.btn_select,     BACK_FLAG);
+  INPUT_BUTTON(map.btn_start,       PLAY_FLAG);
+  INPUT_BUTTON(map.btn_select,      BACK_FLAG);
 
-  INPUT(map.btn_north,      Y_FLAG);
-  INPUT(map.btn_east,       B_FLAG);
-  INPUT(map.btn_south,      A_FLAG);
-  INPUT(map.btn_west,       X_FLAG);
+  INPUT_BUTTON(map.btn_north,       Y_FLAG);
+  INPUT_BUTTON(map.btn_east,        B_FLAG);
+  INPUT_BUTTON(map.btn_south,       A_FLAG);
+  INPUT_BUTTON(map.btn_west,        X_FLAG);
 
-  INPUT(map.btn_tl2,        LS_CLK_FLAG);
-  INPUT(map.btn_tr2,        RS_CLK_FLAG);
+  INPUT_BUTTON(map.btn_tl2,         LS_CLK_FLAG);
+  INPUT_BUTTON(map.btn_tr2,         RS_CLK_FLAG);
 
-  INPUT(map.btn_thumbl,     LB_FLAG);
-  INPUT(map.btn_thumbr,     RB_FLAG);
+  INPUT_BUTTON(map.btn_thumbl,      LB_FLAG);
+  INPUT_BUTTON(map.btn_thumbr,      RB_FLAG);
 
-  // AXIS
-  input.left_trigger  = CHECK_INPUT(map.btn_tl) ? 0xff : 0;
-  input.right_trigger = CHECK_INPUT(map.btn_tr) ? 0xff : 0;
+  // ANALOG
+  input.left_trigger  = INPUT_ANALOG(map.btn_tl);
+  input.right_trigger = INPUT_ANALOG(map.btn_tr);
 
-  input.lx = pad_value(pad, map.abs_x),
-  input.ly = pad_value(pad, map.abs_y),
-  input.rx = pad_value(pad, map.abs_rx),
-  input.ry = pad_value(pad, map.abs_ry);
+  input.lx            = INPUT_ANALOG(map.abs_x);
+  input.ly            = INPUT_ANALOG(map.abs_y);
+  input.rx            = INPUT_ANALOG(map.abs_rx);
+  input.ry            = INPUT_ANALOG(map.abs_ry);
 
   // special touchscreen buttons
   special_input(front, &input);
@@ -429,7 +441,7 @@ int vitainput_thread(SceSize args, void *argp) {
 }
 
 bool vitainput_init() {
-  sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
+  sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
@@ -443,28 +455,37 @@ bool vitainput_init() {
 }
 
 void vitainput_config(CONFIGURATION config) {
-  map.abs_x = 0;
-  map.abs_y = 1;
-  map.abs_rx = 2;
-  map.abs_ry = 3;
+  map.abs_x           = LEFTX               | INPUT_TYPE_ANALOG;
+  map.abs_y           = LEFTY               | INPUT_TYPE_ANALOG;
+  map.abs_rx          = RIGHTX              | INPUT_TYPE_ANALOG;
+  map.abs_ry          = RIGHTY              | INPUT_TYPE_ANALOG;
 
-  map.btn_south       = SCE_CTRL_CROSS      | INPUT_TYPE_GAMEPAD;
-  map.btn_east        = SCE_CTRL_CIRCLE     | INPUT_TYPE_GAMEPAD;
-  map.btn_north       = SCE_CTRL_TRIANGLE   | INPUT_TYPE_GAMEPAD;
-  map.btn_west        = SCE_CTRL_SQUARE     | INPUT_TYPE_GAMEPAD;
-  map.btn_select      = SCE_CTRL_SELECT     | INPUT_TYPE_GAMEPAD;
-  map.btn_start       = SCE_CTRL_START      | INPUT_TYPE_GAMEPAD;
-  map.btn_thumbl      = SCE_CTRL_LTRIGGER   | INPUT_TYPE_GAMEPAD;
-  map.btn_thumbr      = SCE_CTRL_RTRIGGER   | INPUT_TYPE_GAMEPAD;
   map.btn_dpad_up     = SCE_CTRL_UP         | INPUT_TYPE_GAMEPAD;
   map.btn_dpad_down   = SCE_CTRL_DOWN       | INPUT_TYPE_GAMEPAD;
   map.btn_dpad_left   = SCE_CTRL_LEFT       | INPUT_TYPE_GAMEPAD;
   map.btn_dpad_right  = SCE_CTRL_RIGHT      | INPUT_TYPE_GAMEPAD;
+  map.btn_south       = SCE_CTRL_CROSS      | INPUT_TYPE_GAMEPAD;
+  map.btn_east        = SCE_CTRL_CIRCLE     | INPUT_TYPE_GAMEPAD;
+  map.btn_north       = SCE_CTRL_TRIANGLE   | INPUT_TYPE_GAMEPAD;
+  map.btn_west        = SCE_CTRL_SQUARE     | INPUT_TYPE_GAMEPAD;
 
-  map.btn_tl          = TOUCHSEC_NORTHWEST  | INPUT_TYPE_TOUCHSCREEN;
-  map.btn_tr          = TOUCHSEC_NORTHEAST  | INPUT_TYPE_TOUCHSCREEN;
-  map.btn_tl2         = TOUCHSEC_SOUTHWEST  | INPUT_TYPE_TOUCHSCREEN;
-  map.btn_tr2         = TOUCHSEC_SOUTHEAST  | INPUT_TYPE_TOUCHSCREEN;
+  map.btn_select      = SCE_CTRL_SELECT     | INPUT_TYPE_GAMEPAD;
+  map.btn_start       = SCE_CTRL_START      | INPUT_TYPE_GAMEPAD;
+
+  map.btn_thumbl      = SCE_CTRL_L1         | INPUT_TYPE_GAMEPAD;
+  map.btn_thumbr      = SCE_CTRL_R1         | INPUT_TYPE_GAMEPAD;
+
+  if (config.model == SCE_KERNEL_MODEL_VITATV) {
+    map.btn_tl        = LEFT_TRIGGER        | INPUT_TYPE_ANALOG;
+    map.btn_tr        = RIGHT_TRIGGER       | INPUT_TYPE_ANALOG;
+    map.btn_tl2       = SCE_CTRL_L3         | INPUT_TYPE_GAMEPAD;
+    map.btn_tr2       = SCE_CTRL_R3         | INPUT_TYPE_GAMEPAD;
+  } else {
+    map.btn_tl        = TOUCHSEC_NORTHWEST  | INPUT_TYPE_TOUCHSCREEN;
+    map.btn_tr        = TOUCHSEC_NORTHEAST  | INPUT_TYPE_TOUCHSCREEN;
+    map.btn_tl2       = TOUCHSEC_SOUTHWEST  | INPUT_TYPE_TOUCHSCREEN;
+    map.btn_tr2       = TOUCHSEC_SOUTHEAST  | INPUT_TYPE_TOUCHSCREEN;
+  }
 
   if (config.mapping) {
     char config_path[256];
@@ -472,6 +493,8 @@ void vitainput_config(CONFIGURATION config) {
     printf("Loading mapping at %s\n", config_path);
     mapping_load(config_path, &map);
   }
+
+  controller_port = config.model == SCE_KERNEL_MODEL_VITATV ? 1 : 0;
 }
 
 void vitainput_start(void) {

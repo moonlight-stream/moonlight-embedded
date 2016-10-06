@@ -1,3 +1,9 @@
+moonlight-embedded (2.2.2-1wheezy1) RELEASED; urgency=medium
+
+  * Update to version 2.2.2
+
+ -- Iwan Timmer <irtimmer@gmail.com>  Thu, 06 Oct 2016 17:39:56 +0200
+
 moonlight-embedded (2.2.2-1jessie1) RELEASED; urgency=medium
 
   * Update to version 2.2.2

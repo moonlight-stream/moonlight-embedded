@@ -178,7 +178,6 @@ static int load_server_status(PSERVER_DATA server) {
   do {
     char *pairedText = NULL;
     char *currentGameText = NULL;
-    char *versionText = NULL;
     char *stateText = NULL;
     char *heightText = NULL;
     char *serverCodecModeSupportText = NULL;
@@ -193,7 +192,7 @@ static int load_server_status(PSERVER_DATA server) {
     // make another request over HTTP if the HTTPS request fails. We can't just use HTTP
     // for everything because it doesn't accurately tell us if we're paired.
     sprintf(url, "%s://%s:%d/serverinfo?uniqueid=%s&uuid=%s",
-      i == 0 ? "https" : "http", server->address, i == 0 ? 47984 : 47989, unique_id, uuid_str);
+      i == 0 ? "https" : "http", server->serverInfo.address, i == 0 ? 47984 : 47989, unique_id, uuid_str);
 
     PHTTP_DATA data = http_create_data();
     if (data == NULL) {
@@ -212,7 +211,7 @@ static int load_server_status(PSERVER_DATA server) {
     if (xml_search(data->memory, data->size, "PairStatus", &pairedText) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "appversion", &versionText) != GS_OK)
+    if (xml_search(data->memory, data->size, "appversion", (char**) &server->serverInfo.serverInfoAppVersion) != GS_OK)
       goto cleanup;
 
     if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
@@ -227,17 +226,18 @@ static int load_server_status(PSERVER_DATA server) {
     if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "GfeVersion", &server->gfeVersion) != GS_OK)
+    if (xml_search(data->memory, data->size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)
       goto cleanup;
 
     // These fields are present on all version of GFE that this client supports
-    if (!strlen(currentGameText) || !strlen(pairedText) || !strlen(versionText) || !strlen(stateText))
+    if (!strlen(currentGameText) || !strlen(pairedText) || !strlen(server->serverInfo.serverInfoAppVersion) || !strlen(stateText))
       goto cleanup;
 
     server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
     server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
     server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
-    server->serverMajorVersion = atoi(versionText);
+    server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
+
     if (strstr(stateText, "_SERVER_AVAILABLE")) {
       // After GFE 2.8, current game remains set even after streaming
       // has ended. We emulate the old behavior by forcing it to zero
@@ -255,9 +255,6 @@ static int load_server_status(PSERVER_DATA server) {
 
     if (currentGameText != NULL)
       free(currentGameText);
-
-    if (versionText != NULL)
-      free(versionText);
 
     if (heightText != NULL)
       free(heightText);
@@ -374,7 +371,7 @@ int gs_unpair(PSERVER_DATA server) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "http://%s:47989/unpair?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
+  sprintf(url, "http://%s:47989/unpair?uniqueid=%s&uuid=%s", server->serverInfo.address, unique_id, uuid_str);
   ret = http_request(url, data);
 
   http_free_data(data);
@@ -405,7 +402,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->address, unique_id, uuid_str, salt_hex, cert_hex);
+  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->serverInfo.address, unique_id, uuid_str, salt_hex, cert_hex);
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
@@ -463,7 +460,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->address, unique_id, uuid_str, challenge_hex);
+  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->serverInfo.address, unique_id, uuid_str, challenge_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -517,7 +514,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->address, unique_id, uuid_str, challenge_response_hex);
+  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->serverInfo.address, unique_id, uuid_str, challenge_response_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -566,7 +563,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->address, unique_id, uuid_str, client_pairing_secret_hex);
+  sprintf(url, "http://%s:47989/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->serverInfo.address, unique_id, uuid_str, client_pairing_secret_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -583,7 +580,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->address, unique_id, uuid_str);
+  sprintf(url, "https://%s:47984/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->serverInfo.address, unique_id, uuid_str);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -623,7 +620,7 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "https://%s:47984/applist?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
+  sprintf(url, "https://%s:47984/applist?uniqueid=%s&uuid=%s", server->serverInfo.address, unique_id, uuid_str);
   if (http_request(url, data) != GS_OK)
     ret = GS_IO_ERROR;
   else if (xml_applist(data->memory, data->size, list) != GS_OK)
@@ -660,9 +657,9 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (server->currentGame == 0) {
     int channelCounnt = config->audioConfiguration == AUDIO_CONFIGURATION_STEREO ? CHANNEL_COUNT_STEREO : CHANNEL_COUNT_51_SURROUND;
     int mask = config->audioConfiguration == AUDIO_CONFIGURATION_STEREO ? CHANNEL_MASK_STEREO : CHANNEL_MASK_51_SURROUND;
-    sprintf(url, "https://%s:47984/launch?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d", server->address, unique_id, uuid_str, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio, (mask << 16) + channelCounnt);
+    sprintf(url, "https://%s:47984/launch?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d", server->serverInfo.address, unique_id, uuid_str, appId, config->width, config->height, config->fps, sops, rikey_hex, rikeyid, localaudio, (mask << 16) + channelCounnt);
   } else
-    sprintf(url, "https://%s:47984/resume?uniqueid=%s&uuid=%s&rikey=%s&rikeyid=%d", server->address, unique_id, uuid_str, rikey_hex, rikeyid);
+    sprintf(url, "https://%s:47984/resume?uniqueid=%s&uuid=%s&rikey=%s&rikeyid=%d", server->serverInfo.address, unique_id, uuid_str, rikey_hex, rikeyid);
 
   if ((ret = http_request(url, data)) == GS_OK)
     server->currentGame = appId;
@@ -697,7 +694,7 @@ int gs_quit_app(PSERVER_DATA server) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  sprintf(url, "https://%s:47984/cancel?uniqueid=%s&uuid=%s", server->address, unique_id, uuid_str);
+  sprintf(url, "https://%s:47984/cancel?uniqueid=%s&uuid=%s", server->serverInfo.address, unique_id, uuid_str);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -717,7 +714,7 @@ int gs_quit_app(PSERVER_DATA server) {
   return ret;
 }
 
-int gs_init(PSERVER_DATA server, const char *keyDirectory) {
+int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory) {
   mkdirtree(keyDirectory);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
@@ -726,5 +723,8 @@ int gs_init(PSERVER_DATA server, const char *keyDirectory) {
     return GS_FAILED;
 
   http_init(keyDirectory);
+
+  LiInitializeServerInformation(&server->serverInfo);
+  server->serverInfo.address = address;
   return load_server_status(server);
 }

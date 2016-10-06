@@ -77,7 +77,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
         uname(&name);
         int ret = sscanf(name.release, "%d.%d", &major, &minor);
         if (!(major > 3 || (major == 3 && minor >= 14)) && width == 1920 && height == 1080)
-            codecParam.am_sysinfo.param = UCODE_IP_ONLY_PARAM;
+            codecParam.am_sysinfo.param = (void*) UCODE_IP_ONLY_PARAM;
       }
       break;
     case VIDEO_FORMAT_H265:
@@ -92,7 +92,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   codecParam.am_sysinfo.width = width;
   codecParam.am_sysinfo.height = height;
   codecParam.am_sysinfo.rate = 96000 / redrawRate;
-  codecParam.am_sysinfo.param |= SYNC_OUTSIDE;
+  codecParam.am_sysinfo.param = (void*) ((size_t) codecParam.am_sysinfo.param | SYNC_OUTSIDE);
 
   int api = codec_init(&codecParam);
   if (api != 0) {

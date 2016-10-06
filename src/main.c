@@ -100,7 +100,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     drFlags |= FORCE_HARDWARE_ACCELERATION;
 
   printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-  LiStartConnection(server->address, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags, server->serverMajorVersion);
+  LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags);
 
   if (IS_EMBEDDED(system)) {
     evdev_start();
@@ -217,11 +217,10 @@ int main(int argc, char* argv[]) {
     config_file_parse(host_config_file, &config);
 
   SERVER_DATA server;
-  server.address = config.address;
-  printf("Connect to %s...\n", server.address);
+  printf("Connect to %s...\n", config.address);
 
   int ret;
-  if ((ret = gs_init(&server, config.key_dir)) == GS_OUT_OF_MEMORY) {
+  if ((ret = gs_init(&server, config.address, config.key_dir)) == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
     exit(-1);
   } else if (ret == GS_INVALID) {
@@ -237,7 +236,7 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
-  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.gfeVersion, server.serverMajorVersion);
+  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.serverMajorVersion);
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);

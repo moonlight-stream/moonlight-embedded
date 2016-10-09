@@ -6,7 +6,7 @@ This is a vita port.
 
 ## OpenSSL
 
-https://github.com/xyzz/vita-openssl branch `vita-1_0_2`
+https://github.com/d3m3vilurr/vita-openssl branch `vita-1_0_2`
 
 ```
 ./Configure no-threads --prefix=$VITASDK/arm-vita-eabi/ vita-cross
@@ -17,12 +17,12 @@ make install
 
 ## curl
 
-https://github.com/xyzz/vita-curl branch `vita`
+https://github.com/d3m3vilurr/vita-curl branch `vita`
 
 
 ```
 ./buildconf
-./configure --host=arm-vita-eabi --with-ssl=$VITASDK/arm-vita-eabi/ --disable-shared --disable-ftp --disable-ldap --disable-imap --disable-ipv6 --disable-rtsp --disable-dict --disable-file --disable-gopher --disable-pop3 --disable-smtp --disable-telnet --disable-tftp --enable-https --disable-smb --disable-smbs --prefix=$VITASDK/arm-vita-eabi/
+cp lib/config-vita.h lib/curl_config.h
 make -j8
 make install
 ```

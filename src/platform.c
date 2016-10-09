@@ -131,10 +131,6 @@ bool platform_supports_hevc(enum platform system) {
 }
 
 #ifdef __vita__
-int shutdown(int s, int how) {
-  return sceNetShutdown(s, how);
-}
-
 int chmod(const char *path, mode_t mode) {
   return 0;
 }

@@ -31,14 +31,14 @@
 typedef struct _SERVER_DATA {
   const char* address;
   char* gpuType;
-  char* gfeVersion;
   bool paired;
   bool supports4K;
   int currentGame;
   int serverMajorVersion;
+  SERVER_INFORMATION serverInfo;
 } SERVER_DATA, *PSERVER_DATA;
 
-int gs_init(PSERVER_DATA server, const char *keyDirectory);
+int gs_init(PSERVER_DATA server, char* address, const char *keyDirectory);
 int gs_start_app(PSERVER_DATA server, PSTREAM_CONFIGURATION config, int appId, bool sops, bool localaudio);
 int gs_applist(PSERVER_DATA server, PAPP_LIST *app_list);
 int gs_unpair(PSERVER_DATA server);

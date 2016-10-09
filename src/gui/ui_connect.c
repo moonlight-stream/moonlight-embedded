@@ -72,14 +72,13 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
     drFlags |= FORCE_HARDWARE_ACCELERATION;
 
   ret = LiStartConnection(
-      server->address,
+      &server->serverInfo,
       &config.stream,
       &connection_callbacks,
       platform_get_video(system),
       platform_get_audio(system),
       NULL,
-      drFlags,
-      server->serverMajorVersion
+      drFlags
       );
 
   if (ret == 0) {
@@ -185,16 +184,13 @@ int ui_connect_loop(int id, void *context) {
 
 int ui_connect(char *address) {
   if (!server_connected) {
-    server.address = malloc(sizeof(char)*256);
-    strcpy(server.address, address);
-
-    flash_message("Connecting to:\n %s...", server.address);
-    int ret = gs_init(&server, config.key_dir);
+    flash_message("Connecting to:\n %s...", address);
+    int ret = gs_init(&server, address, config.key_dir);
     if (ret == GS_OUT_OF_MEMORY) {
       display_error("Not enough memory");
       return 0;
     } else if (ret == GS_INVALID) {
-      display_error("Invalid data received from server: %s\n", config.address, gs_error);
+      display_error("Invalid data received from server: %s\n", address, gs_error);
       return 0;
     } else if (ret == GS_UNSUPPORTED_VERSION) {
       if (!config.unsupported_version) {
@@ -202,7 +198,7 @@ int ui_connect(char *address) {
         return 0;
       }
     } else if (ret != GS_OK) {
-      display_error("Can't connect to server\n%s", config.address);
+      display_error("Can't connect to server\n%s", address);
       return 0;
     }
 

@@ -15,6 +15,7 @@ include_directories(
 	third_party/libuuid/src/
 	third_party/h264bitstream/
 	third_party/enet/include/
+	third_party/inih/
 )
 
 add_executable(${PROJECT_NAME}.elf
@@ -84,6 +85,8 @@ add_executable(${PROJECT_NAME}.elf
 	third_party/enet/peer.c
 	third_party/enet/protocol.c
 	third_party/enet/vita.c
+
+	third_party/inih/ini.c
 )
 
 target_link_libraries(${PROJECT_NAME}.elf

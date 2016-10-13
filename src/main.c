@@ -160,7 +160,6 @@ int main(int argc, char* argv[]) {
   sceIoMkdir("ux0:/data/moonlight", 0777);
   config_path = "ux0:data/moonlight/moonlight.conf";
   config_parse(argc, argv, &config);
-  config.platform = "vita";
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
   vitapower_config(config);

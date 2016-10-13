@@ -211,7 +211,17 @@ int ui_connect(char *address) {
     server_connected = true;
   }
 
-  struct menu_entry menu[48];
+  int app_count = 0;
+  if (server_applist != NULL) {
+    PAPP_LIST list = server_applist;
+    while (list) {
+      list = list->next;
+      app_count += 1;
+    }
+  }
+
+  // current menu = 11 + app_count. but little more alloc ;)
+  struct menu_entry menu[app_count + 16];
 
   int idx = 0;
 
@@ -257,7 +267,7 @@ int ui_connect(char *address) {
     }
   }
 
-  assert(idx < 48);
+  //assert(idx < 48);
   return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, NULL);
 }
 

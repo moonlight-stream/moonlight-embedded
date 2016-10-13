@@ -297,5 +297,5 @@ bool ui_connect_connected() {
 }
 
 void ui_connect_address(char *addr) {
-  strcpy(addr, server.address);
+  strcpy(addr, server.serverInfo.address);
 }

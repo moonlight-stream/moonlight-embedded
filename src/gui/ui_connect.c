@@ -270,6 +270,8 @@ void ui_connect_ip() {
   switch (ime_dialog(&ip, "Enter IP:", "192.168.")) {
     case 0:
       server_connected = false;
+      if (config.address)
+        free(config.address);
       config.address = malloc(sizeof(char) * strlen(ip));
       strcpy(config.address, ip);
       ui_settings_save_config();

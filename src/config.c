@@ -30,6 +30,8 @@
 #include "graphics.h"
 #include "input/vita.h"
 
+#include <psp2/kernel/sysmem.h>
+
 #define MOONLIGHT_PATH "/moonlight"
 #define USER_PATHS "."
 #define DEFAULT_CONFIG_DIR "/.config"
@@ -226,6 +228,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->localaudio = BOOL(value);
     } else if (strcmp(name, "disable_powersave") == 0) {
       config->disable_powersave = BOOL(value);
+    } else if (strcmp(name, "mapping") == 0) {
+      config->mapping = STR(value);
     }
   }
 }
@@ -297,6 +301,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.supportsHevc = false;
 
   config->platform = "vita";
+  config->model = sceKernelGetModelForCDialog();
   config->app = "Steam";
   config->action = NULL;
   config->address = NULL;

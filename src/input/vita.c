@@ -166,14 +166,14 @@ inline uint8_t read_backscreen() {
       }
     }
 
-    if (touch.button & TOUCHSEC_SOUTHWEST) {
+    if ((touch.button & TOUCHSEC_SOUTHWEST) == 0) {
       if (IN_SECTION(BACK_SECTIONS[2], x, y)) {
         touch.button |= TOUCHSEC_SOUTHWEST;
         continue;
       }
     }
 
-    if (touch.button & TOUCHSEC_SOUTHEAST) {
+    if ((touch.button & TOUCHSEC_SOUTHEAST) == 0) {
       if (IN_SECTION(BACK_SECTIONS[3], x, y)) {
         touch.button |= TOUCHSEC_SOUTHEAST;
         continue;
@@ -203,14 +203,14 @@ inline uint8_t read_frontscreen() {
       }
     }
 
-    if (touch.button & TOUCHSEC_SPECIAL_SW) {
+    if ((touch.button & TOUCHSEC_SPECIAL_SW) == 0) {
       if (IN_SECTION(FRONT_SECTIONS[2], x, y)) {
         touch.button |= TOUCHSEC_SPECIAL_SW;
         continue;
       }
     }
 
-    if (touch.button & TOUCHSEC_SPECIAL_SE) {
+    if ((touch.button & TOUCHSEC_SPECIAL_SE) == 0) {
       if (IN_SECTION(FRONT_SECTIONS[3], x, y)) {
         touch.button |= TOUCHSEC_SPECIAL_SE;
         continue;
@@ -341,6 +341,7 @@ inline void vitainput_process(void) {
   memset(&touch, 0, sizeof(TouchData));
   memset(&curr, 0, sizeof(input_data));
 
+  sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceCtrlReadBufferPositiveExt2(controller_port, &pad, 1);
 
   sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
@@ -382,8 +383,8 @@ inline void vitainput_process(void) {
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE));
   special(config.special_keys.sw,
-          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW),
-          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW));
+          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW),
+          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW));
   special(config.special_keys.se,
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
@@ -473,7 +474,7 @@ bool vitainput_init() {
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
-  SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0x10000100, 0x40000, 0, 0, NULL);
+  SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0, 0x40000, 0, 0, NULL);
   if (thid >= 0) {
     sceKernelStartThread(thid, 0, NULL);
     return true;

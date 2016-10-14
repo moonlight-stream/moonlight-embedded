@@ -443,9 +443,10 @@ static int settings_loop(int id, void *context) {
       if (was_button_pressed(SCE_CTRL_CROSS)) {
         did_change = 1;
         if (config.mapping) {
+          free(config.mapping);
           config.mapping = 0;
         } else {
-          config.mapping = "mappings/vita.conf";
+          config.mapping = strdup("mappings/vita.conf");
         }
       } break;
     case SETTINGS_BACK_DEADZONE:

@@ -203,14 +203,14 @@ inline uint8_t read_frontscreen() {
       }
     }
 
-    if (touch.button & TOUCHSEC_SPECIAL_SW) {
+    if ((touch.button & TOUCHSEC_SPECIAL_SW) == 0) {
       if (IN_SECTION(FRONT_SECTIONS[2], x, y)) {
         touch.button |= TOUCHSEC_SPECIAL_SW;
         continue;
       }
     }
 
-    if (touch.button & TOUCHSEC_SPECIAL_SE) {
+    if ((touch.button & TOUCHSEC_SPECIAL_SE) == 0) {
       if (IN_SECTION(FRONT_SECTIONS[3], x, y)) {
         touch.button |= TOUCHSEC_SPECIAL_SE;
         continue;
@@ -382,8 +382,8 @@ inline void vitainput_process(void) {
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE));
   special(config.special_keys.sw,
-          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW),
-          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW));
+          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW),
+          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW));
   special(config.special_keys.se,
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));

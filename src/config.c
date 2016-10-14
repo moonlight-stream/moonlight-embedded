@@ -30,6 +30,8 @@
 #include "graphics.h"
 #include "input/vita.h"
 
+#include <psp2/kernel/sysmem.h>
+
 #define MOONLIGHT_PATH "/moonlight"
 #define USER_PATHS "."
 #define DEFAULT_CONFIG_DIR "/.config"
@@ -297,6 +299,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.supportsHevc = false;
 
   config->platform = "vita";
+  config->model = sceKernelGetModelForCDialog();
   config->app = "Steam";
   config->action = NULL;
   config->address = NULL;

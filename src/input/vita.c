@@ -166,14 +166,14 @@ inline uint8_t read_backscreen() {
       }
     }
 
-    if (touch.button & TOUCHSEC_SOUTHWEST) {
+    if ((touch.button & TOUCHSEC_SOUTHWEST) == 0) {
       if (IN_SECTION(BACK_SECTIONS[2], x, y)) {
         touch.button |= TOUCHSEC_SOUTHWEST;
         continue;
       }
     }
 
-    if (touch.button & TOUCHSEC_SOUTHEAST) {
+    if ((touch.button & TOUCHSEC_SOUTHEAST) == 0) {
       if (IN_SECTION(BACK_SECTIONS[3], x, y)) {
         touch.button |= TOUCHSEC_SOUTHEAST;
         continue;

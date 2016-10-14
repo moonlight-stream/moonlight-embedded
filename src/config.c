@@ -218,6 +218,8 @@ static int ini_handle(void *out, const char *section, const char *name,
   } else {
     if (strcmp(name, "address") == 0) {
       config->address = STR(value);
+    } else if (strcmp(name, "bitrate") == 0) {
+      config->stream.bitrate = INT(value);
     } else if (strcmp(name, "sops") == 0) {
       config->sops = BOOL(value);
     } else if (strcmp(name, "localaudio") == 0) {

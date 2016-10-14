@@ -341,6 +341,7 @@ inline void vitainput_process(void) {
   memset(&touch, 0, sizeof(TouchData));
   memset(&curr, 0, sizeof(input_data));
 
+  sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceCtrlReadBufferPositiveExt2(controller_port, &pad, 1);
 
   sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);

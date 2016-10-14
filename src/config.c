@@ -228,6 +228,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->localaudio = BOOL(value);
     } else if (strcmp(name, "disable_powersave") == 0) {
       config->disable_powersave = BOOL(value);
+    } else if (strcmp(name, "mapping") == 0) {
+      config->mapping = STR(value);
     }
   }
 }

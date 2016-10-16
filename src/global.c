@@ -17,11 +17,30 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdarg.h>
 #include <signal.h>
 #include <pthread.h>
+
+#include "config.h"
 
 // pthread_t main_thread_id;
 
 void quit() {
   // pthread_kill(main_thread_id, SIGTERM);
+}
+
+void DEBUG_PRINT(const char *s, ...) {
+  if (!config.save_debug_log) {
+    return;
+  }
+
+  va_list va;
+  char buffer[1024];
+
+  va_start(va, s);
+  vsprintf(buffer, s, va);
+  va_end(va);
+
+  fprintf(config.log_file, buffer);
+  fflush(config.log_file);
 }

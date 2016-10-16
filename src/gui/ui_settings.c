@@ -340,20 +340,26 @@ enum {
   SETTINGS_RESOLUTION = 100,
   SETTINGS_FPS,
   SETTINGS_BITRATE,
+  SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_ENABLE_MAPPING,
   SETTINGS_BACK_DEADZONE,
   SETTINGS_SPECIAL_KEYS
 };
 
+
 enum {
-  SETTINGS_VIEW_RESOLUTION = 1,
+  SETTINGS_VIEW_RESOLUTION,
   SETTINGS_VIEW_FPS,
   SETTINGS_VIEW_BITRATE,
-  SETTINGS_VIEW_DISABLE_POWERSAVE = 5,
+  SETTINGS_VIEW_SAVE_DEBUG_LOG,
+  SETTINGS_VIEW_DISABLE_POWERSAVE,
   SETTINGS_VIEW_ENABLE_MAPPING,
-  SETTINGS_VIEW_BACK_DEADZONE = 9
+  SETTINGS_VIEW_BACK_DEADZONE,
+  SETTINGS_VIEW_SPECIAL_KEYS,
 };
+
+static int SETTINGS_VIEW_IDX[8];
 
 static int move_idx_in_array(char *array[], int count, char *find, int index_dist) {
   int i = 0;
@@ -434,6 +440,11 @@ static int settings_loop(int id, void *context) {
           }
         }
       } break;
+    case SETTINGS_SAVE_DEBUG_LOG:
+      if (was_button_pressed(SCE_CTRL_CROSS)) {
+        did_change = 1;
+        config.save_debug_log = !config.save_debug_log;
+      } break;
     case SETTINGS_DISABLE_POWERSAVE:
       if (was_button_pressed(SCE_CTRL_CROSS)) {
         did_change = 1;
@@ -464,20 +475,26 @@ static int settings_loop(int id, void *context) {
     settings_loop_setup = 0;
     char current[256];
 
+#define MENU_REPLACE(ID, MESSAGE) \
+    strcpy(menu[SETTINGS_VIEW_IDX[(ID)]].subname, (MESSAGE))
+
     sprintf(current, "%dx%d", config.stream.width, config.stream.height);
-    strcpy(menu[SETTINGS_VIEW_RESOLUTION].subname, current);
+    MENU_REPLACE(SETTINGS_VIEW_RESOLUTION, current);
 
     sprintf(current, "%d", config.stream.fps);
-    strcpy(menu[SETTINGS_VIEW_FPS].subname, current);
+    MENU_REPLACE(SETTINGS_VIEW_FPS, current);
 
     sprintf(current, "%d", config.stream.bitrate);
-    strcpy(menu[SETTINGS_VIEW_BITRATE].subname, current);
+    MENU_REPLACE(SETTINGS_VIEW_BITRATE, current);
 
     sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
-    strcpy(menu[SETTINGS_VIEW_DISABLE_POWERSAVE].subname, current);
+    MENU_REPLACE(SETTINGS_VIEW_DISABLE_POWERSAVE, current);
+
+    sprintf(current, "%s", config.save_debug_log ? "yes" : "no");
+    MENU_REPLACE(SETTINGS_VIEW_SAVE_DEBUG_LOG, current);
 
     sprintf(current, "%s", config.mapping != 0 ? "yes" : "no");
-    strcpy(menu[SETTINGS_VIEW_ENABLE_MAPPING].subname, current);
+    MENU_REPLACE(SETTINGS_VIEW_ENABLE_MAPPING, current);
 
     sprintf(
         current,
@@ -486,7 +503,7 @@ static int settings_loop(int id, void *context) {
         config.back_deadzone.right,
         config.back_deadzone.bottom,
         config.back_deadzone.left);
-    strcpy(menu[SETTINGS_VIEW_BACK_DEADZONE].subname, current);
+    MENU_REPLACE(SETTINGS_VIEW_BACK_DEADZONE, current);
   }
 
   return 0;
@@ -500,20 +517,38 @@ static int settings_back(void *context) {
 int ui_settings_menu() {
   struct menu_entry menu[32];
   int idx = 0;
-  menu[idx++] = (struct menu_entry) { .name = "Stream", .disabled = true, .separator = true };
-  idx++; menu[SETTINGS_VIEW_RESOLUTION] = (struct menu_entry) { .name = "Resolution", .id = SETTINGS_RESOLUTION, .suffix = "←→"};
-  idx++; menu[SETTINGS_VIEW_FPS] = (struct menu_entry) { .name = "FPS", .id = SETTINGS_FPS, .suffix = "←→" };
-  idx++; menu[SETTINGS_VIEW_BITRATE] = (struct menu_entry) { .name = "Bitrate", .id = SETTINGS_BITRATE };
+#define MENU_CATEGORY(NAME) \
+  do { \
+    menu[idx] = (struct menu_entry) { .name = (NAME), .disabled = true, .separator = true }; \
+    idx++; \
+  } while (0)
+#define MENU_ENTRY(ID, TAG, NAME, SUFFIX) \
+  do { \
+    menu[idx] = (struct menu_entry) { .name = (NAME), .id = (ID), .suffix = (SUFFIX) }; \
+    SETTINGS_VIEW_IDX[(TAG)] = idx; \
+    idx++; \
+  } while(0)
+#define MENU_MESSAGE(MESSAGE) \
+  do { \
+    menu[idx] = (struct menu_entry) { .name = "", .disabled = true, .subname = (MESSAGE) }; \
+    idx++; \
+  } while(0)
 
-  // ---------
-  menu[idx++] = (struct menu_entry) { .name = "Input", .disabled = true, .separator = true };
-  idx++; menu[SETTINGS_VIEW_DISABLE_POWERSAVE] = (struct menu_entry) { .name = "Disable power save", .id = SETTINGS_DISABLE_POWERSAVE };
-  idx++; menu[SETTINGS_VIEW_ENABLE_MAPPING] = (struct menu_entry) { .name = "Enable mapping file", .id = SETTINGS_ENABLE_MAPPING };
+  MENU_CATEGORY("Stream");
+  MENU_ENTRY(SETTINGS_RESOLUTION, SETTINGS_VIEW_RESOLUTION, "Resolution", "←→");
+  MENU_ENTRY(SETTINGS_FPS, SETTINGS_VIEW_FPS, "FPS", "←→");
+  MENU_ENTRY(SETTINGS_BITRATE, SETTINGS_VIEW_BITRATE, "Bitrate", "");
 
-  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .subname = "Located at ux0:data/moonlight/mappings/vita.conf" };
-  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .subname = "Example in github repo." };
-  idx++; menu[SETTINGS_VIEW_BACK_DEADZONE] = (struct menu_entry) { .name = "Back touchscreen deadzone", .id = SETTINGS_BACK_DEADZONE };
-  menu[idx++] = (struct menu_entry) { .name = "Touchscreen special keys", .id = SETTINGS_SPECIAL_KEYS };
+  MENU_CATEGORY("System");
+  MENU_ENTRY(SETTINGS_SAVE_DEBUG_LOG, SETTINGS_VIEW_SAVE_DEBUG_LOG, "Enable debug log", "");
+  MENU_ENTRY(SETTINGS_DISABLE_POWERSAVE, SETTINGS_VIEW_DISABLE_POWERSAVE, "Disable power save", "");
+
+  MENU_CATEGORY("Input");
+  MENU_ENTRY(SETTINGS_ENABLE_MAPPING, SETTINGS_VIEW_ENABLE_MAPPING, "Enable mapping file", "");
+  MENU_MESSAGE("Located at ux0:data/moonlight/mappings/vita.conf");
+  MENU_MESSAGE("Example in github repo.");
+  MENU_ENTRY(SETTINGS_BACK_DEADZONE, SETTINGS_VIEW_BACK_DEADZONE, "Back touchscreen deadzone", "");
+  MENU_ENTRY(SETTINGS_SPECIAL_KEYS, SETTINGS_VIEW_SPECIAL_KEYS, "Touchscreen special keys", "");
 
   settings_loop_setup = 1;
   assert(idx < 32);

@@ -41,6 +41,9 @@ int ui_main_menu_loop(int cursor, void *context) {
         ui_settings_menu();
         break;
       case MAIN_MENU_QUIT:
+        if (connection_get_status() != LI_DISCONNECTED) {
+          connection_terminate();
+        }
         exit(0);
         break;
     }

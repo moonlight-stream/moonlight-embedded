@@ -1,37 +1,46 @@
 #include <stdbool.h>
 #include <vita2d.h>
 
+#include <psp2/touch.h>
+
 #define WIDTH 960
 #define HEIGHT 544
 
-struct menu_entry {
+typedef struct menu_entry {
   int id;
   unsigned int color;
   char *name, *suffix;
   char subname[1024];
   bool disabled, separator;
-};
+} menu_entry;
 
-struct menu_geom {
+typedef struct menu_geom {
   int x, y, width, height, el, total_y;
-};
+} menu_geom;
 
 vita2d_pgf *gui_font;
 
 struct menu_geom make_geom_centered(int w, int h);
 
-typedef int (*gui_loop_callback) (int, void *);
+#define SCE_CTRL_HOLD 0x80000000
+
+typedef struct input_data {
+  int buttons;
+  SceTouchData touch;
+} input_data;
+
+typedef int (*gui_loop_callback) (int, void *, const input_data *);
 typedef int (*gui_back_callback) (void *);
 typedef void (*gui_draw_callback) (void);
 
 bool was_button_pressed(short id);
 bool is_button_down(short id);
-bool is_rectangle_touched(int lx, int ly, int rx, int ry);
+bool is_rectangle_touched(const SceTouchData *touch, int lx, int ly, int rx, int ry);
 
 int display_menu(
-        struct menu_entry menu[],
+        menu_entry menu[],
         int total_elements,
-        struct menu_geom *geom_ptr,
+        menu_geom *geom_ptr,
         gui_loop_callback loop_callback,
         gui_back_callback back_callback,
         gui_draw_callback draw_callback,

@@ -115,71 +115,83 @@ enum {
 
 #define QUIT_RELOAD 2
 
-int ui_connect_loop(int id, void *context) {
-  if (was_button_pressed(SCE_CTRL_CROSS)) {
-    switch (id) {
-      case CONNECT_PAIRUNPAIR:
-        if (server.paired) {
-          flash_message("Unpairing...");
-          int ret = gs_unpair(&server);
-          if (ret == GS_OK)
-            return QUIT_RELOAD;
-          else
-            display_error("Unpairing failed: %d", ret);
-        } else {
-          char pin[5];
-          char message[256];
-          sprintf(pin, "%d%d%d%d", (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
-          flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
-
-          int ret = gs_pair(&server, &pin[0]);
-          if (ret == 0) {
-            server_connected = false;
-            return QUIT_RELOAD;
-          } else {
-            display_error("Pairing failed: %d", ret);
-          }
-        } break;
-
-      case CONNECT_DISCONNECT:
-        flash_message("Disconnecting...");
-        server_connected = false;
-        connection_terminate();
-        sceKernelDelayThread(1000 * 1000);
-        return 1;
-
-      case CONNECT_QUITAPP:
-        flash_message("Quitting...");
-        int ret = gs_quit_app(&server);
-        if (ret == GS_OK) {
-          server.currentGame = 0;
-          return QUIT_RELOAD;
-        } else {
-          display_error("Quitting failed: %d", ret);
-        } break;
-
-      default:
-        vitapower_config(config);
-        vitainput_config(config);
-
-        if (connection_get_status() == LI_READY ||
-            connection_get_status() == LI_MINIMIZED && server.currentGame != id) {
-          flash_message("Stream starting...");
-          ui_connect_stream(&server, id);
-        } else if (connection_get_status() == LI_MINIMIZED) {
-          sceKernelDelayThread(500 * 1000);
-          connection_resume();
-        }
-
-        while (connection_get_status() == LI_CONNECTED) {
-          sceKernelDelayThread(500 * 1000);
-        }
-
-        return QUIT_RELOAD; break;
-    }
+int ui_connect_loop(int id, void *context, const input_data *input) {
+  if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+    return 0;
   }
 
-  return 0;
+  int ret;
+
+  switch (id) {
+    case CONNECT_PAIRUNPAIR:
+      if (server.paired) {
+        flash_message("Unpairing...");
+        ret = gs_unpair(&server);
+        if (ret == GS_OK) {
+          // TODO remove unique key
+          return QUIT_RELOAD;
+        }
+        display_error("Unpairing failed: %d", ret);
+        return 0;
+      }
+
+      char pin[5];
+      char message[256];
+      sprintf(pin, "%d%d%d%d",
+              (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
+      flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
+
+      ret = gs_pair(&server, &pin[0]);
+      if (ret == 0) {
+        server_connected = false;
+        return QUIT_RELOAD;
+      }
+      display_error("Pairing failed: %d", ret);
+      return 0;
+
+    case CONNECT_DISCONNECT:
+      flash_message("Disconnecting...");
+      server_connected = false;
+      connection_terminate();
+      sceKernelDelayThread(1000 * 1000);
+      return 1;
+
+    case CONNECT_QUITAPP:
+      flash_message("Quitting...");
+      ret = gs_quit_app(&server);
+      if (ret == GS_OK) {
+        server.currentGame = 0;
+        return QUIT_RELOAD;
+      }
+      display_error("Quitting failed: %d", ret);
+      return 0;
+
+    default:
+      vitapower_config(config);
+      vitainput_config(config);
+
+      int status = connection_get_status();
+      switch (status) {
+        case LI_MINIMIZED:
+          if (server.currentGame == id) {
+            sceKernelDelayThread(500 * 1000);
+            connection_resume();
+            goto mainloop;
+          }
+          // TODO: stop previous stream
+        case LI_READY:
+          flash_message("Stream starting...");
+          ui_connect_stream(&server, id);
+          break;
+      }
+
+mainloop:
+      while (connection_get_status() == LI_CONNECTED) {
+        sceKernelDelayThread(500 * 1000);
+      }
+
+      return QUIT_RELOAD;
+  }
 }
 
 int ui_connect(char *address) {
@@ -225,12 +237,29 @@ int ui_connect(char *address) {
 
   int idx = 0;
 
+#define MENU_CATEGORY(NAME) \
+  do { \
+    menu[idx] = (menu_entry) { .name = (NAME), .disabled = true, .separator = true }; \
+    idx++; \
+  } while (0)
+#define MENU_ENTRY(ID, NAME) \
+  do { \
+    menu[idx] = (menu_entry) { .name = (NAME), .id = (ID) }; \
+    idx++; \
+  } while(0)
+#define MENU_MESSAGE(MESSAGE, COLOR) \
+  do { \
+    menu[idx] = (menu_entry) { .name = (MESSAGE), .disabled = true, .color = (COLOR) }; \
+    idx++; \
+  } while(0)
+
   //header
-  menu[idx++] = (struct menu_entry) { .name = "Connected to the server:", .disabled = 1, .color = 0xffffffff };
+  //MENU
+  MENU_MESSAGE("Connected to the server:", 0xffffffff);
   char server_info[256];
   sprintf(server_info, "IP: %s, GPU %s, API v%d", address, server.gpuType, server.serverMajorVersion);
-  menu[idx++] = (struct menu_entry) { .name = server_info, .disabled = 1, .color = 0xffffffff };
-  menu[idx++] = (struct menu_entry) { .name = "", .disabled = 1 };
+  MENU_MESSAGE(server_info, 0xffffffff);
+  MENU_MESSAGE("", 0);
 
   // current stream
   if (server.currentGame != 0) {
@@ -242,27 +271,28 @@ int ui_connect(char *address) {
     }
     sprintf(current_status, "Streaming %s", current_appname);
 
-    menu[idx++] = (struct menu_entry) { .name = current_status, .disabled = true, .separator = true };
-    menu[idx++] = (struct menu_entry) { .name = "Resume", .id = server.currentGame };
-    menu[idx++] = (struct menu_entry) { .name = "Quit", .id = CONNECT_QUITAPP };
+    MENU_CATEGORY(current_status);
+    MENU_ENTRY(server.currentGame, "Resume");
+    MENU_ENTRY(CONNECT_QUITAPP, "Quit");
   }
 
   // pairing
-  menu[idx++] = (struct menu_entry) { .name = server.paired ? "Paired" : "Not paired", .disabled = true, .separator = true };
+  MENU_CATEGORY(server.paired ? "Paired" : "Not paired");
   if (server.paired) {
-    menu[idx++] = (struct menu_entry) { .name = "Unpair", .id = CONNECT_PAIRUNPAIR };
+    MENU_ENTRY(CONNECT_PAIRUNPAIR, "Unpair");
   } else {
-    menu[idx++] = (struct menu_entry) { .name = "Pair", .id = CONNECT_PAIRUNPAIR };
+    MENU_ENTRY(CONNECT_PAIRUNPAIR, "Pair");
   }
-  menu[idx++] = (struct menu_entry) { .name = "Disconnect", .id = CONNECT_DISCONNECT };
+
+  MENU_ENTRY(CONNECT_DISCONNECT, "Disconnect");
 
   // app list
   if (server_applist != NULL) {
-    menu[idx++] = (struct menu_entry) { .name = "Applications", .disabled = true, .separator = true };
+    MENU_CATEGORY("Applications");
 
     PAPP_LIST list = server_applist;
     while (list) {
-      menu[idx++] = (struct menu_entry) { .name = list->name, .id = list->id };
+      MENU_ENTRY(list->id, list->name);
       list = list->next;
     }
   }

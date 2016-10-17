@@ -75,30 +75,32 @@ static void deadzone_draw() {
   }
 }
 
-static int deadzone_loop(int cursor, void *context) {
-  struct menu_entry *menu = context;
-  int did_change = 1;
+static int deadzone_loop(int cursor, void *context, const input_data *input) {
+  menu_entry *menu = context;
 
-  bool left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
-  if (left || right) {
-    int delta = left ? -15 : (right ? 15 : 0);
-    switch (cursor) {
-      case 0: config.back_deadzone.top += delta; break;
-      case 1: config.back_deadzone.right += delta; break;
-      case 2: config.back_deadzone.bottom += delta; break;
-      case 3: config.back_deadzone.left += delta; break;
-    }
+  bool left = input->buttons & SCE_CTRL_LEFT;
+  bool right = input->buttons & SCE_CTRL_RIGHT;
+
+  int delta = left ? -15 : (right ? 15 : 0);
+  switch (cursor) {
+    case 0: config.back_deadzone.top += delta; break;
+    case 1: config.back_deadzone.right += delta; break;
+    case 2: config.back_deadzone.bottom += delta; break;
+    case 3: config.back_deadzone.left += delta; break;
   }
 
-  if (did_change) {
-    settings_loop_setup = 0;
-    char current[256];
+  settings_loop_setup = 0;
+  char current[256];
 
-    int numbers[] = {config.back_deadzone.top, config.back_deadzone.right, config.back_deadzone.bottom, config.back_deadzone.left };
-    for (int i = 0; i < 4; i++) {
-      sprintf(current, "%dpx", numbers[i]);
-      strcpy(menu[i].subname, current);
-    }
+  int numbers[] = {
+    config.back_deadzone.top,
+    config.back_deadzone.right,
+    config.back_deadzone.bottom,
+    config.back_deadzone.left
+  };
+  for (int i = 0; i < 4; i++) {
+    sprintf(current, "%dpx", numbers[i]);
+    strcpy(menu[i].subname, current);
   }
 
   return 0;
@@ -107,14 +109,14 @@ static int deadzone_loop(int cursor, void *context) {
 static int deadzone_settings_menu() {
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
-  struct menu_entry menu[16];
+  menu_entry menu[16];
   int idx = 0;
-  menu[idx++] = (struct menu_entry) { .name = "Top: ", .disabled = false, .id = 0, .suffix = "←→" };
-  menu[idx++] = (struct menu_entry) { .name = "Left: ", .disabled = false, .id = 1, .suffix = "←→" };
-  menu[idx++] = (struct menu_entry) { .name = "Bottom: ", .disabled = false, .id = 2, .suffix = "←→" };
-  menu[idx++] = (struct menu_entry) { .name = "Right: ", .disabled = false, .id = 3, .suffix = "←→" };
+  menu[idx++] = (menu_entry) { .name = "Top: ", .disabled = false, .id = 0, .suffix = "←→" };
+  menu[idx++] = (menu_entry) { .name = "Left: ", .disabled = false, .id = 1, .suffix = "←→" };
+  menu[idx++] = (menu_entry) { .name = "Bottom: ", .disabled = false, .id = 2, .suffix = "←→" };
+  menu[idx++] = (menu_entry) { .name = "Right: ", .disabled = false, .id = 3, .suffix = "←→" };
 
-  struct menu_geom geom = make_geom_centered(250, 120);
+  menu_geom geom = make_geom_centered(250, 120);
   geom.x = 50;
   geom.y = 50;
   geom.el = 25;
@@ -177,40 +179,40 @@ enum {
   SETTINGS_SPECIAL_KEYS_NW_VIEW = 3
 };
 
-static int select_special_key_loop(int id, void *context) {
+static int select_special_key_loop(int id, void *context, const input_data *input) {
   int *code = context;
 
-  if (was_button_pressed(SCE_CTRL_CROSS)) {
-    if (id == SETTINGS_SELECT_SPECIAL_KEY_MANUAL) {
-      char key_code_value[512];
-      if (ime_dialog(&key_code_value, "Enter key code:", "") == 0) {
-          int key_code = atoi(key_code_value);
-          if (key_code) {
-            *code = key_code;
-            return 1;
-          } else {
-            display_error("Incorrect key code entered: %s", key_code_value);
-          }
+  if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+    return 0;
+  }
+  if (id != SETTINGS_SELECT_SPECIAL_KEY_MANUAL) {
+    *code = id;
+    return 1;
+  }
+  char key_code_value[512];
+  if (ime_dialog(&key_code_value, "Enter key code:", "") == 0) {
+      int key_code = atoi(key_code_value);
+      if (key_code) {
+        *code = key_code;
+        return 1;
+      } else {
+        display_error("Incorrect key code entered: %s", key_code_value);
       }
-    } else {
-      *code = id;
-      return 1;
-    }
   }
 
   return 0;
 }
 
 static int select_special_key_menu(int *code) {
-  struct menu_entry menu[64];
+  menu_entry menu[64];
   int idx = 0;
   for (int i = 0; i < sizeof(settings_special_codes) / sizeof(int); i++) {
-    menu[idx++] = (struct menu_entry) { .name = malloc(sizeof(char) * 256), .id = settings_special_codes[i] };
+    menu[idx++] = (menu_entry) { .name = malloc(sizeof(char) * 256), .id = settings_special_codes[i] };
     special_keys_name(settings_special_codes[i], menu[idx-1].name);
   }
 
-  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .separator = true };
-  menu[idx++] = (struct menu_entry) { .name = "Enter manually ...", .id = SETTINGS_SELECT_SPECIAL_KEY_MANUAL };
+  menu[idx++] = (menu_entry) { .name = "", .disabled = true, .separator = true };
+  menu[idx++] = (menu_entry) { .name = "Enter manually ...", .id = SETTINGS_SELECT_SPECIAL_KEY_MANUAL };
 
   int return_code = display_menu(menu, idx, NULL, &select_special_key_loop, NULL, NULL, code);
   for (int i = 0; i < sizeof(settings_special_codes) / sizeof(int); i++) {
@@ -220,58 +222,54 @@ static int select_special_key_menu(int *code) {
   return return_code;
 }
 
-static int special_keys_loop(int id, void *context) {
-  bool did_change = true;
-
-  bool left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
+static int special_keys_loop(int id, void *context, const input_data *input) {
+  bool left = input->buttons & SCE_CTRL_LEFT;
+  bool right = input->buttons & SCE_CTRL_RIGHT;
   int selected_ord = -1;
+  int delta = left ? -15 : (right ? 15 : 0);
 
   switch (id) {
     case SETTINGS_SPECIAL_KEYS_OFFSET:
+      config.special_keys.offset += delta;
+      break;
     case SETTINGS_SPECIAL_KEYS_SIZE:
-      if (left || right) {
-        int delta = left ? -15 : (right ? 15 : 0);
-        switch (id) {
-          case SETTINGS_SPECIAL_KEYS_OFFSET: config.special_keys.offset += delta; break;
-          case SETTINGS_SPECIAL_KEYS_SIZE: config.special_keys.size += delta; break;
-        }
-      }
-
+      config.special_keys.size += delta;
       break;
     default:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        select_special_key_menu(&selected_ord);
-        if (selected_ord != -1) {
-          switch (id) {
-            case TOUCHSEC_SPECIAL_NW:
-              config.special_keys.nw = selected_ord;
-              break;
-            case TOUCHSEC_SPECIAL_NE:
-              config.special_keys.ne = selected_ord;
-              break;
-            case TOUCHSEC_SPECIAL_SW:
-              config.special_keys.sw = selected_ord;
-              break;
-            case TOUCHSEC_SPECIAL_SE:
-              config.special_keys.se = selected_ord;
-              break;
-          }
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      select_special_key_menu(&selected_ord);
+      if (selected_ord != -1) {
+        switch (id) {
+          case TOUCHSEC_SPECIAL_NW:
+            config.special_keys.nw = selected_ord;
+            break;
+          case TOUCHSEC_SPECIAL_NE:
+            config.special_keys.ne = selected_ord;
+            break;
+          case TOUCHSEC_SPECIAL_SW:
+            config.special_keys.sw = selected_ord;
+            break;
+          case TOUCHSEC_SPECIAL_SE:
+            config.special_keys.se = selected_ord;
+            break;
         }
-      } break;
+      }
+      break;
   }
 
-  if (did_change) {
-    struct menu_entry *menu = context;
-    int idx = 0;
-    sprintf(menu[idx++].subname, "%d", config.special_keys.offset);
-    sprintf(menu[idx++].subname, "%d", config.special_keys.size);
+  menu_entry *menu = context;
 
-    idx++;
-    special_keys_name(config.special_keys.nw, menu[idx++].subname);
-    special_keys_name(config.special_keys.ne, menu[idx++].subname);
-    special_keys_name(config.special_keys.sw, menu[idx++].subname);
-    special_keys_name(config.special_keys.se, menu[idx++].subname);
-  }
+  int idx = 0;
+  sprintf(menu[idx++].subname, "%d", config.special_keys.offset);
+  sprintf(menu[idx++].subname, "%d", config.special_keys.size);
+
+  idx++;
+  special_keys_name(config.special_keys.nw, menu[idx++].subname);
+  special_keys_name(config.special_keys.ne, menu[idx++].subname);
+  special_keys_name(config.special_keys.sw, menu[idx++].subname);
+  special_keys_name(config.special_keys.se, menu[idx++].subname);
 
   return 0;
 }
@@ -318,16 +316,16 @@ static void special_keys_draw() {
 }
 
 static int special_keys_menu() {
-  struct menu_entry menu[16];
+  menu_entry menu[16];
   int idx = 0;
 
-  menu[idx++] = (struct menu_entry) { .name = "Offset", .id = SETTINGS_SPECIAL_KEYS_OFFSET };
-  menu[idx++] = (struct menu_entry) { .name = "Size", .id = SETTINGS_SPECIAL_KEYS_SIZE };
-  menu[idx++] = (struct menu_entry) { .name = "Assignments", .disabled = true, .separator = false };
-  menu[idx++] = (struct menu_entry) { .name = "Top left", .id = TOUCHSEC_SPECIAL_NW };
-  menu[idx++] = (struct menu_entry) { .name = "Top right", .id = TOUCHSEC_SPECIAL_NE };
-  menu[idx++] = (struct menu_entry) { .name = "Bottom left", .id = TOUCHSEC_SPECIAL_SW };
-  menu[idx++] = (struct menu_entry) { .name = "Bottom right", .id = TOUCHSEC_SPECIAL_SE };
+  menu[idx++] = (menu_entry) { .name = "Offset", .id = SETTINGS_SPECIAL_KEYS_OFFSET };
+  menu[idx++] = (menu_entry) { .name = "Size", .id = SETTINGS_SPECIAL_KEYS_SIZE };
+  menu[idx++] = (menu_entry) { .name = "Assignments", .disabled = true, .separator = false };
+  menu[idx++] = (menu_entry) { .name = "Top left", .id = TOUCHSEC_SPECIAL_NW };
+  menu[idx++] = (menu_entry) { .name = "Top right", .id = TOUCHSEC_SPECIAL_NE };
+  menu[idx++] = (menu_entry) { .name = "Bottom left", .id = TOUCHSEC_SPECIAL_SW };
+  menu[idx++] = (menu_entry) { .name = "Bottom right", .id = TOUCHSEC_SPECIAL_SE };
 
   return display_menu(menu, idx, NULL, &special_keys_loop, NULL, &special_keys_draw, &menu);
 }
@@ -379,132 +377,137 @@ static int move_idx_in_array(char *array[], int count, char *find, int index_dis
   }
 }
 
-static int settings_loop(int id, void *context) {
-  struct menu_entry *menu = context;
+static int settings_loop(int id, void *context, const input_data *input) {
+  menu_entry *menu = context;
   bool did_change = 0;
-  bool left, right;
+  bool left = (input->buttons & SCE_CTRL_LEFT) && (input->buttons & SCE_CTRL_HOLD) == 0;
+  bool right = (input->buttons & SCE_CTRL_RIGHT) && (input->buttons & SCE_CTRL_HOLD) == 0;
+
+  char current[256];
+  int new_idx;
+
   switch (id) {
     case SETTINGS_RESOLUTION:
-      left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
-      if (left || right) {
-        char *resolutions[] = {"960x544", "1280x720", "1920x1080"};
-        char current[256];
-        sprintf(current, "%dx%d", config.stream.width, config.stream.height);
+      if (!left && !right) {
+          break;
+      }
+      char *resolutions[] = {"960x544", "1280x720", "1920x1080"};
+      sprintf(current, "%dx%d", config.stream.width, config.stream.height);
 
-        int new_idx = move_idx_in_array(
-            resolutions,
-            3,
-            current,
-            left ? -1 : +1
-            );
+      new_idx = move_idx_in_array(resolutions, 3, current, left ? -1 : +1);
 
-        switch (new_idx) {
-          case 0: config.stream.width = 960; config.stream.height = 544; break;
-          case 1: config.stream.width = 1280; config.stream.height = 720; break;
-          case 2: config.stream.width = 1920; config.stream.height = 1080; break;
-        }
+      switch (new_idx) {
+        case 0: config.stream.width = 960; config.stream.height = 544; break;
+        case 1: config.stream.width = 1280; config.stream.height = 720; break;
+        case 2: config.stream.width = 1920; config.stream.height = 1080; break;
+      }
 
-        did_change = 1;
-      } break;
+      did_change = 1;
+      break;
     case SETTINGS_FPS:
-      left = was_button_pressed(SCE_CTRL_LEFT), right = was_button_pressed(SCE_CTRL_RIGHT);
-      if (left || right) {
-        char *settings[] = {"30", "60"};
-        char current[256];
-        sprintf(current, "%d", config.stream.fps);
-        int new_idx = move_idx_in_array(
-            settings,
-            2,
-            current,
-            left ? -1 : +1
-            );
+      if (!left && !right) {
+          break;
+      }
+      char *settings[] = {"30", "60"};
+      sprintf(current, "%d", config.stream.fps);
+      new_idx = move_idx_in_array(settings, 2, current, left ? -1 : +1);
 
-        switch (new_idx) {
-          case 0: config.stream.fps = 30; break;
-          case 1: config.stream.fps = 60; break;
-        }
+      switch (new_idx) {
+        case 0: config.stream.fps = 30; break;
+        case 1: config.stream.fps = 60; break;
+      }
 
-        did_change = 1;
-      } break;
+      did_change = 1;
+      break;
     case SETTINGS_BITRATE:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        char value[512];
-        int ret;
-        if ((ret = ime_dialog(&value, "Enter bitrate: ", "")) == 0) {
-          int bitrate = atoi(value);
-          if (bitrate) {
-            config.stream.bitrate = bitrate;
-            did_change = 1;
-          } else {
-            display_error("Incorrect bitrate entered: %s", value);
-          }
-        }
-      } break;
-    case SETTINGS_SAVE_DEBUG_LOG:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        did_change = 1;
-        config.save_debug_log = !config.save_debug_log;
-      } break;
-    case SETTINGS_DISABLE_POWERSAVE:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        did_change = 1;
-        config.disable_powersave = !config.disable_powersave;
-      } break;
-    case SETTINGS_ENABLE_MAPPING:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        did_change = 1;
-        if (config.mapping) {
-          free(config.mapping);
-          config.mapping = 0;
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      char value[512];
+      int ret;
+      if ((ret = ime_dialog(&value, "Enter bitrate: ", "")) == 0) {
+        int bitrate = atoi(value);
+        if (bitrate) {
+          config.stream.bitrate = bitrate;
+          did_change = 1;
         } else {
-          config.mapping = strdup("mappings/vita.conf");
+          display_error("Incorrect bitrate entered: %s", value);
         }
-      } break;
+      }
+      break;
+    case SETTINGS_SAVE_DEBUG_LOG:
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.save_debug_log = !config.save_debug_log;
+      break;
+    case SETTINGS_DISABLE_POWERSAVE:
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.disable_powersave = !config.disable_powersave;
+      break;
+    case SETTINGS_ENABLE_MAPPING:
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      if (config.mapping) {
+        free(config.mapping);
+        config.mapping = 0;
+      } else {
+        config.mapping = strdup("mappings/vita.conf");
+      }
+      break;
     case SETTINGS_BACK_DEADZONE:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        deadzone_settings_menu();
-        did_change = 1;
-      } break;
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      deadzone_settings_menu();
+      did_change = 1;
+      break;
     case SETTINGS_SPECIAL_KEYS:
-      if (was_button_pressed(SCE_CTRL_CROSS)) {
-        special_keys_menu();
-      } break;
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      special_keys_menu();
+      break;
   }
 
-  if (did_change || settings_loop_setup) {
-    settings_loop_setup = 0;
-    char current[256];
+  if (!did_change && !settings_loop_setup) {
+    return 0;
+  }
+  settings_loop_setup = 0;
 
 #define MENU_REPLACE(ID, MESSAGE) \
     strcpy(menu[SETTINGS_VIEW_IDX[(ID)]].subname, (MESSAGE))
 
-    sprintf(current, "%dx%d", config.stream.width, config.stream.height);
-    MENU_REPLACE(SETTINGS_VIEW_RESOLUTION, current);
+  sprintf(current, "%dx%d", config.stream.width, config.stream.height);
+  MENU_REPLACE(SETTINGS_VIEW_RESOLUTION, current);
 
-    sprintf(current, "%d", config.stream.fps);
-    MENU_REPLACE(SETTINGS_VIEW_FPS, current);
+  sprintf(current, "%d", config.stream.fps);
+  MENU_REPLACE(SETTINGS_VIEW_FPS, current);
 
-    sprintf(current, "%d", config.stream.bitrate);
-    MENU_REPLACE(SETTINGS_VIEW_BITRATE, current);
+  sprintf(current, "%d", config.stream.bitrate);
+  MENU_REPLACE(SETTINGS_VIEW_BITRATE, current);
 
-    sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
-    MENU_REPLACE(SETTINGS_VIEW_DISABLE_POWERSAVE, current);
+  sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_DISABLE_POWERSAVE, current);
 
-    sprintf(current, "%s", config.save_debug_log ? "yes" : "no");
-    MENU_REPLACE(SETTINGS_VIEW_SAVE_DEBUG_LOG, current);
+  sprintf(current, "%s", config.save_debug_log ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_SAVE_DEBUG_LOG, current);
 
-    sprintf(current, "%s", config.mapping != 0 ? "yes" : "no");
-    MENU_REPLACE(SETTINGS_VIEW_ENABLE_MAPPING, current);
+  sprintf(current, "%s", config.mapping != 0 ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_ENABLE_MAPPING, current);
 
-    sprintf(
-        current,
-        "%dpx,%dpx,%dpx,%dpx",
-        config.back_deadzone.top,
-        config.back_deadzone.right,
-        config.back_deadzone.bottom,
-        config.back_deadzone.left);
-    MENU_REPLACE(SETTINGS_VIEW_BACK_DEADZONE, current);
-  }
+  sprintf(current, "%dpx,%dpx,%dpx,%dpx",
+          config.back_deadzone.top,
+          config.back_deadzone.right,
+          config.back_deadzone.bottom,
+          config.back_deadzone.left);
+  MENU_REPLACE(SETTINGS_VIEW_BACK_DEADZONE, current);
 
   return 0;
 }
@@ -515,22 +518,22 @@ static int settings_back(void *context) {
 }
 
 int ui_settings_menu() {
-  struct menu_entry menu[32];
+  menu_entry menu[32];
   int idx = 0;
 #define MENU_CATEGORY(NAME) \
   do { \
-    menu[idx] = (struct menu_entry) { .name = (NAME), .disabled = true, .separator = true }; \
+    menu[idx] = (menu_entry) { .name = (NAME), .disabled = true, .separator = true }; \
     idx++; \
   } while (0)
 #define MENU_ENTRY(ID, TAG, NAME, SUFFIX) \
   do { \
-    menu[idx] = (struct menu_entry) { .name = (NAME), .id = (ID), .suffix = (SUFFIX) }; \
+    menu[idx] = (menu_entry) { .name = (NAME), .id = (ID), .suffix = (SUFFIX) }; \
     SETTINGS_VIEW_IDX[(TAG)] = idx; \
     idx++; \
   } while(0)
 #define MENU_MESSAGE(MESSAGE) \
   do { \
-    menu[idx] = (struct menu_entry) { .name = "", .disabled = true, .subname = (MESSAGE) }; \
+    menu[idx] = (menu_entry) { .name = "", .disabled = true, .subname = (MESSAGE) }; \
     idx++; \
   } while(0)
 

@@ -165,5 +165,7 @@ int main(int argc, char* argv[]) {
   vitapower_config(config);
   vitainput_config(config);
 
+  config.log_file = fopen("ux0:data/moonlight/moonlight.log", "w");
+
   gui_loop();
 }

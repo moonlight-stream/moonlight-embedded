@@ -18,7 +18,6 @@
  */
 
 #include "connection.h"
-#include "global.h"
 #include "config.h"
 #include "power/vita.h"
 #include "input/vita.h"
@@ -27,6 +26,8 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+
+#include "debug.h"
 
 static int connection_status = LI_READY;
 
@@ -50,19 +51,23 @@ void start_output() {
 void connection_connection_started() {
   connection_status = LI_CONNECTED;
   start_output();
+  DEBUG_PRINT("connection started\n");
 }
 
 void connection_connection_terminated() {
   stop_output();
   connection_status = LI_READY;
+  DEBUG_PRINT("connection terminated\n");
 }
 
 void connection_display_message(char *msg) {
   printf("%s\n", msg);
+  DEBUG_PRINT("display_message: %s\n", msg);
 }
 
 void connection_display_transient_message(char *msg) {
   printf("%s\n", msg);
+  DEBUG_PRINT("display_transient_message: %s\n", msg);
 }
 
 void connection_reset() {
@@ -86,9 +91,17 @@ void connection_terminate() {
   connection_status = LI_READY;
 }
 
+void connection_stage_starting(int stage) {
+  DEBUG_PRINT("connection_stage_starting - stage: %d\n", stage);
+}
+void connection_stage_complate(int stage) {
+  DEBUG_PRINT("connection_stage_complate - stage: %d\n", stage);
+}
+
 void connection_stage_failed(int stage, long code) {
   connection_failed_stage = stage;
   connection_failed_stage_code = code;
+  DEBUG_PRINT("connection_stage_failed - stage: %d, %d\n", stage, code);
 }
 
 bool connection_is_ready() {
@@ -100,8 +113,8 @@ int connection_get_status() {
 }
 
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
-  .stageStarting = NULL,
-  .stageComplete = NULL,
+  .stageStarting = connection_stage_starting,
+  .stageComplete = connection_stage_complate,
   .stageFailed = connection_stage_failed,
   .connectionStarted = connection_connection_started,
   .connectionTerminated = connection_connection_terminated,

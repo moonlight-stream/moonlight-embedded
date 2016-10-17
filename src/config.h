@@ -19,6 +19,7 @@
 
 #include <Limelight.h>
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -56,8 +57,10 @@ typedef struct _CONFIGURATION {
   struct touchscreen_deadzone back_deadzone;
   struct special_keys special_keys;
   bool disable_powersave;
+  bool save_debug_log;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
+  FILE *log_file;
 } CONFIGURATION, *PCONFIGURATION;
 
 extern CONFIGURATION config;

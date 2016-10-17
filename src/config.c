@@ -228,6 +228,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->localaudio = BOOL(value);
     } else if (strcmp(name, "disable_powersave") == 0) {
       config->disable_powersave = BOOL(value);
+    } else if (strcmp(name, "save_debug_log") == 0) {
+      config->save_debug_log = BOOL(value);
     } else if (strcmp(name, "mapping") == 0) {
       config->mapping = STR(value);
     }
@@ -270,6 +272,7 @@ void config_save(char* filename, PCONFIGURATION config) {
     write_config_string(fd, "app", config->app);
 
   write_config_bool(fd, "disable_powersave", config->disable_powersave);
+  write_config_bool(fd, "save_debug_log", config->save_debug_log);
 
   write_config_section(fd, "backtouchscreen_deadzone");
   write_config_int(fd, "top",     config->back_deadzone.top);

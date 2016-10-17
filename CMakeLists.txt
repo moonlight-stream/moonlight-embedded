@@ -10,6 +10,7 @@ set(TITLE_ID "XYZZ00002")
 set(CMAKE_C_FLAGS "-Wl,-q -O3 -g -std=c99 -Dntohs=__builtin_bswap16 -Dhtons=__builtin_bswap16 -Dntohl=__builtin_bswap32 -Dhtonl=__builtin_bswap32 -DENET_DEBUG=1")
 
 include_directories(
+    include/
 	third_party/moonlight-common-c/src/
 	libgamestream/
 	third_party/libuuid/src/

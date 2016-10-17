@@ -18,7 +18,6 @@
  */
 
 #include "connection.h"
-#include "global.h"
 #include "config.h"
 #include "power/vita.h"
 #include "input/vita.h"
@@ -27,6 +26,8 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+
+#include "debug.h"
 
 static int connection_status = LI_READY;
 

@@ -22,6 +22,7 @@
 #include <pthread.h>
 
 #include "config.h"
+#include "debug.h"
 
 // pthread_t main_thread_id;
 

@@ -22,5 +22,3 @@
 // extern pthread_t main_thread_id;
 
 void quit();
-
-void DEBUG_PRINT(const char *s, ...);

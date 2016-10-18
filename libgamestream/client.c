@@ -38,6 +38,8 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
+#include <psp2/io/stat.h>
+
 #define UNIQUE_FILE_NAME "uniqueid.dat"
 #define P12_FILE_NAME "client.p12"
 

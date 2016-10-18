@@ -8,6 +8,9 @@
 
 #include "../config.h"
 #include "../connection.h"
+#include "../video/vita.h"
+#include "../input/vita.h"
+#include "../power/vita.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -17,6 +20,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 
+#include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
 
 enum {
@@ -79,7 +83,7 @@ int ui_main_menu() {
   char name[256];
   if (ui_connect_connected()) {
     char addr[256];
-    ui_connect_address(&addr);
+    ui_connect_address(addr);
     sprintf(name, "Resume connection to %s", addr);
   } else if (config.address) {
     sprintf(name, "Connect to %s", config.address ? config.address : "none");

@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 
+#include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
 #include <vita2d.h>
 
@@ -266,7 +267,7 @@ int ui_connect(char *address) {
     char current_appname[256];
     char current_status[256];
 
-    if (!get_app_name(server_applist, server.currentGame, &current_appname)) {
+    if (!get_app_name(server_applist, server.currentGame, current_appname)) {
       strcpy(current_appname, "unknown");
     }
     sprintf(current_status, "Streaming %s", current_appname);
@@ -307,7 +308,7 @@ void ui_connect_saved() {
 
 void ui_connect_ip() {
   char ip[512];
-  switch (ime_dialog(&ip, "Enter IP:", "192.168.")) {
+  switch (ime_dialog(ip, "Enter IP:", "192.168.")) {
     case 0:
       server_connected = false;
       if (config.address)

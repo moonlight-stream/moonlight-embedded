@@ -23,6 +23,8 @@
 #include <opus/opus_multistream.h>
 #include <psp2/audioout.h>
 
+#include "debug.h"
+
 #define FRAME_SIZE 240
 #define VITA_SAMPLES 960
 #define BUFFER_SIZE (2 * VITA_SAMPLES)
@@ -44,7 +46,7 @@ static void vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
                                             &rc);
 
   port = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, VITA_SAMPLES, 48000, SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO);
-  sceClibPrintf("open port 0x%x\n", port);
+  DEBUG_PRINT("open port 0x%x\n", port);
 }
 
 static void vita_renderer_cleanup() {
@@ -69,7 +71,7 @@ static void vita_renderer_decode_and_play_sample(char* data, int length) {
       }
     }
   } else {
-    printf("Opus error from decode: %d\n", decodeLen);
+    DEBUG_PRINT("Opus error from decode: %d\n", decodeLen);
   }
 }
 

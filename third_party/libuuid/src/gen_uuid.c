@@ -80,6 +80,9 @@
 #if defined(__linux__) && defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>
 #endif
+#if defined(__vita__)
+#include <psp2/kernel/rng.h>
+#endif
 
 #include "uuidP.h"
 #include "uuidd.h"

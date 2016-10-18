@@ -46,15 +46,22 @@
 #include <openssl/evp.h>
 #include <ctype.h>
 
-#include <psp2/net/net.h>
-#include <psp2/sysmodule.h>
+#include <psp2/kernel/rng.h>
+#include <psp2/kernel/threadmgr.h>
 
+#include <psp2/net/net.h>
+#include <psp2/net/netctl.h>
+
+#include <psp2/io/stat.h>
+
+#include <psp2/sysmodule.h>
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
 
 #include "graphics.h"
 #include "gui/ui.h"
+#include "power/vita.h"
 
 static void help() {
   printf("Usage: moonlight [action] (options) [host]\n");

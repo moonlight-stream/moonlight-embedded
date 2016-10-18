@@ -60,12 +60,12 @@ void connection_connection_terminated() {
   DEBUG_PRINT("connection terminated\n");
 }
 
-void connection_display_message(char *msg) {
+void connection_display_message(const char *msg) {
   printf("%s\n", msg);
   DEBUG_PRINT("display_message: %s\n", msg);
 }
 
-void connection_display_transient_message(char *msg) {
+void connection_display_transient_message(const char *msg) {
   printf("%s\n", msg);
   DEBUG_PRINT("display_transient_message: %s\n", msg);
 }

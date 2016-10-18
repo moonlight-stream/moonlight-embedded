@@ -26,30 +26,27 @@ enum {
   MAIN_MENU_QUIT
 };
 
-int ui_main_menu_loop(int cursor, void *context) {
-  if (was_button_pressed(SCE_CTRL_CROSS)) {
-    switch (cursor) {
-      case MAIN_MENU_CONNECT:
-        ui_connect_ip();
-        return 2;
-        break;
-      case MAIN_MENU_CONNECT_SAVED:
-        ui_connect_saved();
-        return 2;
-        break;
-      case MAIN_MENU_SETTINGS:
-        ui_settings_menu();
-        break;
-      case MAIN_MENU_QUIT:
-        if (connection_get_status() != LI_DISCONNECTED) {
-          connection_terminate();
-        }
-        exit(0);
-        break;
-    }
+int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
+  if ((input->buttons & SCE_CTRL_CROSS) == 0 || (input->buttons & SCE_CTRL_HOLD) != 0) {
+    return 0;
   }
-
-  return 0;
+  switch (cursor) {
+    case MAIN_MENU_CONNECT:
+      ui_connect_ip();
+      return 2;
+    case MAIN_MENU_CONNECT_SAVED:
+      ui_connect_saved();
+      return 2;
+    case MAIN_MENU_SETTINGS:
+      ui_settings_menu();
+      return 0;
+    case MAIN_MENU_QUIT:
+      if (connection_get_status() != LI_DISCONNECTED) {
+        connection_terminate();
+      }
+      exit(0);
+      return 0;
+  }
 }
 
 int ui_main_menu_back(void *context) {
@@ -57,32 +54,50 @@ int ui_main_menu_back(void *context) {
 }
 
 int ui_main_menu() {
-  struct menu_entry menu[16];
+  menu_entry menu[16];
   int idx = 0;
 
-  menu[idx++] = (struct menu_entry) { .name = "", .subname = "Moonlight Alpha", .disabled = true, .color = 0xff00aa00 };
+#define MENU_TITLE(NAME) \
+  do { \
+    menu[idx] = (menu_entry) { .name = "", .subname = (NAME), .disabled = true, .color = 0xff00aa00 }; \
+    idx++; \
+  } while (0)
+#define MENU_ENTRY(ID, NAME) \
+  do { \
+    menu[idx] = (menu_entry) { .name = (NAME), .id = (ID) }; \
+    idx++; \
+  } while(0)
+#define MENU_SEPARATOR() \
+  do { \
+    menu[idx] = (menu_entry) { .name = "", .disabled = true, .separator = true }; \
+    idx++; \
+  } while(0)
+
+
+  MENU_TITLE("Moonlight Alpha");
+
   char name[256];
   if (ui_connect_connected()) {
     char addr[256];
     ui_connect_address(&addr);
     sprintf(name, "Resume connection to %s", addr);
-    menu[idx++] = (struct menu_entry) { .name = name, .id = MAIN_MENU_CONNECT_SAVED };
   } else if (config.address) {
     sprintf(name, "Connect to %s", config.address ? config.address : "none");
-    menu[idx++] = (struct menu_entry) { .name = name, .id = MAIN_MENU_CONNECT_SAVED };
   }
 
-  menu[idx++] = (struct menu_entry) { .name = "Connect to ...", .id = MAIN_MENU_CONNECT };
-  menu[idx++] = (struct menu_entry) { .name = "", .disabled = true, .separator = true };
-  menu[idx++] = (struct menu_entry) { .name = "Settings", .id = MAIN_MENU_SETTINGS };
-  menu[idx++] = (struct menu_entry) { .name = "Quit", .id = MAIN_MENU_QUIT };
+  MENU_ENTRY(MAIN_MENU_CONNECT_SAVED, name);
 
-  struct menu_geom geom = make_geom_centered(500, 200);
+  MENU_ENTRY(MAIN_MENU_CONNECT, "Connect to ...");
+  MENU_SEPARATOR();
+  MENU_ENTRY(MAIN_MENU_SETTINGS, "Settings");
+  MENU_ENTRY(MAIN_MENU_QUIT, "Quit");
+
+  menu_geom geom = make_geom_centered(500, 200);
   return display_menu(menu, idx, &geom, &ui_main_menu_loop, &ui_main_menu_back, NULL, NULL);
 }
 
-int global_loop(int cursor, void *ctx) {
-  if (is_rectangle_touched(0, 0, 150, 150)) {
+int global_loop(int cursor, void *ctx, const input_data *input) {
+  if (is_rectangle_touched(&input->touch, 0, 0, 150, 150)) {
     if (connection_get_status() == LI_MINIMIZED) {
       vitapower_config(config);
       vitainput_config(config);

@@ -327,11 +327,6 @@ int display_menu(menu_entry menu[], int total_elements, menu_geom *geom_ptr,
 
   int offset = 0;
   int cursor = 0;
-  int active_elements = 0;
-
-  for (int i = 0; i < total_elements; i++) {
-      active_elements += menu[i].disabled ? 0 : 1;
-  }
 
   menu_geom geom;
 
@@ -346,6 +341,11 @@ int display_menu(menu_entry menu[], int total_elements, menu_geom *geom_ptr,
   int exit_code = 0;
 
   while (true) {
+    int active_elements = 0;
+    for (int i = 0; i < total_elements; i++) {
+        active_elements += menu[i].disabled ? 0 : 1;
+    }
+
     ui_start();
     tick_number++;
 

@@ -29,7 +29,7 @@
 
 #include "debug.h"
 
-static int connection_status = LI_READY;
+static int connection_status = LI_DISCONNECTED;
 
 int connection_failed_stage = 0;
 long connection_failed_stage_code = 0;
@@ -56,7 +56,7 @@ void connection_connection_started() {
 
 void connection_connection_terminated() {
   stop_output();
-  connection_status = LI_READY;
+  connection_status = LI_DISCONNECTED;
   DEBUG_PRINT("connection terminated\n");
 }
 
@@ -71,7 +71,7 @@ void connection_display_transient_message(const char *msg) {
 }
 
 void connection_reset() {
-  connection_connection_terminated();
+  //connection_connection_terminated();
   connection_status = LI_READY;
 }
 
@@ -88,7 +88,7 @@ void connection_resume() {
 void connection_terminate() {
   connection_connection_terminated();
   LiStopConnection();
-  connection_status = LI_READY;
+  connection_status = LI_DISCONNECTED;
 }
 
 void connection_stage_starting(int stage) {

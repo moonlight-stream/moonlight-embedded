@@ -26,12 +26,7 @@
 #include "discover.h"
 #include "config.h"
 #include "platform.h"
-#include "sdl.h"
 
-#include "input/evdev.h"
-#include "input/udev.h"
-#include "input/cec.h"
-#include "input/sdlinput.h"
 #include "input/vita.h"
 
 #include <Limelight.h>
@@ -62,51 +57,6 @@
 #include "graphics.h"
 #include "gui/ui.h"
 #include "power/vita.h"
-
-static void help() {
-  printf("Usage: moonlight [action] (options) [host]\n");
-  printf("       moonlight [configfile]\n");
-  printf("\n Actions\n\n");
-  printf("\tmap\t\t\tCreate mapping file for gamepad\n");
-  printf("\tpair\t\t\tPair device with computer\n");
-  printf("\tunpair\t\t\tUnpair device with computer\n");
-  printf("\tstream\t\t\tStream computer to device\n");
-  printf("\tlist\t\t\tList available games and applications\n");
-  printf("\tquit\t\t\tQuit the application or game being streamed\n");
-  printf("\thelp\t\t\tShow this help\n");
-  printf("\n Global Options\n\n");
-  printf("\t-config <config>\tLoad configuration file\n");
-  printf("\t-save <config>\t\tSave configuration file\n");
-  printf("\n Streaming options\n\n");
-  printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
-  printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
-  printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
-  printf("\t-height <height>\tVertical resolution (default 720)\n");
-  printf("\t-30fps\t\t\tUse 30fps\n");
-  printf("\t-60fps\t\t\tUse 60fps [default]\n");
-  printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
-  printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
-  printf("\t-forcehevc\t\tUse high efficiency video decoding (HEVC)\n");
-  printf("\t-remote\t\t\tEnable remote optimizations\n");
-  printf("\t-app <app>\t\tName of app to stream\n");
-  printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
-  printf("\t-localaudio\t\tPlay audio locally\n");
-  printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
-  printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
-  #ifdef HAVE_SDL
-  printf("\n Video options (SDL Only)\n\n");
-  printf("\t-windowed\t\tDisplay screen in a window\n");
-  #endif
-  #ifdef HAVE_EMBEDDED
-  printf("\n I/O options\n\n");
-  printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
-  printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
-  printf("\t-audio <device>\t\tUse <device> as audio output device\n");
-  printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
-  #endif
-  printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
-  exit(0);
-}
 
 static void vita_init() {
   // Seed OpenSSL with Sony-grade random number generator

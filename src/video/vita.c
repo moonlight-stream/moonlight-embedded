@@ -153,14 +153,10 @@ int sceAvcdecDecode(SceAvcdecCtrl *decoder, SceAvcdecAu *au, SceAvcdecArrayPictu
 
 SceAvcdecCtrl decoder = {0};
 
-static FILE* fd;
-static const char* fileName = "ux0:data/moonlight/fake.h264";
-
 static void vita_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   gs_sps_init();
 
   printf("vita video setup\n");
-  fd = fopen(fileName, "w");
 
   SceKernelAllocMemBlockOpt opt = { 0 };
   opt.size = sizeof(opt);
@@ -224,8 +220,6 @@ static void vita_setup(int videoFormat, int width, int height, int redrawRate, v
 }
 
 static void vita_cleanup() {
-  fclose(fd);
-
   free(ffmpeg_buffer);
   #warning TODO cleanup
 }

@@ -23,17 +23,4 @@
 
 extern const char* audio_device;
 
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa;
-#ifdef HAVE_SDL
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl;
-#endif
-#ifdef HAVE_PULSE
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
-bool audio_pulse_init();
-#endif
-#ifdef HAVE_PI
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_omx;
-#endif
-#ifdef __vita__
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_vita;
-#endif

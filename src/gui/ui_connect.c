@@ -72,15 +72,9 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
   if (config.forcehw)
     drFlags |= FORCE_HARDWARE_ACCELERATION;
 
-  ret = LiStartConnection(
-      &server->serverInfo,
-      &config.stream,
-      &connection_callbacks,
-      platform_get_video(system),
-      platform_get_audio(system),
-      NULL,
-      drFlags
-      );
+  ret = LiStartConnection(&server->serverInfo, &config.stream, &connection_callbacks,
+                          platform_get_video(system), platform_get_audio(system),
+                          NULL, drFlags);
 
   if (ret == 0) {
     server->currentGame = appId;
@@ -99,7 +93,8 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
       case STAGE_INPUT_STREAM_START: stage = "Input stream start"; break;
     }
 
-    display_error("Failed to start stream: error code %d\nFailed stage: %s\n(error code %d)", ret, stage, connection_failed_stage_code);
+    display_error("Failed to start stream: error code %d\nFailed stage: %s\n(error code %d)",
+                  ret, stage, connection_failed_stage_code);
     return;
   }
 }
@@ -140,7 +135,10 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
         flash_message("Unpairing...");
         ret = gs_unpair(&server);
         if (ret == GS_OK) {
-          // TODO remove unique key
+          if (connection_terminate()) {
+            display_error("Reconnect failed: %d", -1);
+            return 0;
+          }
           return QUIT_RELOAD;
         }
         display_error("Unpairing failed: %d", ret);
@@ -155,7 +153,11 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
 
       ret = gs_pair(&server, &pin[0]);
       if (ret == 0) {
-        connection_terminate();
+        connection_paired();
+        if (connection_terminate()) {
+          display_error("Reconnect failed: %d", -2);
+          return 0;
+        }
         return QUIT_RELOAD;
       }
       display_error("Pairing failed: %d", ret);
@@ -168,6 +170,7 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
       flash_message("Quitting...");
       ret = gs_quit_app(&server);
       if (ret == GS_OK) {
+        connection_paired();
         server.currentGame = 0;
         return QUIT_RELOAD;
       }
@@ -186,7 +189,7 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
             break;
           }
           // TODO: stop previous stream
-        case LI_READY:
+        case LI_PAIRED:
           flash_message("Stream starting...");
           ui_connect_stream(&server, id);
           break;
@@ -297,6 +300,7 @@ int ui_connect(char *address) {
   // pairing
   MENU_CATEGORY(server.paired ? "Paired" : "Not paired");
   if (server.paired) {
+    connection_paired();
     MENU_ENTRY(CONNECT_PAIRUNPAIR, "Unpair");
   } else {
     MENU_ENTRY(CONNECT_PAIRUNPAIR, "Pair");
@@ -321,7 +325,6 @@ int ui_connect(char *address) {
     pos[0] = -1;
   }
 
-  //assert(idx < 48);
   return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, &menu);
 }
 

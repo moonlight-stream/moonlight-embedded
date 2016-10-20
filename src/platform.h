@@ -24,21 +24,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
-
-enum platform { NONE, SDL, PI, IMX, AML, FAKE, VITA };
+enum platform { VITA };
 
 enum platform platform_check(char*);
 PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
 PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
 bool platform_supports_hevc(enum platform system);
 
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
-#ifdef HAVE_SDL
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
-void sdl_loop();
-#endif
-
-#ifdef __vita__
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_vita;
-#endif

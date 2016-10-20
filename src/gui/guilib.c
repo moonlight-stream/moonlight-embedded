@@ -1,7 +1,6 @@
 #include "guilib.h"
 
 #include "../platform.h"
-#include "../sdl.h"
 
 #include <stdarg.h>
 #include <stdio.h>

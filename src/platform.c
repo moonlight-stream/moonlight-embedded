@@ -31,106 +31,23 @@ typedef bool(*ImxInit)();
 
 enum platform platform_check(char* name) {
   bool std = strcmp(name, "default") == 0;
-  #ifdef HAVE_IMX
-  if (std || strcmp(name, "imx") == 0) {
-    void *handle = dlopen("libmoonlight-imx.so", RTLD_NOW | RTLD_GLOBAL);
-    ImxInit video_imx_init = (ImxInit) dlsym(RTLD_DEFAULT, "video_imx_init");
-    if (handle != NULL) {
-      if (video_imx_init())
-        return IMX;
-    }
-  }
-  #endif
-  #ifdef HAVE_PI
-  if (std || strcmp(name, "pi") == 0) {
-    void *handle = dlopen("libmoonlight-pi.so", RTLD_NOW | RTLD_GLOBAL);
-    if (handle != NULL && dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
-      return PI;
-  }
-  #endif
-  #ifdef HAVE_AML
-  if (std || strcmp(name, "aml") == 0) {
-    void *handle = dlopen("libmoonlight-aml.so", RTLD_NOW | RTLD_GLOBAL);
-    if (handle != NULL && access("/dev/amvideo", F_OK) != -1)
-      return AML;
-  }
-  #endif
-  #ifdef HAVE_SDL
-  if (std || strcmp(name, "sdl") == 0)
-    return SDL;
-  #endif
-  #ifdef HAVE_FAKE
-  if (std || strcmp(name, "fake") == 0)
-    return FAKE;
-  #endif
   if (strcmp(name, "vita") == 0)
     return VITA;
   return 0;
 }
 
 DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
-  switch (system) {
-  #ifdef HAVE_SDL
-  case SDL:
-    return &decoder_callbacks_sdl;
-  #endif
-  #ifdef HAVE_IMX
-  case IMX:
-    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_imx");
-  #endif
-  #ifdef HAVE_PI
-  case PI:
-    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_pi");
-  #endif
-  #ifdef HAVE_AML
-  case AML:
-    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_aml");
-  #endif
-  #ifdef HAVE_FAKE
-  case FAKE:
-    return &decoder_callbacks_fake;
-  #endif
-  }
-  #ifdef __vita__
   return &decoder_callbacks_vita;
-  #endif
-  return NULL;
 }
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
-  #ifdef __vita__
   return &audio_callbacks_vita;
-  #endif
-  switch (system) {
-  #ifdef HAVE_SDL
-  case SDL:
-    return &audio_callbacks_sdl;
-  #endif
-  #ifdef HAVE_PI
-  case PI:
-    if (audio_device == NULL || strcmp(audio_device, "local") == 0 || strcmp(audio_device, "hdmi") == 0)
-      return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
-  #endif
-  default:
-    #ifdef HAVE_PULSE
-    if (audio_pulse_init())
-      return &audio_callbacks_pulse;
-    #endif
-    return &audio_callbacks_alsa;
-    return NULL;
-  }
-  return NULL;
 }
 
 bool platform_supports_hevc(enum platform system) {
-  switch (system) {
-  case AML:
-    return true;
-  }
   return false;
 }
 
-#ifdef __vita__
 int chmod(const char *path, mode_t mode) {
   return 0;
 }
@@ -150,4 +67,3 @@ uid_t getgid(void) {
 uid_t getegid(void) {
   return 1;
 }
-#endif

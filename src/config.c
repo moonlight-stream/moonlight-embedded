@@ -17,7 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "input/evdev.h"
 #include "config.h"
 #include "audio.h"
 

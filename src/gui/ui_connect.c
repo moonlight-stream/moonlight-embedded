@@ -72,15 +72,9 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
   if (config.forcehw)
     drFlags |= FORCE_HARDWARE_ACCELERATION;
 
-  ret = LiStartConnection(
-      &server->serverInfo,
-      &config.stream,
-      &connection_callbacks,
-      platform_get_video(system),
-      platform_get_audio(system),
-      NULL,
-      drFlags
-      );
+  ret = LiStartConnection(&server->serverInfo, &config.stream, &connection_callbacks,
+                          platform_get_video(system), platform_get_audio(system),
+                          NULL, drFlags);
 
   if (ret == 0) {
     server->currentGame = appId;
@@ -99,14 +93,15 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
       case STAGE_INPUT_STREAM_START: stage = "Input stream start"; break;
     }
 
-    display_error("Failed to start stream: error code %d\nFailed stage: %s\n(error code %d)", ret, stage, connection_failed_stage_code);
+    display_error("Failed to start stream: error code %d\nFailed stage: %s\n(error code %d)",
+                  ret, stage, connection_failed_stage_code);
     return;
   }
 }
 
 static SERVER_DATA server;
 static PAPP_LIST server_applist;
-static bool server_connected;
+static int pos[2];
 
 enum {
   CONNECT_PAIRUNPAIR = 13,
@@ -117,6 +112,17 @@ enum {
 #define QUIT_RELOAD 2
 
 int ui_connect_loop(int id, void *context, const input_data *input) {
+  int status = connection_get_status();
+
+  if (status == LI_DISCONNECTED) {
+      goto disconnect;
+  }
+
+  menu_entry *menu = context;
+  for (int i = pos[0]; i < pos[1]; i += 1) {
+    menu[i].disabled = (server.currentGame != 0);
+  }
+
   if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
     return 0;
   }
@@ -129,7 +135,10 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
         flash_message("Unpairing...");
         ret = gs_unpair(&server);
         if (ret == GS_OK) {
-          // TODO remove unique key
+          if (connection_terminate()) {
+            display_error("Reconnect failed: %d", -1);
+            return 0;
+          }
           return QUIT_RELOAD;
         }
         display_error("Unpairing failed: %d", ret);
@@ -144,23 +153,24 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
 
       ret = gs_pair(&server, &pin[0]);
       if (ret == 0) {
-        server_connected = false;
+        connection_paired();
+        if (connection_terminate()) {
+          display_error("Reconnect failed: %d", -2);
+          return 0;
+        }
         return QUIT_RELOAD;
       }
       display_error("Pairing failed: %d", ret);
       return 0;
 
     case CONNECT_DISCONNECT:
-      flash_message("Disconnecting...");
-      server_connected = false;
-      connection_terminate();
-      sceKernelDelayThread(1000 * 1000);
-      return 1;
+      goto disconnect;
 
     case CONNECT_QUITAPP:
       flash_message("Quitting...");
       ret = gs_quit_app(&server);
       if (ret == GS_OK) {
+        connection_paired();
         server.currentGame = 0;
         return QUIT_RELOAD;
       }
@@ -171,16 +181,15 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
       vitapower_config(config);
       vitainput_config(config);
 
-      int status = connection_get_status();
       switch (status) {
         case LI_MINIMIZED:
           if (server.currentGame == id) {
             sceKernelDelayThread(500 * 1000);
             connection_resume();
-            goto mainloop;
+            break;
           }
           // TODO: stop previous stream
-        case LI_READY:
+        case LI_PAIRED:
           flash_message("Stream starting...");
           ui_connect_stream(&server, id);
           break;
@@ -191,12 +200,24 @@ mainloop:
         sceKernelDelayThread(500 * 1000);
       }
 
+      int status = connection_get_status();
+
+      if (status == LI_DISCONNECTED) {
+          goto disconnect;
+      }
+
       return QUIT_RELOAD;
   }
+
+disconnect:
+  flash_message("Disconnecting...");
+  connection_terminate();
+  sceKernelDelayThread(1000 * 1000);
+  return 1;
 }
 
 int ui_connect(char *address) {
-  if (!server_connected) {
+  if (!connection_is_ready()) {
     flash_message("Connecting to:\n %s...", address);
     int ret = gs_init(&server, address, config.key_dir);
     if (ret == GS_OUT_OF_MEMORY) {
@@ -220,8 +241,7 @@ int ui_connect(char *address) {
       return 0;
     }
 
-
-    server_connected = true;
+    connection_reset();
   }
 
   int app_count = 0;
@@ -280,6 +300,7 @@ int ui_connect(char *address) {
   // pairing
   MENU_CATEGORY(server.paired ? "Paired" : "Not paired");
   if (server.paired) {
+    connection_paired();
     MENU_ENTRY(CONNECT_PAIRUNPAIR, "Unpair");
   } else {
     MENU_ENTRY(CONNECT_PAIRUNPAIR, "Pair");
@@ -291,26 +312,30 @@ int ui_connect(char *address) {
   if (server_applist != NULL) {
     MENU_CATEGORY("Applications");
 
+    pos[0] = idx;
+
     PAPP_LIST list = server_applist;
     while (list) {
       MENU_ENTRY(list->id, list->name);
       list = list->next;
     }
+
+    pos[1] = idx;
+  } else {
+    pos[0] = -1;
   }
 
-  //assert(idx < 48);
-  return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, NULL);
+  return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, &menu);
 }
 
 void ui_connect_saved() {
-  while (ui_connect(config.address) == 2);
+  while (ui_connect(config.address) == QUIT_RELOAD);
 }
 
 void ui_connect_ip() {
   char ip[512];
   switch (ime_dialog(ip, "Enter IP:", "192.168.")) {
     case 0:
-      server_connected = false;
       if (config.address)
         free(config.address);
       config.address = malloc(sizeof(char) * strlen(ip));
@@ -324,7 +349,7 @@ void ui_connect_ip() {
 }
 
 bool ui_connect_connected() {
-  return server_connected;
+  return connection_is_ready();
 }
 
 void ui_connect_address(char *addr) {

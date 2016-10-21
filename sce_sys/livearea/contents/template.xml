@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<livearea style="browser" format-ver="01.00" content-rev="1">
+    <livearea-background>
+        <image>bg.png</image>
+    </livearea-background>
+
+    <gate>
+        <startup-image>startup.png</startup-image>
+    </gate>
+
+    <frame id="frame8">
+        <liveitem>
+            <text origin="background" align="left" line-align="left" text-valign="bottom" margin-left="30" margin-bottom="0">
+                <str size="18" bold="off" shadow="on" color="#999999">ALPHA 6</str>
+            </text>
+        </liveitem>
+    </frame>
+
+    <frame id="frame9">
+        <liveitem>
+            <text origin="background" align="center" line-align="center" text-valign="bottom">
+                <str size="44" bold="on" shadow="on">MOONLIGHT</str>
+            </text>
+        </liveitem>
+    </frame>
+
+    <frame id="frame10">
+        <liveitem>
+            <text origin="background" line-break="on" pre-br="on" align="center" line-align="center" text-valign="top" margin-bottom="50">
+                <str size="18" bold="on" shadow="on" color="#dddddd">AN OPEN SOURCE
+NVIDIA GAMESTREAM CLIENT</str>
+            </text>
+        </liveitem>
+    </frame>
+
+</livearea>

@@ -65,3 +65,11 @@ mkdir build && cd build
 cmake ..
 make
 ```
+
+# Assets
+
+- Icon - [moonlight-stream][moonlight] project logo
+- Livearea background - [Moonlight Reflection][reflection] Public domain
+
+[moonlight]: https://github.com/moonlight-stream
+[reflection]: http://www.publicdomainpictures.net/view-image.php?image=130014&picture=moonlight-reflection

@@ -231,6 +231,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->save_debug_log = BOOL(value);
     } else if (strcmp(name, "mapping") == 0) {
       config->mapping = STR(value);
+    } else if (strcmp(name, "mouse_acceleration") == 0) {
+      config->mouse_acceleration = INT(value);
     }
   }
 }
@@ -273,6 +275,8 @@ void config_save(char* filename, PCONFIGURATION config) {
   write_config_bool(fd, "disable_powersave", config->disable_powersave);
   write_config_bool(fd, "save_debug_log", config->save_debug_log);
 
+  write_config_int(fd, "mouse_acceleration", config->mouse_acceleration);
+
   write_config_section(fd, "backtouchscreen_deadzone");
   write_config_int(fd, "top",     config->back_deadzone.top);
   write_config_int(fd, "right",   config->back_deadzone.right);
@@ -312,12 +316,15 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->localaudio = false;
   config->fullscreen = true;
   config->unsupported_version = false;
+  config->save_debug_log = false;
   config->disable_powersave = true;
 
   config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL;
   config->special_keys.sw = SPECIAL_FLAG | INPUT_TYPE_GAMEPAD;
   config->special_keys.offset = 0;
   config->special_keys.size = 150;
+
+  config->mouse_acceleration = 150;
 
   config->inputsCount = 0;
   //config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));

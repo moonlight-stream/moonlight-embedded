@@ -60,6 +60,7 @@ typedef struct _CONFIGURATION {
   bool save_debug_log;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
+  int mouse_acceleration;
   FILE *log_file;
 } CONFIGURATION, *PCONFIGURATION;
 

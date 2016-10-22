@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 #include <sys/types.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
@@ -77,6 +78,8 @@ typedef struct TouchData {
 
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
+double mouse_multiplier;
+
 #define MOUSE_ACTION_DELAY 100000 // 100ms
 
 inline bool mouse_click(short finger_count, bool press) {
@@ -100,13 +103,17 @@ inline bool mouse_click(short finger_count, bool press) {
 }
 
 inline void move_mouse(TouchData old, TouchData cur) {
-  int delta_x = (cur.points[0].x - old.points[0].x) / 2;
-  int delta_y = (cur.points[0].y - old.points[0].y) / 2;
+  double delta_x = (cur.points[0].x - old.points[0].x) / 2.;
+  double delta_y = (cur.points[0].y - old.points[0].y) / 2.;
 
-  if (!delta_x && !delta_y) {
+  if (delta_x == 0 && delta_y == 0) {
     return;
   }
-  LiSendMouseMoveEvent(delta_x, delta_y);
+
+  int x = lround(delta_x * mouse_multiplier);
+  int y = lround(delta_y * mouse_multiplier);
+
+  LiSendMouseMoveEvent(x, y);
 }
 
 inline void move_wheel(TouchData old, TouchData cur) {
@@ -118,7 +125,6 @@ inline void move_wheel(TouchData old, TouchData cur) {
   }
   LiSendScrollEvent(delta_y);
 }
-
 
 SceCtrlData pad, pad_old;
 TouchData touch;
@@ -569,6 +575,8 @@ void vitainput_config(CONFIGURATION config) {
   FRONT_SECTIONS[3].left.y  = HEIGHT - config.special_keys.offset - config.special_keys.size;
   FRONT_SECTIONS[3].right.x = WIDTH - config.special_keys.offset;
   FRONT_SECTIONS[3].right.y = HEIGHT - config.special_keys.offset;
+
+  mouse_multiplier = 1 + (0.01 * config.mouse_acceleration);
 }
 
 void vitainput_start(void) {

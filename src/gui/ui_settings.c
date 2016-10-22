@@ -342,7 +342,8 @@ enum {
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_ENABLE_MAPPING,
   SETTINGS_BACK_DEADZONE,
-  SETTINGS_SPECIAL_KEYS
+  SETTINGS_SPECIAL_KEYS,
+  SETTINGS_MOUSE_ACCEL,
 };
 
 
@@ -355,6 +356,7 @@ enum {
   SETTINGS_VIEW_ENABLE_MAPPING,
   SETTINGS_VIEW_BACK_DEADZONE,
   SETTINGS_VIEW_SPECIAL_KEYS,
+  SETTINGS_VIEW_MOUSE_ACCEL,
 };
 
 static int SETTINGS_VIEW_IDX[8];
@@ -474,6 +476,27 @@ static int settings_loop(int id, void *context, const input_data *input) {
       }
       special_keys_menu();
       break;
+    case SETTINGS_MOUSE_ACCEL:
+      left = input->buttons & SCE_CTRL_LEFT;
+      right = input->buttons & SCE_CTRL_RIGHT;
+      if (!left && !right) {
+          break;
+      }
+      if (left) {
+        config.mouse_acceleration -= 15;
+        if (config.mouse_acceleration < 0) {
+          config.mouse_acceleration = 0;
+        }
+      } else {
+        config.mouse_acceleration += 15;
+        if (config.mouse_acceleration > 300) {
+          config.mouse_acceleration = 300;
+        }
+      }
+
+      did_change = 1;
+      break;
+
   }
 
   if (!did_change && !settings_loop_setup) {
@@ -509,6 +532,8 @@ static int settings_loop(int id, void *context, const input_data *input) {
           config.back_deadzone.left);
   MENU_REPLACE(SETTINGS_VIEW_BACK_DEADZONE, current);
 
+  sprintf(current, "%d", config.mouse_acceleration);
+  MENU_REPLACE(SETTINGS_VIEW_MOUSE_ACCEL, current);
   return 0;
 }
 
@@ -537,9 +562,11 @@ int ui_settings_menu() {
     idx++; \
   } while(0)
 
+#define LEFT_RIGHT_ARROWS "\xe2\x86\x90\xe2\x86\x92"
+
   MENU_CATEGORY("Stream");
-  MENU_ENTRY(SETTINGS_RESOLUTION, SETTINGS_VIEW_RESOLUTION, "Resolution", "←→");
-  MENU_ENTRY(SETTINGS_FPS, SETTINGS_VIEW_FPS, "FPS", "←→");
+  MENU_ENTRY(SETTINGS_RESOLUTION, SETTINGS_VIEW_RESOLUTION, "Resolution", LEFT_RIGHT_ARROWS);
+  MENU_ENTRY(SETTINGS_FPS, SETTINGS_VIEW_FPS, "FPS", LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_BITRATE, SETTINGS_VIEW_BITRATE, "Bitrate", "");
 
   MENU_CATEGORY("System");
@@ -547,6 +574,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_DISABLE_POWERSAVE, SETTINGS_VIEW_DISABLE_POWERSAVE, "Disable power save", "");
 
   MENU_CATEGORY("Input");
+  MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_ENABLE_MAPPING, SETTINGS_VIEW_ENABLE_MAPPING, "Enable mapping file", "");
   MENU_MESSAGE("Located at ux0:data/moonlight/mappings/vita.conf");
   MENU_MESSAGE("Example in github repo.");

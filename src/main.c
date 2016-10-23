@@ -68,7 +68,7 @@ static void vita_init() {
   // This is only used for PIN codes, doesn't really matter
   srand(time(NULL));
 
-  printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
+  printf("Vita Moonlight %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
   int ret = 0;
 

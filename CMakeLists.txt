@@ -7,7 +7,19 @@ set(CMAKE_CXX_COMPILER "arm-vita-eabi-g++")
 project(moonlight)
 set(TITLE_ID "XYZZ00002")
 set(TITLE "Moonlight")
-set(VERSION "00.00")
+set(VERSION_MAJOR "0")
+set(VERSION_MINOR "1")
+set(VERSION_PATCH "0")
+
+execute_process(COMMAND
+    python -c "print('%02d.%02d' % (${VERSION_MAJOR}, ${VERSION_MINOR}))"
+    OUTPUT_VARIABLE APP_VER
+)
+string(REPLACE "\n" "" APP_VER "${APP_VER}")
+
+add_definitions(-DVERSION_MAJOR=${VERSION_MAJOR})
+add_definitions(-DVERSION_MINOR=${VERSION_MINOR})
+add_definitions(-DVERSION_PATCH=${VERSION_PATCH})
 
 set(CMAKE_C_FLAGS "-Wl,-q -O3 -g -std=c99 -Dntohs=__builtin_bswap16 -Dhtons=__builtin_bswap16 -Dntohl=__builtin_bswap32 -Dhtonl=__builtin_bswap32 -DENET_DEBUG=1")
 

@@ -63,7 +63,8 @@ int ui_main_menu() {
 
 #define MENU_TITLE(NAME) \
   do { \
-    menu[idx] = (menu_entry) { .name = "", .subname = (NAME), .disabled = true, .color = 0xff00aa00 }; \
+    menu[idx] = (menu_entry) { .name = "", .disabled = true, .color = 0xff00aa00 }; \
+    strcpy(menu[idx].subname, (NAME)); \
     idx++; \
   } while (0)
 #define MENU_ENTRY(ID, NAME) \
@@ -77,8 +78,9 @@ int ui_main_menu() {
     idx++; \
   } while(0)
 
-
-  MENU_TITLE("Moonlight Alpha");
+  char program_info[256];
+  snprintf(program_info, 256, "Moonlight v%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+  MENU_TITLE(program_info);
 
   char name[256];
   if (ui_connect_connected()) {

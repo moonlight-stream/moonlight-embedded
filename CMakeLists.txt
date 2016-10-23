@@ -6,6 +6,8 @@ set(CMAKE_CXX_COMPILER "arm-vita-eabi-g++")
 
 project(moonlight)
 set(TITLE_ID "XYZZ00002")
+set(TITLE "Moonlight")
+set(VERSION "00.00")
 
 set(CMAKE_C_FLAGS "-Wl,-q -O3 -g -std=c99 -Dntohs=__builtin_bswap16 -Dhtons=__builtin_bswap16 -Dntohl=__builtin_bswap32 -Dhtonl=__builtin_bswap32 -DENET_DEBUG=1")
 
@@ -115,21 +117,25 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lSceKernel_stub
 	-lSceGxm_stub
 	-lScePgf_stub
-	-lSceCommonDialog_stub 
-	-lfreetype 
-	-lpng 
-	-ljpeg 
-	-lz 
-	-lm 
+	-lSceCommonDialog_stub
+	-lfreetype
+	-lpng
+	-ljpeg
+	-lz
+	-lm
 	-lc
-
-
 )
 
 add_custom_target(${PROJECT_NAME}.vpk ALL
 	COMMAND vita-elf-create ${PROJECT_NAME}.elf ${PROJECT_NAME}.velf
 	COMMAND vita-make-fself -s ${PROJECT_NAME}.velf eboot.bin
-	COMMAND vita-mksfoex -s TITLE_ID=${TITLE_ID} "${PROJECT_NAME}" param.sfo
-	COMMAND vita-pack-vpk -s param.sfo -b eboot.bin ${PROJECT_NAME}.vpk
+	COMMAND vita-mksfoex -s TITLE_ID=${TITLE_ID} -s APP_VER=${APP_VER} "${TITLE}" param.sfo
+	COMMAND vita-pack-vpk -s param.sfo -b eboot.bin
+			--add ../sce_sys/icon0.png=sce_sys/icon0.png
+			--add ../sce_sys/livearea/contents/bg.png=sce_sys/livearea/contents/bg.png
+			--add ../sce_sys/livearea/contents/startup.png=sce_sys/livearea/contents/startup.png
+			--add ../sce_sys/livearea/contents/template.xml=sce_sys/livearea/contents/template.xml
+			${PROJECT_NAME}.vpk
 )
+
 add_dependencies(${PROJECT_NAME}.vpk ${PROJECT_NAME}.elf)

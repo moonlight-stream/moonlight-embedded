@@ -22,6 +22,7 @@ https://github.com/d3m3vilurr/vita-curl branch `vita`
 
 ```
 ./buildconf
+./configure --host=arm-vita-eabi  --prefix=$VITASDK/arm-vita-eabi/
 cp lib/config-vita.h lib/curl_config.h
 make -j8
 make install

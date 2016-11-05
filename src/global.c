@@ -17,9 +17,11 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <pthread.h>
+#include <psp2/rtc.h>
 
 #include "config.h"
 #include "debug.h"
@@ -35,13 +37,24 @@ void DEBUG_PRINT(const char *s, ...) {
     return;
   }
 
-  va_list va;
-  char buffer[1024];
+  char buffer[1024] = {0};
 
+  SceDateTime time;
+  sceRtcGetCurrentClock(&time, 0);
+
+  snprintf(buffer, 26, "%04d%02d%02d %02d:%02d:%02d.%06d ",
+           time.year, time.month, time.day,
+           time.hour, time.minute, time.second,
+           time.microsecond);
+
+  va_list va;
   va_start(va, s);
-  vsprintf(buffer, s, va);
+  int len = vsnprintf(&buffer[25], 998, s, va);
   va_end(va);
 
   fprintf(config.log_file, buffer);
+  if (buffer[len + 24] != '\n') {
+      fprintf(config.log_file, "\n");
+  }
   fflush(config.log_file);
 }

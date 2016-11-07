@@ -127,7 +127,6 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lSceIme_stub
 
 	-lvita2d
-	-lSceKernel_stub
 	-lSceGxm_stub
 	-lScePgf_stub
 	-lSceCommonDialog_stub

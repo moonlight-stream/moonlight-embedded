@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<changeinfo>
+<changes app_ver="00.01"><![CDATA[
+## 0.1.1<br>
+* Fix connection problem on the GFE 2.2.3 (#66)<br>
+* Improve logging datas (#67, #68)<br>
+* Support newer vitasdk (#70)<br>
+<br>
+## 0.1.0<br>
+* Add new option for store debugging log (#53)<br>
+* Fix crash at quit application (#54)<br>
+* Add livearea (#62)<br>
+* Add new option for mouse acceleration (#63)<br>
+* Cleanup codes. (#60)<br>
+* Now remove alpha mark. but still lower version :) (#64)<br>
+]]></changes>
+<changes app_ver="00.00"><![CDATA[
+## alpha6<br>
+* Reimplement input & config process for the improve stability (#47)<br>
+* Fix little memory leaks (#47)<br>
+* Fix crash if have too many moonlight supporting games (#47)<br>
+* Fix crash at press circle button on the connect menu (#47)<br>
+* Fix bug about not detect device model (#50)<br>
+* Fix cannot use analog sticks on the VITA 2000 (#50)<br>
+* Change priority of input thread for the high bitrate connection (#50)<br>
+* Update mapping values & add new mapping file for the PSTV (#51)<br>
+<br>
+## alpha5<br>
+* Fix crash at first time (dcd1dc8)<br>
+* Improve input packet handle (#24)<br>
+* Change connection option (#26)<br>
+* Code cleanup for input handling (#27, #30, #31)<br>
+* Support L2/R2/L3/R3 Buttons on PSTV (#36)<br>
+* Update build toolchains & Fix connection problems under GFE 3.0 (#39)<br>
+<br>
+## alpha4<br>
+* Support GUI (#13)<br>
+* Support editing config file (#4)<br>
+* Support input mapping (#5)<br>
+* Add new config options for power saving (#6)<br>
+* Turn safe application (#7)<br>
+<br>
+## alpha3<br>
+* Support virtual button for L2/R2/L3/R3 using touchscreen (#1, #2)<br>
+* Support mouse move and click using touchscreen (#3)<br>
+<br>
+## alpha2<br>
+* Support custom settings; screen resolution, framerate and bitrate (d145403)<br>
+<br>
+## alpha1<br>
+* Initial release (04a7c1d)]]></changes>
+</changeinfo>

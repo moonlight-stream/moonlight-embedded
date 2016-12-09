@@ -84,7 +84,7 @@ typedef struct {
   int                                 (CDECL *set_osd_string)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iLogicalAddress, CEC_NAMESPACE cec_display_control duration, const char* strMessage);
   int                                 (CDECL *switch_monitoring)(libcec_connection_t connection, int bEnable);
   CEC_NAMESPACE cec_version           (CDECL *get_device_cec_version)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iLogicalAddress);
-  int                                 (CDECL *get_device_menu_language)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iLogicalAddress, CEC_NAMESPACE cec_menu_language* language);
+  int                                 (CDECL *get_device_menu_language)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iLogicalAddress, CEC_NAMESPACE cec_menu_language language);
   uint64_t                            (CDECL *get_device_vendor_id)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iLogicalAddress);
   uint16_t                            (CDECL *get_device_physical_address)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iLogicalAddress);
   CEC_NAMESPACE cec_logical_address   (CDECL *get_active_source)(libcec_connection_t connection);
@@ -100,7 +100,7 @@ typedef struct {
   int                                 (CDECL *mute_audio)(libcec_connection_t connection, int bSendRelease);
   int                                 (CDECL *send_keypress)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iDestination, CEC_NAMESPACE cec_user_control_code key, int bWait);
   int                                 (CDECL *send_key_release)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iDestination, int bWait);
-  CEC_NAMESPACE cec_osd_name          (CDECL *get_device_osd_name)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iAddress);
+  int                                 (CDECL *get_device_osd_name)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iAddress, CEC_NAMESPACE cec_osd_name name);
   int                                 (CDECL *set_stream_path_logical)(libcec_connection_t connection, CEC_NAMESPACE cec_logical_address iAddress);
   int                                 (CDECL *set_stream_path_physical)(libcec_connection_t connection, uint16_t iPhysicalAddress);
   CEC_NAMESPACE cec_logical_addresses (CDECL *get_logical_addresses)(libcec_connection_t connection);
@@ -161,7 +161,7 @@ static int libcecc_resolve_all(void* lib, libcec_interface_t* iface)
   _libcecc_resolve(lib, iface->set_osd_string,                "libcec_set_osd_string",                int(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address, CEC_NAMESPACE cec_display_control, const char*));
   _libcecc_resolve(lib, iface->switch_monitoring,             "libcec_switch_monitoring",             int(CDECL *)(libcec_connection_t, int));
   _libcecc_resolve(lib, iface->get_device_cec_version,        "libcec_get_device_cec_version",        CEC_NAMESPACE cec_version(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address));
-  _libcecc_resolve(lib, iface->get_device_menu_language,      "libcec_get_device_menu_language",      int(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address, CEC_NAMESPACE cec_menu_language*));
+  _libcecc_resolve(lib, iface->get_device_menu_language,      "libcec_get_device_menu_language",      int(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address, CEC_NAMESPACE cec_menu_language));
   _libcecc_resolve(lib, iface->get_device_vendor_id,          "libcec_get_device_vendor_id",          uint64_t(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address));
   _libcecc_resolve(lib, iface->get_device_physical_address,   "libcec_get_device_physical_address",   uint16_t(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address));
   _libcecc_resolve(lib, iface->get_active_source,             "libcec_get_active_source",             CEC_NAMESPACE cec_logical_address(CDECL *)(libcec_connection_t));
@@ -177,7 +177,7 @@ static int libcecc_resolve_all(void* lib, libcec_interface_t* iface)
   _libcecc_resolve(lib, iface->mute_audio,                    "libcec_mute_audio",                    int(CDECL *)(libcec_connection_t, int));
   _libcecc_resolve(lib, iface->send_keypress,                 "libcec_send_keypress",                 int(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address, CEC_NAMESPACE cec_user_control_code, int));
   _libcecc_resolve(lib, iface->send_key_release,              "libcec_send_key_release",              int(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address, int));
-  _libcecc_resolve(lib, iface->get_device_osd_name,           "libcec_get_device_osd_name",           CEC_NAMESPACE cec_osd_name(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address));
+  _libcecc_resolve(lib, iface->get_device_osd_name,           "libcec_get_device_osd_name",           int(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address, CEC_NAMESPACE cec_osd_name));
   _libcecc_resolve(lib, iface->set_stream_path_logical,       "libcec_set_stream_path_logical",       int(CDECL *)(libcec_connection_t, CEC_NAMESPACE cec_logical_address));
   _libcecc_resolve(lib, iface->set_stream_path_physical,      "libcec_set_stream_path_physical",      int(CDECL *)(libcec_connection_t, uint16_t));
   _libcecc_resolve(lib, iface->get_logical_addresses,         "libcec_get_logical_addresses",         CEC_NAMESPACE cec_logical_addresses(CDECL *)(libcec_connection_t));

@@ -1,4 +1,6 @@
 ## Unreleased
+
+## 0.1.2
 * Compress binary (#75)
 * Support GFE 3.2 (#76)
 

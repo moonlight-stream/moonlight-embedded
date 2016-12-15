@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
 <changes app_ver="00.01"><![CDATA[
+## 0.1.2<br>
+* Compress binary (#75)<br>
+* Support GFE 3.2 (#76)<br>
+<br>
 ## 0.1.1<br>
 * Fix connection problem on the GFE 2.2.3 (#66)<br>
 * Improve logging datas (#67, #68)<br>

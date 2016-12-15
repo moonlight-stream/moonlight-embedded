@@ -1,5 +1,6 @@
 ## Unreleased
 * Compress binary (#75)
+* Support GFE 3.2 (#76)
 
 ## 0.1.1
 * Fix connection problem on the GFE 2.2.3 (#66)

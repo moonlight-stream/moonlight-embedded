@@ -138,10 +138,16 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lc
 )
 
-add_custom_target(${PROJECT_NAME}.vpk ALL
+add_custom_target(${PROJECT_NAME}.velf ALL
 	COMMAND vita-elf-create ${PROJECT_NAME}.elf ${PROJECT_NAME}.velf
-	COMMAND vita-make-fself -s -c ${PROJECT_NAME}.velf eboot.bin
+)
+
+add_custom_target(param.sfo ALL
 	COMMAND vita-mksfoex -s TITLE_ID=${TITLE_ID} -s APP_VER=${APP_VER} "${TITLE}" param.sfo
+)
+
+add_custom_target(${PROJECT_NAME}.vpk ALL
+	COMMAND vita-make-fself -s -c ${PROJECT_NAME}.velf eboot.bin
 	COMMAND vita-pack-vpk -s param.sfo -b eboot.bin
 			--add ../sce_sys/icon0.png=sce_sys/icon0.png
 			--add ../sce_sys/livearea/contents/bg.png=sce_sys/livearea/contents/bg.png
@@ -150,4 +156,16 @@ add_custom_target(${PROJECT_NAME}.vpk ALL
 			${PROJECT_NAME}.vpk
 )
 
-add_dependencies(${PROJECT_NAME}.vpk ${PROJECT_NAME}.elf)
+add_custom_target(${PROJECT_NAME}_uncomp.vpk ALL
+	COMMAND vita-make-fself -s ${PROJECT_NAME}.velf eboot_uncomp.bin
+	COMMAND vita-pack-vpk -s param.sfo -b eboot_uncomp.bin
+			--add ../sce_sys/icon0.png=sce_sys/icon0.png
+			--add ../sce_sys/livearea/contents/bg.png=sce_sys/livearea/contents/bg.png
+			--add ../sce_sys/livearea/contents/startup.png=sce_sys/livearea/contents/startup.png
+			--add ../sce_sys/livearea/contents/template.xml=sce_sys/livearea/contents/template.xml
+			${PROJECT_NAME}_uncomp.vpk
+)
+
+add_dependencies(${PROJECT_NAME}.velf ${PROJECT_NAME}.elf)
+add_dependencies(${PROJECT_NAME}.vpk ${PROJECT_NAME}.velf param.sfo)
+add_dependencies(${PROJECT_NAME}_uncomp.vpk ${PROJECT_NAME}.velf param.sfo)

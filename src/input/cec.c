@@ -77,7 +77,7 @@ void cec_init() {
   libcecc_reset_configuration(&g_config);
   g_config.clientVersion = LIBCEC_VERSION_CURRENT;
   g_config.bActivateSource = 0;
-  g_callbacks.CBCecKeyPress = &on_cec_keypress;
+  g_callbacks.keyPress = &on_cec_keypress;
   g_config.callbacks = &g_callbacks;
   snprintf(g_config.strDeviceName, sizeof(g_config.strDeviceName), "Moonlight");
   g_config.callbacks = &g_callbacks;

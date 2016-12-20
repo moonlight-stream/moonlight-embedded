@@ -74,7 +74,7 @@ static const short keyCodes[] = {
   0xBF, //VK_SLASH
   0x10, //VK_SHIFT Right shift
   0, //VK_KPASTERISK
-  0x11, //VK_ALT Left alt
+  0x12, //VK_ALT Left alt
   0x20, //VK_SPACE
   0x14, //VK_CAPS_LOCK
   0x70, //VK_F1
@@ -118,7 +118,7 @@ static const short keyCodes[] = {
   0x11, //VK_CONTROL Right ctrl
   0, //VK_KPSLASH
   0, //VK_SYSRQ
-  0x11, //VK_ALT Right alt
+  0x12, //VK_ALT Right alt
   0, //KeyEvent.VK_LINEFEED
   0x24, //VK_HOME
   0x26, //VK_UP

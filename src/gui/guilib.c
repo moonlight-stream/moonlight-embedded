@@ -285,6 +285,7 @@ void ui_start() {
 
 void ui_end() {
   vita2d_end_drawing();
+  vita2d_wait_rendering_done();
   vita2d_swap_buffers();
 }
 

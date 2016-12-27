@@ -412,6 +412,7 @@ int display_menu(menu_entry menu[], int total_elements, menu_geom *geom_ptr,
   return 0;
 
 error:
+  ui_end();
   return exit_code;
 }
 

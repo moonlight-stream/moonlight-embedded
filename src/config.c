@@ -241,7 +241,7 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
   return ini_parse(filename, ini_handle, config);
 }
 
-void config_save(char* filename, PCONFIGURATION config) {
+void config_save(const char* filename, PCONFIGURATION config) {
   FILE* fd = fopen(filename, "w");
   if (fd == NULL) {
     fprintf(stderr, "Can't open configuration file: %s\n", filename);
@@ -327,7 +327,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->mouse_acceleration = 150;
 
   config->inputsCount = 0;
-  //config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
+  config->mapping = NULL;
   config->key_dir[0] = 0;
 
   //char* config_file = get_path("moonlight.conf", "ux0:data/moonlight/");

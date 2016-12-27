@@ -467,7 +467,7 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       if (config.mapping) {
         free(config.mapping);
-        config.mapping = 0;
+        config.mapping = NULL;
       } else {
         config.mapping = strdup("mappings/vita.conf");
       }

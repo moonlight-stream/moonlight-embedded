@@ -67,9 +67,9 @@ int ui_main_menu() {
     strcpy(menu[idx].subname, (NAME)); \
     idx++; \
   } while (0)
-#define MENU_ENTRY(ID, NAME) \
+#define MENU_ENTRY(ID, NAME, DISABLED) \
   do { \
-    menu[idx] = (menu_entry) { .name = (NAME), .id = (ID) }; \
+    menu[idx] = (menu_entry) { .name = (NAME), .disabled = (DISABLED), .id = (ID) }; \
     idx++; \
   } while(0)
 #define MENU_SEPARATOR() \
@@ -87,16 +87,16 @@ int ui_main_menu() {
     char addr[256];
     ui_connect_address(addr);
     sprintf(name, "Resume connection to %s", addr);
-  } else if (config.address) {
+  } else {
     sprintf(name, "Connect to %s", config.address ? config.address : "none");
   }
 
-  MENU_ENTRY(MAIN_MENU_CONNECT_SAVED, name);
+  MENU_ENTRY(MAIN_MENU_CONNECT_SAVED, name, !ui_connect_connected() && !config.address);
 
-  MENU_ENTRY(MAIN_MENU_CONNECT, "Connect to ...");
+  MENU_ENTRY(MAIN_MENU_CONNECT, "Connect to ...", ui_connect_connected());
   MENU_SEPARATOR();
-  MENU_ENTRY(MAIN_MENU_SETTINGS, "Settings");
-  MENU_ENTRY(MAIN_MENU_QUIT, "Quit");
+  MENU_ENTRY(MAIN_MENU_SETTINGS, "Settings", false);
+  MENU_ENTRY(MAIN_MENU_QUIT, "Quit", false);
 
   menu_geom geom = make_geom_centered(500, 200);
   return display_menu(menu, idx, &geom, &ui_main_menu_loop, &ui_main_menu_back, NULL, NULL);

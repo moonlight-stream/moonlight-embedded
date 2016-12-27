@@ -338,6 +338,7 @@ enum {
   SETTINGS_RESOLUTION = 100,
   SETTINGS_FPS,
   SETTINGS_BITRATE,
+  SETTINGS_SOPS,
   SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_ENABLE_MAPPING,
@@ -351,6 +352,7 @@ enum {
   SETTINGS_VIEW_RESOLUTION,
   SETTINGS_VIEW_FPS,
   SETTINGS_VIEW_BITRATE,
+  SETTINGS_VIEW_SOPS,
   SETTINGS_VIEW_SAVE_DEBUG_LOG,
   SETTINGS_VIEW_DISABLE_POWERSAVE,
   SETTINGS_VIEW_ENABLE_MAPPING,
@@ -359,7 +361,7 @@ enum {
   SETTINGS_VIEW_MOUSE_ACCEL,
 };
 
-static int SETTINGS_VIEW_IDX[8];
+static int SETTINGS_VIEW_IDX[10];
 
 static int move_idx_in_array(char *array[], int count, char *find, int index_dist) {
   int i = 0;
@@ -437,6 +439,13 @@ static int settings_loop(int id, void *context, const input_data *input) {
         }
       }
       break;
+    case SETTINGS_SOPS:
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.sops = !config.sops;
+      break;
     case SETTINGS_SAVE_DEBUG_LOG:
       if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
@@ -458,7 +467,7 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       if (config.mapping) {
         free(config.mapping);
-        config.mapping = 0;
+        config.mapping = NULL;
       } else {
         config.mapping = strdup("mappings/vita.conf");
       }
@@ -516,6 +525,9 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%d", config.stream.bitrate);
   MENU_REPLACE(SETTINGS_VIEW_BITRATE, current);
 
+  sprintf(current, "%s", config.sops ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_SOPS, current);
+
   sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_DISABLE_POWERSAVE, current);
 
@@ -568,6 +580,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_RESOLUTION, SETTINGS_VIEW_RESOLUTION, "Resolution", LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_FPS, SETTINGS_VIEW_FPS, "FPS", LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_BITRATE, SETTINGS_VIEW_BITRATE, "Bitrate", "");
+  MENU_ENTRY(SETTINGS_SOPS, SETTINGS_VIEW_SOPS, "Change graphical game settings for performance", "");
 
   MENU_CATEGORY("System");
   MENU_ENTRY(SETTINGS_SAVE_DEBUG_LOG, SETTINGS_VIEW_SAVE_DEBUG_LOG, "Enable debug log", "");

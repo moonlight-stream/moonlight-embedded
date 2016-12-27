@@ -523,10 +523,10 @@ void vitainput_config(CONFIGURATION config) {
   }
 
   if (config.mapping) {
-    char config_path[256];
-    sprintf(config_path, "ux0:data/moonlight/%s", config.mapping);
-    printf("Loading mapping at %s\n", config_path);
-    mapping_load(config_path, &map);
+    char mapping_file_path[256];
+    sprintf(mapping_file_path, "ux0:data/moonlight/%s", config.mapping);
+    printf("Loading mapping at %s\n", mapping_file_path);
+    mapping_load(mapping_file_path, &map);
   }
 
   controller_port = config.model == SCE_KERNEL_MODEL_VITATV ? 1 : 0;

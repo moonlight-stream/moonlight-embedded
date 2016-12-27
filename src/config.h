@@ -71,4 +71,4 @@ bool inputAdded;
 
 bool config_file_parse(char* filename, PCONFIGURATION config);
 void config_parse(int argc, char* argv[], PCONFIGURATION config);
-void config_save(char* filename, PCONFIGURATION config);
+void config_save(const char* filename, PCONFIGURATION config);

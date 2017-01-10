@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <amcodec/codec.h>
+#include <codec.h>
 
 #define SYNC_OUTSIDE 0x02
 #define UCODE_IP_ONLY_PARAM 0x08

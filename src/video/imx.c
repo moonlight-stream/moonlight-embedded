@@ -116,7 +116,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
     exit(EXIT_FAILURE);
   }
 
-  if (IOGetVirtMem(&mem_desc) <= 0) {
+  if (IOGetVirtMem(&mem_desc) == -1) {
     fprintf(stderr, "Can't get virtual memory address\n");
     exit(EXIT_FAILURE);
   }

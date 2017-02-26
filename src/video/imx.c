@@ -36,6 +36,7 @@
 #include <linux/ioctl.h>
 #include <linux/mxc_v4l2.h>
 #include <linux/mxcfb.h>
+#include <linux/version.h>
 #include <linux/v4l2-common.h>
 #include <linux/v4l2-controls.h>
 #include <linux/videodev2.h>
@@ -177,13 +178,40 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   sprintf(node, "%d", 17);
   strcpy(v4l_device, "/dev/video");
   strcat(v4l_device, node);
-  fd = open(v4l_device, O_RDWR, 0);
+  fd = open(v4l_device, O_RDWR | O_NONBLOCK, 0);
   if (fd < 0){
     fprintf(stderr, "Can't access video output\n");
     exit(EXIT_FAILURE);
   }
 
   struct v4l2_format fmt = {0};
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
+    /* This is aligned with new V4L interface on 2.6.38 kernel */
+  struct v4l2_rect icrop = {0};
+  icrop.left = 0;
+  icrop.top = 0;
+  icrop.width = width;
+  icrop.height = height;
+  fmt.fmt.pix.priv = (unsigned long)&icrop;
+#else
+    /* This is aligned with new V4L interface on 4.1 kernel    */
+    /* This is a NXP custom ioctl which is present in 4.1 bsp. */ 
+#ifdef VIDIOC_S_INPUT_CROP
+  struct v4l2_crop icrop = {0};
+  icrop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+  icrop.c.left = 0;
+  icrop.c.top = 0;
+  icrop.c.width = width;
+  icrop.c.height =  height;
+  err = ioctl(fd, VIDIOC_S_INPUT_CROP, &icrop);
+  if (err < 0) {
+    err_msg("VIDIOC_S_INPUT_CROP failed\n");
+    goto err;
+  }
+#endif
+#endif
+  
   fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
   fmt.fmt.pix.width = picWidth;
   fmt.fmt.pix.height = picHeight;

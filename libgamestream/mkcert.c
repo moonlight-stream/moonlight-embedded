@@ -129,8 +129,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     X509_set_issuer_name(x, name);
     
     /* Add various extensions: standard extensions */
-    add_ext(x, NID_basic_constraints, "critical,CA:TRUE");
-    add_ext(x, NID_key_usage, "critical,keyCertSign,cRLSign");
+    add_ext(x, NID_key_usage, "critical,digitalSignature,keyEncipherment")
     
     add_ext(x, NID_subject_key_identifier, "hash");
     

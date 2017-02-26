@@ -41,6 +41,7 @@ typedef struct _GAMEPAD_STATE {
 static GAMEPAD_STATE gamepads[4];
 
 static int keyboard_modifiers;
+static int activeGamepadMask = 0;
 
 void sdlinput_init() {
   memset(gamepads, 0, sizeof(gamepads));
@@ -63,6 +64,7 @@ static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id) {
       gamepads[i].sdl_id = sdl_id;
       gamepads[i].id = i;
       gamepads[i].initialized = true;
+      activeGamepadMask |= (1 << i);
       return &gamepads[i];
     } else if (gamepads[i].sdl_id == sdl_id)
       return &gamepads[i];
@@ -163,7 +165,7 @@ int sdlinput_handle_event(SDL_Event* event) {
     default:
       return SDL_NOTHING;
     }
-    LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
+    LiSendMultiControllerEvent(gamepad->id, activeGamepadMask, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;
   case SDL_CONTROLLERBUTTONDOWN:
   case SDL_CONTROLLERBUTTONUP:
@@ -222,7 +224,7 @@ int sdlinput_handle_event(SDL_Event* event) {
     else
       gamepad->buttons &= ~button;
 
-    LiSendMultiControllerEvent(gamepad->id, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
+    LiSendMultiControllerEvent(gamepad->id, activeGamepadMask, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;
   }
   return SDL_NOTHING;

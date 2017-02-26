@@ -156,7 +156,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         if (dev->controllerId < 0)
           dev->controllerId = 0;
       }
-      LiSendMultiControllerEvent(dev->controllerId, dev->buttonFlags, dev->leftTrigger, dev->rightTrigger, dev->leftStickX, dev->leftStickY, dev->rightStickX, dev->rightStickY);
+      LiSendMultiControllerEvent(dev->controllerId, assignedControllerIds, dev->buttonFlags, dev->leftTrigger, dev->rightTrigger, dev->leftStickX, dev->leftStickY, dev->rightStickX, dev->rightStickY);
       dev->gamepadModified = false;
     }
     break;

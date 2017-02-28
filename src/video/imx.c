@@ -26,6 +26,7 @@
 #include <string.h>
 #include <libv4l2.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -76,15 +77,23 @@ static bool initialized = false, decoding = false, displaying = false;
 
 static int queued_count;
 static int disp_clr_index = 0;
+static int frame_count = -120;
+static long long int time_start;
+static long long int time_end;
+
 
 static FrameBuffer *fb;
 static struct v4l2_buffer dbuf;
+
+
 
 bool video_imx_init() {
   return vpu_Init(NULL) == RETCODE_SUCCESS;
 }
 
 static void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+  int res;
+
   if (videoFormat != VIDEO_FORMAT_H264) {
     fprintf(stderr, "Video format not supported\n");
     exit(1);
@@ -178,7 +187,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   sprintf(node, "%d", 17);
   strcpy(v4l_device, "/dev/video");
   strcat(v4l_device, node);
-  fd = open(v4l_device, O_RDWR | O_NONBLOCK, 0);
+  fd = open(v4l_device, O_RDWR, 0);
   if (fd < 0){
     fprintf(stderr, "Can't access video output\n");
     exit(EXIT_FAILURE);
@@ -218,7 +227,14 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   fmt.fmt.pix.bytesperline = picWidth;
   fmt.fmt.pix.field = V4L2_FIELD_ANY;
   fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-  if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0) {
+  res = ioctl(fd, VIDIOC_S_FMT, &fmt);
+  if (res < 0) {
+    if (res == EFAULT) {
+      fprintf(stderr,"***************************************************************\n");
+      fprintf(stderr,"   It appears that you use an incompatible kernel              \n");
+      fprintf(stderr,"   probably >= 4.1 but with a broken mxc_vout.c port from 3.1x \n");
+      fprintf(stderr,"***************************************************************\n");
+    }
     fprintf(stderr, "Can't set source video format\n");
     exit(EXIT_FAILURE);
   }
@@ -405,6 +421,12 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     if (outinfo.indexFrameDisplay >= 0) {
       struct timeval tv;
       gettimeofday(&tv, 0);
+    
+      frame_count ++;
+      if (frame_count >= 0 && !time_start) {
+        time_start = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+      }
+
       dbuf.timestamp.tv_sec = tv.tv_sec;
       dbuf.timestamp.tv_usec = tv.tv_usec;
       dbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -453,11 +475,20 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       exit(EXIT_FAILURE);
     }
   }
+  struct timeval tv;
+  
+  gettimeofday(&tv, 0);
+  time_end = tv.tv_sec * 1000LL + tv.tv_usec / 1000; 
 
   return DR_OK;
 }
 
 static void decoder_renderer_cleanup() {
+  if (frame_count) {
+    fprintf(stderr, " displayed %i frames on %i seconds, average fps: %f ", 
+      frame_count, (int)((time_end - time_start) / 1000), 
+      (float)(frame_count * 1.0) / ((time_end - time_start) / 1000.0));
+  }
   IOFreePhyMem(&ps_mem_desc);
   IOFreePhyMem(&slice_mem_desc);
   

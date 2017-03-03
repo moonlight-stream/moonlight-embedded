@@ -87,11 +87,18 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
     exit(EXIT_FAILURE);
   }
 
+  struct v4l2_rect icrop = {0};
+  icrop.left = 0;
+  icrop.top = 0;
+  icrop.width = width;
+  icrop.height = height;
+
   struct v4l2_format fmt = {0};
   fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
   fmt.fmt.pix.width = picWidth;
   fmt.fmt.pix.height = picHeight;
   fmt.fmt.pix.bytesperline = picWidth;
+  fmt.fmt.pix.priv = (unsigned long)&icrop;
   fmt.fmt.pix.field = V4L2_FIELD_ANY;
   fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
   if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0) {

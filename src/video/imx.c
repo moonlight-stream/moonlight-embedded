@@ -17,11 +17,14 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../loop.h"
 #include "imx_vpu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <poll.h>
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -47,8 +50,68 @@ static int fd;
 static int queued_count;
 static int disp_clr_index = 0;
 
+static int pipefd[2];
+static int clearpipefd[2];
+
 bool video_imx_init() {
   return vpu_init();
+}
+
+static int frame_handle(int pipefd) {
+  int frame, prevframe = -1;
+  while (read(pipefd, &frame, sizeof(int)) > 0) {
+    if (prevframe >= 0)
+      write(clearpipefd[1], &prevframe, sizeof(int));
+
+    prevframe = frame;
+  }
+
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+
+  struct v4l2_buffer dbuf = {};
+  dbuf.timestamp.tv_sec = tv.tv_sec;
+  dbuf.timestamp.tv_usec = tv.tv_usec;
+  dbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+  dbuf.memory = V4L2_MEMORY_MMAP;
+
+  dbuf.index = frame;
+  if (ioctl(fd, VIDIOC_QUERYBUF, &dbuf) < 0) {
+    fprintf(stderr, "Can't get output buffer\n");
+    exit(EXIT_FAILURE);
+  }
+
+  dbuf.index = frame;
+  dbuf.field = V4L2_FIELD_NONE;
+  if (ioctl(fd, VIDIOC_QBUF, &dbuf) < 0) {
+    fprintf(stderr, "Can't get output buffer\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (!displaying) {
+    int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+    if (ioctl(fd, VIDIOC_STREAMON, &type) < 0) {
+      fprintf(stderr, "Failed to output video\n");
+      exit(EXIT_FAILURE);
+    }
+    displaying = true;
+  }
+
+  queued_count++;
+
+  if (queued_count > THRESHOLD) {
+    dbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+    dbuf.memory = V4L2_MEMORY_MMAP;
+    if (ioctl(fd, VIDIOC_DQBUF, &dbuf) < 0) {
+      fprintf(stderr, "Failed to dequeue buffer\n");
+      exit(EXIT_FAILURE);
+    } else
+      queued_count--;
+
+    write(clearpipefd[1], &dbuf.index, sizeof(int));
+  }
+
+  return LOOP_OK;
 }
 
 static void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
@@ -170,59 +233,26 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   }
   
   vpu_setup(buffers, regfbcount, width, height);
+
+  if (pipe(pipefd) == -1 || pipe(clearpipefd) == -1) {
+    fprintf(stderr, "Can't create communication channel between threads\n");
+    exit(EXIT_FAILURE);
+  }
+
+  loop_add_fd(pipefd[0], &frame_handle, POLLIN);
+
+  fcntl(clearpipefd[0], F_SETFL, O_NONBLOCK);
+  fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
 }
 
 static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
+  int frame;
+  while (read(clearpipefd[0], &frame, sizeof(int)) > 0)
+    vpu_clear(frame);
+
   if (vpu_decode(decodeUnit)) {
-    int frame = vpu_get_frame();
-
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-
-    struct v4l2_buffer dbuf = {};
-    dbuf.timestamp.tv_sec = tv.tv_sec;
-    dbuf.timestamp.tv_usec = tv.tv_usec;
-    dbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-    dbuf.memory = V4L2_MEMORY_MMAP;
-
-    dbuf.index = frame;
-    if (ioctl(fd, VIDIOC_QUERYBUF, &dbuf) < 0) {
-      fprintf(stderr, "Can't get output buffer\n");
-      exit(EXIT_FAILURE);
-    }
-
-    dbuf.index = frame;
-    dbuf.field =  V4L2_FIELD_NONE;
-    if (ioctl(fd, VIDIOC_QBUF, &dbuf) < 0) {
-      fprintf(stderr, "Can't get output buffer\n");
-      exit(EXIT_FAILURE);
-    }
-
-    if (!displaying) {
-      int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-      if (ioctl(fd, VIDIOC_STREAMON, &type) < 0) {
-        fprintf(stderr, "Failed to output video\n");
-        exit(EXIT_FAILURE);
-      }
-      displaying = true;
-    }
-
-    queued_count++;
-
-    if (queued_count > THRESHOLD) {
-      dbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-      dbuf.memory = V4L2_MEMORY_MMAP;
-      if (ioctl(fd, VIDIOC_DQBUF, &dbuf) < 0) {
-        fprintf(stderr, "Failed to dequeue buffer\n");
-        exit(EXIT_FAILURE);
-      } else
-        queued_count--;
-    }
-
-    if (disp_clr_index >= 0)
-      vpu_clear(disp_clr_index);
-      
-    disp_clr_index = frame;
+    frame = vpu_get_frame();
+    write(pipefd[1], &frame, sizeof(int));
   }
 }
 

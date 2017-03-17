@@ -120,6 +120,24 @@ int void decoder_renderer_setup(int videoFormat, int width, int height, int redr
     return -2;
   }
 
+  OMX_CONFIG_LATENCYTARGETTYPE latencyTarget;
+  memset(&latencyTarget, 0, sizeof(OMX_CONFIG_LATENCYTARGETTYPE));
+  latencyTarget.nSize = sizeof(OMX_PARAM_PORTDEFINITIONTYPE);
+  latencyTarget.nVersion.nVersion = OMX_VERSION;
+  latencyTarget.nPortIndex = 90;
+  latencyTarget.bEnabled = OMX_TRUE;
+  latencyTarget.nFilter = 2;
+  latencyTarget.nTarget = 4000;
+  latencyTarget.nShift = 3;
+  latencyTarget.nSpeedFactor = -135;
+  latencyTarget.nInterFactor = 500;
+  latencyTarget.nAdjCap = 20;
+
+  if(OMX_SetParameter(ILC_GET_HANDLE(video_render), OMX_IndexConfigLatencyTarget, &latencyTarget) != OMX_ErrorNone) {
+    fprintf(stderr, "Failed to set video render parameters\n");
+    exit(EXIT_FAILURE);
+  }
+
   OMX_PARAM_PORTDEFINITIONTYPE port;
 
   memset(&port, 0, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));

@@ -157,43 +157,39 @@ void ffmpeg_destroy(void) {
 }
 
 AVFrame* ffmpeg_get_frame() {
-  if (decoder_system == SOFTWARE)
-    return dec_frames[current_frame];
-  #ifdef HAVE_VDPAU
-  else if (decoder_system == VDPAU)
-    return vdpau_get_frame(dec_frames[current_frame]);
-  #endif
+  int err = avcodec_receive_frame(decoder_ctx, dec_frames[next_frame]);
+  if (err == 0) {
+    current_frame = next_frame;
+    next_frame = (current_frame+1) % dec_frames_cnt;
+
+    if (decoder_system == SOFTWARE)
+      return dec_frames[current_frame];
+    #ifdef HAVE_VDPAU
+    else if (decoder_system == VDPAU)
+      return vdpau_get_frame(dec_frames[current_frame]);
+    #endif
+  } else if (err != AVERROR(EAGAIN)) {
+    char errorstring[512];
+    av_strerror(err, errorstring, sizeof(errorstring));
+    fprintf(stderr, "Receive failed - %d/%s\n", err, errorstring);
+  }
+  return NULL;
 }
 
 // packets must be decoded in order
 // indata must be inlen + FF_INPUT_BUFFER_PADDING_SIZE in length
 int ffmpeg_decode(unsigned char* indata, int inlen) {
   int err;
-  int got_pic = 0;
 
   pkt.data = indata;
   pkt.size = inlen;
 
-  while (pkt.size > 0) {
-    got_pic = 0;
-    err = avcodec_decode_video2(decoder_ctx, dec_frames[next_frame], &got_pic, &pkt);
-    if (err < 0) {
-      char errorstring[512];
-      av_strerror(err, errorstring, sizeof(errorstring));
-      fprintf(stderr, "Decode failed - %s\n", errorstring);
-      got_pic = 0;
-      break;
-    }
-
-    pkt.size -= err;
-    pkt.data += err;
+  err = avcodec_send_packet(decoder_ctx, &pkt);
+  if (err < 0) {
+    char errorstring[512];
+    av_strerror(err, errorstring, sizeof(errorstring));
+    fprintf(stderr, "Decode failed - %s\n", errorstring);
   }
   
-  if (got_pic) {
-    current_frame = next_frame;
-    next_frame = (current_frame+1) % dec_frames_cnt;
-    return 1;
-  }
-
   return err < 0 ? err : 0;
 }

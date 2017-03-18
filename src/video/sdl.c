@@ -62,12 +62,12 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       length += entry->length;
       entry = entry->next;
     }
+    ffmpeg_decode(ffmpeg_buffer, length);
 
     if (SDL_LockMutex(mutex) == 0) {
-      int ret = ffmpeg_decode(ffmpeg_buffer, length);
-      if (ret == 1) {
+      AVFrame* frame = ffmpeg_get_frame();
+      if (frame != NULL) {
         sdlNextFrame++;
-        AVFrame* frame = ffmpeg_get_frame();
 
         SDL_Event event;
         event.type = SDL_USEREVENT;

@@ -64,7 +64,8 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
-  {"forcehevc", no_argument, NULL, 'x'},
+  {"hevc", no_argument, NULL, 'x'},
+  {"h264", no_argument, NULL, 'z'},
   {"unsupported", no_argument, NULL, 'y'},
   {0, 0, 0, 0},
 };
@@ -204,7 +205,10 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->forcehw = true;
     break;
   case 'x':
-    config->stream.supportsHevc = true;
+    config->codec = CODEC_HEVC;
+    break;
+  case 'z':
+    config->codec = CODEC_H264;
     break;
   case 'y':
     config->unsupported_version = true;
@@ -301,6 +305,8 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->localaudio = false;
   config->fullscreen = true;
   config->unsupported_version = false;
+  config->forcehw = false;
+  config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;
   config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));

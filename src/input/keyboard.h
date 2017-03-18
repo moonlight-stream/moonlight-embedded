@@ -73,8 +73,8 @@ static const short keyCodes[] = {
   0xBE, //VK_DOT
   0xBF, //VK_SLASH
   0x10, //VK_SHIFT Right shift
-  0, //VK_KPASTERISK
-  0x11, //VK_ALT Left alt
+  0x6A, //VK_KPASTERISK
+  0x12, //VK_ALT Left alt
   0x20, //VK_SPACE
   0x14, //VK_CAPS_LOCK
   0x70, //VK_F1
@@ -92,16 +92,16 @@ static const short keyCodes[] = {
   0x67, //VK_NUMPAD7
   0x68, //VK_NUMPAD8
   0x69, //VK_NUMPAD9
-  0, //VK_NUMPAD_MINUS
+  0x6D, //VK_NUMPAD_MINUS
   0x64, //VK_NUMPAD4
   0x65, //VK_NUMPAD5
   0x66, //VK_NUMPAD6
-  0, //VK_NUMPADPLUS
+  0x6B, //VK_NUMPADPLUS
   0x61, //VK_NUMPAD1
   0x62, //VK_NUMPAD2
   0x63, //VK_NUMPAD3
   0x60, //VK_NUMPAD0
-  0, //KeyEvent.VK_NUMPADDOT
+  0x6E, //KeyEvent.VK_NUMPADDOT
   0,
   0, //KeyEvent.VK_ZENKAKUHANKAKU
   0, //KeyEvent.VK_102ND
@@ -114,11 +114,11 @@ static const short keyCodes[] = {
   0, //VK_KATAKANAHIRAGANA
   0, //VK_MUHENKAN
   0, //VK_KPJPCOMMA
-  0, //VK_KPENTER
+  0x0D, //VK_KPENTER
   0x11, //VK_CONTROL Right ctrl
-  0, //VK_KPSLASH
-  0, //VK_SYSRQ
-  0x11, //VK_ALT Right alt
+  0x6F, //VK_KPSLASH
+  0x2C, //VK_SYSRQ
+  0x12, //VK_ALT Right alt
   0, //KeyEvent.VK_LINEFEED
   0x24, //VK_HOME
   0x26, //VK_UP

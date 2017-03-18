@@ -23,6 +23,8 @@
 
 #define MAX_INPUTS 6
 
+enum codecs { CODEC_UNSPECIFIED, CODEC_H264, CODEC_HEVC };
+
 struct input_config {
   char* path;
   char* mapping;
@@ -44,6 +46,7 @@ typedef struct _CONFIGURATION {
   bool unsupported_version;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
+  enum codecs codec;
 } CONFIGURATION, *PCONFIGURATION;
 
 bool inputAdded;

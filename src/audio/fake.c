@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2016 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,28 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Limelight.h>
+#include "../audio.h"
 
-#include <dlfcn.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
 
-#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
+static FILE* fd;
+static const char* fileName = "fake.opus";
 
-enum platform { NONE, SDL, PI, IMX, AML, FAKE };
+static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+  fd = fopen(fileName, "w");
+}
 
-enum platform platform_check(char*);
-PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
-PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
-bool platform_supports_hevc(enum platform system);
+static void alsa_renderer_cleanup() {
+  fclose(fd);
+}
 
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_fake;
-#ifdef HAVE_SDL
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
-void sdl_loop();
-#endif
+static void alsa_renderer_decode_and_play_sample(char* data, int length) {
+  fwrite(data, length, 1, fd);
+}
+
+AUDIO_RENDERER_CALLBACKS audio_callbacks_fake = {
+  .init = alsa_renderer_init,
+  .cleanup = alsa_renderer_cleanup,
+  .decodeAndPlaySample = alsa_renderer_decode_and_play_sample,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+};

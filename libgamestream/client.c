@@ -434,7 +434,6 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     sscanf(&result[count], "%2hhx", &plaincert[count / 2]);
   }
   plaincert[strlen(result)/2] = '\0';
-  printf("%d / %d\n", strlen(result)/2, strlen(plaincert));
 
   unsigned char salt_pin[20];
   unsigned char aes_key_hash[32];

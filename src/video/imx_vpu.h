@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,21 @@
 
 #include <Limelight.h>
 
-#include <dlfcn.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
 
-#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
+#include <sys/types.h>
 
-enum platform { NONE, SDL, PI, IMX, AML, FAKE };
+struct vpu_buf {
+  void *start;
+  off_t offset;
+  size_t length;
+};
 
-enum platform platform_check(char*);
-PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
-PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
-bool platform_supports_hevc(enum platform system);
+bool vpu_init();
+void vpu_setup(struct vpu_buf* buffers[], int bufferCount, int stride, int height);
 
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_fake;
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_fake;
-#ifdef HAVE_SDL
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
-void sdl_loop();
-#endif
+bool vpu_decode(PDECODE_UNIT decodeUnit);
+int vpu_get_frame();
+void vpu_clear(int disp_clr_index);
+
+void vpu_cleanup();

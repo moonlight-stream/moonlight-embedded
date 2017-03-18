@@ -35,7 +35,10 @@
 static AVPacket pkt;
 static AVCodec* decoder;
 static AVCodecContext* decoder_ctx;
-static AVFrame* dec_frame;
+static AVFrame** dec_frames;
+
+static int dec_frames_cnt;
+static int current_frame, next_frame;
 
 enum decoders {SOFTWARE, VDPAU};
 enum decoders decoder_system;
@@ -44,7 +47,7 @@ enum decoders decoder_system;
 
 // This function must be called before
 // any other decoding functions
-int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int thread_count) {
+int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count) {
   // Initialize the avcodec library and register codecs
   av_log_set_level(AV_LOG_QUIET);
   avcodec_register_all();
@@ -114,10 +117,19 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int thread
     return err;
   }
 
-  dec_frame = av_frame_alloc();
-  if (dec_frame == NULL) {
-    printf("Couldn't allocate frame");
+  dec_frames_cnt = buffer_count;
+  dec_frames = malloc(buffer_count * sizeof(AVFrame*));
+  if (dec_frames == NULL) {
+    fprintf(stderr, "Couldn't allocate frames");
     return -1;
+  }
+
+  for (int i = 0; i < buffer_count; i++) {
+    dec_frames[i] = av_frame_alloc();
+    if (dec_frames[i] == NULL) {
+      fprintf(stderr, "Couldn't allocate frame");
+      return -1;
+    }
   }
 
   #ifdef HAVE_VDPAU
@@ -136,18 +148,20 @@ void ffmpeg_destroy(void) {
     av_free(decoder_ctx);
     decoder_ctx = NULL;
   }
-  if (dec_frame) {
-    av_frame_free(&dec_frame);
-    dec_frame = NULL;
+  if (dec_frames) {
+    for (int i = 0; i < dec_frames_cnt; i++) {
+      if (dec_frames[i])
+        av_frame_free(&dec_frames[i]);
+    }
   }
 }
 
 AVFrame* ffmpeg_get_frame() {
   if (decoder_system == SOFTWARE)
-    return dec_frame;
+    return dec_frames[current_frame];
   #ifdef HAVE_VDPAU
   else if (decoder_system == VDPAU)
-    return vdpau_get_frame(dec_frame);
+    return vdpau_get_frame(dec_frames[current_frame]);
   #endif
 }
 
@@ -162,7 +176,7 @@ int ffmpeg_decode(unsigned char* indata, int inlen) {
 
   while (pkt.size > 0) {
     got_pic = 0;
-    err = avcodec_decode_video2(decoder_ctx, dec_frame, &got_pic, &pkt);
+    err = avcodec_decode_video2(decoder_ctx, dec_frames[next_frame], &got_pic, &pkt);
     if (err < 0) {
       char errorstring[512];
       av_strerror(err, errorstring, sizeof(errorstring));
@@ -176,6 +190,8 @@ int ffmpeg_decode(unsigned char* indata, int inlen) {
   }
   
   if (got_pic) {
+    current_frame = next_frame;
+    next_frame = (current_frame+1) % dec_frames_cnt;
     return 1;
   }
 

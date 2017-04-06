@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -427,85 +427,6 @@ void evdev_create(const char* device, char* mapFile) {
   }
 
   loop_add_fd(devices[dev].fd, &evdev_handle, POLLIN);
-}
-
-static void evdev_map_key(char* keyName, short* key) {
-  printf("Press %s\n", keyName);
-  currentKey = key;
-  currentAbs = NULL;
-  *key = -1;
-  loop_main();
-
-  usleep(250000);
-  evdev_drain();
-}
-
-static void evdev_map_abs(char* keyName, short* abs, bool* reverse) {
-  printf("Move %s\n", keyName);
-  currentKey = NULL;
-  currentAbs = abs;
-  currentReverse = reverse;
-  *abs = -1;
-  loop_main();
-
-  usleep(250000);
-  evdev_drain();
-}
-
-static void evdev_map_abskey(char* keyName, short* key, short* abs, bool* reverse) {
-  printf("Press %s\n", keyName);
-  currentKey = key;
-  currentAbs = abs;
-  currentReverse = reverse;
-  *key = -1;
-  *abs = -1;
-  *currentReverse = false;
-  loop_main();
-
-  usleep(250000);
-  evdev_drain();
-}
-
-void evdev_map(char* fileName) {
-  struct mapping map;
-
-  handler = evdev_handle_mapping_event;
-
-  evdev_map_abs("Left Stick Right", &(map.abs_x), &(map.reverse_x));
-  evdev_map_abs("Left Stick Up", &(map.abs_y), &(map.reverse_y));
-  evdev_map_key("Left Stick Button", &(map.btn_thumbl));
-
-  evdev_map_abs("Right Stick Right", &(map.abs_rx), &(map.reverse_rx));
-  evdev_map_abs("Right Stick Up", &(map.abs_ry), &(map.reverse_ry));
-  evdev_map_key("Right Stick Button", &(map.btn_thumbr));
-
-  evdev_map_abskey("D-Pad Right", &(map.btn_dpad_right), &(map.abs_dpad_x), &(map.reverse_dpad_x));
-  if (map.btn_dpad_right >= 0)
-    evdev_map_key("D-Pad Left", &(map.btn_dpad_left));
-  else
-    map.btn_dpad_left = -1;
-
-  evdev_map_abskey("D-Pad Down", &(map.btn_dpad_down), &(map.abs_dpad_y), &(map.reverse_dpad_y));
-  if (map.btn_dpad_down >= 0)
-    evdev_map_key("D-Pad Up", &(map.btn_dpad_up));
-  else
-    map.btn_dpad_up = -1;
-
-  evdev_map_key("Button X (1)", &(map.btn_west));
-  evdev_map_key("Button A (2)", &(map.btn_south));
-  evdev_map_key("Button B (3)", &(map.btn_east));
-  evdev_map_key("Button Y (4)", &(map.btn_north));
-  evdev_map_key("Back Button", &(map.btn_select));
-  evdev_map_key("Start Button", &(map.btn_start));
-  evdev_map_key("Special Button", &(map.btn_mode));
-
-  bool ignored;
-  evdev_map_abskey("Left Trigger", &(map.btn_tl2), &(map.abs_z), &ignored);
-  evdev_map_abskey("Right Trigger", &(map.btn_tr2), &(map.abs_rz), &ignored);
-
-  evdev_map_key("Left Bumper", &(map.btn_tl));
-  evdev_map_key("Right Bumper", &(map.btn_tr));
-  mapping_save(fileName, &map);
 }
 
 void evdev_start() {

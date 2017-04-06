@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -119,7 +119,6 @@ static void help() {
   printf("Usage: moonlight [action] (options) [host]\n");
   printf("       moonlight [configfile]\n");
   printf("\n Actions\n\n");
-  printf("\tmap\t\t\tCreate mapping file for gamepad\n");
   printf("\tpair\t\t\tPair device with computer\n");
   printf("\tunpair\t\t\tUnpair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
@@ -183,19 +182,6 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
   config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-  
-  if (strcmp("map", config.action) == 0) {
-    if (config.address == NULL) {
-      perror("No filename for mapping");
-      exit(-1);
-    }
-    udev_init(!inputAdded, config.mapping);
-    for (int i=0;i<config.inputsCount;i++)
-      evdev_create(config.inputs[i].path, config.inputs[i].mapping);
-    
-    evdev_map(config.address);
-    exit(0);
-  }
 
   if (config.address == NULL) {
     config.address = malloc(MAX_ADDRESS_SIZE);

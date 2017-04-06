@@ -11,10 +11,6 @@ Usage: I<moonlight> E<lt>actionE<gt> [options] [host]
 
 =over 4
 
-=item B<map>
-
-Create a mapping file for a gamepad.
-
 =item B<pair>
 
 Pair this computer with the host.

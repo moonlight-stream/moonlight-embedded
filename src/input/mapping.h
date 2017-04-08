@@ -20,23 +20,27 @@
 #include <stdbool.h>
 
 struct mapping {
-  short abs_x, abs_y, abs_z;
-  short abs_rx, abs_ry, abs_rz;
+  char guid[33];
+  char platform[33];
+  char name[257];
 
-  bool reverse_x, reverse_y;
-  bool reverse_rx, reverse_ry;
+  bool reverse_leftx, reverse_lefty;
+  bool reverse_rightx, reverse_righty;
+  
+  short abs_leftx, abs_lefty;
+  short abs_rightx, abs_righty;
 
-  short abs_deadzone;
-
-  short abs_dpad_x, abs_dpad_y;
-  bool reverse_dpad_x, reverse_dpad_y;
-
-  short btn_south, btn_east, btn_north, btn_west;
-  short btn_select, btn_start, btn_mode;
-  short btn_thumbl, btn_thumbr;
-  short btn_tl, btn_tr, btn_tl2, btn_tr2;
-
-  short btn_dpad_up, btn_dpad_down, btn_dpad_left, btn_dpad_right;
+  short hat_dpright, hat_dpleft, hat_dpup, hat_dpdown;
+  short hat_dir_dpright, hat_dir_dpleft, hat_dir_dpup, hat_dir_dpdown;
+  short btn_dpup, btn_dpdown, btn_dpleft, btn_dpright;
+  
+  short btn_a, btn_x, btn_y, btn_b;
+  short btn_back, btn_start, btn_guide;
+  short btn_leftstick, btn_rightstick;
+  short btn_leftshoulder, btn_rightshoulder;
+  
+  short abs_lefttrigger, abs_righttrigger; 
+  short btn_lefttrigger, btn_righttrigger;
 };
 
 void mapping_load(char* fileName, struct mapping* map);

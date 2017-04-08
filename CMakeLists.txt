@@ -143,5 +143,5 @@ target_link_libraries(moonlight ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRAR
 add_subdirectory(docs)
 
 install(TARGETS moonlight DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(DIRECTORY mappings DESTINATION ${CMAKE_INSTALL_DATADIR}/moonlight)
+install(FILES gamecontrollerdb.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/moonlight)
 install(FILES moonlight.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})

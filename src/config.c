@@ -305,7 +305,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;
-  config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
+  config->mapping = get_path("gamecontrollerdb.txt", getenv("XDG_DATA_DIRS"));
   config->key_dir[0] = 0;
 
   char* config_file = get_path("moonlight.conf", "/etc");

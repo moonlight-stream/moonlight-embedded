@@ -68,8 +68,6 @@ void sdl_init(int width, int height, bool fullscreen) {
     fprintf(stderr, "Couldn't create mutex\n");
     exit(1);
   }
-
-  sdlinput_init();
 }
 
 void sdl_loop() {

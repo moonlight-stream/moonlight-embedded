@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 #include "../loop.h"
 
+#include "udev.h"
 #include "evdev.h"
 
 #include <libudev.h>
@@ -31,7 +32,7 @@
 #include <poll.h>
 
 static bool autoadd;
-static char* defaultMapfile;
+static struct mapping* defaultMappings;
 
 static struct udev *udev;
 static struct udev_monitor *udev_mon;
@@ -45,7 +46,7 @@ static int udev_handle(int fd) {
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
-        evdev_create(devnode, defaultMapfile);
+        evdev_create(devnode, defaultMappings);
       }
     }
     udev_device_unref(dev);
@@ -53,7 +54,7 @@ static int udev_handle(int fd) {
   return LOOP_OK;
 }
 
-void udev_init(bool autoload, char* mapfile) {
+void udev_init(bool autoload, struct mapping* mappings) {
   udev = udev_new();
   if (!udev) {
     fprintf(stderr, "Can't create udev\n");
@@ -74,7 +75,7 @@ void udev_init(bool autoload, char* mapfile) {
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
-        evdev_create(devnode, mapfile);
+        evdev_create(devnode, mappings);
       }
       udev_device_unref(dev);
     }
@@ -86,7 +87,7 @@ void udev_init(bool autoload, char* mapfile) {
   udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "input", NULL);
   udev_monitor_enable_receiving(udev_mon);
 
-  defaultMapfile = mapfile;
+  defaultMappings = mappings;
 
   int udev_fd = udev_monitor_get_fd(udev_mon);
   loop_add_fd(udev_fd, &udev_handle, POLLIN);

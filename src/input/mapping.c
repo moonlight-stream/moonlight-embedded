@@ -23,7 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-void mapping_load(char* fileName, struct mapping* map) {
+struct mapping* mapping_load(char* fileName) {
+  struct mapping* mappings = NULL;
+  struct mapping* map = NULL;
   FILE* fd = fopen(fileName, "r");
   if (fd == NULL) {
     fprintf(stderr, "Can't open mapping file: %s\n", fileName);
@@ -38,6 +40,17 @@ void mapping_load(char* fileName, struct mapping* map) {
     char* name = strtok_r(NULL, ",", &strpoint);
     if (guid == NULL || name == NULL)
       continue;
+
+    struct mapping* newmap = malloc(sizeof(struct mapping));
+    if (newmap == NULL) {
+      fprintf(stderr, "Not enough memory");
+      exit(EXIT_FAILURE);
+    } else if (mappings == NULL)
+      mappings = newmap;
+    else
+      map->next = newmap;
+
+    map = newmap;
 
     strncpy(map->guid, guid, sizeof(map->guid));
     strncpy(map->name, name, sizeof(map->name));
@@ -133,4 +146,6 @@ void mapping_load(char* fileName, struct mapping* map) {
     map->platform[32] = '\0';
   }
   free(line);
+
+  return mappings;
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,11 +43,11 @@ static GAMEPAD_STATE gamepads[4];
 static int keyboard_modifiers;
 static int activeGamepadMask = 0;
 
-void sdlinput_init() {
+void sdlinput_init(char* mappings) {
   memset(gamepads, 0, sizeof(gamepads));
 
   SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-  SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+  SDL_GameControllerAddMappingsFromFile(mappings);
 
   for (int i = 0; i < SDL_NumJoysticks(); ++i) {
     if (SDL_IsGameController(i)) {

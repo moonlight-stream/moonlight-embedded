@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 
 bool inputAdded = false;
-static bool mapped = true;
 const char* audio_device = NULL;
 
 static struct option long_options[] = {
@@ -152,11 +151,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       perror("Too many inputs specified");
       exit(-1);
     }
-    config->inputs[config->inputsCount].path = value;
-    config->inputs[config->inputsCount].mapping = config->mapping;
+    config->inputs[config->inputsCount] = value;
     config->inputsCount++;
     inputAdded = true;
-    mapped = true;
     break;
   case 'k':
     config->mapping = get_path(value, getenv("XDG_DATA_DIRS"));
@@ -164,7 +161,6 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       fprintf(stderr, "Unable to open custom mapping file: %s\n", value);
       exit(-1);
     }
-    mapped = false;
     break;
   case 'l':
     config->sops = false;
@@ -352,10 +348,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   }
 
   if (inputAdded) {
-    if (!mapped) {
-        fprintf(stderr, "Mapping option should be followed by the input to be mapped.\n");
-        exit(-1);
-    } else if (config->mapping == NULL) {
+    if (config->mapping == NULL) {
         fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
         exit(-1);
     }

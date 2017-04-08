@@ -17,6 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <stdbool.h>
 
 struct mapping {
@@ -41,6 +43,8 @@ struct mapping {
   
   short abs_lefttrigger, abs_righttrigger; 
   short btn_lefttrigger, btn_righttrigger;
+
+  struct mapping* next;
 };
 
-void mapping_load(char* fileName, struct mapping* map);
+struct mapping* mapping_load(char* fileName);

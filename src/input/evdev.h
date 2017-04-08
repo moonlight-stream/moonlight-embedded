@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-void evdev_create(const char* device, char* mapFile);
+void evdev_create(const char* device, struct mapping* mappings);
 void evdev_loop();
 
 void evdev_init();

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ static const short keyCodes[] = {
   0x26, //SDLK_UP
 };
 
-void sdlinput_init();
+void sdlinput_init(char* mappings);
 int sdlinput_handle_event(SDL_Event* event);
 
 #endif /* HAVE_SDL */

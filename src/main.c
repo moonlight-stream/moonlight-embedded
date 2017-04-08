@@ -28,6 +28,7 @@
 #include "platform.h"
 #include "sdl.h"
 
+#include "input/mapping.h"
 #include "input/evdev.h"
 #include "input/udev.h"
 #include "input/cec.h"
@@ -145,13 +146,13 @@ static void help() {
   printf("\t-localaudio\t\tPlay audio locally\n");
   printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
+  printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
   #ifdef HAVE_SDL
   printf("\n Video options (SDL Only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
   #endif
   #ifdef HAVE_EMBEDDED
   printf("\n I/O options\n\n");
-  printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as audio output device\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
@@ -231,20 +232,24 @@ int main(int argc, char* argv[]) {
   } else if (strcmp("stream", config.action) == 0) {
     pair_check(&server);
     if (IS_EMBEDDED(system)) {
+      struct mapping* mappings = mapping_load(config.mapping);
+
       for (int i=0;i<config.inputsCount;i++) {
-        printf("Add input %s (mapping %s)...\n", config.inputs[i].path, config.inputs[i].mapping);
-        evdev_create(config.inputs[i].path, config.inputs[i].mapping);
+        printf("Add input %s...\n", config.inputs[i]);
+        evdev_create(config.inputs[i], mappings);
       }
 
-      udev_init(!inputAdded, config.mapping);
+      udev_init(!inputAdded, mappings);
       evdev_init();
       #ifdef HAVE_LIBCEC
       cec_init();
       #endif /* HAVE_LIBCEC */
     }
     #ifdef HAVE_SDL
-    else if (system == SDL)
+    else if (system == SDL) {
       sdl_init(config.stream.width, config.stream.height, config.fullscreen);
+      sdlinput_init(config.mapping);
+    }
     #endif
 
     stream(&server, &config, system);

@@ -12,8 +12,8 @@ set(VERSION_MINOR "1")
 set(VERSION_PATCH "2")
 
 execute_process(COMMAND
-    python -c "print('%02d.%02d' % (${VERSION_MAJOR}, ${VERSION_MINOR}))"
-    OUTPUT_VARIABLE APP_VER
+	python -c "print('%02d.%02d' % (${VERSION_MAJOR}, ${VERSION_MINOR}))"
+	OUTPUT_VARIABLE APP_VER
 )
 string(REPLACE "\n" "" APP_VER "${APP_VER}")
 
@@ -25,7 +25,7 @@ add_definitions(-DsceClibPrintf=DEBUG_PRINT)
 set(CMAKE_C_FLAGS "-Wl,-q -O3 -g -std=c99 -Dntohs=__builtin_bswap16 -Dhtons=__builtin_bswap16 -Dntohl=__builtin_bswap32 -Dhtonl=__builtin_bswap32 -DENET_DEBUG=1")
 
 include_directories(
-    include/
+	include/
 	third_party/moonlight-common-c/src/
 	libgamestream/
 	third_party/libuuid/src/
@@ -117,7 +117,6 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lSceDisplay_stub
 	-lSceCtrl_stub
 	-lSceTouch_stub
-	-lSceReg_stub
 	-lSceNet_stub
 	-lSceSysmodule_stub
 	-lSceNetCtl_stub

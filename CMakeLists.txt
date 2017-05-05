@@ -27,6 +27,7 @@ set(CMAKE_C_FLAGS "-Wl,-q -O3 -g -std=c99 -Dntohs=__builtin_bswap16 -Dhtons=__bu
 include_directories(
 	include/
 	third_party/moonlight-common-c/src/
+	third_party/moonlight-common-c/reedsolomon/
 	libgamestream/
 	third_party/libuuid/src/
 	third_party/h264bitstream/
@@ -92,6 +93,8 @@ add_executable(${PROJECT_NAME}.elf
 	third_party/moonlight-common-c/src/SdpGenerator.c
 	third_party/moonlight-common-c/src/VideoDepacketizer.c
 	third_party/moonlight-common-c/src/VideoStream.c
+	third_party/moonlight-common-c/src/RtpFecQueue.c
+	third_party/moonlight-common-c/reedsolomon/rs.c
 
 	third_party/enet/callbacks.c
 	third_party/enet/compress.c

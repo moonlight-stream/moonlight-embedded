@@ -1,6 +1,6 @@
 ## Unreleased
-* Support forward error correction (f8631b5)
 * Support newer vitasdk (94988ab)
+* Support forward error correction (f8631b5, 184bdbe)
 
 ## 0.1.2
 * Compress binary (#75)

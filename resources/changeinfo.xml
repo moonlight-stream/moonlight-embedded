@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
+<changes app_ver="00.02"><![CDATA[
+## 0.2.0<br>
+* Support newer vitasdk (94988ab)<br>
+* Support forward error correction (f8631b5, 184bdbe)<br>
+* No more build uncompress binary (6fd22e7)<br>
+]]></changes>
 <changes app_ver="00.01"><![CDATA[
 ## 0.1.2<br>
 * Compress binary (#75)<br>

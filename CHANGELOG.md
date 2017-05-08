@@ -1,4 +1,6 @@
 ## Unreleased
+
+## 0.2.0
 * Support newer vitasdk (94988ab)
 * Support forward error correction (f8631b5, 184bdbe)
 * No more build uncompress binary (6fd22e7)

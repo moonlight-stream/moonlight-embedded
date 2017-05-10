@@ -181,6 +181,9 @@ int main(int argc, char* argv[]) {
   if (system == 0) {
     fprintf(stderr, "Platform '%s' not found\n", config.platform);
     exit(-1);
+  } else if (system == SDL && audio_device != NULL) {
+    fprintf(stderr, "You can't select a audio device for SDL\n");
+    exit(-1);
   }
   config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
 
@@ -247,6 +250,11 @@ int main(int argc, char* argv[]) {
     }
     #ifdef HAVE_SDL
     else if (system == SDL) {
+      if (config.inputsCount > 0) {
+        fprintf(stderr, "You can't select input devices as SDL will automatically use all available controllers\n");
+        exit(-1);
+      }
+
       sdl_init(config.stream.width, config.stream.height, config.fullscreen);
       sdlinput_init(config.mapping);
     }

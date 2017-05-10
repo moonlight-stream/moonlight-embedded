@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  * Copyright (C) 2016 OtherCrashOverride, Daniel Mehrwald
  *
  * Moonlight is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <codec.h>
 
 #define SYNC_OUTSIDE 0x02
@@ -94,9 +95,14 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   codecParam.am_sysinfo.rate = 96000 / redrawRate;
   codecParam.am_sysinfo.param = (void*) ((size_t) codecParam.am_sysinfo.param | SYNC_OUTSIDE);
 
-  int api = codec_init(&codecParam);
-  if (api != 0) {
-    fprintf(stderr, "codec_init error: %x\n", api);
+  int ret;
+  if ((ret = codec_init(&codecParam)) != 0) {
+    fprintf(stderr, "codec_init error: %x\n", ret);
+    exit(1);
+  }
+
+  if ((ret = codec_set_freerun_mode(&codecParam, 1)) != 0) {
+    fprintf(stderr, "Can't set Freerun mode: %x\n", ret);
     exit(1);
   }
 }

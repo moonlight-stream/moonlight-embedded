@@ -35,19 +35,19 @@ static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static int channelCount;
 
 bool audio_pulse_init() {
-    pa_sample_spec spec = {
-      .format = PA_SAMPLE_S16LE,
-      .rate = 44000,
-      .channels = 2
-    };
+  pa_sample_spec spec = {
+    .format = PA_SAMPLE_S16LE,
+    .rate = 44000,
+    .channels = 2
+  };
 
-    int error;
-    dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
-    if (dev) {
-        pa_simple_free(dev);
-        return true;
-    } else
-        return false;
+  int error;
+  dev = pa_simple_new(audio_device, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
+
+  if (dev)
+    pa_simple_free(dev);
+
+  return (bool) dev;
 }
 
 static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
@@ -69,12 +69,7 @@ static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIG
     alsaMapping[5] = opusConfig->mapping[3];
   }
 
-  decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
-                                            opusConfig->channelCount,
-                                            opusConfig->streams,
-                                            opusConfig->coupledStreams,
-                                            alsaMapping,
-                                            &rc);
+  decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 
   pa_sample_spec spec = {
     .format = PA_SAMPLE_S16LE,
@@ -82,7 +77,7 @@ static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIG
     .channels = opusConfig->channelCount
   };
 
-  dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
+  dev = pa_simple_new(audio_device, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
 
   if (!dev) {
     printf("Pulseaudio error: %s\n", pa_strerror(error));

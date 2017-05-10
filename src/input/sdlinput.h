@@ -22,7 +22,44 @@
 #include <stdbool.h>
 #include <SDL.h>
 
-static const short keyCodes[] = {
+static const short keyCodes1[] = {
+  0, //SDLK_EXCLAIM
+  0, //SDLK_QUOTEDBL
+  0, //SDLK_HASH
+  0, //SDLK_DOLLAR
+  0, //SDLK_PERCENT
+  0, //SDLK_AMPERSAND
+  0xDE, //SDLK_QUOTE
+  0, //SDLK_LEFTPAREN
+  0, //SDLK_RIGHTPAREN
+  0, //SDLK_ASTERISK
+  0, //SDLK_PLUS
+  0xBC, //SDLK_COMMA
+  0xBD, //SDLK_MINUS
+  0xBE, //SDLK_PERIOD
+  0xBF, //SDLK_SLASH
+};
+
+static const short keyCodes2[] = {
+  0, //SDLK_COLON
+  0xBA, //SDLK_SEMICOLON
+  0, //SDLK_LESS
+  0xBB, //SDLK_EQUALS
+  0, //SDLK_GREATER
+  0, //SDLK_QUESTION
+  0, //SDLK_AT
+};
+
+static const short keyCodes3[] = {
+  0xDB, //SDLK_LEFTBRACKET
+  0xDC, //SDLK_BACKSLASH
+  0xDD, //SDLK_RIGHTBRACKET
+  0, //SDLK_CARET
+  0, //SDLK_UNDERSCORE
+  0xC0, //SDLK_BACKQUOTE
+};
+
+static const short keyCodes4[] = {
   0x14, //SDLK_CAPSLOCK
   0x70, //SDLK_F1
   0x71, //SDLK_F2
@@ -49,6 +86,17 @@ static const short keyCodes[] = {
   0x25, //SDLK_LEFT
   0x28, //SDLK_DOWN
   0x26, //SDLK_UP
+};
+
+static const short keyCodes5[] = {
+  0x11, //SDLK_LCTRL
+  0x10, //SDLK_LSHIFT
+  0x12, //SDLK_LALT
+  0x5B, //SDLK_LGUI
+  0x11, //SDLK_LRCTRL
+  0x10, //SDLK_RSHIFT
+  0x12, //SDLK_RALT
+  0x5C, //SDLK_RGUI
 };
 
 void sdlinput_init(char* mappings);

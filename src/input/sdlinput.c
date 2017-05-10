@@ -103,10 +103,20 @@ int sdlinput_handle_event(SDL_Event* event) {
   case SDL_KEYDOWN:
   case SDL_KEYUP:
     button = event->key.keysym.sym;
-    if (button >= (0x40000000 + 0x39) && button < (0x40000000 + 0x39 + sizeof(keyCodes)))
-      button = keyCodes[button - 0x40000039];
-    else if (button >= 0x61)
+    if (button >= 0x21 && button <= 0x2f)
+      button = keyCodes1[button - 0x21];
+    else if (button >= 0x3a && button <= 0x40)
+      button = keyCodes2[button - 0x3a];
+    else if (button >= 0x5b && button <= 0x60)
+      button = keyCodes3[button - 0x5b];
+    else if (button >= 0x40000039 && button < 0x40000039 + sizeof(keyCodes4))
+      button = keyCodes4[button - 0x40000039];
+    else if (button >= 0x400000E0 && button <= 0x400000E7)
+      button = keyCodes5[button - 0x400000E0];
+    else if (button >= 0x61 && button <= 0x7a)
       button -= 0x20;
+    else if (button == 0x7f)
+      button = 0x2e;
 
     int modifier = 0;
     switch (event->key.keysym.sym) {

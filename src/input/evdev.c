@@ -431,6 +431,7 @@ void evdev_create(const char* device, char* mapFile) {
 
 static void evdev_map_key(char* keyName, short* key) {
   printf("Press %s\n", keyName);
+  fflush(stdout)
   currentKey = key;
   currentAbs = NULL;
   *key = -1;
@@ -442,6 +443,7 @@ static void evdev_map_key(char* keyName, short* key) {
 
 static void evdev_map_abs(char* keyName, short* abs, bool* reverse) {
   printf("Move %s\n", keyName);
+  fflush(stdout)
   currentKey = NULL;
   currentAbs = abs;
   currentReverse = reverse;
@@ -454,6 +456,7 @@ static void evdev_map_abs(char* keyName, short* abs, bool* reverse) {
 
 static void evdev_map_abskey(char* keyName, short* key, short* abs, bool* reverse) {
   printf("Press %s\n", keyName);
+  fflush(stdout)
   currentKey = key;
   currentAbs = abs;
   currentReverse = reverse;

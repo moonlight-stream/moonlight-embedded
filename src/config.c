@@ -219,6 +219,10 @@ static int ini_handle(void *out, const char *section, const char *name,
   } else {
     if (strcmp(name, "address") == 0) {
       config->address = STR(value);
+    } else if (strcmp(name, "width") == 0) {
+      config->stream.width = INT(value);
+    } else if (strcmp(name, "height") == 0) {
+      config->stream.height = INT(value);
     } else if (strcmp(name, "bitrate") == 0) {
       config->stream.bitrate = INT(value);
     } else if (strcmp(name, "sops") == 0) {

@@ -72,8 +72,15 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
   if (config.forcehw)
     drFlags |= FORCE_HARDWARE_ACCELERATION;
 
+  DECODER_RENDERER_CALLBACKS *video_callback = platform_get_video(system);
+  if (config.enable_ref_frame_invalidation) {
+    video_callback->capabilities |= CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC;
+  } else {
+    video_callback->capabilities &= ~CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC;
+  }
+
   ret = LiStartConnection(&server->serverInfo, &config.stream, &connection_callbacks,
-                          platform_get_video(system), platform_get_audio(system),
+                          video_callback, platform_get_audio(system),
                           NULL, drFlags);
 
   if (ret == 0) {

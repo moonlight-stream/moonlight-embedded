@@ -339,6 +339,7 @@ enum {
   SETTINGS_FPS,
   SETTINGS_BITRATE,
   SETTINGS_SOPS,
+  SETTINGS_ENABLE_FRAME_INVAL,
   SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_ENABLE_MAPPING,
@@ -353,6 +354,7 @@ enum {
   SETTINGS_VIEW_FPS,
   SETTINGS_VIEW_BITRATE,
   SETTINGS_VIEW_SOPS,
+  SETTINGS_VIEW_ENABLE_FRAME_INVAL,
   SETTINGS_VIEW_SAVE_DEBUG_LOG,
   SETTINGS_VIEW_DISABLE_POWERSAVE,
   SETTINGS_VIEW_ENABLE_MAPPING,
@@ -446,6 +448,13 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       config.sops = !config.sops;
       break;
+    case SETTINGS_ENABLE_FRAME_INVAL:
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.enable_ref_frame_invalidation = !config.enable_ref_frame_invalidation;
+      break;
     case SETTINGS_SAVE_DEBUG_LOG:
       if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
@@ -528,6 +537,9 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%s", config.sops ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_SOPS, current);
 
+  sprintf(current, "%s", config.enable_ref_frame_invalidation ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_ENABLE_FRAME_INVAL, current);
+
   sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_DISABLE_POWERSAVE, current);
 
@@ -581,6 +593,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_FPS, SETTINGS_VIEW_FPS, "FPS", LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_BITRATE, SETTINGS_VIEW_BITRATE, "Bitrate", "");
   MENU_ENTRY(SETTINGS_SOPS, SETTINGS_VIEW_SOPS, "Change graphical game settings for performance", "");
+  MENU_ENTRY(SETTINGS_ENABLE_FRAME_INVAL, SETTINGS_VIEW_ENABLE_FRAME_INVAL, "Enable reference frame invalidation", "");
 
   MENU_CATEGORY("System");
   MENU_ENTRY(SETTINGS_SAVE_DEBUG_LOG, SETTINGS_VIEW_SAVE_DEBUG_LOG, "Enable debug log", "");

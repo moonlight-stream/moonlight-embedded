@@ -61,6 +61,7 @@ typedef struct _CONFIGURATION {
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;
   int mouse_acceleration;
+  bool enable_ref_frame_invalidation;
   FILE *log_file;
 } CONFIGURATION, *PCONFIGURATION;
 

@@ -355,5 +355,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {
   .setup = vita_setup,
   .cleanup = vita_cleanup,
   .submitDecodeUnit = vita_submit_decode_unit,
-  .capabilities = CAPABILITY_SLICES_PER_FRAME(8) | CAPABILITY_DIRECT_SUBMIT | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC,
+  .capabilities = CAPABILITY_SLICES_PER_FRAME(2) | CAPABILITY_DIRECT_SUBMIT,
 };

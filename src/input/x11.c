@@ -27,36 +27,51 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
+#include <stdbool.h>
+#include <stdlib.h>
 #include <poll.h>
 
+#define MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
+
 static Display *display;
+static Window window;
 
 static Atom wm_deletemessage;
 
 static int last_x = -1, last_y = -1;
 static int keyboard_modifiers;
 
+static const char data[1] = {0};
+static Cursor cursor;
+static bool grabbed = True;
+
 static int x11_handler(int fd) {
   XEvent event;
   int button = 0;
+  int motion_x, motion_y;
 
   XNextEvent(display, &event);
   switch (event.type) {
   case KeyPress:
   case KeyRelease:
     if (event.xkey.keycode >= 8 && event.xkey.keycode < (sizeof(keyCodes)/sizeof(keyCodes[0]) + 8)) {
+      if ((keyboard_modifiers & MODIFIERS) == MODIFIERS && event.type == KeyRelease) {
+        grabbed = !grabbed;
+        XDefineCursor(display, window, grabbed ? cursor : NULL);
+      }
+
       int modifier = 0;
       switch (event.xkey.keycode) {
-      case XK_Shift_R:
-      case XK_Shift_L:
+      case 0x32:
+      case 0x3e:
         modifier = MODIFIER_SHIFT;
         break;
-      case XK_Alt_R:
-      case XK_Alt_L:
+      case 0x40:
+      case 0x6c:
         modifier = MODIFIER_ALT;
         break;
-      case XK_Control_R:
-      case XK_Control_L:
+      case 0x25:
+      case 0x69:
         modifier = MODIFIER_CTRL;
         break;
       }
@@ -90,11 +105,18 @@ static int x11_handler(int fd) {
       LiSendMouseButtonEvent(event.type==ButtonPress ? BUTTON_ACTION_PRESS : BUTTON_ACTION_RELEASE, button);
     break;
   case MotionNotify:
-    if (last_x >= 0 && last_y >= 0) {
-      LiSendMouseMoveEvent(event.xmotion.x - last_x, event.xmotion.y - last_y);
+    motion_x = event.xmotion.x - last_x;
+    motion_y = event.xmotion.y - last_y;
+    if (abs(motion_x) > 0 || abs(motion_y) > 0) {
+      if (last_x >= 0 && last_y >= 0)
+        LiSendMouseMoveEvent(motion_x, motion_y);
+
+      if (grabbed)
+        XWarpPointer(display, None, window, 0, 0, 0, 0, 640, 360);
     }
-    last_x = event.xmotion.x;
-    last_y = event.xmotion.y;
+
+    last_x = grabbed ? 640 : event.xmotion.x;
+    last_y = grabbed ? 360 : event.xmotion.y;
     break;
   case ClientMessage:
     if (event.xclient.data.l[0] == wm_deletemessage)
@@ -102,13 +124,23 @@ static int x11_handler(int fd) {
 
     break;
   }
+
+  return LOOP_OK;
 }
 
-void x11_input_init(Display* x11_display, Window window) {
+void x11_input_init(Display* x11_display, Window x11_window) {
   display = x11_display;
+  window = x11_window;
 
   wm_deletemessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
   XSetWMProtocols(display, window, &wm_deletemessage, 1);
+
+  /* make a blank cursor */
+  XColor dummy;
+  Pixmap blank = XCreateBitmapFromData(display, window, data, 1, 1);
+  cursor = XCreatePixmapCursor(display, blank, blank, &dummy, &dummy, 0, 0);
+  XFreePixmap(display, blank);
+  XDefineCursor(display, window, cursor);
 
   loop_add_fd(ConnectionNumber(display), x11_handler, POLLIN | POLLERR | POLLHUP);
 }

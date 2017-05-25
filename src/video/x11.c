@@ -51,6 +51,7 @@ void x11_setup(int videoFormat, int width, int height, int redrawRate, void* con
     exit(1);
   }
 
+  XInitThreads();
   display = XOpenDisplay(NULL);
   if (!display) {
     fprintf(stderr, "Error: failed to open X display.\n");

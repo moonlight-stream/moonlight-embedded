@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,9 +26,6 @@
 #include <pulse/simple.h>
 #include <pulse/error.h>
 
-#define MAX_CHANNEL_COUNT 6
-#define FRAME_SIZE 240
-
 static OpusMSDecoder* decoder;
 static pa_simple *dev = NULL;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
@@ -52,7 +49,7 @@ bool audio_pulse_init() {
 
 static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc, error;
-  unsigned char alsaMapping[6];
+  unsigned char alsaMapping[MAX_CHANNEL_COUNT];
 
   channelCount = opusConfig->channelCount;
 

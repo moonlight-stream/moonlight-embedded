@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
 #include <stdbool.h>
 
 #include <Limelight.h>
+
+#define MAX_CHANNEL_COUNT 6
+#define FRAME_SIZE 240
+#define FRAME_BUFFER 12
 
 extern const char* audio_device;
 

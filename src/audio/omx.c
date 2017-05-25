@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,9 +25,6 @@
 #include "bcm_host.h"
 #include "ilclient.h"
 
-#define MAX_CHANNEL_COUNT 6
-#define FRAME_SIZE 240
-
 static OpusMSDecoder* decoder;
 ILCLIENT_T* handle;
 COMPONENT_T* component;
@@ -38,7 +35,7 @@ static int channelCount;
 static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc, error;
   OMX_ERRORTYPE err;
-  unsigned char omxMapping[6];
+  unsigned char omxMapping[MAX_CHANNEL_COUNT];
   char* componentName = "audio_render";
 
   channelCount = opusConfig->channelCount;
@@ -52,17 +49,12 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
     omxMapping[3] = opusConfig->mapping[2];
   }
 
-  decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
-                                            opusConfig->channelCount,
-                                            opusConfig->streams,
-                                            opusConfig->coupledStreams,
-                                            omxMapping,
-                                            &rc);
+  decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, omxMapping, &rc);
 
   handle = ilclient_init();
   if (handle == NULL) {
-  	fprintf(stderr, "IL client init failed\n");
-  	exit(1);
+    fprintf(stderr, "IL client init failed\n");
+    exit(1);
   }
 
   if (ilclient_create_component(handle, &component, componentName, ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS) != 0) {
@@ -104,30 +96,30 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
 
   switch(channelCount) {
   case 1:
-     sPCMMode.eChannelMapping[0] = OMX_AUDIO_ChannelCF;
-     break;
+    sPCMMode.eChannelMapping[0] = OMX_AUDIO_ChannelCF;
+    break;
   case 8:
-     sPCMMode.eChannelMapping[7] = OMX_AUDIO_ChannelRS;
+    sPCMMode.eChannelMapping[7] = OMX_AUDIO_ChannelRS;
   case 7:
-     sPCMMode.eChannelMapping[6] = OMX_AUDIO_ChannelLS;
+    sPCMMode.eChannelMapping[6] = OMX_AUDIO_ChannelLS;
   case 6:
-     sPCMMode.eChannelMapping[5] = OMX_AUDIO_ChannelRR;
+    sPCMMode.eChannelMapping[5] = OMX_AUDIO_ChannelRR;
   case 5:
-     sPCMMode.eChannelMapping[4] = OMX_AUDIO_ChannelLR;
+    sPCMMode.eChannelMapping[4] = OMX_AUDIO_ChannelLR;
   case 4:
-     sPCMMode.eChannelMapping[3] = OMX_AUDIO_ChannelLFE;
+    sPCMMode.eChannelMapping[3] = OMX_AUDIO_ChannelLFE;
   case 3:
-     sPCMMode.eChannelMapping[2] = OMX_AUDIO_ChannelCF;
+    sPCMMode.eChannelMapping[2] = OMX_AUDIO_ChannelCF;
   case 2:
-     sPCMMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
-     sPCMMode.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
-     break;
+    sPCMMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+    sPCMMode.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+    break;
   }
 
   err = OMX_SetParameter(ilclient_get_handle(component), OMX_IndexParamAudioPcm, &sPCMMode);
   if(err != OMX_ErrorNone){
-  	fprintf(stderr, "PCM mode unsupported\n");
-  	return;
+    fprintf(stderr, "PCM mode unsupported\n");
+    return;
   }
   OMX_CONFIG_BRCMAUDIODESTINATIONTYPE arDest;
 

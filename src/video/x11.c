@@ -18,39 +18,22 @@
  */
 
 #include "../video.h"
-#include "../global.h"
-#include "../loop.h"
+#include "../input/x11.h"
 #include "egl.h"
 #include "ffmpeg.h"
 
 #include <Limelight.h>
 
-#include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
 #include <stdbool.h>
-#include <poll.h>
 
 #define DECODER_BUFFER_SIZE 92*1024
 
 static char* ffmpeg_buffer = NULL;
 
 static Display *display;
-
-static Atom wm_deletemessage;
-
-static int x11_handler(int fd) {
-  XEvent event;
-  XNextEvent(display, &event);
-  switch (event.type) {
-  case ClientMessage:
-    if (event.xclient.data.l[0] == wm_deletemessage)
-      quit();
-
-    break;
-  }
-}
 
 void x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
@@ -75,7 +58,7 @@ void x11_setup(int videoFormat, int width, int height, int redrawRate, void* con
   }
 
   Window root = DefaultRootWindow(display);
-  XSetWindowAttributes winattr = {0};
+  XSetWindowAttributes winattr = { .event_mask = PointerMotionMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask };
   Window window = XCreateWindow(display, root, 0, 0, width, height, 0, CopyFromParent, InputOutput, CopyFromParent, CWEventMask, &winattr);
   XMapWindow(display, window);
   XStoreName(display, window, "Moonlight");
@@ -96,11 +79,8 @@ void x11_setup(int videoFormat, int width, int height, int redrawRate, void* con
     XSendEvent(display, DefaultRootWindow(display), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
   }
 
-  wm_deletemessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
-  XSetWMProtocols(display, window, &wm_deletemessage, 1);
-
   egl_init(display, window, width, height);
-  loop_add_fd(ConnectionNumber(display), x11_handler, POLLIN | POLLERR | POLLHUP);
+  x11_input_init(display, window);
 }
 
 void x11_cleanup() {

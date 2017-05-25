@@ -63,6 +63,22 @@ void x11_setup(int videoFormat, int width, int height, int redrawRate, void* con
   XMapWindow(display, window);
   XStoreName(display, window, "Moonlight");
 
+  if (drFlags & DISPLAY_FULLSCREEN) {
+    Atom wm_state = XInternAtom(display, "_NET_WM_STATE", False);
+    Atom fullscreen = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
+
+    XEvent xev = {0};
+    xev.type = ClientMessage;
+    xev.xclient.window = window;
+    xev.xclient.message_type = wm_state;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = 1;
+    xev.xclient.data.l[1] = fullscreen;
+    xev.xclient.data.l[2] = 0;
+
+    XSendEvent(display, DefaultRootWindow(display), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+  }
+
   egl_init(display, window, width, height);
 }
 

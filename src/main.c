@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include "platform.h"
 #include "sdl.h"
 
+#include "input/mapping.h"
 #include "input/evdev.h"
 #include "input/udev.h"
 #include "input/cec.h"
@@ -119,7 +120,6 @@ static void help() {
   printf("Usage: moonlight [action] (options) [host]\n");
   printf("       moonlight [configfile]\n");
   printf("\n Actions\n\n");
-  printf("\tmap\t\t\tCreate mapping file for gamepad\n");
   printf("\tpair\t\t\tPair device with computer\n");
   printf("\tunpair\t\t\tUnpair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
@@ -146,13 +146,13 @@ static void help() {
   printf("\t-localaudio\t\tPlay audio locally\n");
   printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
+  printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
   #ifdef HAVE_SDL
   printf("\n Video options (SDL Only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
   #endif
   #ifdef HAVE_EMBEDDED
   printf("\n I/O options\n\n");
-  printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as audio output device\n");
   printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
@@ -181,21 +181,11 @@ int main(int argc, char* argv[]) {
   if (system == 0) {
     fprintf(stderr, "Platform '%s' not found\n", config.platform);
     exit(-1);
+  } else if (system == SDL && audio_device != NULL) {
+    fprintf(stderr, "You can't select a audio device for SDL\n");
+    exit(-1);
   }
   config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-  
-  if (strcmp("map", config.action) == 0) {
-    if (config.address == NULL) {
-      perror("No filename for mapping");
-      exit(-1);
-    }
-    udev_init(!inputAdded, config.mapping);
-    for (int i=0;i<config.inputsCount;i++)
-      evdev_create(config.inputs[i].path, config.inputs[i].mapping);
-    
-    evdev_map(config.address);
-    exit(0);
-  }
 
   if (config.address == NULL) {
     config.address = malloc(MAX_ADDRESS_SIZE);
@@ -245,20 +235,29 @@ int main(int argc, char* argv[]) {
   } else if (strcmp("stream", config.action) == 0) {
     pair_check(&server);
     if (IS_EMBEDDED(system)) {
+      struct mapping* mappings = mapping_load(config.mapping);
+
       for (int i=0;i<config.inputsCount;i++) {
-        printf("Add input %s (mapping %s)...\n", config.inputs[i].path, config.inputs[i].mapping);
-        evdev_create(config.inputs[i].path, config.inputs[i].mapping);
+        printf("Add input %s...\n", config.inputs[i]);
+        evdev_create(config.inputs[i], mappings);
       }
 
-      udev_init(!inputAdded, config.mapping);
+      udev_init(!inputAdded, mappings);
       evdev_init();
       #ifdef HAVE_LIBCEC
       cec_init();
       #endif /* HAVE_LIBCEC */
     }
     #ifdef HAVE_SDL
-    else if (system == SDL)
+    else if (system == SDL) {
+      if (config.inputsCount > 0) {
+        fprintf(stderr, "You can't select input devices as SDL will automatically use all available controllers\n");
+        exit(-1);
+      }
+
       sdl_init(config.stream.width, config.stream.height, config.fullscreen);
+      sdlinput_init(config.mapping);
+    }
     #endif
 
     stream(&server, &config, system);

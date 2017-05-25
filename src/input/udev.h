@@ -17,5 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-void udev_init(bool autoload, char* mapfile);
+#include "mapping.h"
+
+void udev_init(bool autoload, struct mapping* mappings);
 void evdev_destroy();

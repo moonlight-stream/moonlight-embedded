@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,10 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define write_config(fd, key, value) fprintf(fd, "%s = %hd\n", key, value)
-#define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
-
-void mapping_load(char* fileName, struct mapping* map) {
+struct mapping* mapping_load(char* fileName) {
+  struct mapping* mappings = NULL;
+  struct mapping* map = NULL;
   FILE* fd = fopen(fileName, "r");
   if (fd == NULL) {
     fprintf(stderr, "Can't open mapping file: %s\n", fileName);
@@ -36,135 +35,117 @@ void mapping_load(char* fileName, struct mapping* map) {
   char *line = NULL;
   size_t len = 0;
   while (getline(&line, &len, fd) != -1) {
-    char *key = NULL, *value = NULL;
-    if (sscanf(line, "%ms = %ms", &key, &value) == 2) {
-      long int_value = strtol(value, NULL, 10);
-      if (strcmp("abs_x", key) == 0)
-        map->abs_x = int_value;
-      else if (strcmp("abs_y", key) == 0)
-        map->abs_y = int_value;
-      else if (strcmp("abs_z", key) == 0)
-        map->abs_z = int_value;
-      else if (strcmp("abs_rx", key) == 0)
-        map->abs_rx = int_value;
-      else if (strcmp("abs_ry", key) == 0)
-        map->abs_ry = int_value;
-      else if (strcmp("abs_rz", key) == 0)
-        map->abs_rz = int_value;
-      else if (strcmp("abs_deadzone", key) == 0)
-        map->abs_deadzone = int_value;
-      else if (strcmp("abs_dpad_x", key) == 0)
-        map->abs_dpad_x = int_value;
-      else if (strcmp("abs_dpad_y", key) == 0)
-        map->abs_dpad_y = int_value;
-      else if (strcmp("btn_south", key) == 0)
-        map->btn_south = int_value;
-      else if (strcmp("btn_north", key) == 0)
-        map->btn_north = int_value;
-      else if (strcmp("btn_east", key) == 0)
-        map->btn_east = int_value;
-      else if (strcmp("btn_west", key) == 0)
-        map->btn_west = int_value;
-      else if (strcmp("btn_select", key) == 0)
-        map->btn_select = int_value;
-      else if (strcmp("btn_start", key) == 0)
-        map->btn_start = int_value;
-      else if (strcmp("btn_mode", key) == 0)
-        map->btn_mode = int_value;
-      else if (strcmp("btn_thumbl", key) == 0)
-        map->btn_thumbl = int_value;
-      else if (strcmp("btn_thumbr", key) == 0)
-        map->btn_thumbr = int_value;
-      else if (strcmp("btn_tl", key) == 0)
-        map->btn_tl = int_value;
-      else if (strcmp("btn_tr", key) == 0)
-        map->btn_tr = int_value;
-      else if (strcmp("btn_tl2", key) == 0)
-        map->btn_tl2 = int_value;
-      else if (strcmp("btn_tr2", key) == 0)
-        map->btn_tr2 = int_value;
-      else if (strcmp("btn_dpad_up", key) == 0)
-        map->btn_dpad_up = int_value;
-      else if (strcmp("btn_dpad_down", key) == 0)
-        map->btn_dpad_down = int_value;
-      else if (strcmp("btn_dpad_left", key) == 0)
-        map->btn_dpad_left = int_value;
-      else if (strcmp("btn_dpad_right", key) == 0)
-        map->btn_dpad_right = int_value;
-      else if (strcmp("reverse_x", key) == 0)
-        map->reverse_x = strcmp("true", value) == 0;
-      else if (strcmp("reverse_y", key) == 0)
-        map->reverse_y = strcmp("true", value) == 0;
-      else if (strcmp("reverse_rx", key) == 0)
-        map->reverse_rx = strcmp("true", value) == 0;
-      else if (strcmp("reverse_ry", key) == 0)
-        map->reverse_ry = strcmp("true", value) == 0;
-      else if (strcmp("reverse_dpad_x", key) == 0)
-        map->reverse_dpad_x = strcmp("true", value) == 0;
-      else if (strcmp("reverse_dpad_y", key) == 0)
-        map->reverse_dpad_y = strcmp("true", value) == 0;
-      else
-        fprintf(stderr, "Can't map (%s)\n", key);
-    }
-    if (key != NULL)
-      free(key);
+    char* strpoint;
+    char* guid = strtok_r(line, ",", &strpoint);
+    char* name = strtok_r(NULL, ",", &strpoint);
+    if (guid == NULL || name == NULL)
+      continue;
 
-    if (value != NULL)
-      free(value);
+    struct mapping* newmap = malloc(sizeof(struct mapping));
+    if (newmap == NULL) {
+      fprintf(stderr, "Not enough memory");
+      exit(EXIT_FAILURE);
+    } else if (mappings == NULL)
+      mappings = newmap;
+    else
+      map->next = newmap;
+
+    map = newmap;
+
+    strncpy(map->guid, guid, sizeof(map->guid));
+    strncpy(map->name, name, sizeof(map->name));
+    
+    char* option;
+    while ((option = strtok_r(NULL, ",", &strpoint)) != NULL) {
+      char *key = NULL, *value = NULL;
+      int ret;
+      if ((ret = sscanf(option, "%m[^:]:%ms", &key, &value)) == 2) {
+        int int_value, direction_value;
+        char flag = NULL;
+        if (strcmp("platform", key) == 0)
+          strncpy(map->platform, value, sizeof(map->platform));
+        else if (sscanf(value, "b%d", &int_value) == 1) {
+          if (strcmp("a", key) == 0)
+            map->btn_a = int_value;
+          else if (strcmp("y", key) == 0)
+            map->btn_y = int_value;
+          else if (strcmp("x", key) == 0)
+            map->btn_x = int_value;
+          else if (strcmp("b", key) == 0)
+            map->btn_b = int_value;
+          else if (strcmp("back", key) == 0)
+            map->btn_back = int_value;
+          else if (strcmp("start", key) == 0)
+            map->btn_start = int_value;
+          else if (strcmp("guide", key) == 0)
+            map->btn_guide = int_value;
+          else if (strcmp("dpup", key) == 0)
+            map->btn_dpup = int_value;
+          else if (strcmp("dpdown", key) == 0)
+            map->btn_dpdown = int_value;
+          else if (strcmp("dpleft", key) == 0)
+            map->btn_dpleft = int_value;
+          else if (strcmp("dpright", key) == 0)
+            map->btn_dpright = int_value;
+          else if (strcmp("leftstick", key) == 0)
+            map->btn_leftstick = int_value;
+          else if (strcmp("rightstick", key) == 0)
+            map->btn_rightstick = int_value;
+          else if (strcmp("leftshoulder", key) == 0)
+            map->btn_leftshoulder = int_value;
+          else if (strcmp("rightshoulder", key) == 0)
+            map->btn_rightshoulder = int_value;
+          else if (strcmp("lefttrigger", key) == 0)
+            map->btn_lefttrigger = int_value;
+          else if (strcmp("righttrigger", key) == 0)
+            map->btn_righttrigger = int_value;
+        } else if (sscanf(value, "a%d%c", &int_value, &flag) >= 1) {
+          if (strcmp("leftx", key) == 0) {
+            map->abs_leftx = int_value;
+            map->reverse_leftx = flag == '~';
+          } else if (strcmp("lefty", key) == 0) {
+            map->abs_lefty = int_value;
+            map->reverse_lefty = flag == '~';
+          } else if (strcmp("rightx", key) == 0) {
+            map->abs_rightx = int_value;
+            map->reverse_rightx = flag == '~';
+          } else if (strcmp("righty", key) == 0) {
+            map->abs_righty = int_value;
+            map->reverse_righty = flag == '~';
+          } else if (strcmp("lefttrigger", key) == 0)
+            map->abs_lefttrigger = int_value;
+          else if (strcmp("righttrigger", key) == 0)
+            map->abs_righttrigger = int_value;
+        } else if (sscanf(value, "h%d.%d", &int_value, &direction_value) == 2) {
+          if (strcmp("dpright", key) == 0) {
+            map->hat_dpright = int_value;
+            map->hat_dir_dpright = direction_value;
+          } else if (strcmp("dpleft", key) == 0) {
+            map->hat_dpleft = int_value;
+            map->hat_dir_dpleft = direction_value;
+          } else if (strcmp("dpup", key) == 0) {
+            map->hat_dpup = int_value;
+            map->hat_dir_dpup = direction_value;
+          } else if (strcmp("dpdown", key) == 0) {
+            map->hat_dpdown = int_value;
+            map->hat_dir_dpdown = direction_value;
+          }
+        } else
+          fprintf(stderr, "Can't map (%s)\n", option);
+      } else if (ret == 0 && option[0] != '\n')
+        fprintf(stderr, "Can't map (%s)\n", option);
+
+      if (key != NULL)
+        free(key);
+
+      if (value != NULL)
+        free(value);
+    }
+    map->guid[32] = '\0';
+    map->name[256] = '\0';
+    map->platform[32] = '\0';
   }
   free(line);
-}
 
-void mapping_save(char* fileName, struct mapping* map) {
-  FILE* fd = fopen(fileName, "w");
-  if (fd == NULL) {
-    fprintf(stderr, "Can't open mapping file: %s\n", fileName);
-    exit(EXIT_FAILURE);
-  }
-
-  write_config(fd, "abs_x", map->abs_x);
-  write_config(fd, "abs_y", map->abs_y);
-  write_config(fd, "abs_z", map->abs_z);
-
-  write_config_bool(fd, "reverse_x", map->reverse_x);
-  write_config_bool(fd, "reverse_y", map->reverse_y);
-
-  write_config(fd, "abs_rx", map->abs_rx);
-  write_config(fd, "abs_ry", map->abs_ry);
-  write_config(fd, "abs_rz", map->abs_rz);
-
-  write_config_bool(fd, "reverse_rx", map->reverse_rx);
-  write_config_bool(fd, "reverse_ry", map->reverse_ry);
-
-  write_config(fd, "abs_deadzone", map->abs_deadzone);
-
-  write_config(fd, "abs_dpad_x", map->abs_dpad_x);
-  write_config(fd, "abs_dpad_y", map->abs_dpad_y);
-
-  write_config_bool(fd, "reverse_dpad_x", map->reverse_dpad_x);
-  write_config_bool(fd, "reverse_dpad_y", map->reverse_dpad_y);
-
-  write_config(fd, "btn_north", map->btn_north);
-  write_config(fd, "btn_east", map->btn_east);
-  write_config(fd, "btn_south", map->btn_south);
-  write_config(fd, "btn_west", map->btn_west);
-
-  write_config(fd, "btn_select", map->btn_select);
-  write_config(fd, "btn_start", map->btn_start);
-  write_config(fd, "btn_mode", map->btn_mode);
-
-  write_config(fd, "btn_thumbl", map->btn_thumbl);
-  write_config(fd, "btn_thumbr", map->btn_thumbr);
-
-  write_config(fd, "btn_tl", map->btn_tl);
-  write_config(fd, "btn_tr", map->btn_tr);
-  write_config(fd, "btn_tl2", map->btn_tl2);
-  write_config(fd, "btn_tr2", map->btn_tr2);
-
-  write_config(fd, "btn_dpad_up", map->btn_dpad_up);
-  write_config(fd, "btn_dpad_down", map->btn_dpad_down);
-  write_config(fd, "btn_dpad_left", map->btn_dpad_left);
-  write_config(fd, "btn_dpad_right", map->btn_dpad_right);
-
-  fclose(fd);
+  return mappings;
 }

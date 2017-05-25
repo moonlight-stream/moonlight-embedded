@@ -26,6 +26,7 @@
 #include <SDL.h>
 #include <SDL_thread.h>
 
+#include <unistd.h>
 #include <stdbool.h>
 
 #define DECODER_BUFFER_SIZE 92*1024
@@ -37,7 +38,7 @@ static void sdl_setup(int videoFormat, int width, int height, int redrawRate, vo
   if (drFlags & FORCE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;
 
-  if (ffmpeg_init(videoFormat, width, height, avc_flags, SDL_BUFFER_FRAMES, 2) < 0) {
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, SDL_BUFFER_FRAMES, sysconf(_SC_NPROCESSORS_ONLN)) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     exit(1);
   }
@@ -92,5 +93,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl = {
   .setup = sdl_setup,
   .cleanup = sdl_cleanup,
   .submitDecodeUnit = sdl_submit_decode_unit,
-  .capabilities = CAPABILITY_SLICES_PER_FRAME(2) | CAPABILITY_REFERENCE_FRAME_INVALIDATION | CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION | CAPABILITY_DIRECT_SUBMIT,
 };

@@ -11,10 +11,6 @@ Usage: I<moonlight> E<lt>actionE<gt> [options] [host]
 
 =over 4
 
-=item B<map>
-
-Create a mapping file for a gamepad.
-
 =item B<pair>
 
 Pair this computer with the host.
@@ -132,8 +128,8 @@ By default the encryption keys are stored in $XDG_CACHE_DIR/moonlight or ~/.cach
 
 =item B<-mapping> [I<MAPPING>]
 
-Use I<MAPPING> as the mapping file for all inputs specified after this B<-mapping>.
-If no B<-input> is specified after the B<-mapping> this mapping is used for autoloaded inputs.
+Use I<MAPPING> as the mapping file for all inputs.
+This mapping file should have the same format as the gamecontrollerdb.txt for SDL.
 
 =item B<-input> [I<INPUT>]
 

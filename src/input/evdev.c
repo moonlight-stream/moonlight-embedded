@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,13 @@
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <endian.h>
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define int16_to_le(val) val
+#else
+#define int16_to_le(val) ((((val) >> 8) & 0x00FF) | (((val) << 8) & 0xFF00))
+#endif
 
 struct input_abs_parms {
   int min, max;
@@ -48,7 +55,10 @@ struct input_abs_parms {
 
 struct input_device {
   struct libevdev *dev;
-  struct mapping map;
+  struct mapping* map;
+  int key_map[KEY_MAX];
+  int abs_map[ABS_MAX];
+  int hats_state[3][2];
   int fd;
   char modifiers;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
@@ -59,8 +69,15 @@ struct input_device {
   short rightStickX, rightStickY;
   bool gamepadModified;
   struct input_abs_parms xParms, yParms, rxParms, ryParms, zParms, rzParms;
-  struct input_abs_parms dpadxParms, dpadyParms;
 };
+
+#define HAT_UP 1
+#define HAT_RIGHT 2
+#define HAT_DOWN 4
+#define HAT_LEFT 8
+static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT_RIGHT}, {HAT_LEFT, 0, HAT_RIGHT}, {HAT_LEFT | HAT_DOWN, HAT_DOWN, HAT_RIGHT}};
+
+#define set_hat(flags, flag, hat, hat_flag) flags = (-((hat & hat_flag) > 0) ^ flags) & flag
 
 static struct input_device* devices = NULL;
 static int numDevices = 0;
@@ -78,9 +95,9 @@ static bool grabbingDevices;
 static bool (*handler) (struct input_event*, struct input_device*);
 
 static void evdev_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
-  parms->flat = libevdev_get_abs_flat(dev->dev, code);
-  parms->min = libevdev_get_abs_minimum(dev->dev, code);
-  parms->max = libevdev_get_abs_maximum(dev->dev, code);
+  parms->flat = libevdev_get_abs_flat(dev->dev, dev->abs_map[code]);
+  parms->min = libevdev_get_abs_minimum(dev->dev, dev->abs_map[code]);
+  parms->max = libevdev_get_abs_maximum(dev->dev, dev->abs_map[code]);
   parms->avg = (parms->min+parms->max)/2;
   parms->range = parms->max - parms->avg;
   parms->diff = parms->max - parms->min;
@@ -118,15 +135,6 @@ static char evdev_convert_value_byte(struct input_event *ev, struct input_device
     return UCHAR_MAX;
   else
     return (ev->value - parms->flat - parms->min) * UCHAR_MAX / (parms->diff - parms->flat);
-}
-
-static int evdev_convert_value_direction(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {
-  if (ev->value > (parms->avg+parms->range/4))
-    return reverse?-1:1;
-  else if (ev->value < (parms->avg-parms->range/4))
-    return reverse?1:-1;
-  else
-    return 0;
 }
 
 static bool evdev_handle_event(struct input_event *ev, struct input_device *dev) {
@@ -195,6 +203,8 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     } else {
       int mouseCode = 0;
       short gamepadCode = 0;
+      int index = dev->key_map[ev->code - BTN_MISC];
+
       switch (ev->code) {
       case BTN_LEFT:
         mouseCode = BUTTON_LEFT;
@@ -206,35 +216,35 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         mouseCode = BUTTON_RIGHT;
         break;
       default:
-        if (ev->code == dev->map.btn_south)
+        if (index == dev->map->btn_a)
           gamepadCode = A_FLAG;
-        else if (ev->code == dev->map.btn_west)
+        else if (index == dev->map->btn_x)
           gamepadCode = X_FLAG;
-        else if (ev->code == dev->map.btn_north)
+        else if (index == dev->map->btn_y)
           gamepadCode = Y_FLAG;
-        else if (ev->code == dev->map.btn_east)
+        else if (index == dev->map->btn_b)
           gamepadCode = B_FLAG;
-        else if (ev->code == dev->map.btn_dpad_up)
+        else if (index == dev->map->btn_dpup)
           gamepadCode = UP_FLAG;
-        else if (ev->code == dev->map.btn_dpad_down)
+        else if (index == dev->map->btn_dpdown)
           gamepadCode = DOWN_FLAG;
-        else if (ev->code == dev->map.btn_dpad_right)
+        else if (index == dev->map->btn_dpright)
           gamepadCode = RIGHT_FLAG;
-        else if (ev->code == dev->map.btn_dpad_left)
+        else if (index == dev->map->btn_dpleft)
           gamepadCode = LEFT_FLAG;
-        else if (ev->code == dev->map.btn_thumbl)
+        else if (index == dev->map->btn_leftstick)
           gamepadCode = LS_CLK_FLAG;
-        else if (ev->code == dev->map.btn_thumbr)
+        else if (index == dev->map->btn_rightstick)
           gamepadCode = RS_CLK_FLAG;
-        else if (ev->code == dev->map.btn_tl)
+        else if (index == dev->map->btn_leftshoulder)
           gamepadCode = LB_FLAG;
-        else if (ev->code == dev->map.btn_tr)
+        else if (index == dev->map->btn_rightshoulder)
           gamepadCode = RB_FLAG;
-        else if (ev->code == dev->map.btn_start)
+        else if (index == dev->map->btn_start)
           gamepadCode = PLAY_FLAG;
-        else if (ev->code == dev->map.btn_select)
+        else if (index == dev->map->btn_back)
           gamepadCode = BACK_FLAG;
-        else if (ev->code == dev->map.btn_mode)
+        else if (index == dev->map->btn_guide)
           gamepadCode = SPECIAL_FLAG;
       }
 
@@ -248,9 +258,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
             dev->buttonFlags |= gamepadCode;
           else
             dev->buttonFlags &= ~gamepadCode;
-        } else if (ev->code == dev->map.btn_tl2)
+        } else if (index == dev->map->btn_lefttrigger)
           dev->leftTrigger = ev->value?UCHAR_MAX:0;
-        else if (ev->code == dev->map.btn_tr2)
+        else if (index == dev->map->btn_righttrigger)
           dev->rightTrigger = ev->value?UCHAR_MAX:0;
         else {
           fprintf(stderr, "Unmapped button: %d\n", ev->code);
@@ -274,46 +284,46 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     break;
   case EV_ABS:
     gamepadModified = true;
-    if (ev->code == dev->map.abs_x)
-      dev->leftStickX = evdev_convert_value(ev, dev, &dev->xParms, dev->map.reverse_x);
-    else if (ev->code == dev->map.abs_y)
-      dev->leftStickY = evdev_convert_value(ev, dev, &dev->yParms, dev->map.reverse_y);
-    else if (ev->code == dev->map.abs_rx)
-      dev->rightStickX = evdev_convert_value(ev, dev, &dev->rxParms, dev->map.reverse_rx);
-    else if (ev->code == dev->map.abs_ry)
-      dev->rightStickY = evdev_convert_value(ev, dev, &dev->ryParms, dev->map.reverse_ry);
-    else if (ev->code == dev->map.abs_z)
-      dev->leftTrigger = evdev_convert_value_byte(ev, dev, &dev->zParms);
-    else if (ev->code == dev->map.abs_rz)
-      dev->rightTrigger = evdev_convert_value_byte(ev, dev, &dev->rzParms);
-    else if (ev->code == dev->map.abs_dpad_x) {
-      int dir = evdev_convert_value_direction(ev, dev, &dev->dpadxParms, dev->map.reverse_dpad_x);
-      if (dir == 1) {
-        dev->buttonFlags |= RIGHT_FLAG;
-        dev->buttonFlags &= ~LEFT_FLAG;
-      } else if (dir == 0) {
-        dev->buttonFlags &= ~RIGHT_FLAG;
-        dev->buttonFlags &= ~LEFT_FLAG;
-      } else {
-        dev->buttonFlags &= ~RIGHT_FLAG;
-        dev->buttonFlags |= LEFT_FLAG;
-      }
-    } else if (ev->code == dev->map.abs_dpad_y) {
-      int dir = evdev_convert_value_direction(ev, dev, &dev->dpadyParms, dev->map.reverse_dpad_y);
-      if (dir == 1) {
-        dev->buttonFlags |= DOWN_FLAG;
-        dev->buttonFlags &= ~UP_FLAG;
-      } else if (dir == 0) {
-        dev->buttonFlags &= ~DOWN_FLAG;
-        dev->buttonFlags &= ~UP_FLAG;
-      } else {
-        dev->buttonFlags &= ~DOWN_FLAG;
-        dev->buttonFlags |= UP_FLAG;
-      }
-    } else
-      gamepadModified = false;
+    int index = dev->abs_map[ev->code];
+    int hat_index = (ev->code - ABS_HAT0X) / 2;
+    int har_dir_index = (ev->code - ABS_HAT0X) % 2;
 
-    break;
+    switch (ev->code) {
+    case ABS_HAT0X:
+    case ABS_HAT0Y:
+    case ABS_HAT1X:
+    case ABS_HAT1Y:
+    case ABS_HAT2X:
+    case ABS_HAT2Y:
+    case ABS_HAT3X:
+    case ABS_HAT3Y:
+      dev->hats_state[hat_index][har_dir_index] = ev->value < 0 ? 0 : (ev->value == 0 ? 1 : 2);
+      int hat_state = hat_constants[dev->hats_state[hat_index][0]][dev->hats_state[hat_index][1]];
+      if (hat_index == dev->map->hat_dpup)
+        set_hat(dev->buttonFlags, UP_FLAG, hat_state, dev->map->hat_dir_dpup);
+      if (hat_index == dev->map->hat_dpdown)
+        set_hat(dev->buttonFlags, DOWN_FLAG, hat_state, dev->map->hat_dir_dpdown);
+      if (hat_index == dev->map->hat_dpright)
+        set_hat(dev->buttonFlags, HAT_RIGHT, hat_state, dev->map->hat_dir_dpright);
+      if (hat_index == dev->map->hat_dpleft)
+        set_hat(dev->buttonFlags, HAT_LEFT, hat_state, dev->map->hat_dir_dpleft);
+      break;
+    }
+    default:
+      if (index == dev->map->abs_leftx)
+        dev->leftStickX = evdev_convert_value(ev, dev, &dev->xParms, dev->map->reverse_leftx);
+      else if (index == dev->map->abs_lefty)
+        dev->leftStickY = evdev_convert_value(ev, dev, &dev->yParms, !dev->map->reverse_lefty);
+      else if (index == dev->map->abs_rightx)
+        dev->rightStickX = evdev_convert_value(ev, dev, &dev->rxParms, dev->map->reverse_rightx);
+      else if (index == dev->map->abs_righty)
+        dev->rightStickY = evdev_convert_value(ev, dev, &dev->ryParms, !dev->map->reverse_righty);
+      else if (index == dev->map->abs_lefttrigger)
+        dev->leftTrigger = evdev_convert_value_byte(ev, dev, &dev->zParms);
+      else if (index == dev->map->abs_righttrigger)
+        dev->rightTrigger = evdev_convert_value_byte(ev, dev, &dev->rzParms);
+      else
+        gamepadModified = false;
   }
 
   dev->gamepadModified |= gamepadModified;
@@ -380,11 +390,36 @@ static int evdev_handle(int fd) {
   return LOOP_OK;
 }
 
-void evdev_create(const char* device, char* mapFile) {
+void evdev_create(const char* device, struct mapping* mappings) {
   int fd = open(device, O_RDONLY|O_NONBLOCK);
   if (fd <= 0) {
     fprintf(stderr, "Failed to open device %s\n", device);
     fflush(stderr);
+    return;
+  }
+
+  struct libevdev *evdev = libevdev_new();
+  libevdev_set_fd(evdev, fd);
+
+  int16_t guid[8] = {0};
+  guid[0] = int16_to_le(libevdev_get_id_bustype(evdev));
+  guid[2] = int16_to_le(libevdev_get_id_vendor(evdev));
+  guid[4] = int16_to_le(libevdev_get_id_product(evdev));
+  guid[6] = int16_to_le(libevdev_get_id_version(evdev));
+
+  char str_guid[33];
+  char* buf = str_guid;
+  for (int i = 0; i < 16; i++)
+    buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
+
+  while (mappings != NULL && strncmp(str_guid, mappings->guid, 32) != 0)
+    mappings = mappings->next;
+
+  if (mappings == NULL) {
+    fprintf(stderr, "No mapping available for %s\n", device);
+    fflush(stderr);
+    close(fd);
+    libevdev_free(evdev);
     return;
   }
 
@@ -404,21 +439,35 @@ void evdev_create(const char* device, char* mapFile) {
 
   memset(&devices[dev], 0, sizeof(devices[0]));
   devices[dev].fd = fd;
-  devices[dev].dev = libevdev_new();
-  libevdev_set_fd(devices[dev].dev, devices[dev].fd);
+  devices[dev].dev = evdev;
+  devices[dev].map = mappings;
 
-  if (mapFile != NULL)
-    mapping_load(mapFile, &(devices[dev].map));
+  int nbuttons = 0;
+  for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {
+    if (libevdev_has_event_code(devices[dev].dev, EV_KEY, i))
+      devices[dev].key_map[i - BTN_MISC] = nbuttons++;
+  }
+  for (int i = BTN_MISC; i < BTN_JOYSTICK; ++i) {
+    if (libevdev_has_event_code(devices[dev].dev, EV_KEY, i))
+      devices[dev].key_map[i - BTN_MISC] = nbuttons++;
+  }
+
+  int naxes = 0;
+  for (int i = 0; i < ABS_MAX; ++i) {
+    /* Skip hats */
+    if (i == ABS_HAT0X)
+      i = ABS_HAT3Y;
+    else if (libevdev_has_event_code(devices[dev].dev, EV_ABS, i))
+      devices[dev].abs_map[i] = naxes++;
+  }
 
   devices[dev].controllerId = -1;
-  evdev_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map.abs_x);
-  evdev_init_parms(&devices[dev], &(devices[dev].yParms), devices[dev].map.abs_y);
-  evdev_init_parms(&devices[dev], &(devices[dev].zParms), devices[dev].map.abs_z);
-  evdev_init_parms(&devices[dev], &(devices[dev].rxParms), devices[dev].map.abs_rx);
-  evdev_init_parms(&devices[dev], &(devices[dev].ryParms), devices[dev].map.abs_ry);
-  evdev_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map.abs_rz);
-  evdev_init_parms(&devices[dev], &(devices[dev].dpadxParms), devices[dev].map.abs_dpad_x);
-  evdev_init_parms(&devices[dev], &(devices[dev].dpadyParms), devices[dev].map.abs_dpad_y);
+  evdev_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map->abs_leftx);
+  evdev_init_parms(&devices[dev], &(devices[dev].yParms), devices[dev].map->abs_lefty);
+  evdev_init_parms(&devices[dev], &(devices[dev].zParms), devices[dev].map->abs_lefttrigger);
+  evdev_init_parms(&devices[dev], &(devices[dev].rxParms), devices[dev].map->abs_rightx);
+  evdev_init_parms(&devices[dev], &(devices[dev].ryParms), devices[dev].map->abs_righty);
+  evdev_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map->abs_righttrigger);
 
   if (grabbingDevices) {
     if (ioctl(fd, EVIOCGRAB, 1) < 0) {
@@ -427,85 +476,6 @@ void evdev_create(const char* device, char* mapFile) {
   }
 
   loop_add_fd(devices[dev].fd, &evdev_handle, POLLIN);
-}
-
-static void evdev_map_key(char* keyName, short* key) {
-  printf("Press %s\n", keyName);
-  currentKey = key;
-  currentAbs = NULL;
-  *key = -1;
-  loop_main();
-
-  usleep(250000);
-  evdev_drain();
-}
-
-static void evdev_map_abs(char* keyName, short* abs, bool* reverse) {
-  printf("Move %s\n", keyName);
-  currentKey = NULL;
-  currentAbs = abs;
-  currentReverse = reverse;
-  *abs = -1;
-  loop_main();
-
-  usleep(250000);
-  evdev_drain();
-}
-
-static void evdev_map_abskey(char* keyName, short* key, short* abs, bool* reverse) {
-  printf("Press %s\n", keyName);
-  currentKey = key;
-  currentAbs = abs;
-  currentReverse = reverse;
-  *key = -1;
-  *abs = -1;
-  *currentReverse = false;
-  loop_main();
-
-  usleep(250000);
-  evdev_drain();
-}
-
-void evdev_map(char* fileName) {
-  struct mapping map;
-
-  handler = evdev_handle_mapping_event;
-
-  evdev_map_abs("Left Stick Right", &(map.abs_x), &(map.reverse_x));
-  evdev_map_abs("Left Stick Up", &(map.abs_y), &(map.reverse_y));
-  evdev_map_key("Left Stick Button", &(map.btn_thumbl));
-
-  evdev_map_abs("Right Stick Right", &(map.abs_rx), &(map.reverse_rx));
-  evdev_map_abs("Right Stick Up", &(map.abs_ry), &(map.reverse_ry));
-  evdev_map_key("Right Stick Button", &(map.btn_thumbr));
-
-  evdev_map_abskey("D-Pad Right", &(map.btn_dpad_right), &(map.abs_dpad_x), &(map.reverse_dpad_x));
-  if (map.btn_dpad_right >= 0)
-    evdev_map_key("D-Pad Left", &(map.btn_dpad_left));
-  else
-    map.btn_dpad_left = -1;
-
-  evdev_map_abskey("D-Pad Down", &(map.btn_dpad_down), &(map.abs_dpad_y), &(map.reverse_dpad_y));
-  if (map.btn_dpad_down >= 0)
-    evdev_map_key("D-Pad Up", &(map.btn_dpad_up));
-  else
-    map.btn_dpad_up = -1;
-
-  evdev_map_key("Button X (1)", &(map.btn_west));
-  evdev_map_key("Button A (2)", &(map.btn_south));
-  evdev_map_key("Button B (3)", &(map.btn_east));
-  evdev_map_key("Button Y (4)", &(map.btn_north));
-  evdev_map_key("Back Button", &(map.btn_select));
-  evdev_map_key("Start Button", &(map.btn_start));
-  evdev_map_key("Special Button", &(map.btn_mode));
-
-  bool ignored;
-  evdev_map_abskey("Left Trigger", &(map.btn_tl2), &(map.abs_z), &ignored);
-  evdev_map_abskey("Right Trigger", &(map.btn_tr2), &(map.abs_rz), &ignored);
-
-  evdev_map_key("Left Bumper", &(map.btn_tl));
-  evdev_map_key("Right Bumper", &(map.btn_tr));
-  mapping_save(fileName, &map);
 }
 
 void evdev_start() {

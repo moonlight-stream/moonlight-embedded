@@ -55,6 +55,10 @@ enum platform platform_check(char* name) {
       return AML;
   }
   #endif
+  #ifdef HAVE_X11
+  if (std || strcmp(name, "x11") == 0)
+    return X11;
+  #endif
   #ifdef HAVE_SDL
   if (std || strcmp(name, "sdl") == 0)
     return SDL;
@@ -67,6 +71,10 @@ enum platform platform_check(char* name) {
 
 DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   switch (system) {
+  #ifdef HAVE_X11
+  case X11:
+    return &decoder_callbacks_x11;
+  #endif
   #ifdef HAVE_SDL
   case SDL:
     return &decoder_callbacks_sdl;

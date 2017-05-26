@@ -1,6 +1,15 @@
-# Vita port
+# Vita Moonlight
 
-This is a vita port.
+This is a vita port of Moonlight Embedded.
+Moonlight is an open source implementation of NVIDIA GameStream.
+
+## Documentation
+
+More information can find [moonlight-docs][1], [moonlight-embedded][2], and our [wiki][3].
+
+[1]: https://github.com/moonlight-stream/moonlight-docs/wiki
+[2]: https://github.com/irtimmer/moonlight-embedded/wiki
+[3]: https://github.com/xyzz/vita-moonlight/wiki
 
 # Build deps
 

@@ -17,6 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <signal.h>
 #include <pthread.h>
 

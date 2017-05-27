@@ -17,8 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_SDL
-
 #include <stdbool.h>
 #include <SDL.h>
 
@@ -101,5 +99,3 @@ static const short keyCodes5[] = {
 
 void sdlinput_init(char* mappings);
 int sdlinput_handle_event(SDL_Event* event);
-
-#endif /* HAVE_SDL */

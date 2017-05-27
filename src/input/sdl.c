@@ -17,9 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_SDL
-
-#include "sdlinput.h"
+#include "sdl.h"
 #include "../sdl.h"
 
 #include <Limelight.h>
@@ -239,5 +237,3 @@ int sdlinput_handle_event(SDL_Event* event) {
   }
   return SDL_NOTHING;
 }
-
-#endif /* HAVE_SDL */

@@ -31,8 +31,12 @@
 #include "input/mapping.h"
 #include "input/evdev.h"
 #include "input/udev.h"
+#ifdef HAVE_CEC
 #include "input/cec.h"
-#include "input/sdlinput.h"
+#endif
+#ifdef HAVE_SDL
+#include "input/sdl.h"
+#endif
 
 #include <Limelight.h>
 

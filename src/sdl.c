@@ -20,7 +20,7 @@
 #ifdef HAVE_SDL
 
 #include "sdl.h"
-#include "input/sdlinput.h"
+#include "input/sdl.h"
 
 #include <Limelight.h>
 

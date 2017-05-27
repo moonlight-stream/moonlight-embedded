@@ -60,6 +60,10 @@ This is the default option.
 
 Use the resolution 1920x1080 for streaming.
 
+=item B<-4k>
+
+Use the resolution 3840x2160 for streaming.
+
 =item B<-width> [I<WIDTH>]
 
 Change the horizontal resolution to I<WIDTH>

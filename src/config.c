@@ -42,6 +42,7 @@ const char* audio_device = NULL;
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
   {"1080", no_argument, NULL, 'b'},
+  {"4k", no_argument, NULL, '0'},
   {"width", required_argument, NULL, 'c'},
   {"height", required_argument, NULL, 'd'},
   {"30fps", no_argument, NULL, 'e'},
@@ -124,6 +125,10 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'b':
     config->stream.width = 1920;
     config->stream.height = 1080;
+    break;
+  case '0':
+    config->stream.width = 3840;
+    config->stream.height = 2160;
     break;
   case 'c':
     config->stream.width = atoi(value);

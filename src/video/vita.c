@@ -73,7 +73,7 @@ static void vita_cleanup() {
 }
 
 static int vita_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  gs_sps_init();
+  gs_sps_init(width, height);
 
   printf("vita video setup\n");
 

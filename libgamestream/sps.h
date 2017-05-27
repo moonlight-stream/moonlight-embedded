@@ -22,5 +22,5 @@
 #define GS_SPS_BITSTREAM_FIXUP 0x01
 #define GS_SPS_BASELINE_HACK 0x02
 
-void gs_sps_init();
+void gs_sps_init(int width, int height);
 PLENTRY gs_sps_fix(PLENTRY *entry, int flags);

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,5 +17,14 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <Limelight.h>
+
 #define DISPLAY_FULLSCREEN 1
 #define FORCE_HARDWARE_ACCELERATION 2
+
+#ifdef HAVE_X11
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11;
+#endif
+#ifdef HAVE_SDL
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
+#endif

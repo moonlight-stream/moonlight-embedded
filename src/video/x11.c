@@ -22,8 +22,6 @@
 #include "egl.h"
 #include "ffmpeg.h"
 
-#include <Limelight.h>
-
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015-2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -232,6 +232,9 @@ static int load_server_status(PSERVER_DATA server) {
       goto cleanup;
 
     if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
+      goto cleanup;
+
+    if (xml_search(data->memory, data->size, "GsVersion", &server->gsVersion) != GS_OK)
       goto cleanup;
 
     if (xml_search(data->memory, data->size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)

@@ -285,7 +285,14 @@ int ui_connect(char *address) {
   //MENU
   MENU_MESSAGE("Connected to the server:", 0xffffffff);
   char server_info[256];
-  sprintf(server_info, "IP: %s, GPU %s, API v%d", address, server.gpuType, server.serverMajorVersion);
+  snprintf(server_info, 256,
+           "IP: %s, GPU %s, GFE %s (%s, %s)",
+           address,
+           server.gpuType,
+           server.serverInfo.serverInfoGfeVersion,
+           server.gsVersion,
+           server.serverInfo.serverInfoAppVersion);
+
   MENU_MESSAGE(server_info, 0xffffffff);
   MENU_MESSAGE("", 0);
 

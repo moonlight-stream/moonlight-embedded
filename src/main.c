@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
-  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.serverMajorVersion);
+  printf("NVIDIA %s, GFE %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);

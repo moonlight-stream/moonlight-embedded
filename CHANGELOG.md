@@ -1,4 +1,6 @@
 ## Unreleased
+* New configure option about reference frame invalidation (#89, #91)
+* Fix unset resolution configure (#90)
 
 ## 0.2.0
 * Support newer vitasdk (94988ab)

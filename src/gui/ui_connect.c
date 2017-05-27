@@ -58,6 +58,8 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       display_error("Server doesn't support 4K\n");
+    else if (ret == GS_NOT_SUPPORTED_MODE)
+      display_error("Server doesn't support %dx%d (%d fps)\n", config.stream.width, config.stream.height, config.stream.fps);
     else
       display_error("Errorcode starting app: %d\n", ret);
 

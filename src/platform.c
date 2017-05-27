@@ -91,8 +91,6 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   case AML:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_aml");
   #endif
-  case FAKE:
-    return &decoder_callbacks_fake;
   }
   return NULL;
 }
@@ -114,8 +112,6 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
       return &audio_callbacks_pulse;
     #endif
     return &audio_callbacks_alsa;
-  case FAKE:
-    return &audio_callbacks_fake;
   }
   return NULL;
 }

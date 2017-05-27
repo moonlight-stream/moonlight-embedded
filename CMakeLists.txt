@@ -90,7 +90,7 @@ endif()
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-list(APPEND SRC_LIST ./src/audio/alsa.c ./src/audio/fake.c ./src/video/fake.c)
+list(APPEND SRC_LIST ./src/audio/alsa.c)
 
 add_subdirectory(libgamestream)
 

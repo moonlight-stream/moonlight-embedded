@@ -187,7 +187,6 @@ static int load_server_status(PSERVER_DATA server) {
     char *pairedText = NULL;
     char *currentGameText = NULL;
     char *stateText = NULL;
-    char *heightText = NULL;
     char *serverCodecModeSupportText = NULL;
 
     ret = GS_INVALID;
@@ -225,9 +224,6 @@ static int load_server_status(PSERVER_DATA server) {
     if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "Height", &heightText) != GS_OK)
-      goto cleanup;
-
     if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
       goto cleanup;
 
@@ -249,7 +245,7 @@ static int load_server_status(PSERVER_DATA server) {
 
     server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
     server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
-    server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
+    server->supports4K = serverCodecModeSupportText != NULL;
     server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
 
     if (strstr(stateText, "_SERVER_AVAILABLE")) {
@@ -269,9 +265,6 @@ static int load_server_status(PSERVER_DATA server) {
 
     if (currentGameText != NULL)
       free(currentGameText);
-
-    if (heightText != NULL)
-      free(heightText);
 
     if (serverCodecModeSupportText != NULL)
       free(serverCodecModeSupportText);

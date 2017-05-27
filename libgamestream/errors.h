@@ -27,5 +27,6 @@
 #define GS_IO_ERROR -5
 #define GS_NOT_SUPPORTED_4K -6
 #define GS_UNSUPPORTED_VERSION -7
+#define GS_NOT_SUPPORTED_MODE -8
 
 const char* gs_error;

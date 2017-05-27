@@ -88,6 +88,8 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       fprintf(stderr, "Server doesn't support 4K\n");
+    else if (ret == GS_NOT_SUPPORTED_MODE)
+      fprintf(stderr, "Server doesn't support %dx%d (%d fps)\n", config->stream.width, config->stream.height, config->stream.fps);
     else
       fprintf(stderr, "Errorcode starting app: %d\n", ret);
     exit(-1);

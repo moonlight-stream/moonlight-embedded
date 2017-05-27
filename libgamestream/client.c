@@ -232,6 +232,9 @@ static int load_server_status(PSERVER_DATA server) {
     if (xml_search(data->memory, data->size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)
       goto cleanup;
 
+    if (xml_modelist(data->memory, data->size, &server->modes) != GS_OK)
+      goto cleanup;
+
     // These fields are present on all version of GFE that this client supports
     if (!strlen(currentGameText) || !strlen(pairedText) || !strlen(server->serverInfo.serverInfoAppVersion) || !strlen(stateText))
       goto cleanup;
@@ -640,6 +643,18 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   uuid_t uuid;
   char* result = NULL;
   char uuid_str[37];
+
+  PDISPLAY_MODE mode = server->modes;
+  bool correct_mode = false;
+  while (mode != NULL) {
+    if (mode->width == config->width && mode->height == config->height && mode->refresh == config->fps)
+      correct_mode = true;
+
+    mode = mode->next;
+  }
+
+  if (!correct_mode)
+    return GS_NOT_SUPPORTED_MODE;
 
   if (config->height >= 2160 && !server->supports4K)
     return GS_NOT_SUPPORTED_4K;

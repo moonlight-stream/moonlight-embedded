@@ -111,7 +111,9 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system) {
     if (audio_pulse_init())
       return &audio_callbacks_pulse;
     #endif
+    #ifdef HAVE_ALSA
     return &audio_callbacks_alsa;
+    #endif
   }
   return NULL;
 }

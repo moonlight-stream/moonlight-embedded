@@ -13,7 +13,7 @@ aux_source_directory(./src/input SRC_LIST)
 
 set(MOONLIGHT_DEFINITIONS)
 
-find_package(ALSA REQUIRED)
+find_package(ALSA)
 find_package(Opus REQUIRED)
 find_package(Broadcom)
 find_package(Freescale)
@@ -82,6 +82,12 @@ if (AMLOGIC_FOUND OR BROADCOM_FOUND OR FREESCALE_FOUND OR CMAKE_BUILD_TYPE MATCH
   list(APPEND MOONLIGHT_OPTIONS EMBEDDED)
 endif()
 
+if (ALSA_FOUND)
+  list(APPEND SRC_LIST ./src/audio/alsa.c)
+  list(APPEND MOONLIGHT_DEFINITIONS HAVE_ALSA)
+  list(APPEND MOONLIGHT_OPTIONS ALSA)
+endif()
+
 if (PULSE_FOUND)
   list(APPEND SRC_LIST ./src/audio/pulse.c)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_PULSE)
@@ -89,8 +95,6 @@ if (PULSE_FOUND)
 endif()
 
 include_directories("${PROJECT_BINARY_DIR}")
-
-list(APPEND SRC_LIST ./src/audio/alsa.c)
 
 add_subdirectory(libgamestream)
 
@@ -154,6 +158,11 @@ if (SOFTWARE_FOUND)
   endif()
 endif()
 
+if (ALSA_FOUND)
+  target_include_directories(moonlight PRIVATE ${ALSA_INCLUDE_DIR})
+  target_link_libraries(moonlight ${ALSA_LIBRARY})
+endif()
+
 if (PULSE_FOUND)
   target_include_directories(moonlight PRIVATE ${PULSE_INCLUDE_DIRS})
   target_link_libraries(moonlight ${PULSE_LIBRARIES})
@@ -163,7 +172,7 @@ configure_file("./src/configuration.h.in" "${PROJECT_BINARY_DIR}/configuration.h
 
 set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
 target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
-target_link_libraries(moonlight ${EVDEV_LIBRARIES} ${ALSA_LIBRARY} ${OPUS_LIBRARY} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
+target_link_libraries(moonlight ${EVDEV_LIBRARIES} ${OPUS_LIBRARY} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
 
 add_subdirectory(docs)
 

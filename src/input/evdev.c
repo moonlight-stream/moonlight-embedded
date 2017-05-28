@@ -308,7 +308,6 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       if (hat_index == dev->map->hat_dpleft)
         set_hat(dev->buttonFlags, HAT_LEFT, hat_state, dev->map->hat_dir_dpleft);
       break;
-    }
     default:
       if (index == dev->map->abs_leftx)
         dev->leftStickX = evdev_convert_value(ev, dev, &dev->xParms, dev->map->reverse_leftx);
@@ -324,6 +323,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         dev->rightTrigger = evdev_convert_value_byte(ev, dev, &dev->rzParms);
       else
         gamepadModified = false;
+    }
   }
 
   dev->gamepadModified |= gamepadModified;

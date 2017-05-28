@@ -23,6 +23,12 @@
 #include <opus/opus_multistream.h>
 #include <psp2/audioout.h>
 
+enum {
+  VITA_AUDIO_INIT_OK        = 0,
+  VITA_AUDIO_ERROR_BAD_OPUS = 0x80020001,
+  VITA_AUDIO_ERROR_PORT     = 0x80020002,
+};
+
 #include "debug.h"
 
 #define FRAME_SIZE 240
@@ -32,11 +38,18 @@ static int decode_offset;
 static int port;
 
 static int active_audio_thread = true;
-static OpusMSDecoder* decoder;
+static OpusMSDecoder* decoder = NULL;
 
 static short buffer[BUFFER_SIZE];
 
-static void vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static void vita_renderer_cleanup() {
+  if (decoder != NULL) {
+    opus_multistream_decoder_destroy(decoder);
+    decoder = NULL;
+  }
+}
+
+static int vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc;
   decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
                                             opusConfig->channelCount,
@@ -45,13 +58,19 @@ static void vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
                                             opusConfig->mapping,
                                             &rc);
 
-  port = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, VITA_SAMPLES, 48000, SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO);
-  DEBUG_PRINT("open port 0x%x\n", port);
-}
+  if (rc < 0) {
+      return VITA_AUDIO_ERROR_BAD_OPUS;
+  }
 
-static void vita_renderer_cleanup() {
-  if (decoder != NULL)
-    opus_multistream_decoder_destroy(decoder);
+  port = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, VITA_SAMPLES, 48000, SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO);
+
+  if (port < 0) {
+      vita_renderer_cleanup();
+      return VITA_AUDIO_ERROR_PORT;
+  }
+
+  DEBUG_PRINT("open port 0x%x\n", port);
+  return VITA_AUDIO_INIT_OK;
 }
 
 static void vita_renderer_decode_and_play_sample(char* data, int length) {

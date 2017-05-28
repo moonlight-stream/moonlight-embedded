@@ -32,9 +32,19 @@
 
 #include <stdarg.h>
 
+enum {
+  VITA_VIDEO_INIT_OK                  = 0,
+  VITA_VIDEO_ERROR_NO_MEM             = 0x80010001,
+  VITA_VIDEO_ERROR_INIT_LIB           = 0x80010002,
+  VITA_VIDEO_ERROR_QUERY_DEC_MEMSIZE  = 0x80010003,
+  VITA_VIDEO_ERROR_ALLOC_MEM          = 0x80010004,
+  VITA_VIDEO_ERROR_GET_MEMBASE        = 0x80010005,
+  VITA_VIDEO_ERROR_CREATE_DEC         = 0x80010006,
+};
+
 #define DECODER_BUFFER_SIZE 92*1024
 
-static char* ffmpeg_buffer;
+static char* ffmpeg_buffer = NULL;
 
 enum {
   SCREEN_WIDTH = 960,
@@ -43,12 +53,26 @@ enum {
   FRAMEBUFFER_SIZE = 2 * 1024 * 1024,
   FRAMEBUFFER_ALIGNMENT = 256 * 1024
 };
+
 int backbuffer;
 void *framebuffer[2];
 
 SceAvcdecCtrl decoder = {0};
+SceUID decoderblock = -1;
 
-static void vita_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+static void vita_cleanup() {
+  if (ffmpeg_buffer != NULL) {
+    free(ffmpeg_buffer);
+    ffmpeg_buffer = NULL;
+  }
+  if (decoderblock >= 0) {
+    sceKernelFreeMemBlock(decoderblock);
+    decoderblock = -1;
+  }
+  #warning TODO cleanup
+}
+
+static int vita_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   gs_sps_init();
 
   printf("vita video setup\n");
@@ -80,7 +104,7 @@ static void vita_setup(int videoFormat, int width, int height, int redrawRate, v
   ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE);
   if (ffmpeg_buffer == NULL) {
     printf("Not enough memory\n");
-    exit(1);
+    return VITA_VIDEO_ERROR_NO_MEM;
   }
 
   SceVideodecQueryInitInfoHwAvcdec init = {0};
@@ -98,25 +122,45 @@ static void vita_setup(int videoFormat, int width, int height, int redrawRate, v
   SceAvcdecDecoderInfo decoder_info_out = {0};
 
   ret = sceVideodecInitLibrary(0x1001, &init);
-  printf("sceVideodecInitLibrary 0x%x\n", ret);
+  if (ret < 0) {
+    printf("sceVideodecInitLibrary 0x%x\n", ret);
+    vita_cleanup();
+    return VITA_VIDEO_ERROR_INIT_LIB;
+  }
   ret = sceAvcdecQueryDecoderMemSize(0x1001, &decoder_info, &decoder_info_out);
-  printf("sceAvcdecQueryDecoderMemSize 0x%x size 0x%x\n", ret, decoder_info_out.frameMemSize);
+  if (ret < 0) {
+    printf("sceAvcdecQueryDecoderMemSize 0x%x size 0x%x\n", ret, decoder_info_out.frameMemSize);
+    vita_cleanup();
+    return VITA_VIDEO_ERROR_QUERY_DEC_MEMSIZE;
+  }
 
   size_t sz = (decoder_info_out.frameMemSize + 0xFFFFF) & ~0xFFFFF;
   decoder.frameBuf.size = sz;
   printf("allocating size 0x%x\n", sz);
-  int decoderblock = sceKernelAllocMemBlock("decoder", SCE_KERNEL_MEMBLOCK_TYPE_USER_MAIN_PHYCONT_NC_RW, sz, NULL);
-  printf("decoderblock: 0x%08x\n", decoderblock);
-  sceKernelGetMemBlockBase(decoderblock, &decoder.frameBuf.pBuf);
+
+  decoderblock = sceKernelAllocMemBlock("decoder", SCE_KERNEL_MEMBLOCK_TYPE_USER_MAIN_PHYCONT_NC_RW, sz, NULL);
+  if (decoderblock < 0) {
+    printf("decoderblock: 0x%08x\n", decoderblock);
+    vita_cleanup();
+    return VITA_VIDEO_ERROR_ALLOC_MEM;
+  }
+
+  ret = sceKernelGetMemBlockBase(decoderblock, &decoder.frameBuf.pBuf);
+  if (ret < 0) {
+    printf("sceKernelGetMemBlockBase: 0x%x\n", ret);
+    vita_cleanup();
+    return VITA_VIDEO_ERROR_GET_MEMBASE;
+  }
   printf("base: 0x%08x\n", decoder.frameBuf.pBuf);
 
   ret = sceAvcdecCreateDecoder(0x1001, &decoder, &decoder_info);
-  printf("sceAvcdecCreateDecoder 0x%x\n", ret);
-}
+  if (ret < 0) {
+    printf("sceAvcdecCreateDecoder 0x%x\n", ret);
+    vita_cleanup();
+    return VITA_VIDEO_ERROR_CREATE_DEC;
+  }
 
-static void vita_cleanup() {
-  free(ffmpeg_buffer);
-  #warning TODO cleanup
+  return VITA_VIDEO_INIT_OK;
 }
 
 static unsigned numframes;

@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../audio.h"
+#include "audio.h"
 
 #include <stdio.h>
 #include <stdlib.h>

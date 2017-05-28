@@ -20,8 +20,9 @@
 #define _GNU_SOURCE
 
 #include "platform.h"
-#include "audio.h"
-#include "video.h"
+
+#include "audio/audio.h"
+#include "video/video.h"
 
 #include <stdlib.h>
 #include <string.h>

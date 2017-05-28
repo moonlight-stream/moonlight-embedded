@@ -17,10 +17,11 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../video.h"
-#include "../input/x11.h"
+#include "video.h"
 #include "egl.h"
 #include "ffmpeg.h"
+
+#include "../input/x11.h"
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>

@@ -19,6 +19,7 @@
 
 #include "x11.h"
 #include "keyboard.h"
+
 #include "../loop.h"
 
 #include <Limelight.h>

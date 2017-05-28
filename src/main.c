@@ -18,15 +18,14 @@
  */
 
 #include "loop.h"
-#include "client.h"
 #include "connection.h"
 #include "configuration.h"
-#include "audio.h"
-#include "video.h"
-#include "discover.h"
 #include "config.h"
 #include "platform.h"
 #include "sdl.h"
+
+#include "audio/audio.h"
+#include "video/video.h"
 
 #include "input/mapping.h"
 #include "input/evdev.h"
@@ -39,6 +38,9 @@
 #endif
 
 #include <Limelight.h>
+
+#include <client.h>
+#include <discover.h>
 
 #include <stdio.h>
 #include <stdlib.h>

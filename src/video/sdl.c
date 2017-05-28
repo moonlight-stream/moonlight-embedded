@@ -17,9 +17,10 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../video.h"
-#include "../sdl.h"
+#include "video.h"
 #include "ffmpeg.h"
+
+#include "../sdl.h"
 
 #include <SDL.h>
 #include <SDL_thread.h>

@@ -30,7 +30,7 @@
 #include "input/mapping.h"
 #include "input/evdev.h"
 #include "input/udev.h"
-#ifdef HAVE_CEC
+#ifdef HAVE_LIBCEC
 #include "input/cec.h"
 #endif
 #ifdef HAVE_SDL

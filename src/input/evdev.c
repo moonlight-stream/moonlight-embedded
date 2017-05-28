@@ -18,7 +18,6 @@
  */
 
 #include "../loop.h"
-#include "../global.h"
 
 #include "keyboard.h"
 #include "mapping.h"

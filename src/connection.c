@@ -18,12 +18,15 @@
  */
 
 #include "connection.h"
-#include "global.h"
 
 #include <stdio.h>
+#include <signal.h>
 
-static void connection_connection_terminated() {
-  quit();
+pthread_t main_thread_id = 0;
+
+static void connection_terminated() {
+  if (main_thread_id != 0)
+    pthread_kill(main_thread_id, SIGTERM);
 }
 
 static void connection_display_message(const char *msg) {
@@ -39,7 +42,7 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageComplete = NULL,
   .stageFailed = NULL,
   .connectionStarted = NULL,
-  .connectionTerminated = connection_connection_terminated,
+  .connectionTerminated = connection_terminated,
   .displayMessage = connection_display_message,
   .displayTransientMessage = connection_display_transient_message,
 };

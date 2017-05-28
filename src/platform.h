@@ -30,7 +30,7 @@ enum platform { NONE, SDL, X11, PI, IMX, AML, FAKE };
 
 enum platform platform_check(char*);
 PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
-PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
+PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system, char* audio_device);
 bool platform_supports_hevc(enum platform system);
 
 void platform_start(enum platform system);

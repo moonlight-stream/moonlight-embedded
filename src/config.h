@@ -32,6 +32,7 @@ typedef struct _CONFIGURATION {
   char* address;
   char* mapping;
   char* platform;
+  char* audio_device;
   char* config_file;
   char key_dir[4096];
   bool sops;

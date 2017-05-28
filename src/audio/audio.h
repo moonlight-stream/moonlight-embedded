@@ -25,8 +25,6 @@
 #define FRAME_SIZE 240
 #define FRAME_BUFFER 12
 
-extern const char* audio_device;
-
 #ifdef HAVE_ALSA
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa;
 #endif
@@ -35,5 +33,5 @@ extern AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl;
 #endif
 #ifdef HAVE_PULSE
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
-bool audio_pulse_init();
+bool audio_pulse_init(char* audio_device);
 #endif

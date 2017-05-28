@@ -32,7 +32,7 @@ static OMX_BUFFERHEADERTYPE *buf;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static int channelCount;
 
-static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc, error;
   OMX_ERRORTYPE err;
   unsigned char omxMapping[MAX_CHANNEL_COUNT];

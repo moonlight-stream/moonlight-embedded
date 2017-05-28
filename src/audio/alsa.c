@@ -29,7 +29,7 @@ static snd_pcm_t *handle;
 static OpusMSDecoder* decoder;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 
-static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc;
   unsigned char alsaMapping[MAX_CHANNEL_COUNT];
 
@@ -54,6 +54,7 @@ static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
   snd_pcm_uframes_t buffer_size = 2 * period_size;
   unsigned int sampleRate = opusConfig->sampleRate;
 
+  char* audio_device = (char*) context;
   if (audio_device == NULL)
     audio_device = "sysdefault";
 

@@ -38,7 +38,6 @@
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 
 bool inputAdded = false;
-const char* audio_device = NULL;
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
@@ -172,7 +171,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->sops = false;
     break;
   case 'm':
-    audio_device = value;
+    config->audio_device = value;
     break;
   case 'n':
     config->localaudio = true;
@@ -303,6 +302,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->action = NULL;
   config->address = NULL;
   config->config_file = NULL;
+  config->audio_device = NULL;
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;

@@ -47,7 +47,7 @@ bool audio_pulse_init() {
   return (bool) dev;
 }
 
-static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc, error;
   unsigned char alsaMapping[MAX_CHANNEL_COUNT];
 
@@ -78,8 +78,10 @@ static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIG
 
   if (!dev) {
     printf("Pulseaudio error: %s\n", pa_strerror(error));
-    exit(-1);
+    return -1;
   }
+
+  return 0;
 }
 
 static void pulse_renderer_decode_and_play_sample(char* data, int length) {

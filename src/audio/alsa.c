@@ -23,13 +23,13 @@
 #include <opus_multistream.h>
 #include <alsa/asoundlib.h>
 
-#define CHECK_RETURN(f) if ((rc = f) < 0) { printf("Alsa error code %d\n", rc); exit(-1); }
+#define CHECK_RETURN(f) if ((rc = f) < 0) { printf("Alsa error code %d\n", rc); return -1; }
 
 static snd_pcm_t *handle;
 static OpusMSDecoder* decoder;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 
-static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc;
   unsigned char alsaMapping[MAX_CHANNEL_COUNT];
 
@@ -81,6 +81,8 @@ static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
   snd_pcm_sw_params_free(sw_params);
 
   CHECK_RETURN(snd_pcm_prepare(handle));
+
+  return 0;
 }
 
 static void alsa_renderer_cleanup() {

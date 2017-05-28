@@ -32,7 +32,7 @@ static OMX_BUFFERHEADERTYPE *buf;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static int channelCount;
 
-static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
   int rc, error;
   OMX_ERRORTYPE err;
   unsigned char omxMapping[MAX_CHANNEL_COUNT];
@@ -54,17 +54,17 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
   handle = ilclient_init();
   if (handle == NULL) {
     fprintf(stderr, "IL client init failed\n");
-    exit(1);
+    return -1;
   }
 
   if (ilclient_create_component(handle, &component, componentName, ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS) != 0) {
     fprintf(stderr, "Component create failed\n");
-    exit(1);
+    return -1;
   }
 
   if (ilclient_change_component_state(component, OMX_StateIdle)!= 0) {
     fprintf(stderr, "Couldn't change state to Idle\n");
-    exit(1);
+    return -1;
   }
 
   // must be before we enable buffers
@@ -119,7 +119,7 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
   err = OMX_SetParameter(ilclient_get_handle(component), OMX_IndexParamAudioPcm, &sPCMMode);
   if(err != OMX_ErrorNone){
     fprintf(stderr, "PCM mode unsupported\n");
-    return;
+    return -1;
   }
   OMX_CONFIG_BRCMAUDIODESTINATIONTYPE arDest;
 
@@ -136,7 +136,7 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
     err = OMX_SetParameter(ilclient_get_handle(component), OMX_IndexConfigBrcmAudioDestination, &arDest);
     if (err != OMX_ErrorNone) {
       fprintf(stderr, "Error on setting audio destination\nomx option must be set to hdmi or local\n");
-      exit(1);
+      return -1;
     }
   }
 
@@ -146,9 +146,11 @@ static void omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
 
   err = ilclient_change_component_state(component, OMX_StateExecuting);
   if (err < 0) {
-  	fprintf(stderr, "Couldn't change state to Executing\n");
-  	exit(1);
+    fprintf(stderr, "Couldn't change state to Executing\n");
+    return -1;
   }
+
+  return 0;
 }
 
 static void omx_renderer_cleanup() {

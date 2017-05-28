@@ -54,7 +54,7 @@ static int osd_blank(char *path,int cmd) {
   return -1;
 }
 
-void aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+int aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   osd_blank("/sys/class/graphics/fb0/blank",1);
   osd_blank("/sys/class/graphics/fb1/blank",0);
 
@@ -87,7 +87,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
       break;
     default:
       printf("Video format not supported\n");
-      exit(1);
+      return -1;
   }
 
   codecParam.am_sysinfo.width = width;
@@ -98,12 +98,12 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   int ret;
   if ((ret = codec_init(&codecParam)) != 0) {
     fprintf(stderr, "codec_init error: %x\n", ret);
-    exit(1);
+    return -2;
   }
 
   if ((ret = codec_set_freerun_mode(&codecParam, 1)) != 0) {
     fprintf(stderr, "Can't set Freerun mode: %x\n", ret);
-    exit(1);
+    return -2;
   }
 }
 

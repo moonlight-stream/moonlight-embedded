@@ -34,27 +34,28 @@ static char* ffmpeg_buffer = NULL;
 
 static Display *display;
 
-void x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
   if (drFlags & FORCE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;
 
   if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, 2) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
-    exit(1);
+    return -1;
   }
 
   ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
   if (ffmpeg_buffer == NULL) {
     fprintf(stderr, "Not enough memory\n");
-    exit(1);
+    ffmpeg_destroy();
+    return -1;
   }
 
   XInitThreads();
   display = XOpenDisplay(NULL);
   if (!display) {
     fprintf(stderr, "Error: failed to open X display.\n");
-    return;
+    return -2;
   }
 
   Window root = DefaultRootWindow(display);
@@ -81,6 +82,8 @@ void x11_setup(int videoFormat, int width, int height, int redrawRate, void* con
 
   egl_init(display, window, width, height);
   x11_input_init(display, window);
+
+  return 0;
 }
 
 void x11_cleanup() {
@@ -110,5 +113,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_x11 = {
   .setup = x11_setup,
   .cleanup = x11_cleanup,
   .submitDecodeUnit = x11_submit_decode_unit,
-  .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION | CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC | CAPABILITY_REFERENCE_FRAME_INVALIDATION_HEVC | CAPABILITY_DIRECT_SUBMIT,
 };

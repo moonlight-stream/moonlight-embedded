@@ -115,10 +115,10 @@ static int frame_handle(int pipefd) {
   return LOOP_OK;
 }
 
-static void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+int void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   if (videoFormat != VIDEO_FORMAT_H264) {
     fprintf(stderr, "Video format not supported\n");
-    exit(1);
+    return -1;
   }
 
   struct mxcfb_gbl_alpha alpha;
@@ -127,14 +127,14 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
 
   if (fd_fb < 0){
     fprintf(stderr, "Can't access framebuffer\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   alpha.alpha = 0;
   alpha.enable = 1;
   if (ioctl(fd_fb, MXCFB_SET_GBL_ALPHA, &alpha) < 0){
     fprintf(stderr, "Can't set framebuffer output\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   close(fd_fb);
@@ -148,7 +148,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   fd = open(v4l_device, O_RDWR, 0);
   if (fd < 0){
     fprintf(stderr, "Can't access video output\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   struct v4l2_rect icrop = {0};
@@ -167,7 +167,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
   if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0) {
     fprintf(stderr, "Can't set source video format\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0) {
@@ -184,12 +184,12 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
 
   if (ioctl(fd, VIDIOC_REQBUFS, &reqbuf) < 0) {
     fprintf(stderr, "Can't get video buffers\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   if (reqbuf.count < regfbcount) {
     fprintf(stderr, "Not enough video buffers\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
     
   for (int i = 0; i < regfbcount; i++) {
@@ -199,7 +199,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
     buf = calloc(1, sizeof(struct vpu_buf));
     if (buf == NULL) {
       fprintf(stderr, "Not enough memory\n");
-      exit(EXIT_FAILURE);
+      return -2;
     }
 
     buffers[i] = buf;
@@ -210,7 +210,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
 
     if (ioctl(fd, VIDIOC_QUERYBUF, &buffer) < 0) {
       fprintf(stderr, "Can't get video buffer\n");
-      exit(EXIT_FAILURE);
+      return -2;
     }
     buf->start = mmap(NULL, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buffer.m.offset);
 
@@ -221,7 +221,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
     */
     if (ioctl(fd, VIDIOC_QUERYBUF, &buffer) < 0) {
       fprintf(stderr, "Can't set source video format\n");
-      exit(EXIT_FAILURE);
+      return -2;
     }
 
     buf->offset = buffer.m.offset;
@@ -229,7 +229,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
 
     if (buf->start == MAP_FAILED) {
       fprintf(stderr, "Failed to map video buffer\n");
-      exit(EXIT_FAILURE);
+      return -2;
     }
   }
   
@@ -237,7 +237,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
 
   if (pipe(pipefd) == -1 || pipe(clearpipefd) == -1) {
     fprintf(stderr, "Can't create communication channel between threads\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   loop_add_fd(pipefd[0], &frame_handle, POLLIN);

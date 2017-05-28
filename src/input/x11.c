@@ -19,7 +19,6 @@
 
 #include "x11.h"
 #include "keyboard.h"
-#include "../global.h"
 #include "../loop.h"
 
 #include <Limelight.h>
@@ -46,6 +45,9 @@ static Cursor cursor;
 static bool grabbed = True;
 
 static int x11_handler(int fd) {
+  if (!XPending(display))
+    return LOOP_OK;
+
   XEvent event;
   int button = 0;
   int motion_x, motion_y;
@@ -120,7 +122,7 @@ static int x11_handler(int fd) {
     break;
   case ClientMessage:
     if (event.xclient.data.l[0] == wm_deletemessage)
-      quit();
+      return LOOP_RETURN;
 
     break;
   }

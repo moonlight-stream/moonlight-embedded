@@ -84,11 +84,12 @@ This is the default configuration for 720p.
 
 =item B<-fps> [I<FPS>]
 
-Change the number of frame per second to I<FPS>
+Change the number of frame per second to I<FPS>.
+Only 30 and 60 fps are currently supported by Gamestream.
 
 =item B<-bitrate> [I<BITRATE>]
 
-Change bitrate to I<BITRATE> kbps.
+Change bitrate to I<BITRATE> Kbps.
 By default the bitrate depends on the selected resolution and fps.
 For resolution 1080p and 60 fps and higher 20 Mbps is used.
 For resolution 1080p or 60 fps and higher 10 Mbps is used
@@ -96,8 +97,9 @@ For other configurations 5 Mbps is used by default.
 
 =item B<-packetsize> [I<PACKETSIZE>]
 
-Change the network packetsize to I<PACKETSIZE>.
+Change the network packetsize to I<PACKETSIZE> bytes.
 The packetsize should the smaller than the MTU of the network.
+This value must be a multiply of 16.
 By default a safe value of 1024 is used.
 
 =item B<-hevc>
@@ -124,7 +126,11 @@ Stop GFE from changing the graphical settings of the requested game or applicati
 
 =item B<-localaudio>
 
-Play the audio on the host instead of this computer.
+Play the audio on the host computer instead of this device.
+
+=item B<-surround>
+
+Enable 5.1 surround sound instead of stereo.
 
 =item B<-keydir> [I<DIRECTORY>]
 
@@ -134,19 +140,29 @@ By default the encryption keys are stored in $XDG_CACHE_DIR/moonlight or ~/.cach
 =item B<-mapping> [I<MAPPING>]
 
 Use I<MAPPING> as the mapping file for all inputs.
-This mapping file should have the same format as the gamecontrollerdb.txt for SDL.
+This mapping file should have the same format as the gamecontrollerdb.txt for SDL2.
+By default the gamecontrollerdb.txt provided by Moonlight Embedded is used.
 
 =item B<-input> [I<INPUT>]
 
 Enable the I<INPUT> device.
 By default all available input devices are enabled.
 Only evdev devices /dev/input/event* are supported.
-To use a different gamepad mapping then the default the B<-mapping> should be specified before the B<-input>.
 
 =item B<-audio> [I<DEVICE>]
 
 Use <DEVICE> as audio output device.
 The default value is 'sysdefault' for ALSA and 'hdmi' for OMX on the Raspberry Pi.
+
+=item B<-windowed>
+
+Display the stream in a window instead of fullscreen.
+Only available when X11 or SDL platform is used.
+
+=item B<-forcehw>
+
+This will enable unsupported hardware acceleration.
+Currently only VDPAU when using X11 or SDL is unsupported.
 
 =back
 

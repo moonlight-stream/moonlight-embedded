@@ -159,15 +159,15 @@ static void help() {
   printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
-  #ifdef HAVE_SDL
-  printf("\n Video options (SDL Only)\n\n");
+  #if defined(HAVE_SDL) || defined(HAVE_X11)
+  printf("\n Video options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
+  printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
   #endif
   #ifdef HAVE_EMBEDDED
-  printf("\n I/O options\n\n");
+  printf("\n I/O options (PI, IMX, AML and X11 only)\n\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as audio output device\n");
-  printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
   #endif
   printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
   exit(0);

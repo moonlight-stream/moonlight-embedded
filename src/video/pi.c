@@ -133,6 +133,13 @@ int void decoder_renderer_setup(int videoFormat, int width, int height, int redr
   latencyTarget.nInterFactor = 500;
   latencyTarget.nAdjCap = 20;
 
+  OMX_CONFIG_DISPLAYREGIONTYPE displayRegion;
+  displayRegion.nSize = sizeof(OMX_PARAM_PORTDEFINITIONTYPE);
+  displayRegion.nVersion.nVersion = OMX_VERSION;
+  displayRegion.nPortIndex = 90;
+  displayRegion.fullscreen = OMX_TRUE;
+  displayRegion.mode = OMX_DISPLAY_SET_FULLSCREEN;
+
   if(OMX_SetParameter(ILC_GET_HANDLE(video_render), OMX_IndexConfigLatencyTarget, &latencyTarget) != OMX_ErrorNone) {
     fprintf(stderr, "Failed to set video render parameters\n");
     exit(EXIT_FAILURE);

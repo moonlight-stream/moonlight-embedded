@@ -17,10 +17,11 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../loop.h"
+#include "evdev.h"
 
 #include "keyboard.h"
-#include "mapping.h"
+
+#include "../loop.h"
 
 #include "libevdev/libevdev.h"
 #include <Limelight.h>

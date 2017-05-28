@@ -100,7 +100,7 @@ int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     ffmpeg_decode(ffmpeg_buffer, length);
     AVFrame* frame = ffmpeg_get_frame();
     if (frame != NULL)
-      egl_draw(frame->data);
+      egl_draw((const unsigned char**) frame->data);
   }
 
   return DR_OK;

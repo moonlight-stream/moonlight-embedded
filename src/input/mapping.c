@@ -61,7 +61,7 @@ struct mapping* mapping_load(char* fileName) {
       int ret;
       if ((ret = sscanf(option, "%m[^:]:%ms", &key, &value)) == 2) {
         int int_value, direction_value;
-        char flag = NULL;
+        char flag = 0;
         if (strcmp("platform", key) == 0)
           strncpy(map->platform, value, sizeof(map->platform));
         else if (sscanf(value, "b%d", &int_value) == 1) {

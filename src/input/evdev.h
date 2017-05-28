@@ -17,6 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mapping.h"
+
 void evdev_create(const char* device, struct mapping* mappings);
 void evdev_loop();
 

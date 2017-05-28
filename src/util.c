@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015-2017 Iwan Timmer
+ * Copyright (C) 2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +17,23 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Limelight.h>
+#include "util.h"
 
-#include <dlfcn.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdio.h>
 
-#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
+int blank_fb(char *path, bool clear) {
+  int fd = open(path, O_RDWR);
 
-enum platform { NONE, SDL, X11, PI, IMX, AML, FAKE };
+  if(fd >= 0) {
+    int ret = write(fd, clear ? "1" : "0", 1);
+    if (ret < 0)
+      fprintf(stderr, "Failed to clear framebuffer %s: %d\n", path, ret);
 
-enum platform platform_check(char*);
-PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
-PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system);
-bool platform_supports_hevc(enum platform system);
-
-void platform_start(enum platform system);
-void platform_stop(enum platform system);
+    close(fd);
+    return 0;
+  } else
+    return -1;
+}

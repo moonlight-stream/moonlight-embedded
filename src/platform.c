@@ -21,6 +21,8 @@
 
 #include "platform.h"
 
+#include "util.h"
+
 #include "audio/audio.h"
 #include "video/video.h"
 
@@ -69,6 +71,38 @@ enum platform platform_check(char* name) {
     return FAKE;
 
   return 0;
+}
+
+void platform_start(enum platform system) {
+  switch (system) {
+  #ifdef HAVE_AML
+  case AML:
+    blank_fb("/sys/class/graphics/fb0/blank", true);
+    blank_fb("/sys/class/graphics/fb1/blank", true);
+    break;
+  #endif
+  #ifdef HAVE_PI
+  case PI:
+    blank_fb("/sys/class/graphics/fb0/blank", true);
+    break;
+  #endif
+  }
+}
+
+void platform_stop(enum platform system) {
+  switch (system) {
+  #ifdef HAVE_AML
+  case AML:
+    blank_fb("/sys/class/graphics/fb0/blank", false);
+    blank_fb("/sys/class/graphics/fb1/blank", false);
+    break;
+  #endif
+  #ifdef HAVE_PI
+  case PI:
+    blank_fb("/sys/class/graphics/fb0/blank", false);
+    break;
+  #endif
+  }
 }
 
 DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {

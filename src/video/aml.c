@@ -35,29 +35,7 @@
 
 static codec_para_t codecParam = { 0 };
 
-static int osd_blank(char *path,int cmd) {
-  int fd;
-  char bcmd[16];
-
-  fd = open(path, O_CREAT|O_RDWR | O_TRUNC, 0644);
-
-  if(fd>=0) {
-    sprintf(bcmd,"%d",cmd);
-    int ret = write(fd,bcmd,strlen(bcmd));
-    if (ret < 0) {
-      printf("osd_blank error during write: %x\n", ret);
-    }
-    close(fd);
-    return 0;
-  }
-
-  return -1;
-}
-
 int aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  osd_blank("/sys/class/graphics/fb0/blank",1);
-  osd_blank("/sys/class/graphics/fb1/blank",0);
-
   codecParam.stream_type = STREAM_TYPE_ES_VIDEO;
   codecParam.has_video = 1;
   codecParam.noblock = 0;
@@ -108,9 +86,7 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
 }
 
 void aml_cleanup() {
-  int api = codec_close(&codecParam);
-  osd_blank("/sys/class/graphics/fb0/blank",0);
-  osd_blank("/sys/class/graphics/fb1/blank",0);
+  codec_close(&codecParam);
 }
 
 int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {

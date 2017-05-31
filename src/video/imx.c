@@ -244,6 +244,8 @@ int decoder_renderer_setup(int videoFormat, int width, int height, int redrawRat
 
   fcntl(clearpipefd[0], F_SETFL, O_NONBLOCK);
   fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+
+  return 0;
 }
 
 static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {

@@ -83,6 +83,8 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     fprintf(stderr, "Can't set Freerun mode: %x\n", ret);
     return -2;
   }
+
+  return 0;
 }
 
 void aml_cleanup() {

@@ -123,6 +123,7 @@ static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURA
   }
   OMX_CONFIG_BRCMAUDIODESTINATIONTYPE arDest;
 
+  char* audio_device = (char*) context;
   if (audio_device == NULL)
     audio_device = "hdmi";
 

@@ -17,7 +17,10 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <X11/Xlib.h>
 #include <libavcodec/avcodec.h>
 
-int vdpau_init(AVCodecContext* decoder_ctx, int width, int height);
+int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int height);
 AVFrame* vdpau_get_frame(AVFrame* dec_frame);
+int vdpau_init_queue(Drawable win);
+void vdpau_queue(AVFrame* dec_frame);

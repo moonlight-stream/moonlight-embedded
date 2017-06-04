@@ -20,6 +20,7 @@
 #include "video.h"
 #include "egl.h"
 #include "ffmpeg.h"
+#include "ffmpeg_vdpau.h"
 
 #include "../input/x11.h"
 #include "../loop.h"
@@ -53,11 +54,6 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   int avc_flags = SLICE_THREADING;
   if (drFlags & FORCE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;
-
-  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, 2) < 0) {
-    fprintf(stderr, "Couldn't initialize video decoding\n");
-    return -1;
-  }
 
   ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
   if (ffmpeg_buffer == NULL) {
@@ -95,7 +91,16 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     XSendEvent(display, DefaultRootWindow(display), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
   }
 
-  egl_init(display, window, width, height);
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, 2, display) < 0) {
+    fprintf(stderr, "Couldn't initialize video decoding\n");
+    return -1;
+  }
+
+  if (ffmpeg_decoder == SOFTWARE)
+    egl_init(display, window, width, height);
+  else
+    vdpau_init_queue(window);
+
   x11_input_init(display, window);
 
   if (pipe(pipefd) == -1) {
@@ -123,10 +128,13 @@ int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       entry = entry->next;
     }
     ffmpeg_decode(ffmpeg_buffer, length);
-    AVFrame* frame = ffmpeg_get_frame();
+    AVFrame* frame = ffmpeg_get_frame(true);
     if (frame != NULL) {
-      void* pointer = frame->data;
-      write(pipefd[1], &pointer, sizeof(void*));
+      if (ffmpeg_decoder == SOFTWARE) {
+        void* pointer = frame->data;
+        write(pipefd[1], &pointer, sizeof(void*));
+      } else
+        vdpau_queue(frame);
     }
   }
 

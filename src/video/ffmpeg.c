@@ -40,14 +40,13 @@ static AVFrame** dec_frames;
 static int dec_frames_cnt;
 static int current_frame, next_frame;
 
-enum decoders {SOFTWARE, VDPAU};
-enum decoders decoder_system;
+enum decoders ffmpeg_decoder;
 
 #define BYTES_PER_PIXEL 4
 
 // This function must be called before
 // any other decoding functions
-int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count) {
+int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count, void* context) {
   // Initialize the avcodec library and register codecs
   av_log_set_level(AV_LOG_QUIET);
   avcodec_register_all();
@@ -66,12 +65,12 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
     }
 
     if (decoder != NULL)
-      decoder_system = VDPAU;
+      ffmpeg_decoder = VDPAU;
   }
   #endif
 
   if (decoder == NULL) {
-    decoder_system = SOFTWARE;
+    ffmpeg_decoder = SOFTWARE;
     switch (videoFormat) {
       case VIDEO_FORMAT_H264:
         decoder = avcodec_find_decoder_by_name("h264");
@@ -133,8 +132,8 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
   }
 
   #ifdef HAVE_VDPAU
-  if (decoder_system == VDPAU)
-    vdpau_init(decoder_ctx, width, height);
+  if (ffmpeg_decoder == VDPAU)
+    vdpau_init(decoder_ctx, (Display*) context, width, height);
   #endif
 
   return 0;
@@ -156,16 +155,16 @@ void ffmpeg_destroy(void) {
   }
 }
 
-AVFrame* ffmpeg_get_frame() {
+AVFrame* ffmpeg_get_frame(bool native_frame) {
   int err = avcodec_receive_frame(decoder_ctx, dec_frames[next_frame]);
   if (err == 0) {
     current_frame = next_frame;
     next_frame = (current_frame+1) % dec_frames_cnt;
 
-    if (decoder_system == SOFTWARE)
+    if (ffmpeg_decoder == SOFTWARE || native_frame)
       return dec_frames[current_frame];
     #ifdef HAVE_VDPAU
-    else if (decoder_system == VDPAU)
+    else if (ffmpeg_decoder == VDPAU)
       return vdpau_get_frame(dec_frames[current_frame]);
     #endif
   } else if (err != AVERROR(EAGAIN)) {

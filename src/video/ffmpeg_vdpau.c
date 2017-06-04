@@ -34,6 +34,9 @@ static AVFrame* cpu_frame;
 static VdpDevice vdp_device;
 static VdpDecoder vdp_decoder;
 static VdpVideoMixer vdp_mixer;
+static VdpPresentationQueue vdp_queue;
+static VdpPresentationQueueTarget vdp_queue_target;
+static VdpOutputSurface vdp_output;
 static struct vdpau_render_state* vdp_render_state[MAX_RENDER_STATES];
 static int vdp_render_states = 0;
 
@@ -43,8 +46,13 @@ static VdpDecoderRender* vdp_decoder_render;
 static VdpVideoSurfaceGetBitsYCbCr* vdp_video_surface_get_bits_y_cb_cr;
 static VdpVideoSurfaceCreate* vdp_video_surface_create;
 static VdpVideoMixerCreate* vdp_video_mixer_create;
+static VdpVideoMixerRender* vdp_video_mixer_render;
+static VdpOutputSurfaceCreate* vdp_output_surface_create;
+static VdpPresentationQueueCreate* vdp_presentation_queue_create;
+static VdpPresentationQueueDisplay* vdp_presentation_queue_display;
+static VdpPresentationQueueTargetCreateX11* vdp_presentation_queue_target_create_x11;
 
-struct vdpau_render_state* vdp_get_free_render_state() {
+struct vdpau_render_state* vdp_get_free_render_state(int width, int height) {
   for (unsigned i = 0; i < vdp_render_states; i++) {
     struct  vdpau_render_state* render_state = vdp_render_state[i];
     if (!render_state->state)
@@ -60,7 +68,7 @@ struct vdpau_render_state* vdp_get_free_render_state() {
   vdp_render_states++;
   memset(render_state, 0, sizeof(struct vdpau_render_state));
   render_state->surface = VDP_INVALID_HANDLE;
-  VdpStatus status = vdp_video_surface_create(vdp_device, VDP_CHROMA_TYPE_420, 1280, 720, &render_state->surface);
+  VdpStatus status = vdp_video_surface_create(vdp_device, VDP_CHROMA_TYPE_420, width, height, &render_state->surface);
   return render_state;
 }
 
@@ -70,7 +78,7 @@ static void vdp_release_buffer(void* opaque, uint8_t *data) {
 }
 
 static int vdp_get_buffer(AVCodecContext* context, AVFrame* frame, int flags) {
-  struct vdpau_render_state* pRenderState = vdp_get_free_render_state();
+  struct vdpau_render_state* pRenderState = vdp_get_free_render_state(frame->width, frame->height);
   frame->data[0] = (uint8_t*) pRenderState;
   frame->buf[0] = av_buffer_create(frame->data[0], 0, vdp_release_buffer, NULL, 0);
 
@@ -89,23 +97,27 @@ static void vdp_draw_horiz_band(struct AVCodecContext* context, const AVFrame* f
   status = vdp_decoder_render(vdp_decoder, render_state->surface, (VdpPictureInfo const*)&(render_state->info), render_state->bitstream_buffers_used, render_state->bitstream_buffers);
 }
 
-int vdpau_init(AVCodecContext* decoder_ctx, int width, int height) {
+int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int height) {
   if (vdp_device)
     return vdp_device;
 
-  Display* xdisplay = XOpenDisplay(0);
-  if (!xdisplay)
-    return -1;
+  if (!display)
+    display = XOpenDisplay(NULL);
 
-  VdpStatus status = vdp_device_create_x11(xdisplay, DefaultScreen(xdisplay), &vdp_device, &vdp_get_proc_address);
+  VdpStatus status = vdp_device_create_x11(display, DefaultScreen(display), &vdp_device, &vdp_get_proc_address);
   if (status != VDP_STATUS_OK)
      return -1;
 
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_GET_BITS_Y_CB_CR, (void**)&vdp_video_surface_get_bits_y_cb_cr);
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_CREATE, (void**)&vdp_video_surface_create);
+  vdp_get_proc_address(vdp_device, VDP_FUNC_ID_OUTPUT_SURFACE_CREATE, (void**)&vdp_output_surface_create);
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_DECODER_RENDER, (void**)&vdp_decoder_render);
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_DECODER_CREATE, (void**)&vdp_decoder_create);
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_VIDEO_MIXER_CREATE, (void**)&vdp_video_mixer_create);
+  vdp_get_proc_address(vdp_device, VDP_FUNC_ID_VIDEO_MIXER_RENDER, (void**)&vdp_video_mixer_render);
+  vdp_get_proc_address(vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_CREATE, (void**)&vdp_presentation_queue_create);
+  vdp_get_proc_address(vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_TARGET_CREATE_X11, (void**)&vdp_presentation_queue_target_create_x11);
+  vdp_get_proc_address(vdp_device, VDP_FUNC_ID_PRESENTATION_QUEUE_DISPLAY, (void**)&vdp_presentation_queue_display);
 
   decoder_ctx->get_buffer2 = vdp_get_buffer;
   decoder_ctx->draw_horiz_band = vdp_draw_horiz_band;
@@ -153,6 +165,8 @@ int vdpau_init(AVCodecContext* decoder_ctx, int width, int height) {
     return -1;
   }
 
+  vdp_output_surface_create(vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, width, height, &vdp_output);
+
   return vdp_device;
 }
 
@@ -171,4 +185,22 @@ AVFrame* vdpau_get_frame(AVFrame* dec_frame) {
 
   VdpStatus status = vdp_video_surface_get_bits_y_cb_cr(render_state->surface, VDP_YCBCR_FORMAT_YV12, dest, pitches);
   return cpu_frame;
+}
+
+int vdpau_init_queue(Drawable win) {
+  if(vdp_presentation_queue_target_create_x11(vdp_device, win, &vdp_queue_target) != VDP_STATUS_OK)
+    return -1;
+
+  if(vdp_presentation_queue_create(vdp_device, vdp_queue_target, &vdp_queue) != VDP_STATUS_OK)
+    return -1;
+
+  return 0;
+}
+
+void vdpau_queue(AVFrame* dec_frame) {
+  struct vdpau_render_state *render_state = (struct vdpau_render_state *)dec_frame->data[0];
+  int field = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME;
+  vdp_video_mixer_render(vdp_mixer, VDP_INVALID_HANDLE, 0, field, 0, (VdpVideoSurface*)VDP_INVALID_HANDLE, render_state->surface, 0,(VdpVideoSurface*)VDP_INVALID_HANDLE, NULL, vdp_output, NULL, NULL, 0, NULL);  
+
+  vdp_presentation_queue_display(vdp_queue, vdp_output, 0, 0, 0);
 }

@@ -37,7 +37,7 @@ static int sdl_setup(int videoFormat, int width, int height, int redrawRate, voi
   if (drFlags & FORCE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;
 
-  if (ffmpeg_init(videoFormat, width, height, avc_flags, SDL_BUFFER_FRAMES, sysconf(_SC_NPROCESSORS_ONLN)) < 0) {
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, SDL_BUFFER_FRAMES, sysconf(_SC_NPROCESSORS_ONLN), NULL) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     return -1;
   }
@@ -68,7 +68,7 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     ffmpeg_decode(ffmpeg_buffer, length);
 
     if (SDL_LockMutex(mutex) == 0) {
-      AVFrame* frame = ffmpeg_get_frame();
+      AVFrame* frame = ffmpeg_get_frame(false);
       if (frame != NULL) {
         sdlNextFrame++;
 

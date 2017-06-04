@@ -22,17 +22,32 @@
 #include "ffmpeg.h"
 
 #include "../input/x11.h"
+#include "../loop.h"
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
 #include <stdbool.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <poll.h>
 
 #define DECODER_BUFFER_SIZE 92*1024
 
 static char* ffmpeg_buffer = NULL;
 
 static Display *display;
+
+static int pipefd[2];
+
+static int frame_handle(int pipefd) {
+  const unsigned char** data = NULL;
+  while (read(pipefd, &data, sizeof(void*)) > 0);
+  if (data)
+    egl_draw(data);
+
+  return LOOP_OK;
+}
 
 int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
@@ -83,6 +98,13 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   egl_init(display, window, width, height);
   x11_input_init(display, window);
 
+  if (pipe(pipefd) == -1) {
+    fprintf(stderr, "Can't create communication channel between threads\n");
+    return -2;
+  }
+  loop_add_fd(pipefd[0], &frame_handle, POLLIN);
+  fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+
   return 0;
 }
 
@@ -102,8 +124,10 @@ int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     }
     ffmpeg_decode(ffmpeg_buffer, length);
     AVFrame* frame = ffmpeg_get_frame();
-    if (frame != NULL)
-      egl_draw((const unsigned char**) frame->data);
+    if (frame != NULL) {
+      void* pointer = frame->data;
+      write(pipefd[1], &pointer, sizeof(void*));
+    }
   }
 
   return DR_OK;

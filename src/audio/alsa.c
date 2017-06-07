@@ -116,5 +116,5 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa = {
   .init = alsa_renderer_init,
   .cleanup = alsa_renderer_cleanup,
   .decodeAndPlaySample = alsa_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = 0,
 };

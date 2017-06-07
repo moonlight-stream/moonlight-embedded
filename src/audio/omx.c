@@ -199,5 +199,5 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_omx = {
   .init = omx_renderer_init,
   .cleanup = omx_renderer_cleanup,
   .decodeAndPlaySample = omx_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = 0,
 };

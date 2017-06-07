@@ -78,5 +78,5 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl = {
   .init = sdl_renderer_init,
   .cleanup = sdl_renderer_cleanup,
   .decodeAndPlaySample = sdl_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = 0,
 };

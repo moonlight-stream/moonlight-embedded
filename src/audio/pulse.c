@@ -106,5 +106,5 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse = {
   .init = pulse_renderer_init,
   .cleanup = pulse_renderer_cleanup,
   .decodeAndPlaySample = pulse_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = 0,
 };

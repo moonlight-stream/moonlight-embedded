@@ -1,0 +1,34 @@
+Compile using older version (3.0) of CMake
+Index: moonlight-embedded/CMakeLists.txt
+===================================================================
+--- moonlight-embedded.orig/CMakeLists.txt
++++ moonlight-embedded/CMakeLists.txt
+@@ -1,5 +1,5 @@
+ project(moonlight-embedded C)
+-cmake_minimum_required(VERSION 3.1)
++cmake_minimum_required(VERSION 3.0)
+ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+ include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
+ 
+@@ -81,7 +81,7 @@ add_subdirectory(libgamestream)
+ 
+ add_executable(moonlight ${SRC_LIST})
+ target_link_libraries(moonlight gamestream)
+-set_property(TARGET moonlight PROPERTY C_STANDARD 99)
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+ 
+ if (CEC_FOUND)
+   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
+Index: moonlight-embedded/libgamestream/CMakeLists.txt
+===================================================================
+--- moonlight-embedded.orig/libgamestream/CMakeLists.txt
++++ moonlight-embedded/libgamestream/CMakeLists.txt
+@@ -15,7 +15,7 @@ aux_source_directory(../third_party/moon
+ add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
+ 
+ add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})
+-set_property(TARGET gamestream PROPERTY C_STANDARD 99)
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+ target_link_libraries(gamestream moonlight-common)
+ 
+ set_target_properties(gamestream PROPERTIES SOVERSION 0 VERSION ${MOONLIGHT_VERSION})

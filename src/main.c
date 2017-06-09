@@ -146,8 +146,6 @@ static void help() {
   printf("\t-4k\t\t\t\tUse 3840x2160 resolution\n");
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
   printf("\t-height <height>\tVertical resolution (default 720)\n");
-  printf("\t-30fps\t\t\tUse 30fps\n");
-  printf("\t-60fps\t\t\tUse 60fps\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
   printf("\t-hevc\t\t\tUse the high efficiency video coding (HEVC)\n");

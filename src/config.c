@@ -45,8 +45,6 @@ static struct option long_options[] = {
   {"4k", no_argument, NULL, '0'},
   {"width", required_argument, NULL, 'c'},
   {"height", required_argument, NULL, 'd'},
-  {"30fps", no_argument, NULL, 'e'},
-  {"60fps", no_argument, NULL, 'f'},
   {"bitrate", required_argument, NULL, 'g'},
   {"packetsize", required_argument, NULL, 'h'},
   {"app", required_argument, NULL, 'i'},
@@ -135,12 +133,6 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'd':
     config->stream.height = atoi(value);
-    break;
-  case 'e':
-    config->stream.fps = 30;
-    break;
-  case 'f':
-    config->stream.fps = 60;
     break;
   case 'g':
     config->stream.bitrate = atoi(value);

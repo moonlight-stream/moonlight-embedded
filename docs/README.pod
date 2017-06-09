@@ -72,19 +72,10 @@ Change the horizontal resolution to I<WIDTH>
 
 Change the vertical resolution to I<HEIGHT>
 
-=item B<-30fps>
-
-Use 30 fps for streaming.
-This is the default configuration for 1080p and higher.
-
-=item B<-60fps>
-
-Use 60 fps for streaming.
-This is the default configuration for 720p.
-
 =item B<-fps> [I<FPS>]
 
 Change the number of frame per second to I<FPS>.
+Defaults to 60fps for 720p and 30fps for 1080p and higher.
 Only 30 and 60 fps are currently supported by Gamestream.
 
 =item B<-bitrate> [I<BITRATE>]

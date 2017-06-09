@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int blank_fb(char *path, bool clear) {
   int fd = open(path, O_RDWR);

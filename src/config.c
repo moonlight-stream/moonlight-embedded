@@ -62,8 +62,7 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"forcehw", no_argument, NULL, 'w'},
-  {"hevc", no_argument, NULL, 'x'},
-  {"h264", no_argument, NULL, 'z'},
+  {"codec", required_argument, NULL, 'x'},
   {"unsupported", no_argument, NULL, 'y'},
   {0, 0, 0, 0},
 };
@@ -198,10 +197,12 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->forcehw = true;
     break;
   case 'x':
-    config->codec = CODEC_HEVC;
-    break;
-  case 'z':
-    config->codec = CODEC_H264;
+    if (strcasecmp(value, "auto") == 0)
+      config->codec = CODEC_UNSPECIFIED;
+    else if (strcasecmp(value, "h264") == 0)
+      config->codec = CODEC_H264;
+    if (strcasecmp(value, "h265") == 0 || strcasecmp(value, "hevc") == 0)
+      config->codec = CODEC_HEVC;
     break;
   case 'y':
     config->unsupported_version = true;

@@ -148,8 +148,7 @@ static void help() {
   printf("\t-height <height>\tVertical resolution (default 720)\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
-  printf("\t-hevc\t\t\tUse the high efficiency video coding (HEVC)\n");
-  printf("\t-h264\t\t\tUse the advanced video coding (H264)\n");
+  printf("\t-codec <codec>\t\tSelect used codec auto/h264/h265 (default auto)\n");
   printf("\t-remote\t\t\tEnable remote optimizations\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");

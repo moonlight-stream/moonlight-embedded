@@ -34,7 +34,7 @@
 typedef bool(*ImxInit)();
 
 enum platform platform_check(char* name) {
-  bool std = strcmp(name, "default") == 0;
+  bool std = strcmp(name, "auto") == 0;
   #ifdef HAVE_IMX
   if (std || strcmp(name, "imx") == 0) {
     void *handle = dlopen("libmoonlight-imx.so", RTLD_NOW | RTLD_GLOBAL);

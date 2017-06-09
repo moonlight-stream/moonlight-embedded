@@ -293,7 +293,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportsHevc = false;
 
-  config->platform = "default";
+  config->platform = "auto";
   config->app = "Steam";
   config->action = NULL;
   config->address = NULL;

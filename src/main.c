@@ -143,12 +143,13 @@ static void help() {
   printf("\n Streaming options\n\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
   printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
-  printf("\t-4k\t\t\t\tUse 3840x2160 resolution\n");
+  printf("\t-4k\t\t\tUse 3840x2160 resolution\n");
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
   printf("\t-height <height>\tVertical resolution (default 720)\n");
+  printf("\t-fps <fps>\t\tSpecify the fps to use (default -1)\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
-  printf("\t-codec <codec>\t\tSelect used codec auto/h264/h265 (default auto)\n");
+  printf("\t-codec <codec>\t\tSelect used codec: auto/h264/h265 (default auto)\n");
   printf("\t-remote\t\t\tEnable remote optimizations\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
@@ -156,6 +157,8 @@ static void help() {
   printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
+  printf("\t-platform <system>\tSpecify system used for audio, video and input: pi/imx/aml/x11/sdl (default auto)\n");
+  printf("\t-unsupported\t\tTry streaming if GFE version is unsupported\n");
   #if defined(HAVE_SDL) || defined(HAVE_X11)
   printf("\n Video options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");

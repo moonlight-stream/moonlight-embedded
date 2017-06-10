@@ -52,7 +52,7 @@ static int frame_handle(int pipefd) {
 
 int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
-  if (drFlags & FORCE_HARDWARE_ACCELERATION)
+  if (drFlags & ENABLE_HARDWARE_ACCELERATION)
     avc_flags |= HARDWARE_ACCELERATION;
 
   ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
@@ -113,6 +113,10 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   return 0;
 }
 
+int x11_setup_vdpau(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+  x11_setup(videoFormat, width, height, redrawRate, context, drFlags | ENABLE_HARDWARE_ACCELERATION);
+}
+
 void x11_cleanup() {
   ffmpeg_destroy();
   egl_destroy();
@@ -146,4 +150,11 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_x11 = {
   .cleanup = x11_cleanup,
   .submitDecodeUnit = x11_submit_decode_unit,
   .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC | CAPABILITY_REFERENCE_FRAME_INVALIDATION_HEVC | CAPABILITY_DIRECT_SUBMIT,
+};
+
+DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau = {
+  .setup = x11_setup_vdpau,
+  .cleanup = x11_cleanup,
+  .submitDecodeUnit = x11_submit_decode_unit,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT,
 };

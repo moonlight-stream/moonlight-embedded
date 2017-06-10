@@ -148,11 +148,6 @@ The default value is 'sysdefault' for ALSA and 'hdmi' for OMX on the Raspberry P
 Display the stream in a window instead of fullscreen.
 Only available when X11 or SDL platform is used.
 
-=item B<-forcehw>
-
-This will enable unsupported hardware acceleration.
-Currently only VDPAU when using X11 or SDL is unsupported.
-
 =back
 
 =head1 CONFIG FILE

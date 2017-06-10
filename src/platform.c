@@ -62,6 +62,10 @@ enum platform platform_check(char* name) {
   #ifdef HAVE_X11
   if (std || strcmp(name, "x11") == 0)
     return X11;
+  #ifdef HAVE_VDPAU
+  if (std || strcmp(name, "x11_vdpau") == 0)
+    return X11_VDPAU;
+  #endif
   #endif
   #ifdef HAVE_SDL
   if (std || strcmp(name, "sdl") == 0)
@@ -110,6 +114,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   #ifdef HAVE_X11
   case X11:
     return &decoder_callbacks_x11;
+  #ifdef HAVE_VDPAU
+  case X11_VDPAU:
+    return &decoder_callbacks_x11_vdpau;
+  #endif
   #endif
   #ifdef HAVE_SDL
   case SDL:

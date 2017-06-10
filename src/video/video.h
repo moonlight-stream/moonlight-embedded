@@ -20,10 +20,13 @@
 #include <Limelight.h>
 
 #define DISPLAY_FULLSCREEN 1
-#define FORCE_HARDWARE_ACCELERATION 2
+#define ENABLE_HARDWARE_ACCELERATION 2
 
 #ifdef HAVE_X11
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11;
+#ifdef HAVE_VDPAU
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau;
+#endif
 #endif
 #ifdef HAVE_SDL
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;

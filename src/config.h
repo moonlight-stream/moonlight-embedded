@@ -38,7 +38,6 @@ typedef struct _CONFIGURATION {
   bool sops;
   bool localaudio;
   bool fullscreen;
-  bool forcehw;
   bool unsupported_version;
   char* inputs[MAX_INPUTS];
   int inputsCount;

@@ -61,7 +61,6 @@ static struct option long_options[] = {
   {"windowed", no_argument, NULL, 't'},
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
-  {"forcehw", no_argument, NULL, 'w'},
   {"codec", required_argument, NULL, 'x'},
   {"unsupported", no_argument, NULL, 'y'},
   {0, 0, 0, 0},
@@ -193,9 +192,6 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'v':
     config->stream.fps = atoi(value);
     break;
-  case 'w':
-    config->forcehw = true;
-    break;
   case 'x':
     if (strcasecmp(value, "auto") == 0)
       config->codec = CODEC_UNSPECIFIED;
@@ -303,7 +299,6 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->localaudio = false;
   config->fullscreen = true;
   config->unsupported_version = false;
-  config->forcehw = false;
   config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;

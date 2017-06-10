@@ -78,9 +78,20 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     return -1;
   }
 
+  int display_width;
+  int display_height;
+  if (drFlags & DISPLAY_FULLSCREEN) {
+    Screen* screen = DefaultScreenOfDisplay(display);
+    display_width = WidthOfScreen(screen);
+    display_height = HeightOfScreen(screen);
+  } else {
+    display_width = width;
+    display_height = height;
+  }
+
   Window root = DefaultRootWindow(display);
   XSetWindowAttributes winattr = { .event_mask = PointerMotionMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask };
-  Window window = XCreateWindow(display, root, 0, 0, width, height, 0, CopyFromParent, InputOutput, CopyFromParent, CWEventMask, &winattr);
+  Window window = XCreateWindow(display, root, 0, 0, display_width, display_height, 0, CopyFromParent, InputOutput, CopyFromParent, CWEventMask, &winattr);
   XMapWindow(display, window);
   XStoreName(display, window, "Moonlight");
 
@@ -116,7 +127,7 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     egl_init(display, window, width, height);
   #ifdef HAVE_VDPAU
   else if (ffmpeg_decoder == VDPAU)
-    vdpau_init_presentation(window, width, height);
+    vdpau_init_presentation(window, width, height, display_width, display_height);
   #endif
 
   x11_input_init(display, window);

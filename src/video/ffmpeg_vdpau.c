@@ -167,7 +167,7 @@ AVFrame* vdpau_get_frame(AVFrame* dec_frame) {
   return cpu_frame;
 }
 
-int vdpau_init_presentation(Drawable win, int width, int height) {
+int vdpau_init_presentation(Drawable win, int width, int height, int display_width, int display_height) {
   VdpVideoMixerParameter params[] = {
     VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
     VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT
@@ -177,7 +177,7 @@ int vdpau_init_presentation(Drawable win, int width, int height) {
   if (vdp_video_mixer_create(vdp_device, 0, NULL, 2, params, paramValues, &vdp_mixer) != VDP_STATUS_OK)
     return -1;
 
-  if (vdp_output_surface_create(vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, width, height, &vdp_output) != VDP_STATUS_OK)
+  if (vdp_output_surface_create(vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, display_width, display_height, &vdp_output) != VDP_STATUS_OK)
     return -1;
 
   if(vdp_presentation_queue_target_create_x11(vdp_device, win, &vdp_queue_target) != VDP_STATUS_OK)

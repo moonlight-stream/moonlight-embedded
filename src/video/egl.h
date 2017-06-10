@@ -20,5 +20,5 @@
 #include <EGL/egl.h>
 
 void egl_init(EGLNativeDisplayType native_display, NativeWindowType native_window, int display_width, int display_height);
-void egl_draw(const uint8_t* image[3]);
+void egl_draw(uint8_t* image[3]);
 void egl_destroy();

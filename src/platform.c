@@ -60,12 +60,14 @@ enum platform platform_check(char* name) {
   }
   #endif
   #ifdef HAVE_X11
-  if (std || strcmp(name, "x11") == 0)
+  if (std || strcmp(name, "x11") == 0 || strcmp(name, "x11_vdpau") == 0) {
+    int x11 = x11_init(strcmp(name, "x11") != 0);
+    #ifdef HAVE_VDPAU
+    if (strcmp(name, "x11") != 0 && x11 == 0)
+      return X11_VDPAU;
+    #endif
     return X11;
-  #ifdef HAVE_VDPAU
-  if (std || strcmp(name, "x11_vdpau") == 0)
-    return X11_VDPAU;
-  #endif
+  }
   #endif
   #ifdef HAVE_SDL
   if (std || strcmp(name, "sdl") == 0)

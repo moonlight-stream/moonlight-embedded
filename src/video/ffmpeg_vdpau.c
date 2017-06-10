@@ -41,6 +41,7 @@ static struct vdpau_render_state* vdp_render_state[MAX_RENDER_STATES];
 static int vdp_render_states = 0;
 
 static VdpGetProcAddress* vdp_get_proc_address;
+static VdpDeviceDestroy* vdp_device_destroy;
 static VdpDecoderCreate* vdp_decoder_create;
 static VdpDecoderRender* vdp_decoder_render;
 static VdpVideoSurfaceGetBitsYCbCr* vdp_video_surface_get_bits_y_cb_cr;
@@ -96,14 +97,16 @@ static void vdp_draw_horiz_band(struct AVCodecContext* context, const AVFrame* f
   vdp_decoder_render(vdp_decoder, render_state->surface, (VdpPictureInfo const*)&(render_state->info), render_state->bitstream_buffers_used, render_state->bitstream_buffers);
 }
 
-int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int height) {
-  if (vdp_device)
-    return vdp_device;
-
+int vdpau_init_lib(Display* display) {
   VdpStatus status = vdp_device_create_x11(display, DefaultScreen(display), &vdp_device, &vdp_get_proc_address);
   if (status != VDP_STATUS_OK)
      return -1;
 
+  vdp_get_proc_address(vdp_device, VDP_FUNC_ID_DEVICE_DESTROY, (void**)&vdp_device_destroy);
+  return 0;  
+}
+
+int vdpau_init(AVCodecContext* decoder_ctx, int width, int height) {
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_GET_BITS_Y_CB_CR, (void**)&vdp_video_surface_get_bits_y_cb_cr);
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_VIDEO_SURFACE_CREATE, (void**)&vdp_video_surface_create);
   vdp_get_proc_address(vdp_device, VDP_FUNC_ID_OUTPUT_SURFACE_CREATE, (void**)&vdp_output_surface_create);
@@ -134,13 +137,17 @@ int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int hei
     return -1;
   }
 
-  status = vdp_decoder_create(vdp_device, VDP_DECODER_PROFILE_H264_HIGH, width, height, 16, &vdp_decoder);
+  VdpStatus status = vdp_decoder_create(vdp_device, VDP_DECODER_PROFILE_H264_HIGH, width, height, 16, &vdp_decoder);
   if (status != VDP_STATUS_OK) {
     printf("Can't create VDPAU decoder\n");
     return -1;
   }
 
   return vdp_device;
+}
+
+void vdpau_destroy() {
+  vdp_device_destroy(vdp_device);
 }
 
 AVFrame* vdpau_get_frame(AVFrame* dec_frame) {

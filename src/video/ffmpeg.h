@@ -39,7 +39,7 @@
 enum decoders {SOFTWARE, VDPAU};
 extern enum decoders ffmpeg_decoder;
 
-int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count, void* context);
+int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count);
 void ffmpeg_destroy(void);
 
 int ffmpeg_draw_frame(AVFrame *pict);

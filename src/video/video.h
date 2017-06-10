@@ -19,10 +19,13 @@
 
 #include <Limelight.h>
 
+#include <stdbool.h>
+
 #define DISPLAY_FULLSCREEN 1
 #define ENABLE_HARDWARE_ACCELERATION 2
 
 #ifdef HAVE_X11
+int x11_init(bool vdpau);
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11;
 #ifdef HAVE_VDPAU
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau;

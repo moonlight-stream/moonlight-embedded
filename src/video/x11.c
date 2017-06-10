@@ -20,7 +20,9 @@
 #include "video.h"
 #include "egl.h"
 #include "ffmpeg.h"
+#ifdef HAVE_VDPAU
 #include "ffmpeg_vdpau.h"
+#endif
 
 #include "../input/x11.h"
 #include "../loop.h"
@@ -37,7 +39,7 @@
 
 static char* ffmpeg_buffer = NULL;
 
-static Display *display;
+static Display *display = NULL;
 
 static int pipefd[2];
 
@@ -50,23 +52,30 @@ static int frame_handle(int pipefd) {
   return LOOP_OK;
 }
 
-int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  int avc_flags = SLICE_THREADING;
-  if (drFlags & ENABLE_HARDWARE_ACCELERATION)
-    avc_flags |= HARDWARE_ACCELERATION;
+int x11_init(bool vdpau) {
+  XInitThreads();
+  display = XOpenDisplay(NULL);
+  if (!display)
+    return -1;
 
+  #ifdef HAVE_VDPAU
+  if (vdpau && vdpau_init_lib(display) != 0)
+    return -2;
+  #endif
+
+  return 0;
+}
+
+int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
   if (ffmpeg_buffer == NULL) {
     fprintf(stderr, "Not enough memory\n");
-    ffmpeg_destroy();
     return -1;
   }
 
-  XInitThreads();
-  display = XOpenDisplay(NULL);
   if (!display) {
     fprintf(stderr, "Error: failed to open X display.\n");
-    return -2;
+    return -1;
   }
 
   Window root = DefaultRootWindow(display);
@@ -90,16 +99,25 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
 
     XSendEvent(display, DefaultRootWindow(display), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
   }
+  XFlush(display);
 
-  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, 2, display) < 0) {
+  int avc_flags = SLICE_THREADING;
+  #ifdef HAVE_VDPAU
+  if (drFlags & ENABLE_HARDWARE_ACCELERATION)
+    avc_flags |= HARDWARE_ACCELERATION;
+  #endif
+
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, 2) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     return -1;
   }
 
   if (ffmpeg_decoder == SOFTWARE)
     egl_init(display, window, width, height);
-  else
+  #ifdef HAVE_VDPAU
+  else if (ffmpeg_decoder == VDPAU)
     vdpau_init_presentation(window, width, height);
+  #endif
 
   x11_input_init(display, window);
 
@@ -114,7 +132,7 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
 }
 
 int x11_setup_vdpau(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  x11_setup(videoFormat, width, height, redrawRate, context, drFlags | ENABLE_HARDWARE_ACCELERATION);
+  return x11_setup(videoFormat, width, height, redrawRate, context, drFlags | ENABLE_HARDWARE_ACCELERATION);
 }
 
 void x11_cleanup() {

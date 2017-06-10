@@ -20,7 +20,9 @@
 #include <X11/Xlib.h>
 #include <libavcodec/avcodec.h>
 
-int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int height);
+int vdpau_init_lib(Display* display);
+int vdpau_init(AVCodecContext* decoder_ctx, int width, int height);
+void vdpau_destroy();
 AVFrame* vdpau_get_frame(AVFrame* dec_frame);
 int vdpau_init_presentation(Drawable win, int width, int height);
 void vdpau_queue(AVFrame* dec_frame);

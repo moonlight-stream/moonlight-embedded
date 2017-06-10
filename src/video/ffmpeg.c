@@ -46,7 +46,7 @@ enum decoders ffmpeg_decoder;
 
 // This function must be called before
 // any other decoding functions
-int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count, void* context) {
+int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count) {
   // Initialize the avcodec library and register codecs
   av_log_set_level(AV_LOG_QUIET);
   avcodec_register_all();
@@ -133,7 +133,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 
   #ifdef HAVE_VDPAU
   if (ffmpeg_decoder == VDPAU)
-    vdpau_init(decoder_ctx, (Display*) context, width, height);
+    vdpau_init(decoder_ctx, width, height);
   #endif
 
   return 0;

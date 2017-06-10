@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#define VERSION_MAJOR @MOONLIGHT_MAJOR_VERSION@
-#define VERSION_MINOR @MOONLIGHT_MINOR_VERSION@
-#define VERSION_PATCH @MOONLIGHT_PATCH_VERSION@
+#define VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define VERSION_PATCH @PROJECT_VERSION_PATCH@
 
 #define COMPILE_OPTIONS "@MOONLIGHT_OPTIONS@"

@@ -57,8 +57,12 @@ static int x11_handler(int fd) {
     case KeyRelease:
       if (event.xkey.keycode >= 8 && event.xkey.keycode < (sizeof(keyCodes)/sizeof(keyCodes[0]) + 8)) {
         if ((keyboard_modifiers & MODIFIERS) == MODIFIERS && event.type == KeyRelease) {
-          grabbed = !grabbed;
-          XDefineCursor(display, window, grabbed ? cursor : 0);
+          if (event.xkey.keycode == 0x18)
+            return LOOP_RETURN;
+          else {
+            grabbed = !grabbed;
+            XDefineCursor(display, window, grabbed ? cursor : 0);
+          }
         }
 
         int modifier = 0;

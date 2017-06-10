@@ -93,16 +93,12 @@ static enum AVPixelFormat vdp_get_format(AVCodecContext* context, const enum AVP
 static void vdp_draw_horiz_band(struct AVCodecContext* context, const AVFrame* frame, int offset[4], int y, int type, int height) {
   struct vdpau_render_state* render_state = (struct vdpau_render_state*)frame->data[0];
 
-  VdpStatus status = vdp_decoder_render(vdp_decoder, render_state->surface, (VdpPictureInfo const*)&(render_state->info), render_state->bitstream_buffers_used, render_state->bitstream_buffers);
-  status = vdp_decoder_render(vdp_decoder, render_state->surface, (VdpPictureInfo const*)&(render_state->info), render_state->bitstream_buffers_used, render_state->bitstream_buffers);
+  vdp_decoder_render(vdp_decoder, render_state->surface, (VdpPictureInfo const*)&(render_state->info), render_state->bitstream_buffers_used, render_state->bitstream_buffers);
 }
 
 int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int height) {
   if (vdp_device)
     return vdp_device;
-
-  if (!display)
-    display = XOpenDisplay(NULL);
 
   VdpStatus status = vdp_device_create_x11(display, DefaultScreen(display), &vdp_device, &vdp_get_proc_address);
   if (status != VDP_STATUS_OK)
@@ -122,7 +118,6 @@ int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int hei
   decoder_ctx->get_buffer2 = vdp_get_buffer;
   decoder_ctx->draw_horiz_band = vdp_draw_horiz_band;
   decoder_ctx->get_format = vdp_get_format;
-  decoder_ctx->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
 
   cpu_frame = av_frame_alloc();
   if (cpu_frame == NULL) {
@@ -145,28 +140,6 @@ int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int hei
     return -1;
   }
 
-  VdpVideoMixerFeature features[] = {
-    VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL,
-    VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL,
-  };
-  VdpVideoMixerParameter params[] = {
-    VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
-    VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
-    VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE,
-    VDP_VIDEO_MIXER_PARAMETER_LAYERS
-  };
-  VdpChromaType chroma = VDP_CHROMA_TYPE_420;
-  int numLayers = 0;
-  void const* paramValues[] = { &width, &height, &chroma, &numLayers };
-
-  status = vdp_video_mixer_create(vdp_device, 0, features, 4, params, paramValues, &vdp_mixer);
-  if (status != VDP_STATUS_OK) {
-    printf("Can't create VDPAU mixer\n");
-    return -1;
-  }
-
-  vdp_output_surface_create(vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, width, height, &vdp_output);
-
   return vdp_device;
 }
 
@@ -183,11 +156,23 @@ AVFrame* vdpau_get_frame(AVFrame* dec_frame) {
     cpu_frame->linesize[1]
   };
 
-  VdpStatus status = vdp_video_surface_get_bits_y_cb_cr(render_state->surface, VDP_YCBCR_FORMAT_YV12, dest, pitches);
+  vdp_video_surface_get_bits_y_cb_cr(render_state->surface, VDP_YCBCR_FORMAT_YV12, dest, pitches);
   return cpu_frame;
 }
 
-int vdpau_init_queue(Drawable win) {
+int vdpau_init_presentation(Drawable win, int width, int height) {
+  VdpVideoMixerParameter params[] = {
+    VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
+    VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT
+  };
+  void const* paramValues[] = { &width, &height };
+
+  if (vdp_video_mixer_create(vdp_device, 0, NULL, 2, params, paramValues, &vdp_mixer) != VDP_STATUS_OK)
+    return -1;
+
+  if (vdp_output_surface_create(vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, width, height, &vdp_output) != VDP_STATUS_OK)
+    return -1;
+
   if(vdp_presentation_queue_target_create_x11(vdp_device, win, &vdp_queue_target) != VDP_STATUS_OK)
     return -1;
 
@@ -199,8 +184,7 @@ int vdpau_init_queue(Drawable win) {
 
 void vdpau_queue(AVFrame* dec_frame) {
   struct vdpau_render_state *render_state = (struct vdpau_render_state *)dec_frame->data[0];
-  int field = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME;
-  vdp_video_mixer_render(vdp_mixer, VDP_INVALID_HANDLE, 0, field, 0, (VdpVideoSurface*)VDP_INVALID_HANDLE, render_state->surface, 0,(VdpVideoSurface*)VDP_INVALID_HANDLE, NULL, vdp_output, NULL, NULL, 0, NULL);  
+  vdp_video_mixer_render(vdp_mixer, VDP_INVALID_HANDLE, 0, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME, 0, (VdpVideoSurface*)VDP_INVALID_HANDLE, render_state->surface, 0,(VdpVideoSurface*)VDP_INVALID_HANDLE, NULL, vdp_output, NULL, NULL, 0, NULL);  
 
   vdp_presentation_queue_display(vdp_queue, vdp_output, 0, 0, 0);
 }

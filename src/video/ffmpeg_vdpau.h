@@ -22,5 +22,5 @@
 
 int vdpau_init(AVCodecContext* decoder_ctx, Display* display, int width, int height);
 AVFrame* vdpau_get_frame(AVFrame* dec_frame);
-int vdpau_init_queue(Drawable win);
+int vdpau_init_presentation(Drawable win, int width, int height);
 void vdpau_queue(AVFrame* dec_frame);

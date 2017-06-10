@@ -99,7 +99,7 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   if (ffmpeg_decoder == SOFTWARE)
     egl_init(display, window, width, height);
   else
-    vdpau_init_queue(window);
+    vdpau_init_presentation(window, width, height);
 
   x11_input_init(display, window);
 

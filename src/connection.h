@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,4 +19,9 @@
 
 #include <Limelight.h>
 
+#include <pthread.h>
+#include <stdbool.h>
+
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
+extern pthread_t main_thread_id;
+extern bool connection_debug;

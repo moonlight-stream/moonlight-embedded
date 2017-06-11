@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <signal.h>
-#include <pthread.h>
+#include <stdbool.h>
 
-pthread_t main_thread_id;
-
-void quit() {
-  pthread_kill(main_thread_id, SIGTERM);
-}
+int blank_fb(char *path, bool clear);

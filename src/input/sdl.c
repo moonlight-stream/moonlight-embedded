@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +17,14 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_SDL
-
-#include "sdlinput.h"
+#include "sdl.h"
 #include "../sdl.h"
 
 #include <Limelight.h>
 
 #define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY SDLK_q
+#define QUIT_BUTTONS (PLAY_FLAG|BACK_FLAG|LB_FLAG|RB_FLAG)
 #define FULLSCREEN_KEY SDLK_f
 
 typedef struct _GAMEPAD_STATE {
@@ -43,11 +42,11 @@ static GAMEPAD_STATE gamepads[4];
 static int keyboard_modifiers;
 static int activeGamepadMask = 0;
 
-void sdlinput_init() {
+void sdlinput_init(char* mappings) {
   memset(gamepads, 0, sizeof(gamepads));
 
   SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-  SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+  SDL_GameControllerAddMappingsFromFile(mappings);
 
   for (int i = 0; i < SDL_NumJoysticks(); ++i) {
     if (SDL_IsGameController(i)) {
@@ -103,10 +102,20 @@ int sdlinput_handle_event(SDL_Event* event) {
   case SDL_KEYDOWN:
   case SDL_KEYUP:
     button = event->key.keysym.sym;
-    if (button >= (0x40000000 + 0x39) && button < (0x40000000 + 0x39 + sizeof(keyCodes)))
-      button = keyCodes[button - 0x40000039];
-    else if (button >= 0x61)
+    if (button >= 0x21 && button <= 0x2f)
+      button = keyCodes1[button - 0x21];
+    else if (button >= 0x3a && button <= 0x40)
+      button = keyCodes2[button - 0x3a];
+    else if (button >= 0x5b && button <= 0x60)
+      button = keyCodes3[button - 0x5b];
+    else if (button >= 0x40000039 && button < 0x40000039 + sizeof(keyCodes4))
+      button = keyCodes4[button - 0x40000039];
+    else if (button >= 0x400000E0 && button <= 0x400000E7)
+      button = keyCodes5[button - 0x400000E0];
+    else if (button >= 0x61 && button <= 0x7a)
       button -= 0x20;
+    else if (button == 0x7f)
+      button = 0x2e;
 
     int modifier = 0;
     switch (event->key.keysym.sym) {
@@ -224,10 +233,11 @@ int sdlinput_handle_event(SDL_Event* event) {
     else
       gamepad->buttons &= ~button;
 
+    if ((gamepad->buttons & QUIT_BUTTONS) == QUIT_BUTTONS)
+      return SDL_QUIT_APPLICATION;
+
     LiSendMultiControllerEvent(gamepad->id, activeGamepadMask, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;
   }
   return SDL_NOTHING;
 }
-
-#endif /* HAVE_SDL */

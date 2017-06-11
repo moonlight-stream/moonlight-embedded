@@ -19,20 +19,18 @@
 
 #include <Limelight.h>
 
-#include <dlfcn.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
 
-#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
+#define DISPLAY_FULLSCREEN 1
+#define ENABLE_HARDWARE_ACCELERATION 2
 
-enum platform { NONE, SDL, X11, X11_VDPAU, PI, IMX, AML, FAKE };
-
-enum platform platform_check(char*);
-PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
-PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system, char* audio_device);
-bool platform_supports_hevc(enum platform system);
-char* platform_name(enum platform system);
-
-void platform_start(enum platform system);
-void platform_stop(enum platform system);
+#ifdef HAVE_X11
+int x11_init(bool vdpau);
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11;
+#ifdef HAVE_VDPAU
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau;
+#endif
+#endif
+#ifdef HAVE_SDL
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
+#endif

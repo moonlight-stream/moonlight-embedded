@@ -28,9 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Video decode on Raspberry Pi using OpenMAX IL though the ilcient helper library
 // Based upon video decode example from the Raspberry Pi firmware
 
-#include "sps.h"
-
 #include <Limelight.h>
+
+#include <sps.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,10 +53,10 @@ static unsigned char *dest;
 static int port_settings_changed;
 static int first_packet;
 
-static void decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+int decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   if (videoFormat != VIDEO_FORMAT_H264) {
     fprintf(stderr, "Video format not supported\n");
-    exit(1);
+    return -1;
   }
 
   bcm_host_init();
@@ -71,18 +71,18 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
 
   if((client = ilclient_init()) == NULL) {
     fprintf(stderr, "Can't initialize video\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   if(OMX_Init() != OMX_ErrorNone) {
     fprintf(stderr, "Can't initialize OMX\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   // create video_decode
   if(ilclient_create_component(client, &video_decode, "video_decode", ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS) != 0){
     fprintf(stderr, "Can't create video decode\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   list[0] = video_decode;
@@ -90,7 +90,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   // create video_render
   if(ilclient_create_component(client, &video_render, "video_render", ILCLIENT_DISABLE_ALL_PORTS) != 0){
     fprintf(stderr, "Can't create video renderer\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   list[1] = video_render;
@@ -117,6 +117,31 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   if(OMX_SetParameter(ILC_GET_HANDLE(video_decode), OMX_IndexParamVideoPortFormat, &format) != OMX_ErrorNone ||
      OMX_SetParameter(ILC_GET_HANDLE(video_decode), OMX_IndexParamBrcmDataUnit, &unit) != OMX_ErrorNone) {
     fprintf(stderr, "Failed to set video parameters\n");
+    return -2;
+  }
+
+  OMX_CONFIG_LATENCYTARGETTYPE latencyTarget;
+  memset(&latencyTarget, 0, sizeof(OMX_CONFIG_LATENCYTARGETTYPE));
+  latencyTarget.nSize = sizeof(OMX_PARAM_PORTDEFINITIONTYPE);
+  latencyTarget.nVersion.nVersion = OMX_VERSION;
+  latencyTarget.nPortIndex = 90;
+  latencyTarget.bEnabled = OMX_TRUE;
+  latencyTarget.nFilter = 2;
+  latencyTarget.nTarget = 4000;
+  latencyTarget.nShift = 3;
+  latencyTarget.nSpeedFactor = -135;
+  latencyTarget.nInterFactor = 500;
+  latencyTarget.nAdjCap = 20;
+
+  OMX_CONFIG_DISPLAYREGIONTYPE displayRegion;
+  displayRegion.nSize = sizeof(OMX_PARAM_PORTDEFINITIONTYPE);
+  displayRegion.nVersion.nVersion = OMX_VERSION;
+  displayRegion.nPortIndex = 90;
+  displayRegion.fullscreen = OMX_TRUE;
+  displayRegion.mode = OMX_DISPLAY_SET_FULLSCREEN;
+
+  if(OMX_SetParameter(ILC_GET_HANDLE(video_render), OMX_IndexConfigLatencyTarget, &latencyTarget) != OMX_ErrorNone) {
+    fprintf(stderr, "Failed to set video render parameters\n");
     exit(EXIT_FAILURE);
   }
 
@@ -128,7 +153,7 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
   port.nPortIndex = 130;
   if(OMX_GetParameter(ILC_GET_HANDLE(video_decode), OMX_IndexParamPortDefinition, &port) != OMX_ErrorNone) {
     fprintf(stderr, "Failed to get decoder port definition\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
 
   // Increase the buffer size to fit the largest possible frame
@@ -143,8 +168,10 @@ static void decoder_renderer_setup(int videoFormat, int width, int height, int r
     ilclient_change_component_state(video_decode, OMX_StateExecuting);
   } else {
     fprintf(stderr, "Can't setup video\n");
-    exit(EXIT_FAILURE);
+    return -2;
   }
+
+  return 0;
 }
 
 static void decoder_renderer_cleanup() {

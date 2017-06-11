@@ -18,12 +18,17 @@
  */
 
 #include "connection.h"
-#include "global.h"
 
 #include <stdio.h>
+#include <stdarg.h>
+#include <signal.h>
 
-static void connection_connection_terminated() {
-  quit();
+pthread_t main_thread_id = 0;
+bool connection_debug;
+
+static void connection_terminated() {
+  if (main_thread_id != 0)
+    pthread_kill(main_thread_id, SIGTERM);
 }
 
 static void connection_display_message(const char *msg) {
@@ -34,12 +39,20 @@ static void connection_display_transient_message(const char *msg) {
   printf("%s\n", msg);
 }
 
+static void connection_log_message(const char* format, ...) {
+  va_list arglist;
+  va_start(arglist, format);
+  vprintf(format, arglist);
+  va_end(arglist);
+}
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = NULL,
   .stageComplete = NULL,
   .stageFailed = NULL,
   .connectionStarted = NULL,
-  .connectionTerminated = connection_connection_terminated,
+  .connectionTerminated = connection_terminated,
   .displayMessage = connection_display_message,
   .displayTransientMessage = connection_display_transient_message,
+  .logMessage = connection_log_message,
 };

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,22 +18,29 @@
  */
 
 #include "loop.h"
-#include "client.h"
 #include "connection.h"
 #include "configuration.h"
-#include "audio.h"
-#include "video.h"
-#include "discover.h"
 #include "config.h"
 #include "platform.h"
 #include "sdl.h"
 
+#include "audio/audio.h"
+#include "video/video.h"
+
+#include "input/mapping.h"
 #include "input/evdev.h"
 #include "input/udev.h"
+#ifdef HAVE_LIBCEC
 #include "input/cec.h"
-#include "input/sdlinput.h"
+#endif
+#ifdef HAVE_SDL
+#include "input/sdl.h"
+#endif
 
 #include <Limelight.h>
+
+#include <client.h>
+#include <discover.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,6 +94,8 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       fprintf(stderr, "Server doesn't support 4K\n");
+    else if (ret == GS_NOT_SUPPORTED_MODE)
+      fprintf(stderr, "Server doesn't support %dx%d (%d fps)\n", config->stream.width, config->stream.height, config->stream.fps);
     else
       fprintf(stderr, "Errorcode starting app: %d\n", ret);
     exit(-1);
@@ -96,11 +105,13 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   if (config->fullscreen)
     drFlags |= DISPLAY_FULLSCREEN;
 
-  if (config->forcehw)
-    drFlags |= FORCE_HARDWARE_ACCELERATION;
+  if (config->debug_level > 0) {
+    printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
+    connection_debug = true;
+  }
 
-  printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-  LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system), NULL, drFlags);
+  platform_start(system);
+  LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
   if (IS_EMBEDDED(system)) {
     evdev_start();
@@ -113,13 +124,14 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   #endif
 
   LiStopConnection();
+  platform_stop(system);
 }
 
 static void help() {
+  printf("Moonlight Embedded %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
   printf("Usage: moonlight [action] (options) [host]\n");
   printf("       moonlight [configfile]\n");
   printf("\n Actions\n\n");
-  printf("\tmap\t\t\tCreate mapping file for gamepad\n");
   printf("\tpair\t\t\tPair device with computer\n");
   printf("\tunpair\t\t\tUnpair device with computer\n");
   printf("\tstream\t\t\tStream computer to device\n");
@@ -129,35 +141,37 @@ static void help() {
   printf("\n Global Options\n\n");
   printf("\t-config <config>\tLoad configuration file\n");
   printf("\t-save <config>\t\tSave configuration file\n");
+  printf("\t-verbose\t\tEnable verbose output\n");
+  printf("\t-debug\t\t\tEnable verbose and debug output\n");
   printf("\n Streaming options\n\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
   printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
+  printf("\t-4k\t\t\tUse 3840x2160 resolution\n");
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
   printf("\t-height <height>\tVertical resolution (default 720)\n");
-  printf("\t-30fps\t\t\tUse 30fps\n");
-  printf("\t-60fps\t\t\tUse 60fps [default]\n");
+  printf("\t-fps <fps>\t\tSpecify the fps to use (default -1)\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
-  printf("\t-hevc\t\t\tUse the high efficiency video coding (HEVC)\n");
-  printf("\t-h264\t\t\tUse the advanced video coding (H264)\n");
+  printf("\t-codec <codec>\t\tSelect used codec: auto/h264/h265 (default auto)\n");
   printf("\t-remote\t\t\tEnable remote optimizations\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
   printf("\t-localaudio\t\tPlay audio locally\n");
   printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
-  #ifdef HAVE_SDL
-  printf("\n Video options (SDL Only)\n\n");
+  printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
+  printf("\t-platform <system>\tSpecify system used for audio, video and input: pi/imx/aml/x11/x11_vdpau/sdl/fake (default auto)\n");
+  printf("\t-unsupported\t\tTry streaming if GFE version is unsupported\n");
+  #if defined(HAVE_SDL) || defined(HAVE_X11)
+  printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
   #endif
   #ifdef HAVE_EMBEDDED
-  printf("\n I/O options\n\n");
-  printf("\t-mapping <file>\t\tUse <file> as gamepad mapping configuration file (use before -input)\n");
+  printf("\n I/O options (Not for SDL)\n\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as audio output device\n");
-  printf("\t-forcehw \t\tTry to use video hardware acceleration\n");
   #endif
-  printf("\nUse Ctrl+Alt+Shift+Q to exit streaming session\n\n");
+  printf("\nUse Ctrl+Alt+Shift+Q or Play+Back+LeftShoulder+RightShoulder to exit streaming session\n\n");
   exit(0);
 }
 
@@ -169,33 +183,14 @@ static void pair_check(PSERVER_DATA server) {
 }
 
 int main(int argc, char* argv[]) {
-  printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
-
   CONFIGURATION config;
   config_parse(argc, argv, &config);
 
   if (config.action == NULL || strcmp("help", config.action) == 0)
     help();
   
-  enum platform system = platform_check(config.platform);
-  if (system == 0) {
-    fprintf(stderr, "Platform '%s' not found\n", config.platform);
-    exit(-1);
-  }
-  config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-  
-  if (strcmp("map", config.action) == 0) {
-    if (config.address == NULL) {
-      perror("No filename for mapping");
-      exit(-1);
-    }
-    udev_init(!inputAdded, config.mapping);
-    for (int i=0;i<config.inputsCount;i++)
-      evdev_create(config.inputs[i].path, config.inputs[i].mapping);
-    
-    evdev_map(config.address);
-    exit(0);
-  }
+  if (config.debug_level > 0)
+    printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
   if (config.address == NULL) {
     config.address = malloc(MAX_ADDRESS_SIZE);
@@ -221,7 +216,7 @@ int main(int argc, char* argv[]) {
   printf("Connect to %s...\n", config.address);
 
   int ret;
-  if ((ret = gs_init(&server, config.address, config.key_dir)) == GS_OUT_OF_MEMORY) {
+  if ((ret = gs_init(&server, config.address, config.key_dir, config.debug_level)) == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
     exit(-1);
   } else if (ret == GS_INVALID) {
@@ -237,28 +232,57 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
-  printf("NVIDIA %s, GFE %s (protocol version %d)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.serverMajorVersion);
+  if (config.debug_level > 0)
+    printf("NVIDIA %s, GFE %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);
     applist(&server);
   } else if (strcmp("stream", config.action) == 0) {
     pair_check(&server);
+    enum platform system = platform_check(config.platform);
+    if (config.debug_level > 0)
+      printf("Platform %s\n", platform_name(system));
+
+    if (system == 0) {
+      fprintf(stderr, "Platform '%s' not found\n", config.platform);
+      exit(-1);
+    } else if (system == SDL && config.audio_device != NULL) {
+      fprintf(stderr, "You can't select a audio device for SDL\n");
+      exit(-1);
+    }
+    config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
+
     if (IS_EMBEDDED(system)) {
+      if (config.mapping == NULL) {
+        fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
+        exit(-1);
+      }
+      struct mapping* mappings = mapping_load(config.mapping);
+
       for (int i=0;i<config.inputsCount;i++) {
-        printf("Add input %s (mapping %s)...\n", config.inputs[i].path, config.inputs[i].mapping);
-        evdev_create(config.inputs[i].path, config.inputs[i].mapping);
+        if (config.debug_level > 0)
+          printf("Add input %s...\n", config.inputs[i]);
+
+        evdev_create(config.inputs[i], mappings);
       }
 
-      udev_init(!inputAdded, config.mapping);
+      udev_init(!inputAdded, mappings);
       evdev_init();
       #ifdef HAVE_LIBCEC
       cec_init();
       #endif /* HAVE_LIBCEC */
     }
     #ifdef HAVE_SDL
-    else if (system == SDL)
+    else if (system == SDL) {
+      if (config.inputsCount > 0) {
+        fprintf(stderr, "You can't select input devices as SDL will automatically use all available controllers\n");
+        exit(-1);
+      }
+
       sdl_init(config.stream.width, config.stream.height, config.fullscreen);
+      sdlinput_init(config.mapping);
+    }
     #endif
 
     stream(&server, &config, system);

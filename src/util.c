@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,20 +17,24 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
+#include "util.h"
 
-#include <Limelight.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 
-extern const char* audio_device;
+int blank_fb(char *path, bool clear) {
+  int fd = open(path, O_RDWR);
 
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa;
-#ifdef HAVE_SDL
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl;
-#endif
-#ifdef HAVE_PULSE
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse;
-bool audio_pulse_init();
-#endif
-#ifdef HAVE_PI
-extern AUDIO_RENDERER_CALLBACKS audio_callbacks_omx;
-#endif
+  if(fd >= 0) {
+    int ret = write(fd, clear ? "1" : "0", 1);
+    if (ret < 0)
+      fprintf(stderr, "Failed to clear framebuffer %s: %d\n", path, ret);
+
+    close(fd);
+    return 0;
+  } else
+    return -1;
+}

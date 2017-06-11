@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../audio.h"
+#include "audio.h"
 
 #include <SDL.h>
 #include <SDL_audio.h>
@@ -25,22 +25,14 @@
 #include <stdio.h>
 #include <opus_multistream.h>
 
-#define MAX_CHANNEL_COUNT 6
-#define FRAME_SIZE 240
-
 static OpusMSDecoder* decoder;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static SDL_AudioDeviceID dev;
 static int channelCount;
 
-static void sdl_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int sdl_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc;
-  decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
-                                            opusConfig->channelCount,
-                                            opusConfig->streams,
-                                            opusConfig->coupledStreams,
-                                            opusConfig->mapping,
-                                            &rc);
+  decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, opusConfig->mapping, &rc);
 
   channelCount = opusConfig->channelCount;
 
@@ -56,11 +48,14 @@ static void sdl_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
   dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
   if (dev == 0) {
     printf("Failed to open audio: %s\n", SDL_GetError());
+    return -1;
   } else {
     if (have.format != want.format)  // we let this one thing change.
       printf("We didn't get requested audio format.\n");
     SDL_PauseAudioDevice(dev, 0);  // start audio playing.
   }
+
+  return 0;
 }
 
 static void sdl_renderer_cleanup() {

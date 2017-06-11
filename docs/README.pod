@@ -11,10 +11,6 @@ Usage: I<moonlight> E<lt>actionE<gt> [options] [host]
 
 =over 4
 
-=item B<map>
-
-Create a mapping file for a gamepad.
-
 =item B<pair>
 
 Pair this computer with the host.
@@ -64,6 +60,10 @@ This is the default option.
 
 Use the resolution 1920x1080 for streaming.
 
+=item B<-4k>
+
+Use the resolution 3840x2160 for streaming.
+
 =item B<-width> [I<WIDTH>]
 
 Change the horizontal resolution to I<WIDTH>
@@ -72,22 +72,15 @@ Change the horizontal resolution to I<WIDTH>
 
 Change the vertical resolution to I<HEIGHT>
 
-=item B<-30fps>
-
-Use 30 fps for streaming.
-
-=item B<-60fps>
-
-Use 60 fps for streaming.
-This is the default configuration.
-
 =item B<-fps> [I<FPS>]
 
-Change the number of frame per second to I<FPS>
+Change the number of frame per second to I<FPS>.
+Defaults to 60fps for 720p and 30fps for 1080p and higher.
+Only 30 and 60 fps are currently supported by Gamestream.
 
 =item B<-bitrate> [I<BITRATE>]
 
-Change bitrate to I<BITRATE> kbps.
+Change bitrate to I<BITRATE> Kbps.
 By default the bitrate depends on the selected resolution and fps.
 For resolution 1080p and 60 fps and higher 20 Mbps is used.
 For resolution 1080p or 60 fps and higher 10 Mbps is used
@@ -95,18 +88,17 @@ For other configurations 5 Mbps is used by default.
 
 =item B<-packetsize> [I<PACKETSIZE>]
 
-Change the network packetsize to I<PACKETSIZE>.
+Change the network packetsize to I<PACKETSIZE> bytes.
 The packetsize should the smaller than the MTU of the network.
+This value must be a multiply of 16.
 By default a safe value of 1024 is used.
 
-=item B<-hevc>
+=item B<-codec> [I<CODEC>]
 
-Request a h265/HEVC from the server.
-Will still use h264 if server doesn't support HEVC.
-
-=item B<-h264>
-
-Request a h264 from the server even if server and video decoder supports HEVC.
+Select codec to use.
+Can be 'auto', 'h264', 'h265' or 'hevc'.
+Not all video decoders do support H.265/HEVC.
+Will still use H.264 if server doesn't support HEVC.
 
 =item B<-remote>
 
@@ -123,7 +115,11 @@ Stop GFE from changing the graphical settings of the requested game or applicati
 
 =item B<-localaudio>
 
-Play the audio on the host instead of this computer.
+Play the audio on the host computer instead of this device.
+
+=item B<-surround>
+
+Enable 5.1 surround sound instead of stereo.
 
 =item B<-keydir> [I<DIRECTORY>]
 
@@ -132,20 +128,42 @@ By default the encryption keys are stored in $XDG_CACHE_DIR/moonlight or ~/.cach
 
 =item B<-mapping> [I<MAPPING>]
 
-Use I<MAPPING> as the mapping file for all inputs specified after this B<-mapping>.
-If no B<-input> is specified after the B<-mapping> this mapping is used for autoloaded inputs.
+Use I<MAPPING> as the mapping file for all inputs.
+This mapping file should have the same format as the gamecontrollerdb.txt for SDL2.
+By default the gamecontrollerdb.txt provided by Moonlight Embedded is used.
+
+=item B<-platform> [I<PLATFORM>]
+
+Select platform for audio and video output and input.
+<PLATFORM> can be pi, imx, aml, x11, x11_vdpau, sdl or fake.
+
+=item B<-unsupported>
+
+Try streaming if GFE version is unsupported
+
+=item B<-verbose>
+
+Enable verbose output
+
+=item B<-debug>
+
+Enable verbose and debug output
 
 =item B<-input> [I<INPUT>]
 
 Enable the I<INPUT> device.
 By default all available input devices are enabled.
 Only evdev devices /dev/input/event* are supported.
-To use a different gamepad mapping then the default the B<-mapping> should be specified before the B<-input>.
 
 =item B<-audio> [I<DEVICE>]
 
 Use <DEVICE> as audio output device.
 The default value is 'sysdefault' for ALSA and 'hdmi' for OMX on the Raspberry Pi.
+
+=item B<-windowed>
+
+Display the stream in a window instead of fullscreen.
+Only available when X11 or SDL platform is used.
 
 =back
 
@@ -163,7 +181,7 @@ A documented example configuration file can be found at /etc/moonlight/moonlight
 
 =head1 COMMENTS
 
-Use Ctrl+Alt+Shift+Q to quit the streaming session.
+Use Ctrl+Alt+Shift+Q or Play+Back+LeftShoulder+RightShoulder to quit the streaming session.
 
 =head1 AUTHOR
 

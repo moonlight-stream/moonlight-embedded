@@ -2,7 +2,7 @@
 
 Moonlight Embedded is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield, but built for Linux.
 
-Moonlight Embedded allows you to stream your full collection of Steam games from
+Moonlight Embedded allows you to stream your full collection of games from
 your powerful Windows desktop to your (embedded) Linux system, like Raspberry Pi, CuBox-i and ODROID.
 
 ## Documentation
@@ -11,7 +11,7 @@ More information about installing and runnning Moonlight Embedded is available o
 
 ## Requirements
 
-* [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GTX 600/700/900 series GPU (for the PC you're streaming from)
+* [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GTX 600/700/900/1000 series GPU (for the PC you're streaming from)
 * High-end wireless router (802.11n dual-band recommended) or wired network
 * Geforce Experience 2.1.1 or higher
 

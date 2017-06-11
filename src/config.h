@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,26 +25,22 @@
 
 enum codecs { CODEC_UNSPECIFIED, CODEC_H264, CODEC_HEVC };
 
-struct input_config {
-  char* path;
-  char* mapping;
-};
-
 typedef struct _CONFIGURATION {
   STREAM_CONFIGURATION stream;
+  int debug_level;
   char* app;
   char* action;
   char* address;
   char* mapping;
   char* platform;
+  char* audio_device;
   char* config_file;
   char key_dir[4096];
   bool sops;
   bool localaudio;
   bool fullscreen;
-  bool forcehw;
   bool unsupported_version;
-  struct input_config inputs[MAX_INPUTS];
+  char* inputs[MAX_INPUTS];
   int inputsCount;
   enum codecs codec;
 } CONFIGURATION, *PCONFIGURATION;

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  * Copyright (C) 2016 OtherCrashOverride, Daniel Mehrwald
  *
  * Moonlight is free software; you can redistribute it and/or modify
@@ -27,36 +27,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <amcodec/codec.h>
+#include <sys/ioctl.h>
+#include <codec.h>
 
 #define SYNC_OUTSIDE 0x02
 #define UCODE_IP_ONLY_PARAM 0x08
 
 static codec_para_t codecParam = { 0 };
 
-static int osd_blank(char *path,int cmd) {
-  int fd;
-  char bcmd[16];
-
-  fd = open(path, O_CREAT|O_RDWR | O_TRUNC, 0644);
-
-  if(fd>=0) {
-    sprintf(bcmd,"%d",cmd);
-    int ret = write(fd,bcmd,strlen(bcmd));
-    if (ret < 0) {
-      printf("osd_blank error during write: %x\n", ret);
-    }
-    close(fd);
-    return 0;
-  }
-
-  return -1;
-}
-
-void aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  osd_blank("/sys/class/graphics/fb0/blank",1);
-  osd_blank("/sys/class/graphics/fb1/blank",0);
-
+int aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   codecParam.stream_type = STREAM_TYPE_ES_VIDEO;
   codecParam.has_video = 1;
   codecParam.noblock = 0;
@@ -86,7 +65,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
       break;
     default:
       printf("Video format not supported\n");
-      exit(1);
+      return -1;
   }
 
   codecParam.am_sysinfo.width = width;
@@ -94,17 +73,22 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   codecParam.am_sysinfo.rate = 96000 / redrawRate;
   codecParam.am_sysinfo.param = (void*) ((size_t) codecParam.am_sysinfo.param | SYNC_OUTSIDE);
 
-  int api = codec_init(&codecParam);
-  if (api != 0) {
-    fprintf(stderr, "codec_init error: %x\n", api);
-    exit(1);
+  int ret;
+  if ((ret = codec_init(&codecParam)) != 0) {
+    fprintf(stderr, "codec_init error: %x\n", ret);
+    return -2;
   }
+
+  if ((ret = codec_set_freerun_mode(&codecParam, 1)) != 0) {
+    fprintf(stderr, "Can't set Freerun mode: %x\n", ret);
+    return -2;
+  }
+
+  return 0;
 }
 
 void aml_cleanup() {
-  int api = codec_close(&codecParam);
-  osd_blank("/sys/class/graphics/fb0/blank",0);
-  osd_blank("/sys/class/graphics/fb1/blank",0);
+  codec_close(&codecParam);
 }
 
 int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {

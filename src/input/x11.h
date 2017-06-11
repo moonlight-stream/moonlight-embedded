@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2016 Iwan Timmer
+ * Copyright (C) 2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,28 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../audio.h"
+#include <X11/Xlib.h>
 
-#include <stdio.h>
-
-static FILE* fd;
-static const char* fileName = "fake.opus";
-
-static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
-  fd = fopen(fileName, "w");
-}
-
-static void alsa_renderer_cleanup() {
-  fclose(fd);
-}
-
-static void alsa_renderer_decode_and_play_sample(char* data, int length) {
-  fwrite(data, length, 1, fd);
-}
-
-AUDIO_RENDERER_CALLBACKS audio_callbacks_fake = {
-  .init = alsa_renderer_init,
-  .cleanup = alsa_renderer_cleanup,
-  .decodeAndPlaySample = alsa_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
-};
+void x11_input_init(Display* display, Window window);

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,24 +17,21 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../audio.h"
+#include "audio.h"
 
 #include <stdio.h>
 #include <opus_multistream.h>
 #include <alsa/asoundlib.h>
 
-#define CHECK_RETURN(f) if ((rc = f) < 0) { printf("Alsa error code %d\n", rc); exit(-1); }
-
-#define MAX_CHANNEL_COUNT 6
-#define FRAME_SIZE 240
+#define CHECK_RETURN(f) if ((rc = f) < 0) { printf("Alsa error code %d\n", rc); return -1; }
 
 static snd_pcm_t *handle;
 static OpusMSDecoder* decoder;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 
-static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc;
-  unsigned char alsaMapping[6];
+  unsigned char alsaMapping[MAX_CHANNEL_COUNT];
 
   /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR
    * ALSA expects the order: FL-FR-RL-RR-C-LFE
@@ -49,19 +46,15 @@ static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
     alsaMapping[5] = opusConfig->mapping[3];
   }
 
-  decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
-                                            opusConfig->channelCount,
-                                            opusConfig->streams,
-                                            opusConfig->coupledStreams,
-                                            alsaMapping,
-                                            &rc);
+  decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 
   snd_pcm_hw_params_t *hw_params;
   snd_pcm_sw_params_t *sw_params;
-  snd_pcm_uframes_t period_size = FRAME_SIZE * opusConfig->channelCount * 2;
-  snd_pcm_uframes_t buffer_size = 12 * period_size;
+  snd_pcm_uframes_t period_size = FRAME_SIZE * FRAME_BUFFER;
+  snd_pcm_uframes_t buffer_size = 2 * period_size;
   unsigned int sampleRate = opusConfig->sampleRate;
 
+  char* audio_device = (char*) context;
   if (audio_device == NULL)
     audio_device = "sysdefault";
 
@@ -75,20 +68,22 @@ static void alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
   CHECK_RETURN(snd_pcm_hw_params_set_format(handle, hw_params, SND_PCM_FORMAT_S16_LE));
   CHECK_RETURN(snd_pcm_hw_params_set_rate_near(handle, hw_params, &sampleRate, NULL));
   CHECK_RETURN(snd_pcm_hw_params_set_channels(handle, hw_params, opusConfig->channelCount));
-  CHECK_RETURN(snd_pcm_hw_params_set_buffer_size_near(handle, hw_params, &buffer_size));
   CHECK_RETURN(snd_pcm_hw_params_set_period_size_near(handle, hw_params, &period_size, NULL));
+  CHECK_RETURN(snd_pcm_hw_params_set_buffer_size_near(handle, hw_params, &buffer_size));
   CHECK_RETURN(snd_pcm_hw_params(handle, hw_params));
   snd_pcm_hw_params_free(hw_params);
 
   /* Set software parameters */
   CHECK_RETURN(snd_pcm_sw_params_malloc(&sw_params));
   CHECK_RETURN(snd_pcm_sw_params_current(handle, sw_params));
-  CHECK_RETURN(snd_pcm_sw_params_set_start_threshold(handle, sw_params, buffer_size - period_size));
   CHECK_RETURN(snd_pcm_sw_params_set_avail_min(handle, sw_params, period_size));
+  CHECK_RETURN(snd_pcm_sw_params_set_start_threshold(handle, sw_params, 1));
   CHECK_RETURN(snd_pcm_sw_params(handle, sw_params));
   snd_pcm_sw_params_free(sw_params);
 
   CHECK_RETURN(snd_pcm_prepare(handle));
+
+  return 0;
 }
 
 static void alsa_renderer_cleanup() {

@@ -17,36 +17,37 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../video.h"
-#include "../sdl.h"
+#include "video.h"
 #include "ffmpeg.h"
 
-#include <Limelight.h>
+#include "../sdl.h"
 
 #include <SDL.h>
 #include <SDL_thread.h>
 
+#include <unistd.h>
 #include <stdbool.h>
 
 #define DECODER_BUFFER_SIZE 92*1024
 
 static char* ffmpeg_buffer;
 
-static void sdl_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+static int sdl_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   int avc_flags = SLICE_THREADING;
-  if (drFlags & FORCE_HARDWARE_ACCELERATION)
-    avc_flags |= HARDWARE_ACCELERATION;
 
-  if (ffmpeg_init(videoFormat, width, height, avc_flags, SDL_BUFFER_FRAMES, 2) < 0) {
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, SDL_BUFFER_FRAMES, sysconf(_SC_NPROCESSORS_ONLN)) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
-    exit(1);
+    return -1;
   }
   
   ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
   if (ffmpeg_buffer == NULL) {
     fprintf(stderr, "Not enough memory\n");
-    exit(1);
+    ffmpeg_destroy();
+    return -1;
   }
+
+  return 0;
 }
 
 static void sdl_cleanup() {
@@ -65,7 +66,7 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     ffmpeg_decode(ffmpeg_buffer, length);
 
     if (SDL_LockMutex(mutex) == 0) {
-      AVFrame* frame = ffmpeg_get_frame();
+      AVFrame* frame = ffmpeg_get_frame(false);
       if (frame != NULL) {
         sdlNextFrame++;
 
@@ -92,5 +93,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl = {
   .setup = sdl_setup,
   .cleanup = sdl_cleanup,
   .submitDecodeUnit = sdl_submit_decode_unit,
-  .capabilities = CAPABILITY_SLICES_PER_FRAME(2) | CAPABILITY_REFERENCE_FRAME_INVALIDATION | CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC | CAPABILITY_REFERENCE_FRAME_INVALIDATION_HEVC | CAPABILITY_DIRECT_SUBMIT,
 };

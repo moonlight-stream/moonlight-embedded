@@ -1,7 +1,7 @@
 find_path(AMLOGIC_INCLUDE_DIR
   NAMES codec.h
   DOC "Amlogic include directory"
-  PATHS /usr/local/include/amcodec /usr/include/amcodec)
+  PATHS /usr/local/include/amcodec /usr/include/amcodec /usr/include/)
 mark_as_advanced(AMLOGIC_INCLUDE_DIR)
 
 find_library(AMAVUTILS_LIBRARY

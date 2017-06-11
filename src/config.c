@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015, 2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,10 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "input/evdev.h"
 #include "config.h"
-#include "audio.h"
+
+#include "input/evdev.h"
+#include "audio/audio.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,16 +38,13 @@
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
 
 bool inputAdded = false;
-static bool mapped = true;
-const char* audio_device = NULL;
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
   {"1080", no_argument, NULL, 'b'},
+  {"4k", no_argument, NULL, '0'},
   {"width", required_argument, NULL, 'c'},
   {"height", required_argument, NULL, 'd'},
-  {"30fps", no_argument, NULL, 'e'},
-  {"60fps", no_argument, NULL, 'f'},
   {"bitrate", required_argument, NULL, 'g'},
   {"packetsize", required_argument, NULL, 'h'},
   {"app", required_argument, NULL, 'i'},
@@ -63,10 +61,10 @@ static struct option long_options[] = {
   {"windowed", no_argument, NULL, 't'},
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
-  {"forcehw", no_argument, NULL, 'w'},
-  {"hevc", no_argument, NULL, 'x'},
-  {"h264", no_argument, NULL, 'z'},
+  {"codec", required_argument, NULL, 'x'},
   {"unsupported", no_argument, NULL, 'y'},
+  {"verbose", no_argument, NULL, 'z'},
+  {"debug", no_argument, NULL, 'Z'},
   {0, 0, 0, 0},
 };
 
@@ -126,17 +124,15 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->stream.width = 1920;
     config->stream.height = 1080;
     break;
+  case '0':
+    config->stream.width = 3840;
+    config->stream.height = 2160;
+    break;
   case 'c':
     config->stream.width = atoi(value);
     break;
   case 'd':
     config->stream.height = atoi(value);
-    break;
-  case 'e':
-    config->stream.fps = 30;
-    break;
-  case 'f':
-    config->stream.fps = 60;
     break;
   case 'g':
     config->stream.bitrate = atoi(value);
@@ -152,11 +148,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       perror("Too many inputs specified");
       exit(-1);
     }
-    config->inputs[config->inputsCount].path = value;
-    config->inputs[config->inputsCount].mapping = config->mapping;
+    config->inputs[config->inputsCount] = value;
     config->inputsCount++;
     inputAdded = true;
-    mapped = true;
     break;
   case 'k':
     config->mapping = get_path(value, getenv("XDG_DATA_DIRS"));
@@ -164,13 +158,12 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       fprintf(stderr, "Unable to open custom mapping file: %s\n", value);
       exit(-1);
     }
-    mapped = false;
     break;
   case 'l':
     config->sops = false;
     break;
   case 'm':
-    audio_device = value;
+    config->audio_device = value;
     break;
   case 'n':
     config->localaudio = true;
@@ -201,17 +194,22 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'v':
     config->stream.fps = atoi(value);
     break;
-  case 'w':
-    config->forcehw = true;
-    break;
   case 'x':
-    config->codec = CODEC_HEVC;
-    break;
-  case 'z':
-    config->codec = CODEC_H264;
+    if (strcasecmp(value, "auto") == 0)
+      config->codec = CODEC_UNSPECIFIED;
+    else if (strcasecmp(value, "h264") == 0)
+      config->codec = CODEC_H264;
+    if (strcasecmp(value, "h265") == 0 || strcasecmp(value, "hevc") == 0)
+      config->codec = CODEC_HEVC;
     break;
   case 'y':
     config->unsupported_version = true;
+    break;
+  case 'z':
+    config->debug_level = 1;
+    break;
+  case 'Z':
+    config->debug_level = 2;
     break;
   case 1:
     if (config->action == NULL)
@@ -246,8 +244,11 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
         config->localaudio = strcmp("true", value) == 0;
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
-          if (long_options[i].has_arg == required_argument && strcmp(long_options[i].name, key) == 0) {
-            parse_argument(long_options[i].val, value, config);
+          if (strcmp(long_options[i].name, key) == 0) {
+            if (long_options[i].has_arg == required_argument)
+              parse_argument(long_options[i].val, value, config);
+            else if (strcmp("true", value) == 0)
+              parse_argument(long_options[i].val, NULL, config);
           }
         }
       }
@@ -289,27 +290,28 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
 
   config->stream.width = 1280;
   config->stream.height = 720;
-  config->stream.fps = 60;
+  config->stream.fps = -1;
   config->stream.bitrate = -1;
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportsHevc = false;
 
-  config->platform = "default";
+  config->debug_level = 0;
+  config->platform = "auto";
   config->app = "Steam";
   config->action = NULL;
   config->address = NULL;
   config->config_file = NULL;
+  config->audio_device = NULL;
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
   config->unsupported_version = false;
-  config->forcehw = false;
   config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;
-  config->mapping = get_path("mappings/default.conf", getenv("XDG_DATA_DIRS"));
+  config->mapping = get_path("gamecontrollerdb.txt", getenv("XDG_DATA_DIRS"));
   config->key_dir[0] = 0;
 
   char* config_file = get_path("moonlight.conf", "/etc");
@@ -342,6 +344,9 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
     }
   }
 
+  if (config->stream.fps == -1)
+    config->stream.fps = config->stream.height >= 1080 ? 30 : 60;
+
   if (config->stream.bitrate == -1) {
     if (config->stream.height >= 1080 && config->stream.fps >= 60)
       config->stream.bitrate = 20000;
@@ -349,15 +354,5 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
       config->stream.bitrate = 10000;
     else
       config->stream.bitrate = 5000;
-  }
-
-  if (inputAdded) {
-    if (!mapped) {
-        fprintf(stderr, "Mapping option should be followed by the input to be mapped.\n");
-        exit(-1);
-    } else if (config->mapping == NULL) {
-        fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
-        exit(-1);
-    }
   }
 }

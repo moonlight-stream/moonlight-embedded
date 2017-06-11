@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../audio.h"
+#include "audio.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,33 +26,30 @@
 #include <pulse/simple.h>
 #include <pulse/error.h>
 
-#define MAX_CHANNEL_COUNT 6
-#define FRAME_SIZE 240
-
 static OpusMSDecoder* decoder;
 static pa_simple *dev = NULL;
 static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
 static int channelCount;
 
-bool audio_pulse_init() {
-    pa_sample_spec spec = {
-      .format = PA_SAMPLE_S16LE,
-      .rate = 44000,
-      .channels = 2
-    };
+bool audio_pulse_init(char* audio_device) {
+  pa_sample_spec spec = {
+    .format = PA_SAMPLE_S16LE,
+    .rate = 44000,
+    .channels = 2
+  };
 
-    int error;
-    dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
-    if (dev) {
-        pa_simple_free(dev);
-        return true;
-    } else
-        return false;
+  int error;
+  dev = pa_simple_new(audio_device, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
+
+  if (dev)
+    pa_simple_free(dev);
+
+  return (bool) dev;
 }
 
-static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc, error;
-  unsigned char alsaMapping[6];
+  unsigned char alsaMapping[MAX_CHANNEL_COUNT];
 
   channelCount = opusConfig->channelCount;
 
@@ -69,12 +66,7 @@ static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIG
     alsaMapping[5] = opusConfig->mapping[3];
   }
 
-  decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
-                                            opusConfig->channelCount,
-                                            opusConfig->streams,
-                                            opusConfig->coupledStreams,
-                                            alsaMapping,
-                                            &rc);
+  decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 
   pa_sample_spec spec = {
     .format = PA_SAMPLE_S16LE,
@@ -82,12 +74,15 @@ static void pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIG
     .channels = opusConfig->channelCount
   };
 
-  dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
+  char* audio_device = (char*) context;
+  dev = pa_simple_new(audio_device, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
 
   if (!dev) {
     printf("Pulseaudio error: %s\n", pa_strerror(error));
-    exit(-1);
+    return -1;
   }
+
+  return 0;
 }
 
 static void pulse_renderer_decode_and_play_sample(char* data, int length) {

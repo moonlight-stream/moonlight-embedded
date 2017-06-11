@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015-2016 Iwan Timmer
+ * Copyright (C) 2015-2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -179,7 +179,6 @@ static int load_server_status(PSERVER_DATA server) {
     char *pairedText = NULL;
     char *currentGameText = NULL;
     char *stateText = NULL;
-    char *heightText = NULL;
     char *serverCodecModeSupportText = NULL;
 
     ret = GS_INVALID;
@@ -217,16 +216,19 @@ static int load_server_status(PSERVER_DATA server) {
     if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "Height", &heightText) != GS_OK)
-      goto cleanup;
-
     if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
       goto cleanup;
 
     if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
       goto cleanup;
 
+    if (xml_search(data->memory, data->size, "GsVersion", &server->gsVersion) != GS_OK)
+      goto cleanup;
+
     if (xml_search(data->memory, data->size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)
+      goto cleanup;
+
+    if (xml_modelist(data->memory, data->size, &server->modes) != GS_OK)
       goto cleanup;
 
     // These fields are present on all version of GFE that this client supports
@@ -235,7 +237,7 @@ static int load_server_status(PSERVER_DATA server) {
 
     server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
     server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
-    server->supports4K = heightText != NULL && serverCodecModeSupportText != NULL && atoi(heightText) >= 2160;
+    server->supports4K = serverCodecModeSupportText != NULL;
     server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
 
     if (strstr(stateText, "_SERVER_AVAILABLE")) {
@@ -255,9 +257,6 @@ static int load_server_status(PSERVER_DATA server) {
 
     if (currentGameText != NULL)
       free(currentGameText);
-
-    if (heightText != NULL)
-      free(heightText);
 
     if (serverCodecModeSupportText != NULL)
       free(serverCodecModeSupportText);
@@ -494,12 +493,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   char client_secret_data[16];
   RAND_bytes(client_secret_data, 16);
 
+  const ASN1_BIT_STRING *asnSignature;
+  X509_get0_signature(&asnSignature, NULL, cert);
+
   char challenge_response[16 + 256 + 16];
   char challenge_response_hash[32];
   char challenge_response_hash_enc[32];
   char challenge_response_hex[65];
   memcpy(challenge_response, challenge_response_data + hash_length, 16);
-  memcpy(challenge_response + 16, cert->signature->data, 256);
+  memcpy(challenge_response + 16, asnSignature->data, 256);
   memcpy(challenge_response + 16 + 256, client_secret_data, 16);
   if (server->serverMajorVersion >= 7)
     SHA256(challenge_response, 16 + 256 + 16, challenge_response_hash);
@@ -635,6 +637,18 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   char* result = NULL;
   char uuid_str[37];
 
+  PDISPLAY_MODE mode = server->modes;
+  bool correct_mode = false;
+  while (mode != NULL) {
+    if (mode->width == config->width && mode->height == config->height && mode->refresh == config->fps)
+      correct_mode = true;
+
+    mode = mode->next;
+  }
+
+  if (!correct_mode)
+    return GS_NOT_SUPPORTED_MODE;
+
   if (config->height >= 2160 && !server->supports4K)
     return GS_NOT_SUPPORTED_4K;
 
@@ -713,7 +727,7 @@ int gs_quit_app(PSERVER_DATA server) {
   return ret;
 }
 
-int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory) {
+int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int log_level) {
   mkdirtree(keyDirectory);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
@@ -721,7 +735,7 @@ int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory) {
   if (load_cert(keyDirectory))
     return GS_FAILED;
 
-  http_init(keyDirectory);
+  http_init(keyDirectory, log_level);
 
   LiInitializeServerInformation(&server->serverInfo);
   server->serverInfo.address = address;

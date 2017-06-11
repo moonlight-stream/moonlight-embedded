@@ -19,7 +19,7 @@
 
 #include "loop.h"
 
-#include "global.h"
+#include "connection.h"
 
 #include <sys/stat.h>
 #include <sys/signalfd.h>

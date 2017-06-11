@@ -29,7 +29,7 @@ typedef struct _HTTP_DATA {
   size_t size;
 } HTTP_DATA, *PHTTP_DATA;
 
-int http_init(const char* keyDirectory);
+int http_init(const char* keyDirectory, int logLevel);
 PHTTP_DATA http_create_data();
 int http_request(char* url, PHTTP_DATA data);
 void http_free_data(PHTTP_DATA data);

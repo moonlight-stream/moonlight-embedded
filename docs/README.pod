@@ -132,6 +132,10 @@ By default the encryption keys are stored in $XDG_CACHE_DIR/moonlight or ~/.cach
 Use I<MAPPING> as the mapping file for all inputs specified after this B<-mapping>.
 If no B<-input> is specified after the B<-mapping> this mapping is used for autoloaded inputs.
 
+=item B<-debug>
+
+Enable verbose and debug output
+
 =item B<-input> [I<INPUT>]
 
 Enable the I<INPUT> device.

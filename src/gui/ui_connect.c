@@ -228,7 +228,7 @@ int ui_connect(char *address) {
   int ret;
   if (!connection_is_ready()) {
     flash_message("Connecting to:\n %s...", address);
-    ret = gs_init(&server, address, config.key_dir);
+    ret = gs_init(&server, address, config.key_dir, 0);
     if (ret == GS_OUT_OF_MEMORY) {
       display_error("Not enough memory");
       return 0;

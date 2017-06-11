@@ -171,3 +171,24 @@ bool platform_supports_hevc(enum platform system) {
   }
   return false;
 }
+
+char* platform_name(enum platform system) {
+  switch(system) {
+  case PI:
+    return "Raspberry Pi (Broadcom)";
+  case IMX:
+    return "i.MX6 (MXC Vivante)";
+  case AML:
+    return "AMLogic VPU";
+  case X11:
+    return "X Window System (software decoding)";
+  case X11_VDPAU:
+    return "X Window System (VDPAU)";
+  case SDL:
+    return "SDL2 (software decoding)";
+  case FAKE:
+    return "Fake (no a/v output)";
+  default:
+    return "Unknown";
+  }
+}

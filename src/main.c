@@ -240,6 +240,8 @@ int main(int argc, char* argv[]) {
   } else if (strcmp("stream", config.action) == 0) {
     pair_check(&server);
     enum platform system = platform_check(config.platform);
+    if (config.debug_level > 0)
+      printf("Platform %s\n", platform_name(system));
 
     if (system == 0) {
       fprintf(stderr, "Platform '%s' not found\n", config.platform);

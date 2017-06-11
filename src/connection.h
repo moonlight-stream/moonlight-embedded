@@ -20,6 +20,8 @@
 #include <Limelight.h>
 
 #include <pthread.h>
+#include <stdbool.h>
 
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
 extern pthread_t main_thread_id;
+extern bool connection_debug;

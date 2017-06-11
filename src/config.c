@@ -63,6 +63,7 @@ static struct option long_options[] = {
   {"fps", required_argument, NULL, 'v'},
   {"codec", required_argument, NULL, 'x'},
   {"unsupported", no_argument, NULL, 'y'},
+  {"verbose", no_argument, NULL, 'z'},
   {0, 0, 0, 0},
 };
 
@@ -203,6 +204,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'y':
     config->unsupported_version = true;
     break;
+  case 'z':
+    config->debug_level = 1;
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -289,6 +293,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportsHevc = false;
 
+  config->debug_level = 0;
   config->platform = "auto";
   config->app = "Steam";
   config->action = NULL;

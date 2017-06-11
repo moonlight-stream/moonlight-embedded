@@ -105,7 +105,10 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   if (config->fullscreen)
     drFlags |= DISPLAY_FULLSCREEN;
 
-  printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
+  if (config->debug_level > 0) {
+    printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
+    connection_debug = true;
+  }
 
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
@@ -125,6 +128,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
 }
 
 static void help() {
+  printf("Moonlight Embedded %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
   printf("Usage: moonlight [action] (options) [host]\n");
   printf("       moonlight [configfile]\n");
   printf("\n Actions\n\n");
@@ -137,6 +141,7 @@ static void help() {
   printf("\n Global Options\n\n");
   printf("\t-config <config>\tLoad configuration file\n");
   printf("\t-save <config>\t\tSave configuration file\n");
+  printf("\t-verbose\t\tEnable verbose output\n");
   printf("\n Streaming options\n\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
   printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
@@ -177,14 +182,15 @@ static void pair_check(PSERVER_DATA server) {
 }
 
 int main(int argc, char* argv[]) {
-  printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
-
   CONFIGURATION config;
   config_parse(argc, argv, &config);
 
   if (config.action == NULL || strcmp("help", config.action) == 0)
     help();
   
+  if (config.debug_level > 0)
+    printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
+
   if (config.address == NULL) {
     config.address = malloc(MAX_ADDRESS_SIZE);
     if (config.address == NULL) {
@@ -225,7 +231,8 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
-  printf("NVIDIA %s, GFE %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
+  if (config.debug_level > 0)
+    printf("NVIDIA %s, GFE %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);
@@ -251,7 +258,9 @@ int main(int argc, char* argv[]) {
       struct mapping* mappings = mapping_load(config.mapping);
 
       for (int i=0;i<config.inputsCount;i++) {
-        printf("Add input %s...\n", config.inputs[i]);
+        if (config.debug_level > 0)
+          printf("Add input %s...\n", config.inputs[i]);
+
         evdev_create(config.inputs[i], mappings);
       }
 

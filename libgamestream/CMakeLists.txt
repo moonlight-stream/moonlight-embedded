@@ -3,7 +3,7 @@ set(SO_VERSION 1)
 find_package(LibUUID REQUIRED)
 find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
-find_package(OpenSSL REQUIRED)
+find_package(OpenSSL 1.0.2 REQUIRED)
 find_package(EXPAT REQUIRED)
 
 pkg_check_modules(AVAHI REQUIRED avahi-client)
@@ -16,6 +16,7 @@ aux_source_directory(../third_party/moonlight-common-c/src MOONLIGHT_COMMON_SRC_
 aux_source_directory(../third_party/moonlight-common-c/reedsolomon MOONLIGHT_COMMON_SRC_LIST)
 
 add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
+set_property(TARGET moonlight-common PROPERTY C_STANDARD 99)
 
 add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})
 set_property(TARGET gamestream PROPERTY C_STANDARD 99)

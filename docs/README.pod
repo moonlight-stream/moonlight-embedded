@@ -132,6 +132,11 @@ Use I<MAPPING> as the mapping file for all inputs.
 This mapping file should have the same format as the gamecontrollerdb.txt for SDL2.
 By default the gamecontrollerdb.txt provided by Moonlight Embedded is used.
 
+=item B<-platform> [I<PLATFORM>]
+
+Select platform for audio and video output and input.
+<PLATFORM> can be pi, imx, aml, x11, x11_vdpau, sdl or fake.
+
 =item B<-input> [I<INPUT>]
 
 Enable the I<INPUT> device.

@@ -103,6 +103,9 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     } else {
         x = *x509p;
     }
+
+    if ((rsa = RSA_new()) == NULL)
+        goto err;
     
     BIGNUM* bne = BN_new(); 
     if (bne == NULL) {

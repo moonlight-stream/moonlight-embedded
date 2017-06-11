@@ -244,6 +244,10 @@ int main(int argc, char* argv[]) {
     config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
 
     if (IS_EMBEDDED(system)) {
+      if (config.mapping == NULL) {
+        fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
+        exit(-1);
+      }
       struct mapping* mappings = mapping_load(config.mapping);
 
       for (int i=0;i<config.inputsCount;i++) {

@@ -727,7 +727,7 @@ int gs_quit_app(PSERVER_DATA server) {
   return ret;
 }
 
-int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory) {
+int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int log_level) {
   mkdirtree(keyDirectory);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
@@ -735,7 +735,7 @@ int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory) {
   if (load_cert(keyDirectory))
     return GS_FAILED;
 
-  http_init(keyDirectory);
+  http_init(keyDirectory, log_level);
 
   LiInitializeServerInformation(&server->serverInfo);
   server->serverInfo.address = address;

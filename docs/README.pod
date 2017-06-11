@@ -145,6 +145,10 @@ Try streaming if GFE version is unsupported
 
 Enable verbose output
 
+=item B<-debug>
+
+Enable verbose and debug output
+
 =item B<-input> [I<INPUT>]
 
 Enable the I<INPUT> device.

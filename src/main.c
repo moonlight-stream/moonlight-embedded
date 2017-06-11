@@ -142,6 +142,7 @@ static void help() {
   printf("\t-config <config>\tLoad configuration file\n");
   printf("\t-save <config>\t\tSave configuration file\n");
   printf("\t-verbose\t\tEnable verbose output\n");
+  printf("\t-debug\t\t\tEnable verbose and debug output\n");
   printf("\n Streaming options\n\n");
   printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
   printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
@@ -215,7 +216,7 @@ int main(int argc, char* argv[]) {
   printf("Connect to %s...\n", config.address);
 
   int ret;
-  if ((ret = gs_init(&server, config.address, config.key_dir)) == GS_OUT_OF_MEMORY) {
+  if ((ret = gs_init(&server, config.address, config.key_dir, config.debug_level)) == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
     exit(-1);
   } else if (ret == GS_INVALID) {

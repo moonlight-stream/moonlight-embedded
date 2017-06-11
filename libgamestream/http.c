@@ -20,6 +20,7 @@
 #include "http.h"
 #include "errors.h"
 
+#include <stdbool.h>
 #include <string.h>
 #include <curl/curl.h>
 
@@ -27,6 +28,8 @@ static CURL *curl;
 
 static const char *pCertFile = "./client.pem";
 static const char *pKeyFile = "./key.pem";
+
+static bool debug;
 
 static size_t _write_curl(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -44,8 +47,9 @@ static size_t _write_curl(void *contents, size_t size, size_t nmemb, void *userp
   return realsize;
 }
 
-int http_init(const char* keyDirectory) {
+int http_init(const char* keyDirectory, int logLevel) {
   curl = curl_easy_init();
+  debug = logLevel >= 2;
   if (!curl)
     return GS_FAILED;
 
@@ -73,6 +77,9 @@ int http_request(char* url, PHTTP_DATA data) {
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
+  if (debug)
+    printf("Request %s\n", url);
+
   if (data->size > 0) {
     free(data->memory);
     data->memory = malloc(1);
@@ -89,6 +96,9 @@ int http_request(char* url, PHTTP_DATA data) {
   } else if (data->memory == NULL) {
     return GS_OUT_OF_MEMORY;
   }
+
+  if (debug)
+    printf("Response:\n%s\n\n", data->memory);
   
   return GS_OK;
 }

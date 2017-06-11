@@ -64,6 +64,7 @@ static struct option long_options[] = {
   {"codec", required_argument, NULL, 'x'},
   {"unsupported", no_argument, NULL, 'y'},
   {"verbose", no_argument, NULL, 'z'},
+  {"debug", no_argument, NULL, 'Z'},
   {0, 0, 0, 0},
 };
 
@@ -206,6 +207,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'z':
     config->debug_level = 1;
+    break;
+  case 'Z':
+    config->debug_level = 2;
     break;
   case 1:
     if (config->action == NULL)

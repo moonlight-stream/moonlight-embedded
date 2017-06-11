@@ -185,16 +185,6 @@ int main(int argc, char* argv[]) {
   if (config.action == NULL || strcmp("help", config.action) == 0)
     help();
   
-  enum platform system = platform_check(config.platform);
-  if (system == 0) {
-    fprintf(stderr, "Platform '%s' not found\n", config.platform);
-    exit(-1);
-  } else if (system == SDL && config.audio_device != NULL) {
-    fprintf(stderr, "You can't select a audio device for SDL\n");
-    exit(-1);
-  }
-  config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-
   if (config.address == NULL) {
     config.address = malloc(MAX_ADDRESS_SIZE);
     if (config.address == NULL) {
@@ -242,6 +232,17 @@ int main(int argc, char* argv[]) {
     applist(&server);
   } else if (strcmp("stream", config.action) == 0) {
     pair_check(&server);
+    enum platform system = platform_check(config.platform);
+
+    if (system == 0) {
+      fprintf(stderr, "Platform '%s' not found\n", config.platform);
+      exit(-1);
+    } else if (system == SDL && config.audio_device != NULL) {
+      fprintf(stderr, "You can't select a audio device for SDL\n");
+      exit(-1);
+    }
+    config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
+
     if (IS_EMBEDDED(system)) {
       struct mapping* mappings = mapping_load(config.mapping);
 

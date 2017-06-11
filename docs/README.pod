@@ -181,7 +181,7 @@ A documented example configuration file can be found at /etc/moonlight/moonlight
 
 =head1 COMMENTS
 
-Use Ctrl+Alt+Shift+Q to quit the streaming session.
+Use Ctrl+Alt+Shift+Q or Play+Back+LeftShoulder+RightShoulder to quit the streaming session.
 
 =head1 AUTHOR
 

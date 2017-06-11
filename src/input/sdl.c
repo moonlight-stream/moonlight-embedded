@@ -24,6 +24,7 @@
 
 #define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY SDLK_q
+#define QUIT_BUTTONS (PLAY_FLAG|BACK_FLAG|LB_FLAG|RB_FLAG)
 #define FULLSCREEN_KEY SDLK_f
 
 typedef struct _GAMEPAD_STATE {
@@ -231,6 +232,9 @@ int sdlinput_handle_event(SDL_Event* event) {
       gamepad->buttons |= button;
     else
       gamepad->buttons &= ~button;
+
+    if ((gamepad->buttons & QUIT_BUTTONS) == QUIT_BUTTONS)
+      return SDL_QUIT_APPLICATION;
 
     LiSendMultiControllerEvent(gamepad->id, activeGamepadMask, gamepad->buttons, gamepad->leftTrigger, gamepad->rightTrigger, gamepad->leftStickX, gamepad->leftStickY, gamepad->rightStickX, gamepad->rightStickY);
     break;

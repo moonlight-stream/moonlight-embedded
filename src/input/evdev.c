@@ -91,6 +91,7 @@ static bool grabbingDevices;
 
 #define QUIT_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY KEY_Q
+#define QUIT_BUTTONS (PLAY_FLAG|BACK_FLAG|LB_FLAG|RB_FLAG)
 
 static bool (*handler) (struct input_event*, struct input_device*);
 
@@ -325,6 +326,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         gamepadModified = false;
     }
   }
+
+  if (gamepadModified && (dev->buttonFlags & QUIT_BUTTONS) == QUIT_BUTTONS)
+    return false;
 
   dev->gamepadModified |= gamepadModified;
   return true;

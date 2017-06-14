@@ -1,0 +1,64 @@
+diff --git b/libgamestream/mkcert.c a/libgamestream/mkcert.c
+index 6dfc1c2..4ced6f6 100644
+--- b/libgamestream/mkcert.c
++++ a/libgamestream/mkcert.c
+@@ -103,9 +103,6 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
+     } else {
+         x = *x509p;
+     }
+-
+-    if ((rsa = RSA_new()) == NULL)
+-        goto err;
+     
+     BIGNUM* bne = BN_new(); 
+     if (bne == NULL) {
+diff --git b/libgamestream/client.c a/libgamestream/client.c
+index bc6c020..2d547ce 100644
+--- b/libgamestream/client.c
++++ a/libgamestream/client.c
+@@ -494,15 +494,12 @@ int gs_pair(PSERVER_DATA server, char* pin) {
+   char client_secret_data[16];
+   RAND_bytes(client_secret_data, 16);
+ 
+-  const ASN1_BIT_STRING *asnSignature;
+-  X509_get0_signature(&asnSignature, NULL, cert);
+-
+   char challenge_response[16 + 256 + 16];
+   char challenge_response_hash[32];
+   char challenge_response_hash_enc[32];
+   char challenge_response_hex[65];
+   memcpy(challenge_response, challenge_response_data + hash_length, 16);
+-  memcpy(challenge_response + 16, asnSignature->data, 256);
++  memcpy(challenge_response + 16, cert->signature->data, 256);
+   memcpy(challenge_response + 16 + 256, client_secret_data, 16);
+   if (server->serverMajorVersion >= 7)
+     SHA256(challenge_response, 16 + 256 + 16, challenge_response_hash);
+diff --git b/libgamestream/mkcert.c a/libgamestream/mkcert.c
+index e3f6b9e..b0d5e5a 100644
+--- b/libgamestream/mkcert.c
++++ a/libgamestream/mkcert.c
+@@ -18,7 +18,6 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ 
+-#include <openssl/crypto.h>
+ #include <openssl/pem.h>
+ #include <openssl/conf.h>
+ #include <openssl/pkcs12.h>
+@@ -43,7 +42,7 @@ CERT_KEY_PAIR mkcert_generate() {
+     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
+     
+-    OpenSSL_add_all_algorithms();
++    SSLeay_add_all_algorithms();
+     ERR_load_crypto_strings();
+     
+     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
+@@ -55,6 +54,7 @@ CERT_KEY_PAIR mkcert_generate() {
+ #endif
+     CRYPTO_cleanup_all_ex_data();
+     
++    CRYPTO_mem_leaks(bio_err);
+     BIO_free(bio_err);
+     
+     return (CERT_KEY_PAIR) {x509, pkey, p12};

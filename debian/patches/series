@@ -1,1 +1,2 @@
-install.patch
+c99.patch
+openssl.patch

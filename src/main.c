@@ -95,7 +95,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     if (ret == GS_NOT_SUPPORTED_4K)
       fprintf(stderr, "Server doesn't support 4K\n");
     else if (ret == GS_NOT_SUPPORTED_MODE)
-      fprintf(stderr, "Server doesn't support %dx%d (%d fps)\n", config->stream.width, config->stream.height, config->stream.fps);
+      fprintf(stderr, "Server doesn't support %dx%d (%d fps) or try --unsupported option\n", config->stream.width, config->stream.height, config->stream.fps);
     else
       fprintf(stderr, "Errorcode starting app: %d\n", ret);
     exit(-1);
@@ -161,7 +161,7 @@ static void help() {
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
   printf("\t-platform <system>\tSpecify system used for audio, video and input: pi/imx/aml/x11/x11_vdpau/sdl/fake (default auto)\n");
-  printf("\t-unsupported\t\tTry streaming if GFE version is unsupported\n");
+  printf("\t-unsupported\t\tTry streaming if GFE version or options are unsupported\n");
   #if defined(HAVE_SDL) || defined(HAVE_X11)
   printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
@@ -216,17 +216,15 @@ int main(int argc, char* argv[]) {
   printf("Connect to %s...\n", config.address);
 
   int ret;
-  if ((ret = gs_init(&server, config.address, config.key_dir, config.debug_level)) == GS_OUT_OF_MEMORY) {
+  if ((ret = gs_init(&server, config.address, config.key_dir, config.debug_level, config.unsupported)) == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
     exit(-1);
   } else if (ret == GS_INVALID) {
     fprintf(stderr, "Invalid data received from server: %s\n", config.address, gs_error);
     exit(-1);
   } else if (ret == GS_UNSUPPORTED_VERSION) {
-    if (!config.unsupported_version) {
-      fprintf(stderr, "Unsupported version: %s\n", gs_error);
-      exit(-1);
-    }
+    fprintf(stderr, "Unsupported version: %s\n", gs_error);
+    exit(-1);
   } else if (ret != GS_OK) {
     fprintf(stderr, "Can't connect to server %s\n", config.address);
     exit(-1);

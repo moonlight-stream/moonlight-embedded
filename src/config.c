@@ -203,7 +203,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       config->codec = CODEC_HEVC;
     break;
   case 'y':
-    config->unsupported_version = true;
+    config->unsupported = true;
     break;
   case 'z':
     config->debug_level = 1;
@@ -307,7 +307,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
-  config->unsupported_version = false;
+  config->unsupported = false;
   config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;

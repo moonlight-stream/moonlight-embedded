@@ -55,7 +55,7 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
 
 void ui_connect_stream(PSERVER_DATA server, int appId) {
   // TODO support force controller id
-  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio, 1, true);
+  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio, 1);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       display_error("Server doesn't support 4K\n");
@@ -228,7 +228,7 @@ int ui_connect(char *address) {
   int ret;
   if (!connection_is_ready()) {
     flash_message("Connecting to:\n %s...", address);
-    ret = gs_init(&server, address, config.key_dir, 0);
+    ret = gs_init(&server, address, config.key_dir, 0, true);
     if (ret == GS_OUT_OF_MEMORY) {
       display_error("Not enough memory");
       return 0;

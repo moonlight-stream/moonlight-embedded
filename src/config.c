@@ -158,7 +158,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->stream.supportsHevc = true;
     break;
   case 'y':
-    config->unsupported_version = true;
+    config->unsupported = true;
     break;
   case 1:
     if (config->action == NULL)
@@ -313,6 +313,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
+  config->unsupported = false;
   config->unsupported_version = false;
   config->save_debug_log = false;
   config->disable_powersave = true;

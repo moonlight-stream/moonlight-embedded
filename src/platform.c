@@ -60,10 +60,17 @@ enum platform platform_check(char* name) {
   }
   #endif
   #ifdef HAVE_X11
-  if (std || strcmp(name, "x11") == 0 || strcmp(name, "x11_vdpau") == 0) {
-    int x11 = x11_init(strcmp(name, "x11") != 0);
+  bool x11 = strcmp(name, "x11") == 0;
+  bool vdpau = strcmp(name, "x11_vdpau") == 0;
+  bool vaapi = strcmp(name, "x11_vaapi") == 0;
+  if (std || x11 || vdpau || vaapi) {
+    int init = x11_init(std || vdpau, std || vaapi);
+    #ifdef HAVE_VAAPI
+    if (init == INIT_VAAPI)
+      return X11_VAAPI;
+    #endif
     #ifdef HAVE_VDPAU
-    if (strcmp(name, "x11") != 0 && x11 == 0)
+    if (init == INIT_VDPAU)
       return X11_VDPAU;
     #endif
     return X11;
@@ -182,6 +189,8 @@ char* platform_name(enum platform system) {
     return "AMLogic VPU";
   case X11:
     return "X Window System (software decoding)";
+  case X11_VAAPI:
+    return "X Window System (VAAPI)";
   case X11_VDPAU:
     return "X Window System (VDPAU)";
   case SDL:

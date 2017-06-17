@@ -23,6 +23,9 @@
 #ifdef HAVE_VDPAU
 #include "ffmpeg_vdpau.h"
 #endif
+#ifdef HAVE_VAAPI
+#include "ffmpeg_vaapi.h"
+#endif
 
 #include "../input/x11.h"
 #include "../loop.h"
@@ -36,12 +39,18 @@
 #include <poll.h>
 
 #define DECODER_BUFFER_SIZE 92*1024
+#define X11_VDPAU_ACCELERATION ENABLE_HARDWARE_ACCELERATION_1
+#define X11_VAAPI_ACCELERATION ENABLE_HARDWARE_ACCELERATION_2
 
 static char* ffmpeg_buffer = NULL;
 
 static Display *display = NULL;
+static Window window;
 
 static int pipefd[2];
+
+static int display_width;
+static int display_height;
 
 static int frame_handle(int pipefd) {
   AVFrame* frame = NULL;
@@ -52,18 +61,23 @@ static int frame_handle(int pipefd) {
   return LOOP_OK;
 }
 
-int x11_init(bool vdpau) {
+int x11_init(bool vdpau, bool vaapi) {
   XInitThreads();
   display = XOpenDisplay(NULL);
   if (!display)
-    return -1;
+    return 0;
 
-  #ifdef HAVE_VDPAU
-  if (vdpau && vdpau_init_lib(display) != 0)
-    return -2;
+  #ifdef HAVE_VAAPI
+  if (vaapi && vaapi_init_lib(display) == 0)
+    return INIT_VAAPI;
   #endif
 
-  return 0;
+  #ifdef HAVE_VDPAU
+  if (vdpau && vdpau_init_lib(display) == 0)
+    return INIT_VDPAU;
+  #endif
+
+  return INIT_EGL;
 }
 
 int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
@@ -78,8 +92,6 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     return -1;
   }
 
-  int display_width;
-  int display_height;
   if (drFlags & DISPLAY_FULLSCREEN) {
     Screen* screen = DefaultScreenOfDisplay(display);
     display_width = WidthOfScreen(screen);
@@ -91,7 +103,7 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
 
   Window root = DefaultRootWindow(display);
   XSetWindowAttributes winattr = { .event_mask = PointerMotionMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask };
-  Window window = XCreateWindow(display, root, 0, 0, display_width, display_height, 0, CopyFromParent, InputOutput, CopyFromParent, CWEventMask, &winattr);
+  window = XCreateWindow(display, root, 0, 0, display_width, display_height, 0, CopyFromParent, InputOutput, CopyFromParent, CWEventMask, &winattr);
   XMapWindow(display, window);
   XStoreName(display, window, "Moonlight");
 
@@ -113,10 +125,10 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   XFlush(display);
 
   int avc_flags = SLICE_THREADING;
-  #ifdef HAVE_VDPAU
-  if (drFlags & ENABLE_HARDWARE_ACCELERATION)
-    avc_flags |= HARDWARE_ACCELERATION;
-  #endif
+  if (drFlags & X11_VDPAU_ACCELERATION)
+    avc_flags |= VDPAU_ACCELERATION;
+  else if (drFlags & X11_VAAPI_ACCELERATION)
+    avc_flags |= VAAPI_ACCELERATION;
 
   if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, 2) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
@@ -143,7 +155,11 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
 }
 
 int x11_setup_vdpau(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  return x11_setup(videoFormat, width, height, redrawRate, context, drFlags | ENABLE_HARDWARE_ACCELERATION);
+  return x11_setup(videoFormat, width, height, redrawRate, context, drFlags | X11_VDPAU_ACCELERATION);
+}
+
+int x11_setup_vaapi(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+  return x11_setup(videoFormat, width, height, redrawRate, context, drFlags | X11_VAAPI_ACCELERATION);
 }
 
 void x11_cleanup() {
@@ -167,6 +183,8 @@ int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
         write(pipefd[1], &frame, sizeof(void*));
       else if (ffmpeg_decoder == VDPAU)
         vdpau_queue(frame);
+      else if (ffmpeg_decoder == VAAPI)
+        vaapi_queue(frame, window, display_width, display_height);
     }
   }
 
@@ -185,4 +203,11 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau = {
   .cleanup = x11_cleanup,
   .submitDecodeUnit = x11_submit_decode_unit,
   .capabilities = CAPABILITY_DIRECT_SUBMIT,
+};
+
+DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vaapi = {
+  .setup = x11_setup_vaapi,
+  .cleanup = x11_cleanup,
+  .submitDecodeUnit = x11_submit_decode_unit,
+  .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC | CAPABILITY_REFERENCE_FRAME_INVALIDATION_HEVC | CAPABILITY_DIRECT_SUBMIT,
 };

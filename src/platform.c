@@ -123,6 +123,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   #ifdef HAVE_X11
   case X11:
     return &decoder_callbacks_x11;
+  #ifdef HAVE_VAAPI
+  case X11_VAAPI:
+    return &decoder_callbacks_x11_vaapi;
+  #endif
   #ifdef HAVE_VDPAU
   case X11_VDPAU:
     return &decoder_callbacks_x11_vdpau;

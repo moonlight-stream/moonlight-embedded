@@ -47,4 +47,5 @@ struct mapping {
   struct mapping* next;
 };
 
+struct mapping* mapping_parse(char* mapping);
 struct mapping* mapping_load(char* fileName, bool verbose);

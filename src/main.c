@@ -252,11 +252,21 @@ int main(int argc, char* argv[]) {
     config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
 
     if (IS_EMBEDDED(system)) {
-      if (config.mapping == NULL) {
+      char* mapping_env = getenv("SDL_GAMECONTROLLERCONFIG");
+      if (config.mapping == NULL && mapping_env == NULL) {
         fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
         exit(-1);
       }
-      struct mapping* mappings = mapping_load(config.mapping, config.debug_level > 0);
+
+      struct mapping* mappings;
+      if (config.mapping != NULL)
+        mappings = mapping_load(config.mapping, config.debug_level > 0);
+
+      if (mapping_env != NULL) {
+        struct mapping* map = mapping_parse(mapping_env);
+        map->next = mappings;
+        mappings = map;
+      }
 
       for (int i=0;i<config.inputsCount;i++) {
         if (config.debug_level > 0)

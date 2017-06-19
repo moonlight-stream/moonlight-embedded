@@ -256,19 +256,17 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       } else if (gamepadCode != 0) {
         gamepadModified = true;
 
-        if (gamepadCode != 0) {
-          if (ev->value)
-            dev->buttonFlags |= gamepadCode;
-          else
-            dev->buttonFlags &= ~gamepadCode;
-        } else if (index == dev->map->btn_lefttrigger)
-          dev->leftTrigger = ev->value?UCHAR_MAX:0;
-        else if (index == dev->map->btn_righttrigger)
-          dev->rightTrigger = ev->value?UCHAR_MAX:0;
-        else {
-          fprintf(stderr, "Unmapped button: %d\n", ev->code);
-          gamepadModified = false;
-        }
+        if (ev->value)
+          dev->buttonFlags |= gamepadCode;
+        else
+          dev->buttonFlags &= ~gamepadCode;
+      } else if (index == dev->map->btn_lefttrigger)
+        dev->leftTrigger = ev->value ? UCHAR_MAX : 0;
+      else if (index == dev->map->btn_righttrigger)
+        dev->rightTrigger = ev->value ? UCHAR_MAX : 0;
+      else {
+        fprintf(stderr, "Unmapped button: %d\n", ev->code);
+        gamepadModified = false;
       }
     }
     break;

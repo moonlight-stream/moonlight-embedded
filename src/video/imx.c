@@ -115,7 +115,7 @@ static int frame_handle(int pipefd) {
   return LOOP_OK;
 }
 
-int decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+static int decoder_renderer_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   if (videoFormat != VIDEO_FORMAT_H264) {
     fprintf(stderr, "Video format not supported\n");
     return -1;

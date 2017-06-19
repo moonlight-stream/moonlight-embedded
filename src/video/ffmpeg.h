@@ -34,9 +34,10 @@
 // Uses a faster bilinear filtering with lower image quality
 #define FAST_BILINEAR_FILTERING 0x20
 // Uses hardware acceleration
-#define HARDWARE_ACCELERATION 0x40
+#define VDPAU_ACCELERATION 0x40
+#define VAAPI_ACCELERATION 0x80
 
-enum decoders {SOFTWARE, VDPAU};
+enum decoders {SOFTWARE, VDPAU, VAAPI};
 extern enum decoders ffmpeg_decoder;
 
 int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count);

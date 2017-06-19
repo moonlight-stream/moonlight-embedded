@@ -264,7 +264,7 @@ static int load_server_status(PSERVER_DATA server) {
     i++;
   } while (ret != GS_OK && i < 2);
 
-  if (ret == GS_OK) {
+  if (ret == GS_OK && !server->unsupported) {
     if (server->serverMajorVersion > MAX_SUPPORTED_GFE_VERSION) {
       gs_error = "Ensure you're running the latest version of Moonlight Embedded or downgrade GeForce Experience and try again";
       ret = GS_UNSUPPORTED_VERSION;
@@ -646,7 +646,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
     mode = mode->next;
   }
 
-  if (!correct_mode)
+  if (!correct_mode && !server->unsupported)
     return GS_NOT_SUPPORTED_MODE;
 
   if (config->height >= 2160 && !server->supports4K)
@@ -727,7 +727,7 @@ int gs_quit_app(PSERVER_DATA server) {
   return ret;
 }
 
-int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int log_level) {
+int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int log_level, bool unsupported) {
   mkdirtree(keyDirectory);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
@@ -739,5 +739,6 @@ int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int lo
 
   LiInitializeServerInformation(&server->serverInfo);
   server->serverInfo.address = address;
+  server->unsupported = unsupported;
   return load_server_status(server);
 }

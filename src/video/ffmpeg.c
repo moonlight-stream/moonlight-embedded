@@ -22,6 +22,9 @@
 #ifdef HAVE_VDPAU
 #include "ffmpeg_vdpau.h"
 #endif
+#ifdef HAVE_VAAPI
+#include "ffmpeg_vaapi.h"
+#endif
 
 #include <Limelight.h>
 
@@ -53,8 +56,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 
   av_init_packet(&pkt);
 
-  #ifdef HAVE_VDPAU
-  if (perf_lvl & HARDWARE_ACCELERATION) {
+  if (perf_lvl & VDPAU_ACCELERATION) {
     switch (videoFormat) {
       case VIDEO_FORMAT_H264:
         decoder = avcodec_find_decoder_by_name("h264_vdpau");
@@ -64,13 +66,9 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
         break;
     }
 
-    if (decoder != NULL)
-      ffmpeg_decoder = VDPAU;
-  }
-  #endif
-
-  if (decoder == NULL) {
-    ffmpeg_decoder = SOFTWARE;
+    ffmpeg_decoder = VDPAU;
+  } else {
+    ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
     switch (videoFormat) {
       case VIDEO_FORMAT_H264:
         decoder = avcodec_find_decoder_by_name("h264");
@@ -79,10 +77,11 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
         decoder = avcodec_find_decoder_by_name("hevc");
         break;
     }
-    if (decoder == NULL) {
-      printf("Couldn't find decoder\n");
-      return -1;
-    }
+  }
+
+  if (decoder == NULL) {
+    printf("Couldn't find decoder\n");
+    return -1;
   }
 
   decoder_ctx = avcodec_alloc_context3(decoder);
@@ -130,6 +129,11 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
       return -1;
     }
   }
+
+  #ifdef HAVE_VAAPI
+  if (ffmpeg_decoder == VAAPI)
+    vaapi_init(decoder_ctx);
+  #endif
 
   #ifdef HAVE_VDPAU
   if (ffmpeg_decoder == VDPAU)

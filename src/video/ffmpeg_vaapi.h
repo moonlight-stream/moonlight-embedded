@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015-2017 Iwan Timmer
+ * Copyright (C) 2017 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,28 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Limelight.h>
+#include <va/va.h>
 
-#include <stdbool.h>
-
-#define DISPLAY_FULLSCREEN 1
-#define ENABLE_HARDWARE_ACCELERATION_1 2
-#define ENABLE_HARDWARE_ACCELERATION_2 4
-
-#define INIT_EGL 1
-#define INIT_VDPAU 2
-#define INIT_VAAPI 3
-
-#ifdef HAVE_X11
-int x11_init(bool vdpau, bool vaapi);
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11;
-#ifdef HAVE_VAAPI
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vaapi;
-#endif
-#ifdef HAVE_VDPAU
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau;
-#endif
-#endif
-#ifdef HAVE_SDL
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
-#endif
+int vaapi_init_lib();
+int vaapi_init(AVCodecContext* decoder_ctx);
+void vaapi_queue(AVFrame* dec_frame, Window win, int width, int height);

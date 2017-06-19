@@ -217,7 +217,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         mouseCode = BUTTON_RIGHT;
         break;
       default:
-        if (index == dev->map->btn_a)
+        if (dev->map == NULL)
+          break;
+        else if (index == dev->map->btn_a)
           gamepadCode = A_FLAG;
         else if (index == dev->map->btn_x)
           gamepadCode = X_FLAG;
@@ -251,22 +253,20 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
 
       if (mouseCode != 0) {
         LiSendMouseButtonEvent(ev->value?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, mouseCode);
-      } else {
+      } else if (gamepadCode != 0) {
         gamepadModified = true;
 
-        if (gamepadCode != 0) {
-          if (ev->value)
-            dev->buttonFlags |= gamepadCode;
-          else
-            dev->buttonFlags &= ~gamepadCode;
-        } else if (index == dev->map->btn_lefttrigger)
-          dev->leftTrigger = ev->value?UCHAR_MAX:0;
-        else if (index == dev->map->btn_righttrigger)
-          dev->rightTrigger = ev->value?UCHAR_MAX:0;
-        else {
-          fprintf(stderr, "Unmapped button: %d\n", ev->code);
-          gamepadModified = false;
-        }
+        if (ev->value)
+          dev->buttonFlags |= gamepadCode;
+        else
+          dev->buttonFlags &= ~gamepadCode;
+      } else if (index == dev->map->btn_lefttrigger)
+        dev->leftTrigger = ev->value ? UCHAR_MAX : 0;
+      else if (index == dev->map->btn_righttrigger)
+        dev->rightTrigger = ev->value ? UCHAR_MAX : 0;
+      else {
+        fprintf(stderr, "Unmapped button: %d\n", ev->code);
+        gamepadModified = false;
       }
     }
     break;
@@ -284,6 +284,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     }
     break;
   case EV_ABS:
+    if (dev->map == NULL)
+      break;
+
     gamepadModified = true;
     int index = dev->abs_map[ev->code];
     int hat_index = (ev->code - ABS_HAT0X) / 2;
@@ -394,7 +397,7 @@ static int evdev_handle(int fd) {
   return LOOP_OK;
 }
 
-void evdev_create(const char* device, struct mapping* mappings) {
+void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   int fd = open(device, O_RDONLY|O_NONBLOCK);
   if (fd <= 0) {
     fprintf(stderr, "Failed to open device %s\n", device);
@@ -416,16 +419,21 @@ void evdev_create(const char* device, struct mapping* mappings) {
   for (int i = 0; i < 16; i++)
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
 
-  while (mappings != NULL && strncmp(str_guid, mappings->guid, 32) != 0)
-    mappings = mappings->next;
+  while (mappings != NULL) {
+    if (strncmp(str_guid, mappings->guid, 32) == 0) {
+      if (verbose)
+        printf("Detected %s (%s) on %s\n", mappings->name, str_guid, device);
 
-  if (mappings == NULL) {
-    fprintf(stderr, "No mapping available for %s\n", device);
-    fflush(stderr);
-    close(fd);
-    libevdev_free(evdev);
-    return;
+      break;
+    }
+    mappings = mappings->next;
   }
+
+  bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);
+  bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
+
+  if (mappings == NULL && !(is_keyboard || is_mouse))
+    fprintf(stderr, "No mapping available for %s (%s)\n", device, str_guid);
 
   int dev = numDevices;
   numDevices++;
@@ -466,12 +474,15 @@ void evdev_create(const char* device, struct mapping* mappings) {
   }
 
   devices[dev].controllerId = -1;
-  evdev_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map->abs_leftx);
-  evdev_init_parms(&devices[dev], &(devices[dev].yParms), devices[dev].map->abs_lefty);
-  evdev_init_parms(&devices[dev], &(devices[dev].zParms), devices[dev].map->abs_lefttrigger);
-  evdev_init_parms(&devices[dev], &(devices[dev].rxParms), devices[dev].map->abs_rightx);
-  evdev_init_parms(&devices[dev], &(devices[dev].ryParms), devices[dev].map->abs_righty);
-  evdev_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map->abs_righttrigger);
+
+  if (devices[dev].map != NULL) {
+    evdev_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map->abs_leftx);
+    evdev_init_parms(&devices[dev], &(devices[dev].yParms), devices[dev].map->abs_lefty);
+    evdev_init_parms(&devices[dev], &(devices[dev].zParms), devices[dev].map->abs_lefttrigger);
+    evdev_init_parms(&devices[dev], &(devices[dev].rxParms), devices[dev].map->abs_rightx);
+    evdev_init_parms(&devices[dev], &(devices[dev].ryParms), devices[dev].map->abs_righty);
+    evdev_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map->abs_righttrigger);
+  }
 
   if (grabbingDevices) {
     if (ioctl(fd, EVIOCGRAB, 1) < 0) {

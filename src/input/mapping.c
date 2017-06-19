@@ -21,16 +21,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
-struct mapping* mapping_load(char* fileName) {
+struct mapping* mapping_load(char* fileName, bool verbose) {
   struct mapping* mappings = NULL;
   struct mapping* map = NULL;
   FILE* fd = fopen(fileName, "r");
   if (fd == NULL) {
     fprintf(stderr, "Can't open mapping file: %s\n", fileName);
     exit(EXIT_FAILURE);
-  }
+  } else if (verbose)
+    printf("Loading mappingfile %s\n", fileName);
 
   char *line = NULL;
   size_t len = 0;

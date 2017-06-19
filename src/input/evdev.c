@@ -397,7 +397,7 @@ static int evdev_handle(int fd) {
   return LOOP_OK;
 }
 
-void evdev_create(const char* device, struct mapping* mappings) {
+void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   int fd = open(device, O_RDONLY|O_NONBLOCK);
   if (fd <= 0) {
     fprintf(stderr, "Failed to open device %s\n", device);
@@ -419,14 +419,21 @@ void evdev_create(const char* device, struct mapping* mappings) {
   for (int i = 0; i < 16; i++)
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
 
-  while (mappings != NULL && strncmp(str_guid, mappings->guid, 32) != 0)
+  while (mappings != NULL) {
+    if (strncmp(str_guid, mappings->guid, 32) == 0) {
+      if (verbose)
+        printf("Detected %s (%s) on %s\n", mappings->name, str_guid, device);
+
+      break;
+    }
     mappings = mappings->next;
+  }
 
   bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);
   bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
 
   if (mappings == NULL && !(is_keyboard || is_mouse))
-    fprintf(stderr, "No mapping available for %s\n", device);
+    fprintf(stderr, "No mapping available for %s (%s)\n", device, str_guid);
 
   int dev = numDevices;
   numDevices++;

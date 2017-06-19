@@ -256,16 +256,16 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
         exit(-1);
       }
-      struct mapping* mappings = mapping_load(config.mapping);
+      struct mapping* mappings = mapping_load(config.mapping, config.debug_level > 0);
 
       for (int i=0;i<config.inputsCount;i++) {
         if (config.debug_level > 0)
           printf("Add input %s...\n", config.inputs[i]);
 
-        evdev_create(config.inputs[i], mappings);
+        evdev_create(config.inputs[i], mappings, config.debug_level > 0);
       }
 
-      udev_init(!inputAdded, mappings);
+      udev_init(!inputAdded, mappings, config.debug_level > 0);
       evdev_init();
       #ifdef HAVE_LIBCEC
       cec_init();

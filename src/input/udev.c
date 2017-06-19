@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <poll.h>
 
-static bool autoadd;
+static bool autoadd, debug;
 static struct mapping* defaultMappings;
 
 static struct udev *udev;
@@ -46,7 +46,7 @@ static int udev_handle(int fd) {
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
-        evdev_create(devnode, defaultMappings);
+        evdev_create(devnode, defaultMappings, debug);
       }
     }
     udev_device_unref(dev);
@@ -54,8 +54,9 @@ static int udev_handle(int fd) {
   return LOOP_OK;
 }
 
-void udev_init(bool autoload, struct mapping* mappings) {
+void udev_init(bool autoload, struct mapping* mappings, bool verbose) {
   udev = udev_new();
+  debug = verbose;
   if (!udev) {
     fprintf(stderr, "Can't create udev\n");
     exit(1);
@@ -75,7 +76,7 @@ void udev_init(bool autoload, struct mapping* mappings) {
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
-        evdev_create(devnode, mappings);
+        evdev_create(devnode, mappings, verbose);
       }
       udev_device_unref(dev);
     }

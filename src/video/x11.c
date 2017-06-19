@@ -55,8 +55,14 @@ static int display_height;
 static int frame_handle(int pipefd) {
   AVFrame* frame = NULL;
   while (read(pipefd, &frame, sizeof(void*)) > 0);
-  if (frame)
-    egl_draw(frame->data);
+  if (frame) {
+    if (ffmpeg_decoder == SOFTWARE)
+      egl_draw(frame->data);
+    else if (ffmpeg_decoder == VAAPI)
+      vaapi_queue(frame, window, display_width, display_height);
+    else if (ffmpeg_decoder == VDPAU)
+      vdpau_queue(frame);
+  }
 
   return LOOP_OK;
 }
@@ -135,19 +141,20 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     return -1;
   }
 
-  if (ffmpeg_decoder == SOFTWARE) {
+  if (ffmpeg_decoder == SOFTWARE)
     egl_init(display, window, width, height);
-    if (pipe(pipefd) == -1) {
-      fprintf(stderr, "Can't create communication channel between threads\n");
-      return -2;
-    }
-    loop_add_fd(pipefd[0], &frame_handle, POLLIN);
-    fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
-  }
+  
   #ifdef HAVE_VDPAU
-  else if (ffmpeg_decoder == VDPAU)
+  if (ffmpeg_decoder == VDPAU)
     vdpau_init_presentation(window, width, height, display_width, display_height);
   #endif
+
+  if (pipe(pipefd) == -1) {
+    fprintf(stderr, "Can't create communication channel between threads\n");
+    return -2;
+  }
+  loop_add_fd(pipefd[0], &frame_handle, POLLIN);
+  fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
 
   x11_input_init(display, window);
 
@@ -178,14 +185,8 @@ int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     }
     ffmpeg_decode(ffmpeg_buffer, length);
     AVFrame* frame = ffmpeg_get_frame(true);
-    if (frame != NULL) {
-      if (ffmpeg_decoder == SOFTWARE)
-        write(pipefd[1], &frame, sizeof(void*));
-      else if (ffmpeg_decoder == VDPAU)
-        vdpau_queue(frame);
-      else if (ffmpeg_decoder == VAAPI)
-        vaapi_queue(frame, window, display_width, display_height);
-    }
+    if (frame != NULL)
+      write(pipefd[1], &frame, sizeof(void*));
   }
 
   return DR_OK;

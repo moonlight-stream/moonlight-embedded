@@ -214,7 +214,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     } else {
       int mouseCode = 0;
       short gamepadCode = 0;
-      int index = dev->key_map[ev->code - BTN_MISC];
+      int index = ev->code > BTN_MISC && ev->code < (BTN_MISC + KEY_MAX) ? dev->key_map[ev->code - BTN_MISC] : -1;
 
       switch (ev->code) {
       case BTN_LEFT:
@@ -311,8 +311,8 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     case ABS_HAT2Y:
     case ABS_HAT3X:
     case ABS_HAT3Y:
-      dev->hats_state[hat_index][hat_dir_index] = ev->value < 0 ? 0 : (ev->value == 0 ? 1 : 2);
-      int hat_state = hat_constants[dev->hats_state[hat_index][1]][dev->hats_state[hat_index][0]];
+      dev->hats_state[hat_index][hat_dir_index] = ev->value < 0 ? -1 : (ev->value == 0 ? 0 : 1);
+      int hat_state = hat_constants[dev->hats_state[hat_index][1] + 1][dev->hats_state[hat_index][0] + 1];
       if (hat_index == dev->map->hat_dpup)
         set_hat(dev->buttonFlags, UP_FLAG, hat_state, dev->map->hat_dir_dpup);
       if (hat_index == dev->map->hat_dpdown)
@@ -463,6 +463,8 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   devices[dev].fd = fd;
   devices[dev].dev = evdev;
   devices[dev].map = mappings;
+  memset(&devices[dev].key_map, -1, sizeof(devices[dev].key_map));
+  memset(&devices[dev].abs_map, -1, sizeof(devices[dev].abs_map));
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {

@@ -75,9 +75,9 @@ struct input_device {
 #define HAT_RIGHT 2
 #define HAT_DOWN 4
 #define HAT_LEFT 8
-static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT_RIGHT}, {HAT_LEFT, 0, HAT_RIGHT}, {HAT_LEFT | HAT_DOWN, HAT_DOWN, HAT_RIGHT}};
+static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT_RIGHT}, {HAT_LEFT, 0, HAT_RIGHT}, {HAT_LEFT | HAT_DOWN, HAT_DOWN, HAT_DOWN | HAT_RIGHT}};
 
-#define set_hat(flags, flag, hat, hat_flag) flags = (-((hat & hat_flag) > 0) ^ flags) & flag
+#define set_hat(flags, flag, hat, hat_flag) flags = (hat & hat_flag) == hat_flag ? flags | flag : flags & ~flag
 
 static struct input_device* devices = NULL;
 static int numDevices = 0;
@@ -290,7 +290,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     gamepadModified = true;
     int index = dev->abs_map[ev->code];
     int hat_index = (ev->code - ABS_HAT0X) / 2;
-    int har_dir_index = (ev->code - ABS_HAT0X) % 2;
+    int hat_dir_index = (ev->code - ABS_HAT0X) % 2;
 
     switch (ev->code) {
     case ABS_HAT0X:
@@ -301,16 +301,16 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     case ABS_HAT2Y:
     case ABS_HAT3X:
     case ABS_HAT3Y:
-      dev->hats_state[hat_index][har_dir_index] = ev->value < 0 ? 0 : (ev->value == 0 ? 1 : 2);
-      int hat_state = hat_constants[dev->hats_state[hat_index][0]][dev->hats_state[hat_index][1]];
+      dev->hats_state[hat_index][hat_dir_index] = ev->value < 0 ? 0 : (ev->value == 0 ? 1 : 2);
+      int hat_state = hat_constants[dev->hats_state[hat_index][1]][dev->hats_state[hat_index][0]];
       if (hat_index == dev->map->hat_dpup)
         set_hat(dev->buttonFlags, UP_FLAG, hat_state, dev->map->hat_dir_dpup);
       if (hat_index == dev->map->hat_dpdown)
         set_hat(dev->buttonFlags, DOWN_FLAG, hat_state, dev->map->hat_dir_dpdown);
       if (hat_index == dev->map->hat_dpright)
-        set_hat(dev->buttonFlags, HAT_RIGHT, hat_state, dev->map->hat_dir_dpright);
+        set_hat(dev->buttonFlags, RIGHT_FLAG, hat_state, dev->map->hat_dir_dpright);
       if (hat_index == dev->map->hat_dpleft)
-        set_hat(dev->buttonFlags, HAT_LEFT, hat_state, dev->map->hat_dir_dpleft);
+        set_hat(dev->buttonFlags, LEFT_FLAG, hat_state, dev->map->hat_dir_dpleft);
       break;
     default:
       if (index == dev->map->abs_leftx)

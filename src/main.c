@@ -258,7 +258,7 @@ int main(int argc, char* argv[]) {
         exit(-1);
       }
 
-      struct mapping* mappings;
+      struct mapping* mappings = NULL;
       if (config.mapping != NULL)
         mappings = mapping_load(config.mapping, config.debug_level > 0);
 

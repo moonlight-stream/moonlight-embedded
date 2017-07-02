@@ -75,9 +75,9 @@ struct input_device {
 #define HAT_RIGHT 2
 #define HAT_DOWN 4
 #define HAT_LEFT 8
-static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT_RIGHT}, {HAT_LEFT, 0, HAT_RIGHT}, {HAT_LEFT | HAT_DOWN, HAT_DOWN, HAT_RIGHT}};
+static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT_RIGHT}, {HAT_LEFT, 0, HAT_RIGHT}, {HAT_LEFT | HAT_DOWN, HAT_DOWN, HAT_DOWN | HAT_RIGHT}};
 
-#define set_hat(flags, flag, hat, hat_flag) flags = (-((hat & hat_flag) > 0) ^ flags) & flag
+#define set_hat(flags, flag, hat, hat_flag) flags = (hat & hat_flag) == hat_flag ? flags | flag : flags & ~flag
 
 static struct input_device* devices = NULL;
 static int numDevices = 0;
@@ -95,10 +95,20 @@ static bool grabbingDevices;
 
 static bool (*handler) (struct input_event*, struct input_device*);
 
+static int evdev_get_map_key(int* map, int length, int value) {
+  for (int i = 0; i < length; i++) {
+    if (value == map[i])
+      return i;
+  }
+  return -1;
+}
+
 static void evdev_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
-  parms->flat = libevdev_get_abs_flat(dev->dev, dev->abs_map[code]);
-  parms->min = libevdev_get_abs_minimum(dev->dev, dev->abs_map[code]);
-  parms->max = libevdev_get_abs_maximum(dev->dev, dev->abs_map[code]);
+  int abs = evdev_get_map_key(dev->abs_map, ABS_MAX, code);
+
+  parms->flat = libevdev_get_abs_flat(dev->dev, abs);
+  parms->min = libevdev_get_abs_minimum(dev->dev, abs);
+  parms->max = libevdev_get_abs_maximum(dev->dev, abs);
   parms->avg = (parms->min+parms->max)/2;
   parms->range = parms->max - parms->avg;
   parms->diff = parms->max - parms->min;
@@ -117,6 +127,11 @@ static void evdev_remove(int devindex) {
 }
 
 static short evdev_convert_value(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {
+  if (parms->max == 0 && parms->min == 0) {
+    fprintf(stderr, "Axis not found: %d\n", ev->code);
+    return 0;
+  }
+
   if (abs(ev->value - parms->avg) < parms->flat)
     return 0;
   else if (ev->value > parms->max)
@@ -130,6 +145,11 @@ static short evdev_convert_value(struct input_event *ev, struct input_device *de
 }
 
 static char evdev_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms) {
+  if (parms->max == 0 && parms->min == 0) {
+    fprintf(stderr, "Axis not found: %d\n", ev->code);
+    return 0;
+  }
+
   if (abs(ev->value-parms->min)<parms->flat)
     return 0;
   else if (ev->value>parms->max)
@@ -204,7 +224,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     } else {
       int mouseCode = 0;
       short gamepadCode = 0;
-      int index = dev->key_map[ev->code - BTN_MISC];
+      int index = ev->code > BTN_MISC && ev->code < (BTN_MISC + KEY_MAX) ? dev->key_map[ev->code - BTN_MISC] : -1;
 
       switch (ev->code) {
       case BTN_LEFT:
@@ -260,12 +280,14 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
           dev->buttonFlags |= gamepadCode;
         else
           dev->buttonFlags &= ~gamepadCode;
-      } else if (index == dev->map->btn_lefttrigger)
+      } else if (dev->map != NULL && index == dev->map->btn_lefttrigger)
         dev->leftTrigger = ev->value ? UCHAR_MAX : 0;
-      else if (index == dev->map->btn_righttrigger)
+      else if (dev->map != NULL && index == dev->map->btn_righttrigger)
         dev->rightTrigger = ev->value ? UCHAR_MAX : 0;
       else {
-        fprintf(stderr, "Unmapped button: %d\n", ev->code);
+        if (dev->map != NULL)
+          fprintf(stderr, "Unmapped button: %d\n", ev->code);
+
         gamepadModified = false;
       }
     }
@@ -290,7 +312,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     gamepadModified = true;
     int index = dev->abs_map[ev->code];
     int hat_index = (ev->code - ABS_HAT0X) / 2;
-    int har_dir_index = (ev->code - ABS_HAT0X) % 2;
+    int hat_dir_index = (ev->code - ABS_HAT0X) % 2;
 
     switch (ev->code) {
     case ABS_HAT0X:
@@ -301,16 +323,16 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     case ABS_HAT2Y:
     case ABS_HAT3X:
     case ABS_HAT3Y:
-      dev->hats_state[hat_index][har_dir_index] = ev->value < 0 ? 0 : (ev->value == 0 ? 1 : 2);
-      int hat_state = hat_constants[dev->hats_state[hat_index][0]][dev->hats_state[hat_index][1]];
+      dev->hats_state[hat_index][hat_dir_index] = ev->value < 0 ? -1 : (ev->value == 0 ? 0 : 1);
+      int hat_state = hat_constants[dev->hats_state[hat_index][1] + 1][dev->hats_state[hat_index][0] + 1];
       if (hat_index == dev->map->hat_dpup)
         set_hat(dev->buttonFlags, UP_FLAG, hat_state, dev->map->hat_dir_dpup);
       if (hat_index == dev->map->hat_dpdown)
         set_hat(dev->buttonFlags, DOWN_FLAG, hat_state, dev->map->hat_dir_dpdown);
       if (hat_index == dev->map->hat_dpright)
-        set_hat(dev->buttonFlags, HAT_RIGHT, hat_state, dev->map->hat_dir_dpright);
+        set_hat(dev->buttonFlags, RIGHT_FLAG, hat_state, dev->map->hat_dir_dpright);
       if (hat_index == dev->map->hat_dpleft)
-        set_hat(dev->buttonFlags, HAT_LEFT, hat_state, dev->map->hat_dir_dpleft);
+        set_hat(dev->buttonFlags, LEFT_FLAG, hat_state, dev->map->hat_dir_dpleft);
       break;
     default:
       if (index == dev->map->abs_leftx)
@@ -407,6 +429,7 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
 
   struct libevdev *evdev = libevdev_new();
   libevdev_set_fd(evdev, fd);
+  const char* name = libevdev_get_name(evdev);
 
   int16_t guid[8] = {0};
   guid[0] = int16_to_le(libevdev_get_id_bustype(evdev));
@@ -419,21 +442,32 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   for (int i = 0; i < 16; i++)
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
 
+  struct mapping* default_mapping = NULL;
+  struct mapping* xwc_mapping = NULL;
   while (mappings != NULL) {
     if (strncmp(str_guid, mappings->guid, 32) == 0) {
       if (verbose)
-        printf("Detected %s (%s) on %s\n", mappings->name, str_guid, device);
+        printf("Detected %s (%s) on %s as %s\n", name, str_guid, device, mappings->name);
 
       break;
-    }
+    } else if (strncmp("default", mappings->guid, 32) == 0)
+      default_mapping = mappings;
+    else if (strncmp("xwc", mappings->guid, 32) == 0)
+      default_mapping = mappings;
+
     mappings = mappings->next;
   }
+
+  if (mappings != NULL && strstr(name, "Xbox 360 Wireless Receiver") != NULL)
+    mappings = xwc_mapping;
 
   bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);
   bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
 
-  if (mappings == NULL && !(is_keyboard || is_mouse))
-    fprintf(stderr, "No mapping available for %s (%s)\n", device, str_guid);
+  if (mappings == NULL && !(is_keyboard || is_mouse)) {
+    fprintf(stderr, "No mapping available for %s (%s) on %s\n", name, str_guid, device);
+    mappings = default_mapping;
+  }
 
   int dev = numDevices;
   numDevices++;
@@ -453,6 +487,8 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   devices[dev].fd = fd;
   devices[dev].dev = evdev;
   devices[dev].map = mappings;
+  memset(&devices[dev].key_map, -1, sizeof(devices[dev].key_map));
+  memset(&devices[dev].abs_map, -1, sizeof(devices[dev].abs_map));
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {

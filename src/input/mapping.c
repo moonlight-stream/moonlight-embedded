@@ -39,7 +39,8 @@ struct mapping* mapping_parse(char* mapping) {
 
   strncpy(map->guid, guid, sizeof(map->guid));
   strncpy(map->name, name, sizeof(map->name));
-    
+  memset(&map->abs_leftx, -1, sizeof(short) * 31);
+
   char* option;
   while ((option = strtok_r(NULL, ",", &strpoint)) != NULL) {
     char *key = NULL, *value = NULL;

@@ -1,3 +1,9 @@
+moonlight-embedded (2.4.1-1jessie1) RELEASED; urgency=medium
+
+  * Update to version 2.4.1
+
+ -- Iwan Timmer <irtimmer@gmail.com>  Mon, 19 Jun 2017 20:51:46 +0000
+
 moonlight-embedded (2.4.0-2jessie1) RELEASED; urgency=medium
 
   * Fix for OpenSSL patch

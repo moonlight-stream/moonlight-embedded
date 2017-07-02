@@ -1,8 +1,8 @@
-diff --git b/libgamestream/client.c a/libgamestream/client.c
-index bc6c020..2d547ce 100644
---- b/libgamestream/client.c
-+++ a/libgamestream/client.c
-@@ -494,15 +494,12 @@ int gs_pair(PSERVER_DATA server, char* pin) {
+Index: moonlight-embedded/libgamestream/client.c
+===================================================================
+--- moonlight-embedded.orig/libgamestream/client.c
++++ moonlight-embedded/libgamestream/client.c
+@@ -493,15 +493,12 @@ int gs_pair(PSERVER_DATA server, char* p
    char client_secret_data[16];
    RAND_bytes(client_secret_data, 16);
  
@@ -19,3 +19,16 @@ index bc6c020..2d547ce 100644
    memcpy(challenge_response + 16 + 256, client_secret_data, 16);
    if (server->serverMajorVersion >= 7)
      SHA256(challenge_response, 16 + 256 + 16, challenge_response_hash);
+Index: moonlight-embedded/libgamestream/CMakeLists.txt
+===================================================================
+--- moonlight-embedded.orig/libgamestream/CMakeLists.txt
++++ moonlight-embedded/libgamestream/CMakeLists.txt
+@@ -3,7 +3,7 @@ set(SO_VERSION 2)
+ find_package(LibUUID REQUIRED)
+ find_package(Threads REQUIRED)
+ find_package(CURL REQUIRED)
+-find_package(OpenSSL 1.0.2 REQUIRED)
++find_package(OpenSSL 1.0.1 REQUIRED)
+ find_package(EXPAT REQUIRED)
+ 
+ pkg_check_modules(AVAHI REQUIRED avahi-client)

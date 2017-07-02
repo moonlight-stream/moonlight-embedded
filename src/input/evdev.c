@@ -429,6 +429,7 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
 
   struct libevdev *evdev = libevdev_new();
   libevdev_set_fd(evdev, fd);
+  const char* name = libevdev_get_name(evdev);
 
   int16_t guid[8] = {0};
   guid[0] = int16_to_le(libevdev_get_id_bustype(evdev));
@@ -442,23 +443,29 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
 
   struct mapping* default_mapping = NULL;
+  struct mapping* xwc_mapping = NULL;
   while (mappings != NULL) {
     if (strncmp(str_guid, mappings->guid, 32) == 0) {
       if (verbose)
-        printf("Detected %s (%s) on %s\n", mappings->name, str_guid, device);
+        printf("Detected %s (%s) on %s as %s\n", name, str_guid, device, mappings->name);
 
       break;
     } else if (strncmp("default", mappings->guid, 32) == 0)
+      default_mapping = mappings;
+    else if (strncmp("xwc", mappings->guid, 32) == 0)
       default_mapping = mappings;
 
     mappings = mappings->next;
   }
 
+  if (mappings != NULL && strstr(name, "Xbox 360 Wireless Receiver") != NULL)
+    mappings = xwc_mapping;
+
   bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);
   bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
 
   if (mappings == NULL && !(is_keyboard || is_mouse)) {
-    fprintf(stderr, "No mapping available for %s (%s)\n", device, str_guid);
+    fprintf(stderr, "No mapping available for %s (%s) on %s\n", name, str_guid, device);
     mappings = default_mapping;
   }
 

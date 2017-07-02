@@ -95,10 +95,20 @@ static bool grabbingDevices;
 
 static bool (*handler) (struct input_event*, struct input_device*);
 
+static int evdev_get_map_key(int* map, int length, int value) {
+  for (int i = 0; i < length; i++) {
+    if (value == map[i])
+      return i;
+  }
+  return -1;
+}
+
 static void evdev_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
-  parms->flat = libevdev_get_abs_flat(dev->dev, dev->abs_map[code]);
-  parms->min = libevdev_get_abs_minimum(dev->dev, dev->abs_map[code]);
-  parms->max = libevdev_get_abs_maximum(dev->dev, dev->abs_map[code]);
+  int abs = evdev_get_map_key(dev->abs_map, ABS_MAX, code);
+
+  parms->flat = libevdev_get_abs_flat(dev->dev, abs);
+  parms->min = libevdev_get_abs_minimum(dev->dev, abs);
+  parms->max = libevdev_get_abs_maximum(dev->dev, abs);
   parms->avg = (parms->min+parms->max)/2;
   parms->range = parms->max - parms->avg;
   parms->diff = parms->max - parms->min;

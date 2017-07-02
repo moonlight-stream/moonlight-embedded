@@ -128,7 +128,7 @@ static void evdev_remove(int devindex) {
 
 static short evdev_convert_value(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {
   if (parms->max == 0 && parms->min == 0) {
-    fprintf(stderr, "Unmapped axis: %d\n", ev->code);
+    fprintf(stderr, "Axis not found: %d\n", ev->code);
     return 0;
   }
 
@@ -146,7 +146,7 @@ static short evdev_convert_value(struct input_event *ev, struct input_device *de
 
 static char evdev_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms) {
   if (parms->max == 0 && parms->min == 0) {
-    fprintf(stderr, "Unmapped axis: %d\n", ev->code);
+    fprintf(stderr, "Axis not found: %d\n", ev->code);
     return 0;
   }
 
@@ -285,7 +285,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       else if (dev->map != NULL && index == dev->map->btn_righttrigger)
         dev->rightTrigger = ev->value ? UCHAR_MAX : 0;
       else {
-        fprintf(stderr, "Unmapped button: %d\n", ev->code);
+        if (dev->map != NULL)
+          fprintf(stderr, "Unmapped button: %d\n", ev->code);
+
         gamepadModified = false;
       }
     }

@@ -441,21 +441,26 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   for (int i = 0; i < 16; i++)
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
 
+  struct mapping* default_mapping = NULL;
   while (mappings != NULL) {
     if (strncmp(str_guid, mappings->guid, 32) == 0) {
       if (verbose)
         printf("Detected %s (%s) on %s\n", mappings->name, str_guid, device);
 
       break;
-    }
+    } else if (strncmp("default", mappings->guid, 32) == 0)
+      default_mapping = mappings;
+
     mappings = mappings->next;
   }
 
   bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);
   bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
 
-  if (mappings == NULL && !(is_keyboard || is_mouse))
+  if (mappings == NULL && !(is_keyboard || is_mouse)) {
     fprintf(stderr, "No mapping available for %s (%s)\n", device, str_guid);
+    mappings = default_mapping;
+  }
 
   int dev = numDevices;
   numDevices++;

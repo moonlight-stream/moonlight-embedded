@@ -453,12 +453,12 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
     } else if (strncmp("default", mappings->guid, 32) == 0)
       default_mapping = mappings;
     else if (strncmp("xwc", mappings->guid, 32) == 0)
-      default_mapping = mappings;
+      xwc_mapping = mappings;
 
     mappings = mappings->next;
   }
 
-  if (mappings != NULL && strstr(name, "Xbox 360 Wireless Receiver") != NULL)
+  if (mappings == NULL && strstr(name, "Xbox 360 Wireless Receiver") != NULL)
     mappings = xwc_mapping;
 
   bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);

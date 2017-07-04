@@ -173,7 +173,7 @@ void egl_init(EGLNativeDisplayType native_display, NativeWindowType native_windo
 void egl_draw(uint8_t* image[3]) {
   if (!current) {
     eglMakeCurrent(display, surface, surface, context);
-    current = True;
+    current = true;
   }
 
   glUseProgram(shader_program);

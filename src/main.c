@@ -96,6 +96,8 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
       fprintf(stderr, "Server doesn't support 4K\n");
     else if (ret == GS_NOT_SUPPORTED_MODE)
       fprintf(stderr, "Server doesn't support %dx%d (%d fps) or try --unsupported option\n", config->stream.width, config->stream.height, config->stream.fps);
+    else if (ret == GS_ERROR)
+      fprintf(stderr, "Gamestream error: %s\n", gs_error);
     else
       fprintf(stderr, "Errorcode starting app: %d\n", ret);
     exit(-1);
@@ -219,8 +221,11 @@ int main(int argc, char* argv[]) {
   if ((ret = gs_init(&server, config.address, config.key_dir, config.debug_level, config.unsupported)) == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
     exit(-1);
+  } else if (ret == GS_ERROR) {
+    fprintf(stderr, "Gamestream error: %s\n", gs_error);
+    exit(-1);
   } else if (ret == GS_INVALID) {
-    fprintf(stderr, "Invalid data received from server: %s\n", config.address, gs_error);
+    fprintf(stderr, "Invalid data received from server: %s\n", gs_error);
     exit(-1);
   } else if (ret == GS_UNSUPPORTED_VERSION) {
     fprintf(stderr, "Unsupported version: %s\n", gs_error);

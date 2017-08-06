@@ -238,6 +238,9 @@ int ui_connect(char *address) {
         display_error("Unsupported version: %s\n", gs_error);
         return 0;
       }
+    } else if (ret == GS_ERROR) {
+      display_error("Gamestream error: %s\n", gs_error);
+      return 0;
     } else if (ret != GS_OK) {
       display_error("Can't connect to server\n%s", address);
       return 0;

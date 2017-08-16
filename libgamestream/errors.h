@@ -28,5 +28,6 @@
 #define GS_NOT_SUPPORTED_4K -6
 #define GS_UNSUPPORTED_VERSION -7
 #define GS_NOT_SUPPORTED_MODE -8
+#define GS_ERROR -9
 
-const char* gs_error;
+extern const char* gs_error;

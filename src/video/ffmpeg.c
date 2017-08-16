@@ -29,7 +29,6 @@
 #include <Limelight.h>
 
 #include <stdlib.h>
-#include <libswscale/swscale.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdbool.h>

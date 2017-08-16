@@ -103,15 +103,21 @@ static int evdev_get_map_key(int* map, int length, int value) {
   return -1;
 }
 
-static void evdev_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
+static bool evdev_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
   int abs = evdev_get_map_key(dev->abs_map, ABS_MAX, code);
 
-  parms->flat = libevdev_get_abs_flat(dev->dev, abs);
-  parms->min = libevdev_get_abs_minimum(dev->dev, abs);
-  parms->max = libevdev_get_abs_maximum(dev->dev, abs);
-  parms->avg = (parms->min+parms->max)/2;
-  parms->range = parms->max - parms->avg;
-  parms->diff = parms->max - parms->min;
+  if (abs >= 0) {
+    parms->flat = libevdev_get_abs_flat(dev->dev, abs);
+    parms->min = libevdev_get_abs_minimum(dev->dev, abs);
+    parms->max = libevdev_get_abs_maximum(dev->dev, abs);
+    if (parms->flat == 0 && parms->min == 0 && parms->max == 0)
+      return false;
+
+    parms->avg = (parms->min+parms->max)/2;
+    parms->range = parms->max - parms->avg;
+    parms->diff = parms->max - parms->min;
+  }
+  return true;
 }
 
 static void evdev_remove(int devindex) {
@@ -453,12 +459,12 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
     } else if (strncmp("default", mappings->guid, 32) == 0)
       default_mapping = mappings;
     else if (strncmp("xwc", mappings->guid, 32) == 0)
-      default_mapping = mappings;
+      xwc_mapping = mappings;
 
     mappings = mappings->next;
   }
 
-  if (mappings != NULL && strstr(name, "Xbox 360 Wireless Receiver") != NULL)
+  if (mappings == NULL && strstr(name, "Xbox 360 Wireless Receiver") != NULL)
     mappings = xwc_mapping;
 
   bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);
@@ -512,12 +518,14 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   devices[dev].controllerId = -1;
 
   if (devices[dev].map != NULL) {
-    evdev_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map->abs_leftx);
-    evdev_init_parms(&devices[dev], &(devices[dev].yParms), devices[dev].map->abs_lefty);
-    evdev_init_parms(&devices[dev], &(devices[dev].zParms), devices[dev].map->abs_lefttrigger);
-    evdev_init_parms(&devices[dev], &(devices[dev].rxParms), devices[dev].map->abs_rightx);
-    evdev_init_parms(&devices[dev], &(devices[dev].ryParms), devices[dev].map->abs_righty);
-    evdev_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map->abs_righttrigger);
+    bool valid = evdev_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map->abs_leftx);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].yParms), devices[dev].map->abs_lefty);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].zParms), devices[dev].map->abs_lefttrigger);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].rxParms), devices[dev].map->abs_rightx);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].ryParms), devices[dev].map->abs_righty);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map->abs_righttrigger);
+    if (!valid)
+      fprintf(stderr, "Mapping for %s (%s) on %s is incorrect\n", name, str_guid, device);
   }
 
   if (grabbingDevices) {

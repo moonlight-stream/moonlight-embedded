@@ -139,7 +139,7 @@ Select platform for audio and video output and input.
 
 =item B<-unsupported>
 
-Try streaming if GFE version is unsupported
+Try streaming if GFE version or options are unsupported
 
 =item B<-verbose>
 

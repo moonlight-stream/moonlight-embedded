@@ -81,7 +81,7 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
 
   ret = LiStartConnection(&server->serverInfo, &config.stream, &connection_callbacks,
                           video_callback, platform_get_audio(system),
-                          NULL, drFlags);
+                          NULL, drFlags, NULL, 0);
 
   if (ret == 0) {
     server->currentGame = appId;

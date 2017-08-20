@@ -49,7 +49,7 @@ static void vita_renderer_cleanup() {
   }
 }
 
-static int vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig) {
+static int vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* audioContext, int arFlags) {
   int rc;
   decoder = opus_multistream_decoder_create(opusConfig->sampleRate,
                                             opusConfig->channelCount,

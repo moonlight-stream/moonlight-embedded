@@ -18,6 +18,7 @@
  */
 
 #include "../audio.h"
+#include "../debug.h"
 
 #include <stdio.h>
 #include <opus/opus_multistream.h>
@@ -28,8 +29,6 @@ enum {
   VITA_AUDIO_ERROR_BAD_OPUS = 0x80020001,
   VITA_AUDIO_ERROR_PORT     = 0x80020002,
 };
-
-#include "debug.h"
 
 #define FRAME_SIZE 240
 #define VITA_SAMPLES 960
@@ -69,7 +68,7 @@ static int vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
       return VITA_AUDIO_ERROR_PORT;
   }
 
-  DEBUG_PRINT("open port 0x%x\n", port);
+  vita_debug_log("open port 0x%x\n", port);
   return VITA_AUDIO_INIT_OK;
 }
 
@@ -90,7 +89,7 @@ static void vita_renderer_decode_and_play_sample(char* data, int length) {
       }
     }
   } else {
-    DEBUG_PRINT("Opus error from decode: %d\n", decodeLen);
+    vita_debug_log("Opus error from decode: %d\n", decodeLen);
   }
 }
 

@@ -56,10 +56,10 @@ void start_output() {
 
 void connection_connection_started() {
   if (connection_status != LI_PAIRED) {
-    DEBUG_PRINT("connection_connection_started error: %d\n", connection_status);
+    vita_debug_log("connection_connection_started error: %d\n", connection_status);
     return;
   }
-  DEBUG_PRINT("connection started\n");
+  vita_debug_log("connection started\n");
   connection_status = LI_CONNECTED;
   start_output();
 }
@@ -67,7 +67,7 @@ void connection_connection_started() {
 void connection_connection_terminated() {
   if (connection_status != LI_PAIRED && connection_status != LI_CONNECTED &&
       connection_status != LI_MINIMIZED) {
-    DEBUG_PRINT("connection_connection_terminated error: %d\n", connection_status);
+    vita_debug_log("connection_connection_terminated error: %d\n", connection_status);
   }
 
   LiStopConnection();
@@ -75,21 +75,21 @@ void connection_connection_terminated() {
   if (connection_status == LI_CONNECTED) {
     stop_output();
   }
-  DEBUG_PRINT("connection terminated\n");
+  vita_debug_log("connection terminated\n");
   connection_status = LI_DISCONNECTED;
 }
 
 void connection_display_message(const char *msg) {
-  DEBUG_PRINT("display_message: %s\n", msg);
+  vita_debug_log("display_message: %s\n", msg);
 }
 
 void connection_display_transient_message(const char *msg) {
-  DEBUG_PRINT("display_transient_message: %s\n", msg);
+  vita_debug_log("display_transient_message: %s\n", msg);
 }
 
 int connection_reset() {
   if (connection_status != LI_DISCONNECTED) {
-    DEBUG_PRINT("connection_reset error: %d\n", connection_status);
+    vita_debug_log("connection_reset error: %d\n", connection_status);
     return -1;
   }
   connection_status = LI_READY;
@@ -99,7 +99,7 @@ int connection_reset() {
 int connection_paired() {
   if (connection_status != LI_READY && connection_status != LI_PAIRED &&
       connection_status != LI_CONNECTED) {
-    DEBUG_PRINT("connection_paired error: %d\n", connection_status);
+    vita_debug_log("connection_paired error: %d\n", connection_status);
     return -1;
   }
   connection_status = LI_PAIRED;
@@ -108,7 +108,7 @@ int connection_paired() {
 
 int connection_minimize() {
   if (connection_status != LI_CONNECTED) {
-    DEBUG_PRINT("connection_minimize error: %d\n", connection_status);
+    vita_debug_log("connection_minimize error: %d\n", connection_status);
     return -1;
   }
   pause_output();
@@ -118,7 +118,7 @@ int connection_minimize() {
 
 int connection_resume() {
   if (connection_status != LI_MINIMIZED) {
-    DEBUG_PRINT("connection_resume error: %d\n", connection_status);
+    vita_debug_log("connection_resume error: %d\n", connection_status);
     return -1;
   }
   start_output();
@@ -129,7 +129,7 @@ int connection_resume() {
 int connection_terminate() {
   if (connection_status != LI_PAIRED && connection_status != LI_CONNECTED &&
       connection_status != LI_MINIMIZED) {
-    DEBUG_PRINT("connection_terminate error: %d\n", connection_status);
+    vita_debug_log("connection_terminate error: %d\n", connection_status);
     return -1;
   }
   connection_connection_terminated();
@@ -137,16 +137,16 @@ int connection_terminate() {
 }
 
 void connection_stage_starting(int stage) {
-  DEBUG_PRINT("connection_stage_starting - stage: %d\n", stage);
+  vita_debug_log("connection_stage_starting - stage: %d\n", stage);
 }
 void connection_stage_complate(int stage) {
-  DEBUG_PRINT("connection_stage_complate - stage: %d\n", stage);
+  vita_debug_log("connection_stage_complate - stage: %d\n", stage);
 }
 
 void connection_stage_failed(int stage, long code) {
   connection_failed_stage = stage;
   connection_failed_stage_code = code;
-  DEBUG_PRINT("connection_stage_failed - stage: %d, %d\n", stage, code);
+  vita_debug_log("connection_stage_failed - stage: %d, %d\n", stage, code);
 }
 
 bool connection_is_ready() {
@@ -165,4 +165,5 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .connectionTerminated = connection_connection_terminated,
   .displayMessage = connection_display_message,
   .displayTransientMessage = connection_display_transient_message,
+  .logMessage = vita_debug_log,
 };

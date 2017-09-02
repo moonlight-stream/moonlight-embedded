@@ -243,6 +243,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         mouseCode = BUTTON_RIGHT;
         break;
       default:
+        gamepadModified = true;
         if (dev->map == NULL)
           break;
         else if (index == dev->map->btn_a)
@@ -279,9 +280,8 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
 
       if (mouseCode != 0) {
         LiSendMouseButtonEvent(ev->value?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, mouseCode);
+        gamepadModified = false;
       } else if (gamepadCode != 0) {
-        gamepadModified = true;
-
         if (ev->value)
           dev->buttonFlags |= gamepadCode;
         else

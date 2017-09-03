@@ -286,11 +286,13 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
           dev->buttonFlags |= gamepadCode;
         else
           dev->buttonFlags &= ~gamepadCode;
-      } else if (dev->map != NULL && index == dev->map->btn_lefttrigger)
+      } else if (dev->map != NULL && index == dev->map->btn_lefttrigger) {
         dev->leftTrigger = ev->value ? UCHAR_MAX : 0;
-      else if (dev->map != NULL && index == dev->map->btn_righttrigger)
+        gamepadModified = true;
+      } else if (dev->map != NULL && index == dev->map->btn_righttrigger) {
         dev->rightTrigger = ev->value ? UCHAR_MAX : 0;
-      else {
+        gamepadModified = true;
+      } else {
         if (dev->map != NULL)
           fprintf(stderr, "Unmapped button: %d\n", ev->code);
 

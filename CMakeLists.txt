@@ -100,6 +100,8 @@ if (CEC_FOUND)
   list(APPEND SRC_LIST ./src/input/cec.c)
 endif()
 
+set(CMAKE_C_FLAGS "-std=c99")
+
 include_directories("${PROJECT_BINARY_DIR}")
 
 add_subdirectory(libgamestream)

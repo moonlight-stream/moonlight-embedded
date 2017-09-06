@@ -16,10 +16,8 @@ aux_source_directory(../third_party/moonlight-common-c/src MOONLIGHT_COMMON_SRC_
 aux_source_directory(../third_party/moonlight-common-c/reedsolomon MOONLIGHT_COMMON_SRC_LIST)
 
 add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
-set_property(TARGET moonlight-common PROPERTY C_STANDARD 99)
 
 add_library(gamestream SHARED ${GAMESTREAM_SRC_LIST})
-set_property(TARGET gamestream PROPERTY C_STANDARD 99)
 target_link_libraries(gamestream moonlight-common)
 
 set_target_properties(gamestream PROPERTIES SOVERSION ${SO_VERSION} VERSION ${PROJECT_VERSION})

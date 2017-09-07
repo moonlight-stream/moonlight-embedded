@@ -1,4 +1,5 @@
 set(SO_VERSION 2)
+set_property(GLOBAL PROPERTY C_STANDARD 99)
 
 find_package(LibUUID REQUIRED)
 find_package(Threads REQUIRED)

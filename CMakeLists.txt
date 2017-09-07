@@ -26,7 +26,7 @@ pkg_check_modules(VDPAU vdpau)
 pkg_check_modules(LIBVA libva)
 pkg_check_modules(LIBVA_X11 libva-x11)
 pkg_check_modules(PULSE libpulse-simple)
-pkg_check_modules(CEC libcec>=3.0.0)
+pkg_check_modules(CEC libcec>=4)
 pkg_check_modules(EGL egl)
 pkg_check_modules(GLES glesv2)
 

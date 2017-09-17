@@ -27,6 +27,7 @@
 #endif
 
 #include <Limelight.h>
+#include <libavcodec/avcodec.h>
 
 #include <stdlib.h>
 #include <pthread.h>

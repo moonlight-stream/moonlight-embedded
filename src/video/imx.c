@@ -34,6 +34,7 @@
 
 #include <libv4l2.h>
 
+#include <linux/types.h>
 #include <linux/ioctl.h>
 #include <linux/mxc_v4l2.h>
 #include <linux/mxcfb.h>

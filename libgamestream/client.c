@@ -245,7 +245,7 @@ static int load_server_status(PSERVER_DATA server) {
     server->supports4K = serverCodecModeSupportText != NULL;
     server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
 
-    if (strstr(stateText, "_SERVER_AVAILABLE")) {
+    if (strstr(stateText, "_SERVER_BUSY") == NULL) {
       // After GFE 2.8, current game remains set even after streaming
       // has ended. We emulate the old behavior by forcing it to zero
       // if streaming is not active.

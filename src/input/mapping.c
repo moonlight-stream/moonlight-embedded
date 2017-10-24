@@ -155,3 +155,39 @@ struct mapping* mapping_load(char* fileName, bool verbose) {
 
   return mappings;
 }
+
+#define print_btn(btn, code) if (code > -1) printf("%s:b%d,", btn, code)
+#define print_abs(abs, code) if (code > -1) printf("%s:a%d,", abs, code)
+#define print_hat(hat, code, dir) if (code > -1) printf("%s:h%d.%d,", hat, code, dir)
+
+void mapping_print(struct mapping* map) {
+  printf("%s,%s,", map->guid, map->name);
+  print_btn("a", map->btn_a);
+  print_btn("b", map->btn_b);
+  print_btn("x", map->btn_x);
+  print_btn("y", map->btn_y);
+  print_btn("start", map->btn_start);
+  print_btn("guide", map->btn_guide);
+  print_btn("back", map->btn_back);
+  print_btn("leftstick", map->btn_leftstick);
+  print_btn("rightstick", map->btn_rightstick);
+  print_btn("leftshoulder", map->btn_leftshoulder);
+  print_btn("rightshoulder", map->btn_rightshoulder);
+  print_btn("dpup", map->btn_dpup);
+  print_btn("dpleft", map->btn_dpleft);
+  print_btn("dpdown", map->btn_dpdown);
+  print_btn("dpright", map->btn_dpright);
+  print_hat("dpup", map->hat_dpup, map->hat_dir_dpup);
+  print_hat("dpleft", map->hat_dpleft, map->hat_dir_dpleft);
+  print_hat("dpdown", map->hat_dpdown, map->hat_dir_dpdown);
+  print_hat("dpright", map->hat_dpright, map->hat_dir_dpright);
+  print_abs("leftx", map->abs_leftx);
+  print_abs("lefty", map->abs_lefty);
+  print_abs("rightx", map->abs_rightx);
+  print_abs("righty", map->abs_righty);
+  print_abs("lefttrigger", map->abs_lefttrigger);
+  print_abs("righttrigger", map->abs_righttrigger);
+  print_btn("lefttrigger", map->btn_lefttrigger);
+  print_btn("righttrigger", map->btn_righttrigger);
+  printf("platform:Linux\n");
+}

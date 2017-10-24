@@ -31,6 +31,10 @@ List all available games and application on host.
 
 Quit the current running game or application on host.
 
+=item B<map> 
+ 
+Create a mapping for the specified I<INPUT> device.
+
 =item B<help>
 
 Show help for all available commands.

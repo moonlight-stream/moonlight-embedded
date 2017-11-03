@@ -18,6 +18,7 @@
  */
 
 #include <va/va.h>
+#include <X11/Xlib.h>
 
 int vaapi_init_lib();
 int vaapi_init(AVCodecContext* decoder_ctx);

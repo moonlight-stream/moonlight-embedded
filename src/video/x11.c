@@ -34,6 +34,8 @@
 #include <X11/Xutil.h>
 
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>

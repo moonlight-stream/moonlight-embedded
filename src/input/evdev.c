@@ -84,6 +84,8 @@ static int numDevices = 0;
 static int assignedControllerIds = 0;
 
 static short* currentKey;
+static short* currentHat;
+static short* currentHatDir;
 static short* currentAbs;
 static bool* currentReverse;
 
@@ -243,6 +245,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         mouseCode = BUTTON_RIGHT;
         break;
       default:
+        gamepadModified = true;
         if (dev->map == NULL)
           break;
         else if (index == dev->map->btn_a)
@@ -279,9 +282,8 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
 
       if (mouseCode != 0) {
         LiSendMouseButtonEvent(ev->value?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, mouseCode);
+        gamepadModified = false;
       } else if (gamepadCode != 0) {
-        gamepadModified = true;
-
         if (ev->value)
           dev->buttonFlags |= gamepadCode;
         else
@@ -366,28 +368,42 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
 }
 
 static bool evdev_handle_mapping_event(struct input_event *ev, struct input_device *dev) {
+  int index, hat_index;
   switch (ev->type) {
   case EV_KEY:
+    index = ev->code > BTN_MISC && ev->code < (BTN_MISC + KEY_MAX) ? dev->key_map[ev->code - BTN_MISC] : -1;
     if (currentKey != NULL) {
       if (ev->value)
-        *currentKey = ev->code;
-      else if (ev->code == *currentKey)
+        *currentKey = index;
+      else if (*currentKey != -1 && index == *currentKey)
         return false;
     }
     break;
   case EV_ABS:
+    hat_index = (ev->code - ABS_HAT0X) / 2;
+    if (hat_index >= 0 && hat_index < 4) {
+      int hat_dir_index = (ev->code - ABS_HAT0X) % 2;
+      dev->hats_state[hat_index][hat_dir_index] = ev->value < 0 ? -1 : (ev->value == 0 ? 0 : 1);
+    }
     if (currentAbs != NULL) {
       struct input_abs_parms parms;
       evdev_init_parms(dev, &parms, ev->code);
 
+      printf("%d: %d >< %d / %d\n", ev->code, ev->value, parms.avg + parms.range/2, parms.avg - parms.range/2);
       if (ev->value > parms.avg + parms.range/2) {
-        *currentAbs = ev->code;
+        *currentAbs = dev->abs_map[ev->code];
         *currentReverse = false;
       } else if (ev->value < parms.avg - parms.range/2) {
-        *currentAbs = ev->code;
+        *currentAbs = dev->abs_map[ev->code];
         *currentReverse = true;
       } else if (ev->code == *currentAbs)
         return false;
+    } else if (currentHat != NULL) {
+      if (hat_index >= 0 && hat_index < 4) {
+        *currentHat = hat_index;
+        *currentHatDir = hat_constants[dev->hats_state[hat_index][1] + 1][dev->hats_state[hat_index][0] + 1];
+        return false;
+      }
     }
     break;
   }
@@ -535,6 +551,117 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   }
 
   loop_add_fd(devices[dev].fd, &evdev_handle, POLLIN);
+}
+
+static void evdev_map_key(char* keyName, short* key) {
+  printf("Press %s\n", keyName);
+  currentKey = key;
+  currentHat = NULL;
+  currentAbs = NULL;
+  *key = -1;
+  loop_main();
+
+  usleep(250000);
+  evdev_drain();
+}
+
+static void evdev_map_abs(char* keyName, short* abs, bool* reverse) {
+  printf("Move %s\n", keyName);
+  currentKey = NULL;
+  currentHat = NULL;
+  currentAbs = abs;
+  currentReverse = reverse;
+  *abs = -1;
+  loop_main();
+
+  usleep(250000);
+  evdev_drain();
+}
+
+static void evdev_map_hatkey(char* keyName, short* hat, short* hat_dir, short* key) {
+  printf("Press %s\n", keyName);
+  currentKey = key;
+  currentHat = hat;
+  currentHatDir = hat_dir;
+  currentAbs = NULL;
+  *key = -1;
+  *hat = -1;
+  *hat_dir = -1;
+  *currentReverse = false;
+  loop_main();
+
+  usleep(250000);
+  evdev_drain();
+}
+
+static void evdev_map_abskey(char* keyName, short* abs, short* key, bool* reverse) {
+  printf("Press %s\n", keyName);
+  currentKey = key;
+  currentHat = NULL;
+  currentAbs = abs;
+  currentReverse = reverse;
+  *key = -1;
+  *abs = -1;
+  *currentReverse = false;
+  loop_main();
+
+  usleep(250000);
+  evdev_drain();
+}
+
+void evdev_map(char* device) {
+  int fd = open(device, O_RDONLY|O_NONBLOCK);
+  struct libevdev *evdev = libevdev_new();
+  libevdev_set_fd(evdev, fd);
+  const char* name = libevdev_get_name(evdev);
+
+  int16_t guid[8] = {0};
+  guid[0] = int16_to_le(libevdev_get_id_bustype(evdev));
+  guid[2] = int16_to_le(libevdev_get_id_vendor(evdev));
+  guid[4] = int16_to_le(libevdev_get_id_product(evdev));
+  guid[6] = int16_to_le(libevdev_get_id_version(evdev));
+  char str_guid[33];
+  char* buf = str_guid;
+  for (int i = 0; i < 16; i++)
+    buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
+  
+  struct mapping map;
+  strncpy(map.name, libevdev_get_name(evdev), sizeof(map.name));
+  strncpy(map.guid, str_guid, sizeof(map.name));
+
+  libevdev_free(evdev);
+  close(fd);
+
+  handler = evdev_handle_mapping_event;
+
+  evdev_map_abs("Left Stick Right", &(map.abs_leftx), &(map.reverse_leftx));
+  evdev_map_abs("Left Stick Up", &(map.abs_lefty), &(map.reverse_lefty));
+  evdev_map_key("Left Stick Button", &(map.btn_leftstick));
+
+  evdev_map_abs("Right Stick Right", &(map.abs_rightx), &(map.reverse_rightx));
+  evdev_map_abs("Right Stick Up", &(map.abs_righty), &(map.reverse_righty));
+  evdev_map_key("Right Stick Button", &(map.btn_rightstick));
+
+  evdev_map_hatkey("D-Pad Right", &(map.hat_dpright), &(map.hat_dir_dpright), &(map.btn_dpright));
+  evdev_map_hatkey("D-Pad Left", &(map.hat_dpleft), &(map.hat_dir_dpleft), &(map.btn_dpleft));
+  evdev_map_hatkey("D-Pad Up", &(map.hat_dpup), &(map.hat_dir_dpup), &(map.btn_dpup));
+  evdev_map_hatkey("D-Pad Down", &(map.hat_dpdown), &(map.hat_dir_dpdown), &(map.btn_dpdown));
+
+  evdev_map_key("Button X (1)", &(map.btn_x));
+  evdev_map_key("Button A (2)", &(map.btn_a));
+  evdev_map_key("Button B (3)", &(map.btn_b));
+  evdev_map_key("Button Y (4)", &(map.btn_y));
+  evdev_map_key("Back Button", &(map.btn_back));
+  evdev_map_key("Start Button", &(map.btn_start));
+  evdev_map_key("Special Button", &(map.btn_guide));
+
+  bool ignored;
+  evdev_map_abskey("Left Trigger", &(map.abs_lefttrigger), &(map.btn_lefttrigger), &ignored);
+  evdev_map_abskey("Right Trigger", &(map.abs_righttrigger), &(map.btn_righttrigger), &ignored);
+
+  evdev_map_key("Left Bumper", &(map.btn_leftshoulder));
+  evdev_map_key("Right Bumper", &(map.btn_rightshoulder));
+  mapping_print(&map);
 }
 
 void evdev_start() {

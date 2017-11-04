@@ -22,7 +22,7 @@
 
 #include "ffmpeg_vdpau.h"
 
-#include <vdpau/vdpau.h>
+#include <vdpau/vdpau_x11.h>
 #include <libavutil/pixfmt.h>
 #include <libavutil/imgutils.h>
 #include <libavcodec/vdpau.h>

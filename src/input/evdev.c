@@ -389,7 +389,6 @@ static bool evdev_handle_mapping_event(struct input_event *ev, struct input_devi
       struct input_abs_parms parms;
       evdev_init_parms(dev, &parms, ev->code);
 
-      printf("%d: %d >< %d / %d\n", ev->code, ev->value, parms.avg + parms.range/2, parms.avg - parms.range/2);
       if (ev->value > parms.avg + parms.range/2) {
         *currentAbs = dev->abs_map[ev->code];
         *currentReverse = false;

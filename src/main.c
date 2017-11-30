@@ -139,7 +139,7 @@ static void help() {
   printf("\tstream\t\t\tStream computer to device\n");
   printf("\tlist\t\t\tList available games and applications\n");
   printf("\tquit\t\t\tQuit the application or game being streamed\n");
-  printf("\tmap\t\t\tCreate mapping file for gamepad\n");
+  printf("\tmap\t\t\tCreate mapping for gamepad\n");
   printf("\thelp\t\t\tShow this help\n");
   printf("\n Global Options\n\n");
   printf("\t-config <config>\tLoad configuration file\n");

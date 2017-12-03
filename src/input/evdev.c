@@ -418,7 +418,7 @@ static void evdev_drain(void) {
 
 static int evdev_handle(int fd) {
   for (int i=0;i<numDevices;i++) {
-    if (devices[i].fd = fd) {
+    if (devices[i].fd == fd) {
       int rc;
       struct input_event ev;
       while ((rc = libevdev_next_event(devices[i].dev, LIBEVDEV_READ_FLAG_NORMAL, &ev)) >= 0) {

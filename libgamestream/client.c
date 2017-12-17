@@ -58,12 +58,18 @@ static EVP_PKEY *privateKey;
 const char* gs_error;
 
 static int mkdirtree(const char* directory) {
-  char buffer[1024];
+  const int bufferLength = 1024;
+  char buffer[bufferLength];
   char* p = buffer;
 
   // The passed in string could be a string literal
   // so we must copy it first
-  strcpy(p, directory);
+  if(strlen(directory)<bufferLength)
+  	strcpy(p, directory);
+  else
+  {
+     return -1;
+  }
 
   while (*p != 0) {
     // Find the end of the path element

@@ -2,7 +2,7 @@ Index: moonlight-embedded/libgamestream/client.c
 ===================================================================
 --- moonlight-embedded.orig/libgamestream/client.c
 +++ moonlight-embedded/libgamestream/client.c
-@@ -493,15 +493,12 @@ int gs_pair(PSERVER_DATA server, char* p
+@@ -504,15 +504,12 @@ int gs_pair(PSERVER_DATA server, char* p
    char client_secret_data[16];
    RAND_bytes(client_secret_data, 16);
  

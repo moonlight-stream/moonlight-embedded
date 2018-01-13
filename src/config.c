@@ -27,6 +27,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
+#include <pwd.h>
+#include <sys/types.h>
 
 #define MOONLIGHT_PATH "/moonlight"
 #define USER_PATHS "."
@@ -74,6 +76,11 @@ char* get_path(char* name, char* extra_data_dirs) {
 
   if (access(name, R_OK) != -1) {
       return name;
+  }
+
+  if (!home_dir) {
+    struct passwd *pw = getpwuid(getuid());
+    home_dir = pw->pw_dir;
   }
 
   if (!extra_data_dirs)
@@ -335,13 +342,14 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
     config_save(config->config_file, config);
 
   if (config->key_dir[0] == 0x0) {
-    const char *xdg_cache_dir = getenv("XDG_CACHE_DIR");
-    if (xdg_cache_dir != NULL)
-      sprintf(config->key_dir, "%s" MOONLIGHT_PATH, xdg_cache_dir);
-    else {
-      const char *home_dir = getenv("HOME");
-      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, home_dir);
-    }
+    struct passwd *pw = getpwuid(getuid());
+    const char *dir;
+    if ((dir = getenv("XDG_CACHE_DIR")) != NULL)
+      sprintf(config->key_dir, "%s" MOONLIGHT_PATH, dir);
+    else if ((dir = getenv("HOME")) != NULL)
+      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, dir);
+    else
+      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, pw->pw_dir);
   }
 
   if (config->stream.fps == -1)

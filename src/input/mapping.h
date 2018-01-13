@@ -49,3 +49,4 @@ struct mapping {
 
 struct mapping* mapping_parse(char* mapping);
 struct mapping* mapping_load(char* fileName, bool verbose);
+void mapping_print(struct mapping*);

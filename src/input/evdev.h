@@ -25,3 +25,4 @@ void evdev_loop();
 void evdev_init();
 void evdev_start();
 void evdev_stop();
+void evdev_map(char* device);

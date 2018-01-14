@@ -71,8 +71,6 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
 
   if (config.fullscreen)
     drFlags |= DISPLAY_FULLSCREEN;
-  if (config.forcehw)
-    drFlags |= FORCE_HARDWARE_ACCELERATION;
 
   DECODER_RENDERER_CALLBACKS *video_callback = platform_get_video(system);
   if (config.enable_ref_frame_invalidation) {

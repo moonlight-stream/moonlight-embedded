@@ -70,7 +70,6 @@ static struct option long_options[] = {
   {"windowed",    no_argument,        NULL, 't'},
   {"surround",    no_argument,        NULL, 'u'},
   {"fps",         required_argument,  NULL, 'v'},
-  {"forcehw",     no_argument,        NULL, 'w'},
   {"forcehevc",   no_argument,        NULL, 'x'},
   {"unsupported", no_argument,        NULL, 'y'},
   {0, 0, 0, 0},
@@ -154,9 +153,6 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'v':
     config->stream.fps = atoi(value);
-    break;
-  case 'w':
-    config->forcehw = true;
     break;
   case 'x':
     config->stream.supportsHevc = true;

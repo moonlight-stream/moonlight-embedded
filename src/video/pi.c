@@ -47,9 +47,6 @@ static ILCLIENT_T *client;
 
 static COMPONENT_T *video_decode = NULL, *video_scheduler = NULL, *video_render = NULL;
 
-static OMX_BUFFERHEADERTYPE *buf;
-static unsigned char *dest;
-
 static int port_settings_changed;
 static int first_packet;
 
@@ -177,6 +174,7 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
 static void decoder_renderer_cleanup() {
   int status = 0;
 
+  OMX_BUFFERHEADERTYPE *buf;
   if((buf = ilclient_get_input_buffer(video_decode, 130, 1)) == NULL){
     fprintf(stderr, "Can't get video buffer\n");
     exit(EXIT_FAILURE);
@@ -209,51 +207,48 @@ static void decoder_renderer_cleanup() {
 }
 
 static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  if((buf = ilclient_get_input_buffer(video_decode, 130, 1)) == NULL){
-    fprintf(stderr, "Can't get video buffer\n");
-    exit(EXIT_FAILURE);
-  }
+  OMX_BUFFERHEADERTYPE *buf = NULL;
 
-  // feed data and wait until we get port settings changed
-  dest = buf->pBuffer;
-
-  buf->nFilledLen = 0;
-
-  buf->nOffset = 0;
-
-  buf->nFlags = OMX_BUFFERFLAG_ENDOFFRAME | OMX_BUFFERFLAG_EOS;
-
-  if(first_packet) {
-    buf->nFlags = OMX_BUFFERFLAG_STARTTIME;
-    first_packet = 0;
-  }
-
-  PLENTRY entry = gs_sps_fix(&decodeUnit->bufferList, GS_SPS_BITSTREAM_FIXUP);
-  decodeUnit->bufferList = entry;
+  gs_sps_fix(decodeUnit, GS_SPS_BITSTREAM_FIXUP);
+  PLENTRY entry = decodeUnit->bufferList;
   while (entry != NULL) {
-    memcpy(dest, entry->data, entry->length);
-    buf->nFilledLen += entry->length;
-    dest += entry->length;
-    entry = entry->next;
-  }
-
-  if(port_settings_changed == 0 &&
-    ((buf->nFilledLen > 0 && ilclient_remove_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1) == 0) ||
-    (buf->nFilledLen == 0 && ilclient_wait_for_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1,
-                        ILCLIENT_EVENT_ERROR | ILCLIENT_PARAMETER_CHANGED, 10000) == 0))) {
-    port_settings_changed = 1;
-
-    if(ilclient_setup_tunnel(tunnel, 0, 0) != 0){
-      fprintf(stderr, "Can't setup video\n");
-      exit(EXIT_FAILURE);
+    if (buf == NULL) {
+      if ((buf = ilclient_get_input_buffer(video_decode, 130, 1)) == NULL) {
+        fprintf(stderr, "Can't get video buffer\n");
+        exit(EXIT_FAILURE);
+      }
+      buf->nFilledLen = 0;
+      buf->nOffset = 0;
+      buf->nFlags = OMX_BUFFERFLAG_ENDOFFRAME | OMX_BUFFERFLAG_EOS;
+      if(first_packet) {
+        buf->nFlags = OMX_BUFFERFLAG_STARTTIME;
+        first_packet = 0;
+      }
     }
 
-    ilclient_change_component_state(video_render, OMX_StateExecuting);
-  }
+    memcpy(buf->pBuffer + buf->nFilledLen, entry->data, entry->length);
+    buf->nFilledLen += entry->length;
 
-  if(OMX_EmptyThisBuffer(ILC_GET_HANDLE(video_decode), buf) != OMX_ErrorNone){
-    fprintf(stderr, "Can't empty video buffer\n");
-    exit(EXIT_FAILURE);
+    if (entry->bufferType != BUFFER_TYPE_PICDATA || entry->next == NULL || entry->next->bufferType != BUFFER_TYPE_PICDATA) {
+      if(port_settings_changed == 0 && ((buf->nFilledLen > 0 && ilclient_remove_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1) == 0) || (buf->nFilledLen == 0 && ilclient_wait_for_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1, ILCLIENT_EVENT_ERROR | ILCLIENT_PARAMETER_CHANGED, 10000) == 0))) {
+        port_settings_changed = 1;
+
+        if(ilclient_setup_tunnel(tunnel, 0, 0) != 0) {
+          fprintf(stderr, "Can't setup video\n");
+          exit(EXIT_FAILURE);
+        }
+
+        ilclient_change_component_state(video_render, OMX_StateExecuting);
+      }
+
+      if(OMX_EmptyThisBuffer(ILC_GET_HANDLE(video_decode), buf) != OMX_ErrorNone){
+        fprintf(stderr, "Can't empty video buffer\n");
+        exit(EXIT_FAILURE);
+      }
+      buf = NULL;
+    }
+
+    entry = entry->next;
   }
 
   return DR_OK;

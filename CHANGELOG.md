@@ -1,4 +1,7 @@
 ## Unreleased
+
+## 0.3.0
+* Support GFE 3.11
 * New configure option about reference frame invalidation (#89, #91)
 * Fix unset resolution configure (#90)
 

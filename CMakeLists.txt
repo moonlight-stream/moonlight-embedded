@@ -8,7 +8,7 @@ project(moonlight)
 set(TITLE_ID "XYZZ00002")
 set(TITLE "Moonlight")
 set(VERSION_MAJOR "0")
-set(VERSION_MINOR "2")
+set(VERSION_MINOR "3")
 set(VERSION_PATCH "0")
 
 execute_process(COMMAND

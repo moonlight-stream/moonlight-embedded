@@ -190,7 +190,8 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   picture.frame.pPicture[0] = framebuffer[backbuffer];
 
   if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
-    PLENTRY entry = gs_sps_fix(&decodeUnit->bufferList, 0);
+    gs_sps_fix(decodeUnit, 0);
+    PLENTRY entry = decodeUnit->bufferList;
     int length = 0;
     while (entry != NULL) {
       memcpy(ffmpeg_buffer+length, entry->data, entry->length);

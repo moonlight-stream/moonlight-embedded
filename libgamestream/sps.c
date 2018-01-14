@@ -32,19 +32,20 @@ void gs_sps_init(int width, int height) {
   initial_height = height;
 }
 
-PLENTRY gs_sps_fix(PLENTRY *head, int flags) {
-  PLENTRY entry = *head;
+void gs_sps_fix(PDECODE_UNIT decodeUnit, int flags) {
+  PLENTRY entry = decodeUnit->bufferList;
   const char naluHeader[] = {0x00, 0x00, 0x00, 0x01};
 
   if (replay_sps == 1) {
     PLENTRY replay_entry = (PLENTRY) malloc(sizeof(*replay_entry) + 128);
     if (replay_entry == NULL)
-      return NULL;
+      return;
 
     replay_entry->data = (char *) (entry + 1);
     memcpy(replay_entry->data, naluHeader, sizeof(naluHeader));
     h264_stream->sps->profile_idc = H264_PROFILE_HIGH;
     replay_entry->length = write_nal_unit(h264_stream, replay_entry->data+4, 124) + 4;
+    decodeUnit->fullLength += replay_entry->length;
 
     replay_entry->next = entry;
     entry = replay_entry;
@@ -97,20 +98,21 @@ PLENTRY gs_sps_fix(PLENTRY *head, int flags) {
 
     PLENTRY sps_entry = (PLENTRY) malloc(sizeof(*sps_entry) + 128);
     if (sps_entry == NULL)
-      return NULL;
+      return;
 
     PLENTRY next = entry->next;
+    decodeUnit->fullLength -= entry->length;
     free(entry);
     sps_entry->data = (char*) (sps_entry + 1);
     memcpy(sps_entry->data, naluHeader, sizeof(naluHeader));
     sps_entry->length = write_nal_unit(h264_stream, sps_entry->data+4, 124) + 4;
     sps_entry->next = next;
     entry = sps_entry;
+    decodeUnit->fullLength += entry->length;
   } else if ((entry->data[4] & 0x1F) == NAL_UNIT_TYPE_PPS) {
     if ((flags & GS_SPS_BASELINE_HACK) == GS_SPS_BASELINE_HACK && !replay_sps)
       replay_sps = 1;
 
   }
-  *head = entry;
-  return entry;
+  decodeUnit->bufferList = entry;
 }

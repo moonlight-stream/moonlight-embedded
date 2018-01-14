@@ -342,7 +342,7 @@ inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
 
 }
 
-inline void vitainput_process(void) {
+static inline void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
   memset(&touch, 0, sizeof(TouchData));
   memset(&curr, 0, sizeof(input_data));

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
 <changes app_ver="00.03"><![CDATA[
+## 0.3.1<br>
+* Fix cannot connect with new devices (b838278)<br>
+<br>
 ## 0.3.0<br>
 * Support GFE 3.11<br>
 * New configure option about reference frame invalidation (#89, #91)<br>

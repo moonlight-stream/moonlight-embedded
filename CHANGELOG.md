@@ -1,5 +1,8 @@
 ## Unreleased
 
+## 0.3.1
+* Fix cannot connect with new devices (b838278)
+
 ## 0.3.0
 * Support GFE 3.11
 * New configure option about reference frame invalidation (#89, #91)

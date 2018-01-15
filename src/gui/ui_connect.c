@@ -246,8 +246,9 @@ int ui_connect(char *address) {
       return 0;
     }
 
-    if (gs_applist(&server, &server_applist) != GS_OK) {
-      display_error("Can't get applist!");
+    ret = gs_applist(&server, &server_applist);
+    if (ret != GS_OK) {
+      display_error("Can't get applist!\n%d\n%s", ret, gs_error);
       return 0;
     }
 

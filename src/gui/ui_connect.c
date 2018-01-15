@@ -224,9 +224,10 @@ disconnect:
 }
 
 int ui_connect(char *address) {
+  int ret;
   if (!connection_is_ready()) {
     flash_message("Connecting to:\n %s...", address);
-    int ret = gs_init(&server, address, config.key_dir);
+    ret = gs_init(&server, address, config.key_dir);
     if (ret == GS_OUT_OF_MEMORY) {
       display_error("Not enough memory");
       return 0;
@@ -246,21 +247,23 @@ int ui_connect(char *address) {
       return 0;
     }
 
+    connection_reset();
+  }
+
+  int app_count = 0;
+  if (server.paired) {
     ret = gs_applist(&server, &server_applist);
     if (ret != GS_OK) {
       display_error("Can't get applist!\n%d\n%s", ret, gs_error);
       return 0;
     }
 
-    connection_reset();
-  }
-
-  int app_count = 0;
-  if (server_applist != NULL) {
-    PAPP_LIST list = server_applist;
-    while (list) {
-      list = list->next;
-      app_count += 1;
+    if (server_applist != NULL) {
+      PAPP_LIST list = server_applist;
+      while (list) {
+        list = list->next;
+        app_count += 1;
+      }
     }
   }
 
@@ -298,47 +301,52 @@ int ui_connect(char *address) {
   MENU_MESSAGE(server_info, 0xffffffff);
   MENU_MESSAGE("", 0);
 
-  // current stream
-  if (server.currentGame != 0) {
-    char current_appname[256];
-    char current_status[256];
-
-    if (!get_app_name(server_applist, server.currentGame, current_appname)) {
-      strcpy(current_appname, "unknown");
-    }
-    sprintf(current_status, "Streaming %s", current_appname);
-
-    MENU_CATEGORY(current_status);
-    MENU_ENTRY(server.currentGame, "Resume");
-    MENU_ENTRY(CONNECT_QUITAPP, "Quit");
-  }
-
-  // pairing
-  MENU_CATEGORY(server.paired ? "Paired" : "Not paired");
-  if (server.paired) {
-    connection_paired();
-    MENU_ENTRY(CONNECT_PAIRUNPAIR, "Unpair");
-  } else {
+  if (!server.paired) {
+    // pairing
+    MENU_CATEGORY("Not paired");
     MENU_ENTRY(CONNECT_PAIRUNPAIR, "Pair");
-  }
 
-  MENU_ENTRY(CONNECT_DISCONNECT, "Disconnect");
+    MENU_ENTRY(CONNECT_DISCONNECT, "Disconnect");
+  } else {
+    // current stream
+    if (server.currentGame != 0) {
+      char current_appname[256];
+      char current_status[256];
 
-  // app list
-  if (server_applist != NULL) {
-    MENU_CATEGORY("Applications");
+      if (!get_app_name(server_applist, server.currentGame, current_appname)) {
+        strcpy(current_appname, "unknown");
+      }
+      sprintf(current_status, "Streaming %s", current_appname);
 
-    pos[0] = idx;
-
-    PAPP_LIST list = server_applist;
-    while (list) {
-      MENU_ENTRY(list->id, list->name);
-      list = list->next;
+      MENU_CATEGORY(current_status);
+      MENU_ENTRY(server.currentGame, "Resume");
+      MENU_ENTRY(CONNECT_QUITAPP, "Quit");
     }
 
-    pos[1] = idx;
-  } else {
-    pos[0] = -1;
+    // pairing
+    MENU_CATEGORY("Paired");
+    connection_paired();
+    // FIXME: unpair not work
+    // MENU_ENTRY(CONNECT_PAIRUNPAIR, "Unpair");
+
+    MENU_ENTRY(CONNECT_DISCONNECT, "Disconnect");
+
+    // app list
+    if (server_applist != NULL) {
+      MENU_CATEGORY("Applications");
+
+      pos[0] = idx;
+
+      PAPP_LIST list = server_applist;
+      while (list) {
+        MENU_ENTRY(list->id, list->name);
+        list = list->next;
+      }
+
+      pos[1] = idx;
+    } else {
+      pos[0] = -1;
+    }
   }
 
   return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, &menu);

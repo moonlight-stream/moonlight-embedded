@@ -340,6 +340,7 @@ enum {
   SETTINGS_BITRATE,
   SETTINGS_SOPS,
   SETTINGS_ENABLE_FRAME_INVAL,
+  SETTINGS_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_ENABLE_MAPPING,
@@ -355,6 +356,7 @@ enum {
   SETTINGS_VIEW_BITRATE,
   SETTINGS_VIEW_SOPS,
   SETTINGS_VIEW_ENABLE_FRAME_INVAL,
+  SETTINGS_VIEW_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_VIEW_SAVE_DEBUG_LOG,
   SETTINGS_VIEW_DISABLE_POWERSAVE,
   SETTINGS_VIEW_ENABLE_MAPPING,
@@ -455,6 +457,13 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       config.enable_ref_frame_invalidation = !config.enable_ref_frame_invalidation;
       break;
+    case SETTINGS_ENABLE_STREAM_OPTIMIZE:
+      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.stream.streamingRemotely = config.stream.streamingRemotely ? 0 : 1;
+      break;
     case SETTINGS_SAVE_DEBUG_LOG:
       if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
@@ -540,6 +549,9 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%s", config.enable_ref_frame_invalidation ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ENABLE_FRAME_INVAL, current);
 
+  sprintf(current, "%s", config.stream.streamingRemotely ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_ENABLE_STREAM_OPTIMIZE, current);
+
   sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_DISABLE_POWERSAVE, current);
 
@@ -594,6 +606,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_BITRATE, SETTINGS_VIEW_BITRATE, "Bitrate", "");
   MENU_ENTRY(SETTINGS_SOPS, SETTINGS_VIEW_SOPS, "Change graphical game settings for performance", "");
   MENU_ENTRY(SETTINGS_ENABLE_FRAME_INVAL, SETTINGS_VIEW_ENABLE_FRAME_INVAL, "Enable reference frame invalidation", "");
+  MENU_ENTRY(SETTINGS_ENABLE_STREAM_OPTIMIZE, SETTINGS_VIEW_ENABLE_STREAM_OPTIMIZE, "Enable stream optimization", "");
 
   MENU_CATEGORY("System");
   MENU_ENTRY(SETTINGS_SAVE_DEBUG_LOG, SETTINGS_VIEW_SAVE_DEBUG_LOG, "Enable debug log", "");

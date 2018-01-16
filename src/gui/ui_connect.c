@@ -54,7 +54,7 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
 }
 
 void ui_connect_stream(PSERVER_DATA server, int appId) {
-  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio);
+  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio, true);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       display_error("Server doesn't support 4K\n");

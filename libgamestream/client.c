@@ -658,7 +658,7 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
   return ret;
 }
 
-int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio) {
+int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio, bool custom_res) {
   int ret = GS_OK;
   uuid_t uuid;
   char* result = NULL;
@@ -673,7 +673,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
     mode = mode->next;
   }
 
-  if (!correct_mode)
+  if (!custom_res && !correct_mode)
     return GS_NOT_SUPPORTED_MODE;
 
   if (config->height >= 2160 && !server->supports4K)

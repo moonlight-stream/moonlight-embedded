@@ -1,4 +1,5 @@
 ## Unreleased
+* New configure option about streaming optimization (d2c974a)
 * Fix cannot use 960x544 resolution (653afa6)
 
 ## 0.3.1

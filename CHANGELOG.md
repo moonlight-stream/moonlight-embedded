@@ -1,4 +1,5 @@
 ## Unreleased
+* Fix cannot use 960x544 resolution (653afa6)
 
 ## 0.3.1
 * Fix cannot connect with new devices (b838278)

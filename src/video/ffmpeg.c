@@ -147,14 +147,13 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 // This function must be called after
 // decoding is finished
 void ffmpeg_destroy(void) {
-  int i;
   if (decoder_ctx) {
     avcodec_close(decoder_ctx);
     av_free(decoder_ctx);
     decoder_ctx = NULL;
   }
   if (dec_frames) {
-    for (i = 0; i < dec_frames_cnt; i++) {
+    for (int i = 0; i < dec_frames_cnt; i++) {
       if (dec_frames[i])
         av_frame_free(&dec_frames[i]);
     }

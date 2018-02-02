@@ -45,8 +45,6 @@ static int current_frame, next_frame;
 
 enum decoders ffmpeg_decoder;
 
-#define BYTES_PER_PIXEL 4
-
 // This function must be called before
 // any other decoding functions
 int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count) {
@@ -100,8 +98,11 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 
   if (perf_lvl & SLICE_THREADING)
     decoder_ctx->thread_type = FF_THREAD_SLICE;
-  else
+  else {
+    decoder_ctx->flags2 |= CODEC_FLAG2_FAST;
+    decoder_ctx->delay = 0;
     decoder_ctx->thread_type = FF_THREAD_FRAME;
+  }
 
   decoder_ctx->thread_count = thread_count;
 
@@ -146,13 +147,14 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 // This function must be called after
 // decoding is finished
 void ffmpeg_destroy(void) {
+  int i;
   if (decoder_ctx) {
     avcodec_close(decoder_ctx);
     av_free(decoder_ctx);
     decoder_ctx = NULL;
   }
   if (dec_frames) {
-    for (int i = 0; i < dec_frames_cnt; i++) {
+    for (i = 0; i < dec_frames_cnt; i++) {
       if (dec_frames[i])
         av_frame_free(&dec_frames[i]);
     }
@@ -160,6 +162,14 @@ void ffmpeg_destroy(void) {
 }
 
 AVFrame* ffmpeg_get_frame(bool native_frame) {
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,16,0)
+  if (ffmpeg_decoder == SOFTWARE)
+    return dec_frames[current_frame];
+  #ifdef HAVE_VDPAU
+  else if (ffmpeg_decoder == VDPAU)
+    return vdpau_get_frame(dec_frames[current_frame]);
+  #endif
+#else
   int err = avcodec_receive_frame(decoder_ctx, dec_frames[next_frame]);
   if (err == 0) {
     current_frame = next_frame;
@@ -177,16 +187,44 @@ AVFrame* ffmpeg_get_frame(bool native_frame) {
     fprintf(stderr, "Receive failed - %d/%s\n", err, errorstring);
   }
   return NULL;
+#endif
 }
 
 // packets must be decoded in order
 // indata must be inlen + FF_INPUT_BUFFER_PADDING_SIZE in length
 int ffmpeg_decode(unsigned char* indata, int inlen) {
   int err;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,16,0)
+  int got_pic = 0;
+#endif
 
   pkt.data = indata;
   pkt.size = inlen;
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57,16,0)
+  while (pkt.size > 0) {
+    got_pic = 0;
+    err = avcodec_decode_video2(decoder_ctx, dec_frames[next_frame], &got_pic, &pkt);
+    if (err < 0) {
+      char errorstring[512];
+      av_strerror(err, errorstring, sizeof(errorstring));
+      fprintf(stderr, "Decode failed - %s\n", errorstring);
+      got_pic = 0;
+      break;
+    }
+
+    pkt.size -= err;
+    pkt.data += err;
+  }
+
+  if (got_pic) {
+    current_frame = next_frame;
+    next_frame = (current_frame+1) % dec_frames_cnt;
+    return 1;
+  }
+
+  return err < 0 ? err : 0;
+#else
   err = avcodec_send_packet(decoder_ctx, &pkt);
   if (err < 0) {
     char errorstring[512];
@@ -195,4 +233,5 @@ int ffmpeg_decode(unsigned char* indata, int inlen) {
   }
   
   return err < 0 ? err : 0;
+#endif
 }

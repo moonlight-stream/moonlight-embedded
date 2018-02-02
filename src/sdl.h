@@ -31,7 +31,7 @@
 
 #define SDL_CODE_FRAME 0
 
-#define SDL_BUFFER_FRAMES 2
+#define SDL_BUFFER_FRAMES 1
 
 void sdl_init(int width, int height, bool fullscreen);
 void sdl_loop();

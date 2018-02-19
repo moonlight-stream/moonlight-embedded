@@ -59,6 +59,15 @@ enum platform platform_check(char* name) {
       return AML;
   }
   #endif
+  #ifdef HAVE_ROCKCHIP
+  if (std || strcmp(name, "rk") == 0) {
+    void *handle = dlopen("libmoonlight-rk.so", RTLD_NOW | RTLD_GLOBAL);
+    if (handle != NULL && dlsym(RTLD_DEFAULT, "mpp_init") != NULL)
+      return RK;
+    else
+	  printf("function not found\n");
+  }
+  #endif
   #ifdef HAVE_X11
   bool x11 = strcmp(name, "x11") == 0;
   bool vdpau = strcmp(name, "x11_vdpau") == 0;
@@ -148,6 +157,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   case AML:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_aml");
   #endif
+  #ifdef HAVE_ROCKCHIP
+  case RK:
+    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_rk");
+  #endif
   }
   return NULL;
 }
@@ -179,6 +192,8 @@ bool platform_supports_hevc(enum platform system) {
   switch (system) {
   case AML:
     return true;
+  case RK:
+    return true;
   }
   return false;
 }
@@ -191,6 +206,8 @@ char* platform_name(enum platform system) {
     return "i.MX6 (MXC Vivante)";
   case AML:
     return "AMLogic VPU";
+  case RK:
+    return "Rockchip VPU";
   case X11:
     return "X Window System (software decoding)";
   case X11_VAAPI:

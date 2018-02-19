@@ -64,8 +64,6 @@ enum platform platform_check(char* name) {
     void *handle = dlopen("libmoonlight-rk.so", RTLD_NOW | RTLD_GLOBAL);
     if (handle != NULL && dlsym(RTLD_DEFAULT, "mpp_init") != NULL)
       return RK;
-    else
-	  printf("function not found\n");
   }
   #endif
   #ifdef HAVE_X11

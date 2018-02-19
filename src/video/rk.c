@@ -44,9 +44,6 @@
 #define RK_H264 7
 #define RK_H265 16777220
 
-#define CURSORW  64
-#define CURSORH  64
-
 void *pkt_buf = NULL;
 pthread_t tid_frame, tid_display;
 drmModePlane *ovr = NULL;
@@ -141,7 +138,7 @@ void *frame_thread(void *param) {
                 fprintf(stderr, "Waiting for Frame (return code = %d, retry count = %d)\n", ret, count);
                 usleep(10000);
                 count++;
-				continue;
+                continue;
             }
         }
 #ifdef _DEBUG
@@ -272,11 +269,11 @@ void *frame_thread(void *param) {
             mpp_frame_deinit(&frame);
             frame = NULL;
         } else {
-			if (!drm.frm_eos) {
+            if (!drm.frm_eos) {
                 fprintf(stderr, "Didn't get frame from MPP (return code = %d)\n", ret);
             }
             break;
-		}
+        }
     }
 
     fprintf(stdout, "FRAME THREAD END\n");
@@ -291,15 +288,15 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
     int format = 0;
 
     switch (videoFormat) {
-      case VIDEO_FORMAT_H264:
-        format = RK_H264;
-        break;
-      case VIDEO_FORMAT_H265:
-        format = RK_H265;
-        break;
-      default:
-        fprintf(stderr, "Video format not supported\n");
-        return -1;
+        case VIDEO_FORMAT_H264:
+            format = RK_H264;
+            break;
+        case VIDEO_FORMAT_H265:
+            format = RK_H265;
+            break;
+        default:
+            fprintf(stderr, "Video format not supported\n");
+            return -1;
     }
 
     MppCodingType mpp_type = (MppCodingType)format;

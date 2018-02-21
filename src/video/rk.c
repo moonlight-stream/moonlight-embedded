@@ -66,7 +66,6 @@ struct {
     pthread_cond_t cond;
     int fb_id;
     int skipped_frames;
-    drmModeCrtc *orig_crtc;
 } drm;
 
 struct {
@@ -364,9 +363,6 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
             if (ovr->formats[j] ==  DRM_FORMAT_NV12) {
                 break;
             }
-        }
-        if (j == ovr->count_formats) {
-            continue;
         }
         if ((ovr->possible_crtcs & crtc_bit) && !ovr->crtc_id) {
             drmModeObjectPropertiesPtr props = drmModeObjectGetProperties(drm.fd, plane_resources->planes[i], DRM_MODE_OBJECT_PLANE);

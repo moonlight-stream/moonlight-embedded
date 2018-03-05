@@ -64,7 +64,7 @@ static void browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, Avah
     avahi_simple_poll_quit(simple_poll);
     break;
   case AVAHI_BROWSER_NEW:
-    if (!(avahi_service_resolver_new(c, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, 0, resolve_callback, userdata)))
+    if (!(avahi_service_resolver_new(c, interface, protocol, name, type, domain, AVAHI_PROTO_INET, 0, resolve_callback, userdata)))
       gs_error = "Failed to resolve service";
 
     break;
@@ -89,7 +89,7 @@ void gs_discover_server(char* dest) {
     goto cleanup;
   }
 
-  if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_nvstream._tcp", NULL, 0, browse_callback, dest))) {
+  if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, "_nvstream._tcp", NULL, 0, browse_callback, dest))) {
     gs_error = "Failed to create service browser";
     goto cleanup;
   }

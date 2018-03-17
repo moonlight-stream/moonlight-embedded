@@ -32,6 +32,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <poll.h>
+#include <string.h>
 
 #define MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 
@@ -46,7 +47,6 @@ static int keyboard_modifiers;
 static const char data[1] = {0};
 static Cursor cursor;
 static bool grabbed = True;
-static release = false;
 
 static int x11_handler(int fd) {
   XEvent event;
@@ -62,9 +62,7 @@ static int x11_handler(int fd) {
         if ((keyboard_modifiers & MODIFIERS) == MODIFIERS && event.type == KeyRelease) {
           if (event.xkey.keycode == 0x18) {
             return LOOP_RETURN;
-          }
-          else if (strcmp(isc_global, "-1") == 0) {
-            release = true;
+          } else if (strcmp(isc_global, "-1") == 0) {
             grabbed = !grabbed;
             XDefineCursor(display, window, grabbed ? cursor : 0);
           }
@@ -94,8 +92,7 @@ static int x11_handler(int fd) {
         }
 
         short code = 0x80 << 8 | keyCodes[event.xkey.keycode - 8];
-        if (grabbed || release) LiSendKeyboardEvent(code, event.type == KeyPress ? KEY_ACTION_DOWN : KEY_ACTION_UP, keyboard_modifiers);
-        release = false;
+        if (grabbed || (modifier != 0 && event.type == KeyRelease && (code == -32750 || code == -32751 || code == -32752))) LiSendKeyboardEvent(code, event.type == KeyPress ? KEY_ACTION_DOWN : KEY_ACTION_UP, keyboard_modifiers);
       }
       break;
     case ButtonPress:

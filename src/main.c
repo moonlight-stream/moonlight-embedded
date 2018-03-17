@@ -23,6 +23,7 @@
 #include "config.h"
 #include "platform.h"
 #include "sdl.h"
+#include "util.h"
 
 #include "audio/audio.h"
 #include "video/video.h"
@@ -53,6 +54,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <openssl/rand.h>
+
+char* isc_global = "-1";
 
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list = NULL;
@@ -168,13 +171,20 @@ static void help() {
   #if defined(HAVE_SDL) || defined(HAVE_X11)
   printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
+  printf("\n X11 options\n\n");
+  printf("\t-isc <file>\t\tOverrides mouse/keyboard capture mechanism and executes script on mouse click. Passing in \"NONE\" as the file will run no script but disable mouse/keyboard capture\n");
+  printf("\t           \t\tThis is useful when using alternative inputs mechanisms such as usb-passthrough in a VM or usbip\n");
+  printf("\t           \t\tMake sure the script can't be easily edited because otherwise this could be exploited for privilege escalation when running with sudo!!\n");
+  printf("\t           \t\tThe script will be executed with the system function. Don't forget to make the file executable.\n");
+  printf("\t           \t\tAlso, if this is being used for click to bind, you will have to handle the unbinding mechanism manually, as Ctrl+Shift+Alt and Ctrl+Shift+Alt+Q probably won't work!!\n");
   #endif
   #ifdef HAVE_EMBEDDED
-  printf("\n I/O options (Not for SDL)\n\n");
+  printf("\n I/O options (Not for SDL), note for X11: you will have to manually specify devices that aren't mouse and keyboard\n\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
   printf("\t-audio <device>\t\tUse <device> as audio output device\n");
   #endif
-  printf("\nUse Ctrl+Alt+Shift+Q or Play+Back+LeftShoulder+RightShoulder to exit streaming session\n\n");
+  printf("\nUse Ctrl+Alt+Shift+Q or Play+Back+LeftShoulder+RightShoulder to exit streaming session\n");
+  printf("\nUse Ctrl+Alt+Shift to unbind mouse/keyboard on certain platforms (X11 and SDL)\n\n");
   exit(0);
 }
 
@@ -265,7 +275,15 @@ int main(int argc, char* argv[]) {
     } else if (system == SDL && config.audio_device != NULL) {
       fprintf(stderr, "You can't select a audio device for SDL\n");
       exit(-1);
+    } else if (system != X11 && system != X11_VAAPI && system != X11_VDPAU && config.isc) {
+      fprintf(stderr, "You can only use the isc argument when using an X11 platform\n");
+      exit(-1);
     }
+
+    if (config.isc) {
+      isc_global = config.isc;
+    }
+
     config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
 
     if (IS_EMBEDDED(system)) {
@@ -291,8 +309,10 @@ int main(int argc, char* argv[]) {
 
         evdev_create(config.inputs[i], mappings, config.debug_level > 0);
       }
-
-      udev_init(!inputAdded, mappings, config.debug_level > 0);
+      bool autoadd = !inputAdded;
+      if (system == X11 || system == X11_VAAPI || system == X11_VDPAU)
+        autoadd = false;
+      udev_init(autoadd, mappings, config.debug_level > 0);
       evdev_init();
       #ifdef HAVE_LIBCEC
       cec_init();

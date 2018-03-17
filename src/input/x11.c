@@ -20,6 +20,8 @@
 #include "x11.h"
 #include "keyboard.h"
 
+#include "../util.h"
+
 #include "../loop.h"
 
 #include <Limelight.h>
@@ -49,17 +51,18 @@ static int x11_handler(int fd) {
   XEvent event;
   int button = 0;
   int motion_x, motion_y;
-
   while (XPending(display)) {
     XNextEvent(display, &event);
+
     switch (event.type) {
     case KeyPress:
     case KeyRelease:
       if (event.xkey.keycode >= 8 && event.xkey.keycode < (sizeof(keyCodes)/sizeof(keyCodes[0]) + 8)) {
         if ((keyboard_modifiers & MODIFIERS) == MODIFIERS && event.type == KeyRelease) {
-          if (event.xkey.keycode == 0x18)
+          if (event.xkey.keycode == 0x18) {
             return LOOP_RETURN;
-          else {
+          }
+          else if (strcmp(isc_global, "-1") == 0) {
             grabbed = !grabbed;
             XDefineCursor(display, window, grabbed ? cursor : 0);
           }
@@ -89,7 +92,7 @@ static int x11_handler(int fd) {
         }
 
         short code = 0x80 << 8 | keyCodes[event.xkey.keycode - 8];
-        LiSendKeyboardEvent(code, event.type == KeyPress ? KEY_ACTION_DOWN : KEY_ACTION_UP, keyboard_modifiers);
+        if (grabbed) LiSendKeyboardEvent(code, event.type == KeyPress ? KEY_ACTION_DOWN : KEY_ACTION_UP, keyboard_modifiers);
       }
       break;
     case ButtonPress:
@@ -106,14 +109,24 @@ static int x11_handler(int fd) {
         break;
       }
 
-      if (button != 0)
+      if (button != 0 && grabbed)
         LiSendMouseButtonEvent(event.type==ButtonPress ? BUTTON_ACTION_PRESS : BUTTON_ACTION_RELEASE, button);
+
+      if (button == BUTTON_LEFT && last_x >= 0 && last_y >= 0 && !grabbed && event.type == ButtonRelease) {
+        if (strcmp(isc_global, "-1") == 0) {
+          grabbed = True;
+          XDefineCursor(display, window, grabbed ? cursor : 0);
+        } else if (strcmp(isc_global, "NONE") != 0) {
+          system(isc_global);
+        }
+      }
+
       break;
     case MotionNotify:
       motion_x = event.xmotion.x - last_x;
       motion_y = event.xmotion.y - last_y;
       if (abs(motion_x) > 0 || abs(motion_y) > 0) {
-        if (last_x >= 0 && last_y >= 0)
+        if (last_x >= 0 && last_y >= 0 && grabbed)
           LiSendMouseMoveEvent(motion_x, motion_y);
 
         if (grabbed)
@@ -126,7 +139,6 @@ static int x11_handler(int fd) {
     case ClientMessage:
       if (event.xclient.data.l[0] == wm_deletemessage)
         return LOOP_RETURN;
-
       break;
     }
   }
@@ -139,6 +151,7 @@ void x11_input_init(Display* x11_display, Window x11_window) {
   window = x11_window;
 
   wm_deletemessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
+
   XSetWMProtocols(display, window, &wm_deletemessage, 1);
 
   /* make a blank cursor */
@@ -147,6 +160,9 @@ void x11_input_init(Display* x11_display, Window x11_window) {
   cursor = XCreatePixmapCursor(display, blank, blank, &dummy, &dummy, 0, 0);
   XFreePixmap(display, blank);
   XDefineCursor(display, window, cursor);
-
   loop_add_fd(ConnectionNumber(display), x11_handler, POLLIN | POLLERR | POLLHUP);
+  if (strcmp(isc_global, "-1") != 0){
+    grabbed = false;
+    XDefineCursor(display, window, grabbed ? cursor : 0);
+  }
 }

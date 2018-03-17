@@ -45,6 +45,7 @@ static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
   {"1080", no_argument, NULL, 'b'},
   {"4k", no_argument, NULL, '0'},
+  {"isc", required_argument, NULL, '1'},
   {"width", required_argument, NULL, 'c'},
   {"height", required_argument, NULL, 'd'},
   {"bitrate", required_argument, NULL, 'g'},
@@ -123,6 +124,9 @@ char* get_path(char* name, char* extra_data_dirs) {
 
 static void parse_argument(int c, char* value, PCONFIGURATION config) {
   switch (c) {
+  case '1':
+    config->isc = value;
+    break;
   case 'a':
     config->stream.width = 1280;
     config->stream.height = 720;
@@ -285,7 +289,8 @@ void config_save(char* filename, PCONFIGURATION config) {
     write_config_bool(fd, "sops", config->sops);
   if (config->localaudio)
     write_config_bool(fd, "localaudio", config->localaudio);
-
+  if (config->isc)
+      write_config_string(fd, "isc", config->isc);
   if (strcmp(config->app, "Steam") != 0)
     write_config_string(fd, "app", config->app);
 
@@ -316,6 +321,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->fullscreen = true;
   config->unsupported = false;
   config->codec = CODEC_UNSPECIFIED;
+  config->isc = NULL;
 
   config->inputsCount = 0;
   config->mapping = get_path("gamecontrollerdb.txt", getenv("XDG_DATA_DIRS"));

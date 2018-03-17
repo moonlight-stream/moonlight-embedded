@@ -52,7 +52,6 @@ static int loop_sig_handler(int fd) {
 void loop_add_fd(int fd, FdHandler handler, int events) {
   int fdindex = numFds;
   numFds++;
-
   if (fds == NULL) {
     fds = malloc(sizeof(struct pollfd));
     fdHandlers = malloc(sizeof(FdHandler*));

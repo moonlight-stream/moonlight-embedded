@@ -20,3 +20,4 @@
 #include <stdbool.h>
 
 int blank_fb(char *path, bool clear);
+extern char* isc_global;

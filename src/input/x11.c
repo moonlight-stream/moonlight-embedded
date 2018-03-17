@@ -46,6 +46,7 @@ static int keyboard_modifiers;
 static const char data[1] = {0};
 static Cursor cursor;
 static bool grabbed = True;
+static release = false;
 
 static int x11_handler(int fd) {
   XEvent event;
@@ -63,6 +64,7 @@ static int x11_handler(int fd) {
             return LOOP_RETURN;
           }
           else if (strcmp(isc_global, "-1") == 0) {
+            release = true;
             grabbed = !grabbed;
             XDefineCursor(display, window, grabbed ? cursor : 0);
           }
@@ -92,7 +94,8 @@ static int x11_handler(int fd) {
         }
 
         short code = 0x80 << 8 | keyCodes[event.xkey.keycode - 8];
-        if (grabbed) LiSendKeyboardEvent(code, event.type == KeyPress ? KEY_ACTION_DOWN : KEY_ACTION_UP, keyboard_modifiers);
+        if (grabbed || release) LiSendKeyboardEvent(code, event.type == KeyPress ? KEY_ACTION_DOWN : KEY_ACTION_UP, keyboard_modifiers);
+        release = false;
       }
       break;
     case ButtonPress:

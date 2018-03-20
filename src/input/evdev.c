@@ -454,9 +454,14 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
 
   int16_t guid[8] = {0};
   guid[0] = int16_to_le(libevdev_get_id_bustype(evdev));
-  guid[2] = int16_to_le(libevdev_get_id_vendor(evdev));
-  guid[4] = int16_to_le(libevdev_get_id_product(evdev));
-  guid[6] = int16_to_le(libevdev_get_id_version(evdev));
+  int16_t vendor = libevdev_get_id_vendor(evdev);
+  int16_t product = libevdev_get_id_product(evdev);
+  if (vendor && product) {
+    guid[2] = int16_to_le(vendor);
+    guid[4] = int16_to_le(product);
+    guid[6] = int16_to_le(libevdev_get_id_version(evdev));
+  } else
+    strncpy((char*) &guid[2], name, 11);
 
   char str_guid[33];
   char* buf = str_guid;

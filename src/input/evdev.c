@@ -99,7 +99,7 @@ int evdev_gamepads = 0;
 
 static bool (*handler) (struct input_event*, struct input_device*);
 
-static int evdev_get_map_key(int* map, int length, int value) {
+static int evdev_get_map(int* map, int length, int value) {
   for (int i = 0; i < length; i++) {
     if (value == map[i])
       return i;
@@ -108,7 +108,7 @@ static int evdev_get_map_key(int* map, int length, int value) {
 }
 
 static bool evdev_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
-  int abs = evdev_get_map_key(dev->abs_map, ABS_MAX, code);
+  int abs = evdev_get_map(dev->abs_map, ABS_MAX, code);
 
   if (abs >= 0) {
     parms->flat = libevdev_get_abs_flat(dev->dev, abs);
@@ -518,8 +518,8 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   devices[dev].fd = fd;
   devices[dev].dev = evdev;
   devices[dev].map = mappings;
-  memset(&devices[dev].key_map, -1, sizeof(devices[dev].key_map));
-  memset(&devices[dev].abs_map, -1, sizeof(devices[dev].abs_map));
+  memset(&devices[dev].key_map, -2, sizeof(devices[dev].key_map));
+  memset(&devices[dev].abs_map, -2, sizeof(devices[dev].abs_map));
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {

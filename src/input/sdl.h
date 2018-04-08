@@ -20,6 +20,8 @@
 #include <stdbool.h>
 #include <SDL.h>
 
+extern int sdl_gamepads;
+
 static const short keyCodes1[] = {
   0, //SDLK_EXCLAIM
   0, //SDLK_QUOTEDBL

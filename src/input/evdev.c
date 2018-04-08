@@ -91,6 +91,8 @@ static bool* currentReverse;
 
 static bool grabbingDevices;
 
+int evdev_gamepads = 0;
+
 #define QUIT_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY KEY_Q
 #define QUIT_BUTTONS (PLAY_FLAG|BACK_FLAG|LB_FLAG|RB_FLAG)
@@ -494,6 +496,9 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
     fprintf(stderr, "No mapping available for %s (%s) on %s\n", name, str_guid, device);
     mappings = default_mapping;
   }
+
+  if (!is_keyboard && !is_mouse)
+    evdev_gamepads++;
 
   int dev = numDevices;
   numDevices++;

@@ -42,6 +42,8 @@ static GAMEPAD_STATE gamepads[4];
 static int keyboard_modifiers;
 static int activeGamepadMask = 0;
 
+int sdl_gamepads = 0;
+
 void sdlinput_init(char* mappings) {
   memset(gamepads, 0, sizeof(gamepads));
 
@@ -50,6 +52,7 @@ void sdlinput_init(char* mappings) {
 
   for (int i = 0; i < SDL_NumJoysticks(); ++i) {
     if (SDL_IsGameController(i)) {
+      sdl_gamepads++;
       if (!SDL_GameControllerOpen(i)) {
         fprintf(stderr, "Could not open gamecontroller %i: %s\n", i, SDL_GetError());
       }

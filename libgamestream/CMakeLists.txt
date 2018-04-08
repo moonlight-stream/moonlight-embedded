@@ -1,4 +1,4 @@
-set(SO_VERSION 3)
+set(SO_VERSION 4)
 
 find_package(LibUUID REQUIRED)
 find_package(Threads REQUIRED)

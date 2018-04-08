@@ -90,7 +90,16 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     exit(-1);
   }
 
-  int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio);
+  int gamepads = 0;
+  gamepads += evdev_gamepads;
+  #ifdef HAVE_SDL
+  gamepads += sdl_gamepads;
+  #endif
+  int gamepad_mask;
+  for (int i = 0; i < gamepads && i < 4; i++)
+    gamepad_mask = (gamepad_mask << 1) + 1;
+
+  int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio, gamepad_mask);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       fprintf(stderr, "Server doesn't support 4K\n");

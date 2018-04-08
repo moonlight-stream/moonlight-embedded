@@ -19,6 +19,8 @@
 
 #include "mapping.h"
 
+extern int evdev_gamepads;
+
 void evdev_create(const char* device, struct mapping* mappings, bool verbose);
 void evdev_loop();
 

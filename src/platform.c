@@ -58,6 +58,9 @@ enum platform platform_check(char* name) {
     if (handle == NULL){
       fprintf(stderr, "Error loading libmoonlight-aml.so \n");
     }
+    if (access("/dev/amvideo", F_OK) == -1){
+      fprintf(stderr, "Error: no access to /dev/amvideo \n");
+    }
     if (handle != NULL && access("/dev/amvideo", F_OK) != -1)
       return AML;
   }

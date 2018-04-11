@@ -55,6 +55,9 @@ enum platform platform_check(char* name) {
   #ifdef HAVE_AML
   if (std || strcmp(name, "aml") == 0) {
     void *handle = dlopen("libmoonlight-aml.so", RTLD_NOW | RTLD_GLOBAL);
+    if (handle == NULL){
+      fprintf(stderr, "Error loading libmoonlight-aml.so \n");
+    }
     if (handle != NULL && access("/dev/amvideo", F_OK) != -1)
       return AML;
   }

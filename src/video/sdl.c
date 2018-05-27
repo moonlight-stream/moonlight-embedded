@@ -40,7 +40,7 @@ static int sdl_setup(int videoFormat, int width, int height, int redrawRate, voi
     return -1;
   }
   
-  ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+  ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
   if (ffmpeg_buffer == NULL) {
     fprintf(stderr, "Not enough memory\n");
     ffmpeg_destroy();

@@ -20,9 +20,6 @@
 #include "video.h"
 #include "egl.h"
 #include "ffmpeg.h"
-#ifdef HAVE_VDPAU
-#include "ffmpeg_vdpau.h"
-#endif
 #ifdef HAVE_VAAPI
 #include "ffmpeg_vaapi.h"
 #endif
@@ -63,11 +60,7 @@ static int frame_handle(int pipefd) {
     #ifdef HAVE_VAAPI 
     else if (ffmpeg_decoder == VAAPI)
       vaapi_queue(frame, window, display_width, display_height);
-    #endif  
-    #ifdef HAVE_VDPAU
-    else if (ffmpeg_decoder == VDPAU)
-      vdpau_queue(frame);
-    #endif 
+    #endif
   }
 
   return LOOP_OK;
@@ -84,16 +77,11 @@ int x11_init(bool vdpau, bool vaapi) {
     return INIT_VAAPI;
   #endif
 
-  #ifdef HAVE_VDPAU
-  if (vdpau && vdpau_init_lib(display) == 0)
-    return INIT_VDPAU;
-  #endif
-
   return INIT_EGL;
 }
 
 int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+  ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
   if (ffmpeg_buffer == NULL) {
     fprintf(stderr, "Not enough memory\n");
     return -1;
@@ -149,11 +137,6 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
 
   if (ffmpeg_decoder == SOFTWARE)
     egl_init(display, window, width, height);
-  
-  #ifdef HAVE_VDPAU
-  if (ffmpeg_decoder == VDPAU)
-    vdpau_init_presentation(window, width, height, display_width, display_height);
-  #endif
 
   if (pipe(pipefd) == -1) {
     fprintf(stderr, "Can't create communication channel between threads\n");

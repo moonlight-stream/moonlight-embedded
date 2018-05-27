@@ -91,13 +91,15 @@ static bool* currentReverse;
 
 static bool grabbingDevices;
 
+int evdev_gamepads = 0;
+
 #define QUIT_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY KEY_Q
 #define QUIT_BUTTONS (PLAY_FLAG|BACK_FLAG|LB_FLAG|RB_FLAG)
 
 static bool (*handler) (struct input_event*, struct input_device*);
 
-static int evdev_get_map_key(int* map, int length, int value) {
+static int evdev_get_map(int* map, int length, int value) {
   for (int i = 0; i < length; i++) {
     if (value == map[i])
       return i;
@@ -106,7 +108,7 @@ static int evdev_get_map_key(int* map, int length, int value) {
 }
 
 static bool evdev_init_parms(struct input_device *dev, struct input_abs_parms *parms, int code) {
-  int abs = evdev_get_map_key(dev->abs_map, ABS_MAX, code);
+  int abs = evdev_get_map(dev->abs_map, ABS_MAX, code);
 
   if (abs >= 0) {
     parms->flat = libevdev_get_abs_flat(dev->dev, abs);
@@ -454,9 +456,14 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
 
   int16_t guid[8] = {0};
   guid[0] = int16_to_le(libevdev_get_id_bustype(evdev));
-  guid[2] = int16_to_le(libevdev_get_id_vendor(evdev));
-  guid[4] = int16_to_le(libevdev_get_id_product(evdev));
-  guid[6] = int16_to_le(libevdev_get_id_version(evdev));
+  int16_t vendor = libevdev_get_id_vendor(evdev);
+  int16_t product = libevdev_get_id_product(evdev);
+  if (vendor && product) {
+    guid[2] = int16_to_le(vendor);
+    guid[4] = int16_to_le(product);
+    guid[6] = int16_to_le(libevdev_get_id_version(evdev));
+  } else
+    strncpy((char*) &guid[2], name, 11);
 
   char str_guid[33];
   char* buf = str_guid;
@@ -490,6 +497,9 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
     mappings = default_mapping;
   }
 
+  if (!is_keyboard && !is_mouse)
+    evdev_gamepads++;
+
   int dev = numDevices;
   numDevices++;
 
@@ -508,8 +518,8 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   devices[dev].fd = fd;
   devices[dev].dev = evdev;
   devices[dev].map = mappings;
-  memset(&devices[dev].key_map, -1, sizeof(devices[dev].key_map));
-  memset(&devices[dev].abs_map, -1, sizeof(devices[dev].abs_map));
+  memset(&devices[dev].key_map, -2, sizeof(devices[dev].key_map));
+  memset(&devices[dev].abs_map, -2, sizeof(devices[dev].abs_map));
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {

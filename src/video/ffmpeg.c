@@ -19,9 +19,6 @@
 
 #include "ffmpeg.h"
 
-#ifdef HAVE_VDPAU
-#include "ffmpeg_vdpau.h"
-#endif
 #ifdef HAVE_VAAPI
 #include "ffmpeg_vaapi.h"
 #endif
@@ -52,31 +49,17 @@ enum decoders ffmpeg_decoder;
 int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count) {
   // Initialize the avcodec library and register codecs
   av_log_set_level(AV_LOG_QUIET);
-  avcodec_register_all();
 
   av_init_packet(&pkt);
 
-  if (perf_lvl & VDPAU_ACCELERATION) {
-    switch (videoFormat) {
-      case VIDEO_FORMAT_H264:
-        decoder = avcodec_find_decoder_by_name("h264_vdpau");
-        break;
-      case VIDEO_FORMAT_H265:
-        decoder = avcodec_find_decoder_by_name("hevc_vdpau");
-        break;
-    }
-
-    ffmpeg_decoder = VDPAU;
-  } else {
-    ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
-    switch (videoFormat) {
-      case VIDEO_FORMAT_H264:
-        decoder = avcodec_find_decoder_by_name("h264");
-        break;
-      case VIDEO_FORMAT_H265:
-        decoder = avcodec_find_decoder_by_name("hevc");
-        break;
-    }
+  ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
+  switch (videoFormat) {
+    case VIDEO_FORMAT_H264:
+      decoder = avcodec_find_decoder_by_name("h264");
+      break;
+    case VIDEO_FORMAT_H265:
+      decoder = avcodec_find_decoder_by_name("hevc");
+      break;
   }
 
   if (decoder == NULL) {
@@ -96,7 +79,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 
   if (perf_lvl & LOW_LATENCY_DECODE)
     // Use low delay single threaded encoding
-    decoder_ctx->flags |= CODEC_FLAG_LOW_DELAY;
+    decoder_ctx->flags |= AV_CODEC_FLAG_LOW_DELAY;
 
   if (perf_lvl & SLICE_THREADING)
     decoder_ctx->thread_type = FF_THREAD_SLICE;
@@ -135,11 +118,6 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
     vaapi_init(decoder_ctx);
   #endif
 
-  #ifdef HAVE_VDPAU
-  if (ffmpeg_decoder == VDPAU)
-    vdpau_init(decoder_ctx, width, height);
-  #endif
-
   return 0;
 }
 
@@ -167,10 +145,6 @@ AVFrame* ffmpeg_get_frame(bool native_frame) {
 
     if (ffmpeg_decoder == SOFTWARE || native_frame)
       return dec_frames[current_frame];
-    #ifdef HAVE_VDPAU
-    else if (ffmpeg_decoder == VDPAU)
-      return vdpau_get_frame(dec_frames[current_frame]);
-    #endif
   } else if (err != AVERROR(EAGAIN)) {
     char errorstring[512];
     av_strerror(err, errorstring, sizeof(errorstring));
@@ -180,7 +154,7 @@ AVFrame* ffmpeg_get_frame(bool native_frame) {
 }
 
 // packets must be decoded in order
-// indata must be inlen + FF_INPUT_BUFFER_PADDING_SIZE in length
+// indata must be inlen + AV_INPUT_BUFFER_PADDING_SIZE in length
 int ffmpeg_decode(unsigned char* indata, int inlen) {
   int err;
 

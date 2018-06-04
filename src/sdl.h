@@ -17,8 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_SDL
-
 #include <SDL.h>
 
 #include <stdbool.h>
@@ -38,5 +36,3 @@ void sdl_loop();
 
 SDL_mutex *mutex;
 int sdlCurrentFrame, sdlNextFrame;
-
-#endif /* HAVE_SDL */

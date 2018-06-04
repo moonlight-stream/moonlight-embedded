@@ -19,7 +19,6 @@
 
 #include "config.h"
 
-#include "input/evdev.h"
 #include "audio/audio.h"
 
 #include <stdio.h>

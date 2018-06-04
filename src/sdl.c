@@ -17,8 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_SDL
-
 #include "sdl.h"
 #include "input/sdl.h"
 
@@ -111,5 +109,3 @@ void sdl_loop() {
   SDL_DestroyWindow(window);
   SDL_Quit();
 }
-
-#endif /* HAVE_SDL */

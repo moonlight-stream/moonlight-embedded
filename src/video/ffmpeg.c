@@ -51,6 +51,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
   av_log_set_level(AV_LOG_QUIET);
 
   av_init_packet(&pkt);
+  avcodec_register_all();
 
   ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
   switch (videoFormat) {

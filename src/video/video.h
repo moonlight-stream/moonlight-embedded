@@ -28,5 +28,3 @@
 #define INIT_EGL 1
 #define INIT_VDPAU 2
 #define INIT_VAAPI 3
-
-extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;

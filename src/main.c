@@ -21,13 +21,11 @@
 #include "configuration.h"
 #include "config.h"
 #include "platform.h"
-#include "sdl.h"
 
 #include "audio/audio.h"
 #include "video/video.h"
 
 #include "input/mapping.h"
-#include "input/sdl.h"
 
 #include <Limelight.h>
 
@@ -82,7 +80,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     exit(-1);
   }
 
-  int gamepads = sdl_gamepads;
+  int gamepads = 0;
   int gamepad_mask;
   for (int i = 0; i < gamepads && i < 4; i++)
     gamepad_mask = (gamepad_mask << 1) + 1;
@@ -112,8 +110,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
-  if (system == SDL)
-    sdl_loop();
+  printf("Would loop here...");
 
   LiStopConnection();
   platform_stop(system);
@@ -243,21 +240,8 @@ int main(int argc, char* argv[]) {
     if (system == 0) {
       fprintf(stderr, "Platform '%s' not found\n", config.platform);
       exit(-1);
-    } else if (system == SDL && config.audio_device != NULL) {
-      fprintf(stderr, "You can't select a audio device for SDL\n");
-      exit(-1);
     }
     config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-
-    if (system == SDL) {
-      if (config.inputsCount > 0) {
-        fprintf(stderr, "You can't select input devices as SDL will automatically use all available controllers\n");
-        exit(-1);
-      }
-
-      sdl_init(config.stream.width, config.stream.height, config.fullscreen);
-      sdlinput_init(config.mapping);
-    }
 
     stream(&server, &config, system);
   } else if (strcmp("pair", config.action) == 0) {

@@ -19,14 +19,11 @@
 
 #include <Limelight.h>
 
-#include <dlfcn.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
-
-enum platform { NONE, SDL };
+enum platform { NONE, SWITCH };
 
 enum platform platform_check(char*);
 PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);

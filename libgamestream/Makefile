@@ -46,7 +46,7 @@ ASFLAGS	:=	-g $(ARCH)
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:= $(PORTLIBS) $(LIBNX)
-LIBS    := -lssl -lcrypto -lnx
+LIBS    := -luuid -lenet -lssl -lcrypto -lnx
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -90,7 +90,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 .PHONY: clean all
 
 #---------------------------------------------------------------------------------
-all: lib/lib$(TARGET).a lib/lib$(TARGET)d.a
+all: lib/$(TARGET).a lib/$(TARGET)d.a
 
 lib:
 	@[ -d $@ ] || mkdir -p $@
@@ -101,14 +101,14 @@ release:
 debug:
 	@[ -d $@ ] || mkdir -p $@
 
-lib/lib$(TARGET).a : lib release $(SOURCES) $(INCLUDES)
+lib/$(TARGET).a : lib release $(SOURCES) $(INCLUDES)
 	@$(MAKE) BUILD=release OUTPUT=$(CURDIR)/$@ \
 	BUILD_CFLAGS="-DNDEBUG=1 -O2" \
 	DEPSDIR=$(CURDIR)/release \
 	--no-print-directory -C release \
 	-f $(CURDIR)/Makefile
 
-lib/lib$(TARGET)d.a : lib debug $(SOURCES) $(INCLUDES)
+lib/$(TARGET)d.a : lib debug $(SOURCES) $(INCLUDES)
 	@$(MAKE) BUILD=debug OUTPUT=$(CURDIR)/$@ \
 	BUILD_CFLAGS="-DDEBUG=1 -Og" \
 	DEPSDIR=$(CURDIR)/debug \

@@ -29,15 +29,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <dlfcn.h>
 
 typedef bool(*ImxInit)();
 
 enum platform platform_check(char* name) {
   bool std = strcmp(name, "auto") == 0;
 
-  if (std || strcmp(name, "sdl") == 0)
-    return SDL;
+  if (std || strcmp(name, "switch") == 0)
+    return SWITCH;
 
   return 0;
 }
@@ -51,18 +50,10 @@ void platform_stop(enum platform system) {
 }
 
 DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
-  switch (system) {
-  case SDL:
-    return &decoder_callbacks_sdl;
-  }
   return NULL;
 }
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system, char* audio_device) {
-  switch (system) {
-  case SDL:
-    return &audio_callbacks_sdl;
-  }
   return NULL;
 }
 
@@ -72,8 +63,6 @@ bool platform_supports_hevc(enum platform system) {
 
 char* platform_name(enum platform system) {
   switch(system) {
-  case SDL:
-    return "SDL2 (software decoding)";
   default:
     return "Unknown";
   }

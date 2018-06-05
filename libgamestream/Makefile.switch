@@ -1,0 +1,47 @@
+TARGET := libgamestream
+
+all: $(TARGET).nro $(TARGET).nso
+
+clean:
+	rm -f *.o *.nro *.nso *.so
+
+# include libtransistor rules
+ifndef LIBTRANSISTOR_HOME
+    $(error LIBTRANSISTOR_HOME must be set)
+endif
+include $(LIBTRANSISTOR_HOME)/libtransistor.mk
+
+GAMESTREAM_SRC_LIST += $(wildcard ./*.c)
+GAMESTREAM_SRC_LIST += $(wildcard ../third_party/moonlight-common-c/reedsolomon/*.c)
+GAMESTREAM_SRC_LIST += $(wildcard ../third_party/moonlight-common-c/src/*.c)
+GAMESTREAM_SRC_LIST += $(wildcard ../third_party/h264bitstream/*.c)
+# GAMESTREAM_SRC_LIST := $(wildcard ../third_party/libuuid/*.c)
+
+OBJECTS := $(notdir $(addsuffix .o,$(basename $(GAMESTREAM_SRC_LIST))))
+
+GAMESTREAM_INCLUDE :=	\
+	-I../third_party/moonlight-common-c/reedsolomon \
+	-I../third_party/moonlight-common-c/src \
+    -I../third_party/h264bitstream \
+    -I/usr/local/opt/switch/openssl/include \
+    -I/usr/local/opt/switch/expat/include \
+    -I/usr/local/opt/switch/curl/include \
+    -I/usr/local/opt/switch/enet/include \
+    # ../third_party/libuuid \
+
+
+LD_SHARED_LIBRARY_FLAGS	+= \
+	-L/usr/local/opt/switch/openssl/lib -lssl -crypto \
+	-L/usr/local/opt/switch/curl/lib -lcurl \
+	-L/usr/local/opt/switch/expat/lib -lexpat \
+	-L/usr/local/opt/switch/enet/lib -lenet \
+
+
+$(OBJECTS):
+	$(CC) -w $(CPPFLAGS) $(CFLAGS) $(GAMESTREAM_INCLUDE) -c $(GAMESTREAM_SRC_LIST)
+
+$(TARGET).nro.so: $(OBJECTS) $(LIBTRANSITOR_NRO_LIB) $(LIBTRANSISTOR_COMMON_LIBS)
+	$(LD) $(LD_SHARED_LIBRARY_FLAGS) -o $@ $(OBJECTS) $(LIBTRANSISTOR_NRO_LDFLAGS)
+
+$(TARGET).nso.so: $(OBJECTS) $(LIBTRANSITOR_NSO_LIB) $(LIBTRANSISTOR_COMMON_LIBS)
+	$(LD) $(LD_SHARED_LIBRARY_FLAGS) -o $@ $(OBJECTS) $(LIBTRANSISTOR_NSO_LDFLAGS)

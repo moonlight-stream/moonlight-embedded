@@ -411,3 +411,5 @@ __pycache__/
 
 
 # End of https://www.gitignore.io/api/c++,xcode,cmake,qtcreator,visualstudio,visualstudiocode
+
+.vscode

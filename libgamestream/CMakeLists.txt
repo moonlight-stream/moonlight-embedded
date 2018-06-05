@@ -3,10 +3,13 @@ set(SO_VERSION 4)
 find_package(LibUUID REQUIRED)
 find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
-#find_package(OpenSSL 1.0.2 REQUIRED)
 find_package(EXPAT REQUIRED)
 
 pkg_check_modules(ENET REQUIRED libenet)
+
+MESSAGE(STATUS "libuuid libraries " ${LIBUUID_LIBRARIES})
+MESSAGE(STATUS "libuuid includes " ${LIBUUID_INCLUDE_DIRS})
+MESSAGE(STATUS "libuuid found " ${LIBUUID_FOUND})
 
 aux_source_directory(./ GAMESTREAM_SRC_LIST)
 aux_source_directory(../third_party/h264bitstream GAMESTREAM_SRC_LIST)

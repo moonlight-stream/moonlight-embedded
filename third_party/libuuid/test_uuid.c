@@ -67,7 +67,7 @@ static int test_uuid(const char * uuid, int isValid)
 #endif
 
 int
-main(int argc ATTR((unused)) , char **argv ATTR((unused)))
+main_(int argc ATTR((unused)) , char **argv ATTR((unused)))
 {
 	uuid_t		buf, tst;
 	char		str[100];

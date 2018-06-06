@@ -13,8 +13,6 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include <sys/syscall.h>
-
 #include "randutils.h"
 
 #ifdef HAVE_TLS
@@ -24,6 +22,7 @@
 #endif
 
 #if defined(__linux__) && defined(__NR_gettid) && defined(HAVE_JRAND48)
+#include <sys/syscall.h>
 #define DO_JRAND_MIX
 THREAD_LOCAL unsigned short ul_jrand_seed[3];
 #endif

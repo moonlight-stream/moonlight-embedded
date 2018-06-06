@@ -17,6 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <switch.h>
+
 #include "connection.h"
 #include "configuration.h"
 #include "config.h"
@@ -166,6 +168,11 @@ static void pair_check(PSERVER_DATA server) {
 }
 
 int main(int argc, char* argv[]) {
+    gfxInitDefault();
+
+    //Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
+    consoleInit(NULL);
+
   CONFIGURATION config;
   config_parse(argc, argv, &config);
 
@@ -174,6 +181,27 @@ int main(int argc, char* argv[]) {
   
   if (config.debug_level > 0)
     printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
+
+
+  while(appletMainLoop())
+  {
+      //Scan all the inputs. This should be done once for each frame
+      hidScanInput();
+
+      //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+      u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+
+      if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+
+      gfxFlushBuffers();
+      gfxSwapBuffers();
+      gfxWaitForVsync();
+  }
+
+  gfxExit();
+  return 0;
+
+
 
   if (strcmp("map", config.action) == 0) { 
     if (config.inputsCount != 1) {

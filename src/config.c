@@ -320,36 +320,36 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->mapping = get_path("gamecontrollerdb.txt", getenv("XDG_DATA_DIRS"));
   config->key_dir[0] = 0;
 
-  char* config_file = get_path("moonlight.conf", "/etc");
-  if (config_file)
-    config_file_parse(config_file, config);
+//  char* config_file = get_path("moonlight.conf", "/etc");
+//  if (config_file)
+//    config_file_parse(config_file, config);
   
-  if (argc == 2 && access(argv[1], F_OK) == 0) {
-    config->action = "stream";
-    if (!config_file_parse(argv[1], config))
-      exit(EXIT_FAILURE);
+//  if (argc == 2 && access(argv[1], F_OK) == 0) {
+//    config->action = "stream";
+//    if (!config_file_parse(argv[1], config))
+//      exit(EXIT_FAILURE);
 
-  } else {
-    int option_index = 0;
-    int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w:xy", long_options, &option_index)) != -1) {
-      parse_argument(c, optarg, config);
-    }
-  }
+//  } else {
+//    int option_index = 0;
+//    int c;
+//    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w:xy", long_options, &option_index)) != -1) {
+//      parse_argument(c, optarg, config);
+//    }
+//  }
 
-  if (config->config_file != NULL)
-    config_save(config->config_file, config);
+//  if (config->config_file != NULL)
+//    config_save(config->config_file, config);
 
-  if (config->key_dir[0] == 0x0) {
-    struct passwd *pw = getpwuid(getuid());
-    const char *dir;
-    if ((dir = getenv("XDG_CACHE_DIR")) != NULL)
-      sprintf(config->key_dir, "%s" MOONLIGHT_PATH, dir);
-    else if ((dir = getenv("HOME")) != NULL)
-      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, dir);
-    else
-      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, pw->pw_dir);
-  }
+//  if (config->key_dir[0] == 0x0) {
+//    struct passwd *pw = getpwuid(getuid());
+//    const char *dir;
+//    if ((dir = getenv("XDG_CACHE_DIR")) != NULL)
+//      sprintf(config->key_dir, "%s" MOONLIGHT_PATH, dir);
+//    else if ((dir = getenv("HOME")) != NULL)
+//      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, dir);
+//    else
+//      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, pw->pw_dir);
+//  }
 
   if (config->stream.fps == -1)
     config->stream.fps = config->stream.height >= 1080 ? 30 : 60;

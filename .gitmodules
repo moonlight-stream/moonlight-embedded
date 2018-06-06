@@ -4,3 +4,6 @@
 [submodule "third_party/enet"]
 	path = third_party/enet
 	url = https://github.com/lsalzman/enet
+[submodule "third_party/libexpat"]
+	path = third_party/libexpat
+	url = https://github.com/libexpat/libexpat.git

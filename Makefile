@@ -32,7 +32,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/audio src/video src/input	\
+SOURCES		:=	src src/audio src/video src/input \
 				libgamestream \
 				third_party/enet \
 				third_party/libuuid \
@@ -41,13 +41,13 @@ SOURCES		:=	src src/audio src/video src/input	\
 				third_party/h264bitstream 
 
 INCLUDES	:=	libgamestream \
-				third_party/enet \
+                                third_party/enet/include \
 				third_party/libuuid \
 				third_party/moonlight-common-c/src \
 				third_party/moonlight-common-c/reedsolomon \
-				third_party/h264bitstream \
-				$(PORTLIBS)/include \
-				$(DEVKITPRO)/aarch64-none-elf/include 
+				third_party/h264bitstream
+
+EXEFS_SRC	:=	exefs_src
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -57,19 +57,15 @@ ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC
 CFLAGS	:=	-g -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DHAVE_USLEEP
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DHAVE_USLEEP -DHAS_SOCKLEN_T
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lSDL2 \
-			-lcurl \
-			-lopus \
-			-lz -lm -lssl -lcrypto \
-			-lexpat \
-			-lnx -lc
+LIBS	:=  -lssl -lcrypto -lcurl -lz -lexpat -lnx
+
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

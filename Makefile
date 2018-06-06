@@ -30,11 +30,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #     - icon.jpg
 #     - <libnx folder>/default_icon.jpg
 #---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
+DIST		:=	dist
+TARGET		:=	$(DIST)/$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	src src/audio src/video src/input \
 				libgamestream \
 				third_party/enet \
+				third_party/inih \
 				third_party/libuuid \
 				third_party/moonlight-common-c/src \
 				third_party/moonlight-common-c/reedsolomon \
@@ -42,7 +44,8 @@ SOURCES		:=	src src/audio src/video src/input \
 
 INCLUDES	:=	libgamestream \
                                 third_party/enet/include \
-				third_party/libuuid \
+                                third_party/inih \
+                                third_party/libuuid \
 				third_party/moonlight-common-c/src \
 				third_party/moonlight-common-c/reedsolomon \
 				third_party/h264bitstream
@@ -163,6 +166,7 @@ all: $(BUILD)
 $(BUILD):
 	@$(foreach dir,$(SOURCES),mkdir -p $(BUILD)/$(dir);)
 	@[ -d $@ ] || mkdir -p $@
+	@mkdir -p $(DIST)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------

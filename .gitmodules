@@ -7,3 +7,6 @@
 [submodule "third_party/libexpat"]
 	path = third_party/libexpat
 	url = https://github.com/libexpat/libexpat.git
+[submodule "third_party/inih"]
+	path = third_party/inih
+	url = https://github.com/benhoyt/inih.git

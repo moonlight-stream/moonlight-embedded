@@ -21,12 +21,12 @@
 
 #include "audio/audio.h"
 
+#include <ini.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
-#include <pwd.h>
 #include <sys/types.h>
 
 #define MOONLIGHT_PATH "/moonlight"
@@ -69,198 +69,37 @@ static struct option long_options[] = {
   {0, 0, 0, 0},
 };
 
-char* get_path(char* name, char* extra_data_dirs) {
-  const char *xdg_config_dir = getenv("XDG_CONFIG_DIR");
-  const char *home_dir = getenv("HOME");
+static int ini_handle(void *out, const char *section, const char *name, const char *value) {
+#define HEX(v) strtol((v), NULL, 16)
+#define INT(v) atoi((v))
+#define BOOL(v) strcmp((v), "true") == 0
+#define STR(v) strdup((v))
 
-  if (access(name, R_OK) != -1) {
-      return name;
-  }
+  PCONFIGURATION config = (PCONFIGURATION)out;
 
-  if (!home_dir) {
-    struct passwd *pw = getpwuid(getuid());
-    home_dir = pw->pw_dir;
-  }
-
-  if (!extra_data_dirs)
-    extra_data_dirs = "/usr/share:/usr/local/share";
-  if (!xdg_config_dir)
-    xdg_config_dir = home_dir;
-
-  char *data_dirs = malloc(strlen(USER_PATHS) + 1 + strlen(xdg_config_dir) + 1 + strlen(home_dir) + 1 + strlen(DEFAULT_CONFIG_DIR) + 1 + strlen(extra_data_dirs) + 2);
-  sprintf(data_dirs, USER_PATHS ":%s:%s/" DEFAULT_CONFIG_DIR ":%s/", xdg_config_dir, home_dir, extra_data_dirs);
-
-  char *path = malloc(strlen(data_dirs)+strlen(MOONLIGHT_PATH)+strlen(name)+2);
-  if (path == NULL) {
-    fprintf(stderr, "Not enough memory\n");
-    exit(-1);
-  }
-
-  char* data_dir = data_dirs;
-  char* end;
-  do {
-    end = strstr(data_dir, ":");
-    int length = end != NULL?end - data_dir:strlen(data_dir);
-    memcpy(path, data_dir, length);
-    if (path[0] == '/')
-      sprintf(path+length, MOONLIGHT_PATH "/%s", name);
-    else
-      sprintf(path+length, "/%s", name);
-
-    if(access(path, R_OK) != -1) {
-      free(data_dirs);
-      return path;
-    }
-
-    data_dir = end + 1;
-  } while (end != NULL);
-
-  free(data_dirs);
-  free(path);
-  return NULL;
-}
-
-static void parse_argument(int c, char* value, PCONFIGURATION config) {
-  switch (c) {
-  case 'a':
-    config->stream.width = 1280;
-    config->stream.height = 720;
-    break;
-  case 'b':
-    config->stream.width = 1920;
-    config->stream.height = 1080;
-    break;
-  case '0':
-    config->stream.width = 3840;
-    config->stream.height = 2160;
-    break;
-  case 'c':
-    config->stream.width = atoi(value);
-    break;
-  case 'd':
-    config->stream.height = atoi(value);
-    break;
-  case 'g':
-    config->stream.bitrate = atoi(value);
-    break;
-  case 'h':
-    config->stream.packetSize = atoi(value);
-    break;
-  case 'i':
-    config->app = value;
-    break;
-  case 'j':
-    if (config->inputsCount >= MAX_INPUTS) {
-      perror("Too many inputs specified");
-      exit(-1);
-    }
-    config->inputs[config->inputsCount] = value;
-    config->inputsCount++;
-    inputAdded = true;
-    break;
-  case 'k':
-    config->mapping = get_path(value, getenv("XDG_DATA_DIRS"));
-    if (config->mapping == NULL) {
-      fprintf(stderr, "Unable to open custom mapping file: %s\n", value);
-      exit(-1);
-    }
-    break;
-  case 'l':
-    config->sops = false;
-    break;
-  case 'm':
-    config->audio_device = value;
-    break;
-  case 'n':
-    config->localaudio = true;
-    break;
-  case 'o':
-    if (!config_file_parse(value, config))
-      exit(EXIT_FAILURE);
-
-    break;
-  case 'p':
-    config->platform = value;
-    break;
-  case 'q':
-    config->config_file = value;
-    break;
-  case 'r':
-    strcpy(config->key_dir, value);
-    break;
-  case 's':
-    config->stream.streamingRemotely = 1;
-    break;
-  case 't':
-    config->fullscreen = false;
-    break;
-  case 'u':
-    config->stream.audioConfiguration = AUDIO_CONFIGURATION_51_SURROUND;
-    break;
-  case 'v':
-    config->stream.fps = atoi(value);
-    break;
-  case 'x':
-    if (strcasecmp(value, "auto") == 0)
-      config->codec = CODEC_UNSPECIFIED;
-    else if (strcasecmp(value, "h264") == 0)
-      config->codec = CODEC_H264;
-    if (strcasecmp(value, "h265") == 0 || strcasecmp(value, "hevc") == 0)
-      config->codec = CODEC_HEVC;
-    break;
-  case 'y':
-    config->unsupported = true;
-    break;
-  case 'z':
-    config->debug_level = 1;
-    break;
-  case 'Z':
-    config->debug_level = 2;
-    break;
-  case 1:
-    if (config->action == NULL)
-      config->action = value;
-    else if (config->address == NULL)
-      config->address = value;
-    else {
-      perror("Too many options");
-      exit(-1);
-    }
+  if (strcmp(name, "address") == 0) {
+    config->address = STR(value);
+  } else if (strcmp(name, "width") == 0) {
+    config->stream.width = INT(value);
+  } else if (strcmp(name, "height") == 0) {
+    config->stream.height = INT(value);
+  } else if (strcmp(name, "bitrate") == 0) {
+    config->stream.bitrate = INT(value);
+  } else if (strcmp(name, "sops") == 0) {
+    config->sops = BOOL(value);
+  } else if (strcmp(name, "localaudio") == 0) {
+    config->localaudio = BOOL(value);
+  } else if (strcmp(name, "mapping") == 0) {
+    config->mapping = STR(value);
+  } else if (strcmp(name, "enable_remote_stream_optimization") == 0) {
+    config->stream.streamingRemotely = INT(value);
+  } else if (strcmp(name, "debug_level") == 0) {
+    config->debug_level = INT(value);
   }
 }
 
 bool config_file_parse(char* filename, PCONFIGURATION config) {
-  FILE* fd = fopen(filename, "r");
-  if (fd == NULL) {
-    fprintf(stderr, "Can't open configuration file: %s\n", filename);
-    return false;
-  }
-
-  char *line = NULL;
-  size_t len = 0;
-
-  while (getline(&line, &len, fd) != -1) {
-    char *key = NULL, *value = NULL;
-    if (sscanf(line, "%ms = %m[^\n]", &key, &value) == 2) {
-      if (strcmp(key, "address") == 0) {
-        config->address = value;
-      } else if (strcmp(key, "sops") == 0) {
-        config->sops = strcmp("true", value) == 0;
-      } else if (strcmp(key, "localaudio") == 0) {
-        config->localaudio = strcmp("true", value) == 0;
-      } else {
-        for (int i=0;long_options[i].name != NULL;i++) {
-          if (strcmp(long_options[i].name, key) == 0) {
-            if (long_options[i].has_arg == required_argument)
-              parse_argument(long_options[i].val, value, config);
-            else if (strcmp("true", value) == 0)
-              parse_argument(long_options[i].val, NULL, config);
-          }
-        }
-      }
-    }
-  }
-  return true;
+  return ini_parse(filename, ini_handle, config);
 }
 
 void config_save(char* filename, PCONFIGURATION config) {
@@ -291,7 +130,7 @@ void config_save(char* filename, PCONFIGURATION config) {
   fclose(fd);
 }
 
-void config_parse(int argc, char* argv[], PCONFIGURATION config) {
+void config_parse(char *filename, PCONFIGURATION config) {
   LiInitializeStreamConfiguration(&config->stream);
 
   config->stream.width = 1280;
@@ -304,7 +143,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.supportsHevc = false;
 
   config->debug_level = 0;
-  config->platform = "auto";
+  config->platform = "switch";
   config->app = "Steam";
   config->action = NULL;
   config->address = NULL;
@@ -317,39 +156,10 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;
-  config->mapping = get_path("gamecontrollerdb.txt", getenv("XDG_DATA_DIRS"));
-  config->key_dir[0] = 0;
+  char* config_file = filename;
 
-//  char* config_file = get_path("moonlight.conf", "/etc");
-//  if (config_file)
-//    config_file_parse(config_file, config);
-  
-//  if (argc == 2 && access(argv[1], F_OK) == 0) {
-//    config->action = "stream";
-//    if (!config_file_parse(argv[1], config))
-//      exit(EXIT_FAILURE);
-
-//  } else {
-//    int option_index = 0;
-//    int c;
-//    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w:xy", long_options, &option_index)) != -1) {
-//      parse_argument(c, optarg, config);
-//    }
-//  }
-
-//  if (config->config_file != NULL)
-//    config_save(config->config_file, config);
-
-//  if (config->key_dir[0] == 0x0) {
-//    struct passwd *pw = getpwuid(getuid());
-//    const char *dir;
-//    if ((dir = getenv("XDG_CACHE_DIR")) != NULL)
-//      sprintf(config->key_dir, "%s" MOONLIGHT_PATH, dir);
-//    else if ((dir = getenv("HOME")) != NULL)
-//      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, dir);
-//    else
-//      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, pw->pw_dir);
-//  }
+  if (config_file)
+    config_file_parse(config_file, config);
 
   if (config->stream.fps == -1)
     config->stream.fps = config->stream.height >= 1080 ? 30 : 60;

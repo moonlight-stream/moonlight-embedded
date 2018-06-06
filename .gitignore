@@ -1,8 +1,8 @@
-*.elf
-*.nro
-*.nso
-*.nacp
-*.pfs0
+dist/*.elf
+dist/*.nro
+dist/*.nso
+dist/*.nacp
+dist/*.pfs0
 
 
 # Created by https://www.gitignore.io/api/c++,xcode,cmake,qtcreator,visualstudio,visualstudiocode

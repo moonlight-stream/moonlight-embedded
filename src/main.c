@@ -174,13 +174,12 @@ int main(int argc, char* argv[]) {
     consoleInit(NULL);
 
   CONFIGURATION config;
-  config_parse(argc, argv, &config);
-
-  if (config.action == NULL || strcmp("help", config.action) == 0)
-    help();
+  config_parse("sdmc:/switch/moonlight-switch/moonlight.ini", &config);
   
   if (config.debug_level > 0)
     printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
+
+  printf("\naddress = %s", config.address);
 
 
   while(appletMainLoop())

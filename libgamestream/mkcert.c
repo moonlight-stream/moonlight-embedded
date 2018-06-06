@@ -18,10 +18,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <switch.h>
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/conf.h>
 #include <openssl/pkcs12.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -44,8 +47,9 @@ CERT_KEY_PAIR mkcert_generate() {
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
     
     OpenSSL_add_all_algorithms();
+
     ERR_load_crypto_strings();
-    
+
     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
 
     p12 = PKCS12_create("limelight", "GameStream", pkey, x509, NULL, 0, 0, 0, 0, 0);
@@ -56,7 +60,7 @@ CERT_KEY_PAIR mkcert_generate() {
     CRYPTO_cleanup_all_ex_data();
     
     BIO_free(bio_err);
-    
+
     return (CERT_KEY_PAIR) {x509, pkey, p12};
 }
 
@@ -86,16 +90,22 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     EVP_PKEY *pk;
     RSA *rsa;
     X509_NAME *name = NULL;
+    unsigned long e;
+
+    size_t seedlen = 2048;
+    void *seedbuf = malloc(seedlen);
+    randomGet(seedbuf, seedlen);
+    RAND_seed(seedbuf, seedlen);
     
     if (*pkeyp == NULL) {
         if ((pk=EVP_PKEY_new()) == NULL) {
-            abort();
-            return(0);
+//            abort();
+          goto err;
         }
     } else {
         pk = *pkeyp;
     }
-    
+
     if (*x509p == NULL) {
         if ((x = X509_new()) == NULL) {
             goto err;
@@ -106,21 +116,21 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
 
     if ((rsa = RSA_new()) == NULL)
         goto err;
-    
+
     BIGNUM* bne = BN_new(); 
     if (bne == NULL) {
-        abort();
+//        abort();
         goto err;
     }
 
     BN_set_word(bne, RSA_F4);
     if (RSA_generate_key_ex(rsa, bits, bne, NULL) == 0) {
-        abort();
+//        abort();
         goto err;
     }
 
     if (!EVP_PKEY_assign_RSA(pk, rsa)) {
-        abort();
+//        abort();
         goto err;
     }
     
@@ -156,6 +166,9 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     
     return(1);
 err:
+    e = ERR_get_error();
+    printf(": failed with error %d = '%s'", e, ERR_error_string(e, NULL));
+
     return(0);
 }
 

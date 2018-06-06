@@ -46,6 +46,8 @@
 #include <arpa/inet.h>
 #include <openssl/rand.h>
 
+#define MOONLIGHT_DATA_DIR "sdmc:/switch/moonlight-switch/"
+
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list = NULL;
   if (gs_applist(server, &list) != GS_OK) {
@@ -168,49 +170,21 @@ static void pair_check(PSERVER_DATA server) {
 }
 
 int main(int argc, char* argv[]) {
-    gfxInitDefault();
+  gfxInitDefault();
 
-    //Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
-    consoleInit(NULL);
+  //Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
+  consoleInit(NULL);
 
+  // Parse the global Moonlight settings
   CONFIGURATION config;
-  config_parse("sdmc:/switch/moonlight-switch/moonlight.ini", &config);
+  config_parse(MOONLIGHT_DATA_DIR "moonlight.ini", &config);
+
+  config.action = "pair";
   
   if (config.debug_level > 0)
     printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
-  printf("\naddress = %s", config.address);
-
-
-  while(appletMainLoop())
-  {
-      //Scan all the inputs. This should be done once for each frame
-      hidScanInput();
-
-      //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-      u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-
-      if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
-
-      gfxFlushBuffers();
-      gfxSwapBuffers();
-      gfxWaitForVsync();
-  }
-
-  gfxExit();
-  return 0;
-
-
-
-  if (strcmp("map", config.action) == 0) { 
-    if (config.inputsCount != 1) {
-      printf("You need to specify one input device using -input.\n");
-      exit(-1);
-    }
-
-    exit(0); 
-  }
-
+  // Discover applicable streaming servers on the network
   if (config.address == NULL) {
     config.address = malloc(MAX_ADDRESS_SIZE);
     if (config.address == NULL) {
@@ -225,17 +199,20 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
   }
-  
-  char host_config_file[128];
-  sprintf(host_config_file, "hosts/%s.conf", config.address);
-  if (access(host_config_file, R_OK) != -1)
-    config_file_parse(host_config_file, &config);
 
+  // Parse configuration specific to the host at `address`
+  char host_config_file[128];
+  sprintf(host_config_file, MOONLIGHT_DATA_DIR "hosts/%s.ini", config.address);
+
+  if (access(host_config_file, R_OK) != -1)
+    config_parse(host_config_file, &config);
+
+  // Connect to the given host
   SERVER_DATA server;
   printf("Connect to %s...\n", config.address);
 
-  int ret;
-  if ((ret = gs_init(&server, config.address, config.key_dir, config.debug_level, config.unsupported)) == GS_OUT_OF_MEMORY) {
+  int ret = gs_init(&server, config.address, MOONLIGHT_DATA_DIR "key", config.debug_level, config.unsupported);
+  if (ret == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
     exit(-1);
   } else if (ret == GS_ERROR) {
@@ -289,6 +266,25 @@ int main(int argc, char* argv[]) {
   } else if (strcmp("quit", config.action) == 0) {
     pair_check(&server);
     gs_quit_app(&server);
-  } else
+  } else {
     fprintf(stderr, "%s is not a valid action\n", config.action);
+  }
+
+  while(appletMainLoop())
+  {
+      //Scan all the inputs. This should be done once for each frame
+      hidScanInput();
+
+      //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+      u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+
+      if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+
+      gfxFlushBuffers();
+      gfxSwapBuffers();
+      gfxWaitForVsync();
+  }
+
+  gfxExit();
+  return 0;
 }

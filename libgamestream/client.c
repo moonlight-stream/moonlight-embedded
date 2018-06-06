@@ -121,9 +121,9 @@ static int load_cert(const char* keyDirectory) {
 
   FILE *fd = fopen(certificateFilePath, "r");
   if (fd == NULL) {
-    printf("Generating certificate...");
+    printf("Generating certificate... ");
     CERT_KEY_PAIR cert = mkcert_generate();
-    printf("done\n");
+    printf("done.\n");
 
     char p12FilePath[PATH_MAX];
     snprintf(p12FilePath, PATH_MAX, "%s/%s", keyDirectory, P12_FILE_NAME);
@@ -168,7 +168,6 @@ static int load_cert(const char* keyDirectory) {
 }
 
 static int load_server_status(PSERVER_DATA server) {
-
   uuid_t uuid;
   char uuid_str[37];
 
@@ -200,6 +199,7 @@ static int load_server_status(PSERVER_DATA server) {
       ret = GS_OUT_OF_MEMORY;
       goto cleanup;
     }
+
     if (http_request(url, data) != GS_OK) {
       ret = GS_IO_ERROR;
       goto cleanup;
@@ -751,12 +751,27 @@ int gs_quit_app(PSERVER_DATA server) {
 }
 
 int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int log_level, bool unsupported) {
+  printf("Setting up key directory (%s)... ", keyDirectory);
   mkdirtree(keyDirectory);
-  if (load_unique_id(keyDirectory) != GS_OK)
-    return GS_FAILED;
+  printf("done.\n");
 
-  if (load_cert(keyDirectory))
+  printf("Loading " UNIQUE_FILE_NAME "... ");
+  if (load_unique_id(keyDirectory) != GS_OK) {
+    printf("failed -- %s.\n", gs_error);
     return GS_FAILED;
+  }
+  else {
+    printf("done.\n");
+  }
+
+  printf("Loading " CERTIFICATE_FILE_NAME "... ");
+  if (load_cert(keyDirectory)) {
+    printf("...failed -- %s.\n", gs_error);
+    return GS_FAILED;
+  }
+  else {
+    printf("...done.\n");
+  }
 
   http_init(keyDirectory, log_level);
 

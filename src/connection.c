@@ -27,8 +27,7 @@ pthread_t main_thread_id = 0;
 bool connection_debug;
 
 static void connection_terminated() {
-  if (main_thread_id != 0)
-    pthread_kill(main_thread_id, SIGTERM);
+  printf("connection terminated\n");
 }
 
 static void connection_display_message(const char *msg) {

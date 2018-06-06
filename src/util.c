@@ -38,3 +38,7 @@ int blank_fb(char *path, bool clear) {
   } else
     return -1;
 }
+
+uid_t getuid() {
+  return 0;
+}

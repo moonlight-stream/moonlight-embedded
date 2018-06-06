@@ -25,5 +25,5 @@
 #include <time.h>
 
 void gs_discover_server(char* dest) {
-  dest = "localhost";
+  dest = "0.0.0.0";
 }

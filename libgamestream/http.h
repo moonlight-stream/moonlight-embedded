@@ -26,7 +26,9 @@
 
 typedef struct _HTTP_DATA {
   char *memory;
-  size_t size;
+  size_t memory_size;
+  char *body;
+  size_t body_size;
 } HTTP_DATA, *PHTTP_DATA;
 
 int http_init(const char* keyDirectory, int logLevel);

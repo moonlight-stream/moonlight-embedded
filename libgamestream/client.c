@@ -199,47 +199,46 @@ static int load_server_status(PSERVER_DATA server) {
       goto cleanup;
     }
 
-    printf("http_request('%s:%d%s')\n", server->serverInfo.address, 47979, path);
     if (http_request(server->serverInfo.address, 47989, path, data) != GS_OK) {
       printf("\tfailed, error: %s", gs_error);
       ret = GS_IO_ERROR;
       goto cleanup;
     }
 
-    printf("http_data: ");
-    fwrite(data->memory, data->size, 1, stdout);
-    printf("\n");
-    if (xml_status(data->memory, data->size) == GS_ERROR) {
+//    printf("http_data: ");
+//    fwrite(data->body, data->size, 1, stdout);
+//    printf("\n");
+    if (xml_status(data->body, data->body_size) == GS_ERROR) {
       ret = GS_ERROR;
       goto cleanup;
     }
 
-    if (xml_search(data->memory, data->size, "currentgame", &currentGameText) != GS_OK) {
+    if (xml_search(data->body, data->body_size, "currentgame", &currentGameText) != GS_OK) {
       goto cleanup;
     }
 
-    if (xml_search(data->memory, data->size, "PairStatus", &pairedText) != GS_OK)
+    if (xml_search(data->body, data->body_size, "PairStatus", &pairedText) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "appversion", (char**) &server->serverInfo.serverInfoAppVersion) != GS_OK)
+    if (xml_search(data->body, data->body_size, "appversion", (char**) &server->serverInfo.serverInfoAppVersion) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
+    if (xml_search(data->body, data->body_size, "state", &stateText) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
+    if (xml_search(data->body, data->body_size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
+    if (xml_search(data->body, data->body_size, "gputype", &server->gpuType) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "GsVersion", &server->gsVersion) != GS_OK)
+    if (xml_search(data->body, data->body_size, "GsVersion", &server->gsVersion) != GS_OK)
       goto cleanup;
 
-    if (xml_search(data->memory, data->size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)
+    if (xml_search(data->body, data->body_size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)
       goto cleanup;
 
-    if (xml_modelist(data->memory, data->size, &server->modes) != GS_OK)
+    if (xml_modelist(data->body, data->body_size, &server->modes) != GS_OK)
       goto cleanup;
 
     // These fields are present on all version of GFE that this client supports
@@ -419,9 +418,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   else if ((ret = http_request(server->serverInfo.address, 47989, path, data)) != GS_OK)
     goto cleanup;
 
-  if ((ret = xml_status(data->memory, data->size) != GS_OK))
+  if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+  else if ((ret = xml_search(data->body, data->body_size, "paired", &result)) != GS_OK)
     goto cleanup;
 
   if (strcmp(result, "1") != 0) {
@@ -432,7 +431,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   free(result);
   result = NULL;
-  if ((ret = xml_search(data->memory, data->size, "plaincert", &result)) != GS_OK)
+  if ((ret = xml_search(data->body, data->body_size, "plaincert", &result)) != GS_OK)
     goto cleanup;
 
   if (strlen(result)/2 > 8191) {
@@ -477,9 +476,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   free(result);
   result = NULL;
-  if ((ret = xml_status(data->memory, data->size) != GS_OK))
+  if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+  else if ((ret = xml_search(data->body, data->body_size, "paired", &result)) != GS_OK)
     goto cleanup;
 
   if (strcmp(result, "1") != 0) {
@@ -490,7 +489,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   free(result);
   result = NULL;
-  if (xml_search(data->memory, data->size, "challengeresponse", &result) != GS_OK) {
+  if (xml_search(data->body, data->body_size, "challengeresponse", &result) != GS_OK) {
     ret = GS_INVALID;
     goto cleanup;
   }
@@ -536,9 +535,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   free(result);
   result = NULL;
-  if ((ret = xml_status(data->memory, data->size) != GS_OK))
+  if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+  else if ((ret = xml_search(data->body, data->body_size, "paired", &result)) != GS_OK)
     goto cleanup;
 
   if (strcmp(result, "1") != 0) {
@@ -549,7 +548,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   free(result);
   result = NULL;
-  if (xml_search(data->memory, data->size, "pairingsecret", &result) != GS_OK) {
+  if (xml_search(data->body, data->body_size, "pairingsecret", &result) != GS_OK) {
     ret = GS_INVALID;
     goto cleanup;
   }
@@ -587,9 +586,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   free(result);
   result = NULL;
-  if ((ret = xml_status(data->memory, data->size) != GS_OK))
+  if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+  else if ((ret = xml_search(data->body, data->body_size, "paired", &result)) != GS_OK)
     goto cleanup;
 
   if (strcmp(result, "1") != 0) {
@@ -607,9 +606,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   free(result);
   result = NULL;
-  if ((ret = xml_status(data->memory, data->size) != GS_OK))
+  if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "paired", &result)) != GS_OK)
+  else if ((ret = xml_search(data->body, data->body_size, "paired", &result)) != GS_OK)
     goto cleanup;
 
   if (strcmp(result, "1") != 0) {
@@ -647,9 +646,9 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
   snprintf(path, sizeof(path), "/applist?uniqueid=%s&uuid=%s", unique_id, uuid_str);
   if (http_request(server->serverInfo.address, 47984, path, data) != GS_OK)
     ret = GS_IO_ERROR;
-  else if (xml_status(data->memory, data->size) == GS_ERROR)
+  else if (xml_status(data->body, data->body_size) == GS_ERROR)
     ret = GS_ERROR;
-  else if (xml_applist(data->memory, data->size, list) != GS_OK)
+  else if (xml_applist(data->body, data->body_size, list) != GS_OK)
     ret = GS_INVALID;
 
   http_free_data(data);
@@ -705,9 +704,9 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   else
     goto cleanup;
 
-  if ((ret = xml_status(data->memory, data->size) != GS_OK))
+  if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "gamesession", &result)) != GS_OK)
+  else if ((ret = xml_search(data->body, data->body_size, "gamesession", &result)) != GS_OK)
     goto cleanup;
 
   if (!strcmp(result, "0")) {
@@ -740,9 +739,9 @@ int gs_quit_app(PSERVER_DATA server) {
   if ((ret = http_request(server->serverInfo.address, 47984, path, data)) != GS_OK)
     goto cleanup;
 
-  if ((ret = xml_status(data->memory, data->size) != GS_OK))
+  if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "cancel", &result)) != GS_OK)
+  else if ((ret = xml_search(data->body, data->body_size, "cancel", &result)) != GS_OK)
     goto cleanup;
 
   if (strcmp(result, "0") == 0) {

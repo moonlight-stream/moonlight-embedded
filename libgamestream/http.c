@@ -34,7 +34,7 @@
 static const char *pCertFile = "./client.pem";
 static const char *pKeyFile = "./key.pem";
 
-static bool debug = true;
+static bool debug; // = true;
 
 #define BUFFER_LENGTH 4096
 
@@ -49,10 +49,9 @@ int http_init(const char* keyDirectory, int logLevel) {
 }
 
 int http_request(char* host, int port, char* path, PHTTP_DATA data) {
-  if (debug)
-    printf("Request %s:%d%s\n", host, port, path);
+  if (debug) printf("Request %s:%d%s\n", host, port, path);
 
-  if (data->size > 0) {
+  if (data->memory_size > 0) {
     free(data->memory);
     data->memory = malloc(1);
 
@@ -61,10 +60,10 @@ int http_request(char* host, int port, char* path, PHTTP_DATA data) {
       return GS_OUT_OF_MEMORY;
     }
 
-    data->size = 0;
+    data->memory_size = 0;
   }
   else {
-    printf("* Allocated some memory\n");
+    if (debug) printf("* Allocated some memory\n");
   }
 
   // Create a socket
@@ -74,7 +73,7 @@ int http_request(char* host, int port, char* path, PHTTP_DATA data) {
     return GS_FAILED;
   }
   else {
-    printf("* Created socket object\n");
+    if (debug) printf("* Created socket object\n");
   }
 
   // Connect to the server
@@ -85,43 +84,68 @@ int http_request(char* host, int port, char* path, PHTTP_DATA data) {
 
   if (connect(sock, &server, sizeof(server)) < 0) {
     gs_error = "Could not connect to server";
-    return GS_FAILED;
+    goto failure;
   }
   else {
-    printf("* Connected to server\n");
+    if (debug) printf("* Connected to server\n");
   }
 
   // Create the HTTP contents
   char *buffer = calloc(BUFFER_LENGTH, sizeof(char));
-  snprintf(buffer, BUFFER_LENGTH, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n", path, host);
+  snprintf(buffer, BUFFER_LENGTH, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", path, host);
+
+  if (debug) printf("* Sending data: %s\n", buffer);
+
   int bytes_sent = send(sock, buffer, strlen(buffer), 0);
   int bytes_to_send = strlen(buffer);
-  printf("* Sent %d bytes of %d to server (%s)\n", bytes_sent, bytes_to_send, buffer);
+  if (debug) printf("* Sent %d bytes of %d bytes to server\n", bytes_sent, bytes_to_send);
 
   // Read the HTTP response
   while (1) {
       int bytes_received = recv(sock, buffer, BUFFER_LENGTH, 0);
 
       if (bytes_received == -1) {
-        printf("Errno: %d\n", errno);
+        if (debug) printf("Errno: %d\n", errno);
         gs_error = "Received error when trying to read";
-        return GS_FAILED;
+        goto failure;
       } else if (bytes_received == 0) {
         break;
       }
 
       if (bytes_received > 0) {
-        data->memory = realloc(data->memory, data->size + bytes_received);
-        if (!data->memory) {
+        char *temp = malloc(data->memory_size + bytes_received);
+        if (!temp) {
           gs_error = "Could not allocate memory for response";
-          return GS_FAILED;
+          goto failure;
         }
-        memcpy(data->memory + data->size, buffer, bytes_received);
-        data->size += bytes_received;
+        memcpy(temp, data->memory, data->memory_size);
+        memcpy(temp + data->memory_size, buffer, bytes_received);
+        free(data->memory);
+        data->memory_size += bytes_received;
+        data->memory = temp;
       }
   }
   
+
+  // Parse the body by looking for the separator between header and body
+  const char *sep = "\r\n\r\n";
+  char *before_sep = strstr(data->memory, sep);
+
+  if (before_sep != NULL) {
+    data->body = before_sep + strlen(sep);
+    data->body_size = data->memory_size - (data->body - data->memory);
+  }
+  else {
+    data->body = data->memory;
+    data->body_size = data->memory_size;
+  }
+
+success:
   return GS_OK;
+
+failure:
+  close(sock);
+  return GS_FAILED;
 }
 
 void http_cleanup() {
@@ -138,7 +162,10 @@ PHTTP_DATA http_create_data() {
     free(data);
     return NULL;
   }
-  data->size = 0;
+  data->memory_size = 0;
+
+  data->body = data->memory;
+  data->body_size = data->memory_size;
 
   return data;
 }

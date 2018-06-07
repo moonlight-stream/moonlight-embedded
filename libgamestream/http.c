@@ -176,8 +176,6 @@ failure:
 
 
 int https_request(char* host, int port, char* path, PHTTP_DATA data) {
-  bool debug = true;
-
   if (debug) printf("HTTPS request: %s:%d%s\n", host, port, path);
 
   if (data->memory_size > 0) {

@@ -399,11 +399,15 @@ int gs_unpair(PSERVER_DATA server) {
   snprintf(path, sizeof(path), "/unpair?uniqueid=%s&uuid=%s", unique_id, uuid_str);
   ret = http_request(server->serverInfo.address, 47989, path, data);
 
+  server->paired = false;
+
   http_free_data(data);
   return ret;
 }
 
 int gs_pair(PSERVER_DATA server, char* pin) {
+  bool debug = false;
+
   int ret = GS_OK;
   char* result = NULL;
   char path[4096];
@@ -445,7 +449,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
   else {
-    printf("gs_pair: `getservercert` succeeded\n");
+    if (debug) printf("gs_pair: `getservercert` succeeded\n");
   }
 
   free(result);
@@ -506,7 +510,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
   else {
-    printf("gs_pair: `clientchallenge` succeeded\n");
+    if (debug) printf("gs_pair: `clientchallenge` succeeded\n");
   }
 
   free(result);
@@ -568,7 +572,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
   else {
-    printf("gs_pair: `serverchallenge` succeeded\n");
+    if (debug) printf("gs_pair: `serverchallenge` succeeded\n");
   }
 
   free(result);
@@ -622,19 +626,17 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
   else {
-    printf("gs_pair: `clientpairingsecret` succeeded\n");
+    if (debug) printf("gs_pair: `clientpairingsecret` succeeded\n");
   }
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  /// HTTPS!!!!
   snprintf(path, sizeof(path), "/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", unique_id, uuid_str);
   if ((ret = https_request(server->serverInfo.address, 47984, path, data)) != GS_OK)
     goto cleanup;
 
   free(result);
   result = NULL;
-  printf("After HTTPS request: %s\n", data->body);
   if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
   else if ((ret = xml_search(data->body, data->body_size, "paired", &result)) != GS_OK)
@@ -646,7 +648,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
   else {
-    printf("gs_pair: `pairchallenge` succeeded\n");
+    if (debug) printf("gs_pair: `pairchallenge` succeeded\n");
   }
 
   server->paired = true;
@@ -674,9 +676,8 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  /// HTTPS!!!
   snprintf(path, sizeof(path), "/applist?uniqueid=%s&uuid=%s", unique_id, uuid_str);
-  if (http_request(server->serverInfo.address, 47984, path, data) != GS_OK)
+  if (https_request(server->serverInfo.address, 47984, path, data) != GS_OK)
     ret = GS_IO_ERROR;
   else if (xml_status(data->body, data->body_size) == GS_ERROR)
     ret = GS_ERROR;
@@ -730,8 +731,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   } else
     snprintf(path, sizeof(path), "/resume?uniqueid=%s&uuid=%s&rikey=%s&rikeyid=%d", unique_id, uuid_str, rikey_hex, rikeyid);
 
-  /// HTTPS!!!
-  if ((ret = http_request(server->serverInfo.address, 47984, path, data)) == GS_OK)
+  if ((ret = https_request(server->serverInfo.address, 47984, path, data)) == GS_OK)
     server->currentGame = appId;
   else
     goto cleanup;
@@ -766,9 +766,8 @@ int gs_quit_app(PSERVER_DATA server) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  /// HTTPS!!!
   snprintf(path, sizeof(path), "/cancel?uniqueid=%s&uuid=%s", unique_id, uuid_str);
-  if ((ret = http_request(server->serverInfo.address, 47984, path, data)) != GS_OK)
+  if ((ret = https_request(server->serverInfo.address, 47984, path, data)) != GS_OK)
     goto cleanup;
 
   if ((ret = xml_status(data->body, data->body_size) != GS_OK))

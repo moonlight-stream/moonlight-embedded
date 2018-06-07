@@ -51,6 +51,25 @@
 
 #define MOONLIGHT_DATA_DIR "sdmc:/switch/moonlight-switch/"
 
+static const SocketInitConfig customSocketInitConfig = {
+    .bsdsockets_version = 1,
+
+    .tcp_tx_buf_size        = 0x8000,
+    .tcp_rx_buf_size        = 0x10000,
+    .tcp_tx_buf_max_size    = 0x40000,
+    .tcp_rx_buf_max_size    = 0x40000,
+
+    .udp_tx_buf_size = 0x2400,
+    .udp_rx_buf_size = 0xA500,
+
+    .sb_efficiency = 4,
+
+    .serialized_out_addrinfos_max_size  = 0x1000,
+    .serialized_out_hostent_max_size    = 0x200,
+    .bypass_nsd                         = false,
+    .dns_timeout                        = 5,
+};
+
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list = NULL;
   if (gs_applist(server, &list) != GS_OK) {
@@ -179,7 +198,7 @@ int main(int argc, char* argv[]) {
 
   //Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
   consoleInit(NULL);
-  socketInitializeDefault();
+  socketInitialize(&customSocketInitConfig);
 //  nxlinkStdio();
 
   // Initialize OpenSSL
@@ -269,11 +288,11 @@ int main(int argc, char* argv[]) {
         if (pair_check(&server)) {
           enum platform system = platform_check(config.platform);
           if (config.debug_level > 0)
-            printf("Platform %s\n", platform_name(system));
+            printf("Beginning streaming on platform %s\n", platform_name(system));
 
           if (system == 0) {
             fprintf(stderr, "Platform '%s' not found\n", config.platform);
-            exit(-1);
+            break;
           }
           config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
 

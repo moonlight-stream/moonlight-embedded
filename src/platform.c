@@ -63,6 +63,8 @@ bool platform_supports_hevc(enum platform system) {
 
 char* platform_name(enum platform system) {
   switch(system) {
+  case SWITCH:
+    return "Switch";
   default:
     return "Unknown";
   }

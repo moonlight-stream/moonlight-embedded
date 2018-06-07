@@ -162,11 +162,13 @@ static void help() {
   exit(0);
 }
 
-static void pair_check(PSERVER_DATA server) {
+static int pair_check(PSERVER_DATA server) {
   if (!server->paired) {
     fprintf(stderr, "You must pair with the PC first\n");
-    exit(-1);
+    return 0;
   }
+
+  return 1;
 }
 
 int main(int argc, char* argv[]) {
@@ -174,13 +176,14 @@ int main(int argc, char* argv[]) {
 
   //Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
   consoleInit(NULL);
+  socketInitializeDefault();
+//  nxlinkStdio();
 
   // Parse the global Moonlight settings
   CONFIGURATION config;
   config_parse(MOONLIGHT_DATA_DIR "moonlight.ini", &config);
+  config.debug_level = 2;
 
-  config.action = "pair";
-  
   if (config.debug_level > 0)
     printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
@@ -189,14 +192,14 @@ int main(int argc, char* argv[]) {
     config.address = malloc(MAX_ADDRESS_SIZE);
     if (config.address == NULL) {
       perror("Not enough memory");
-      exit(-1);
+      return 0;
     }
     config.address[0] = 0;
     printf("Searching for server...\n");
     gs_discover_server(config.address);
     if (config.address[0] == 0) {
       fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
-      exit(-1);
+      return 0;
     }
   }
 
@@ -214,61 +217,26 @@ int main(int argc, char* argv[]) {
   int ret = gs_init(&server, config.address, MOONLIGHT_DATA_DIR "key", config.debug_level, config.unsupported);
   if (ret == GS_OUT_OF_MEMORY) {
     fprintf(stderr, "Not enough memory\n");
-    exit(-1);
   } else if (ret == GS_ERROR) {
     fprintf(stderr, "Gamestream error: %s\n", gs_error);
-    exit(-1);
   } else if (ret == GS_INVALID) {
     fprintf(stderr, "Invalid data received from server: %s\n", gs_error);
-    exit(-1);
   } else if (ret == GS_UNSUPPORTED_VERSION) {
     fprintf(stderr, "Unsupported version: %s\n", gs_error);
-    exit(-1);
   } else if (ret != GS_OK) {
-    fprintf(stderr, "Can't connect to server %s\n", config.address);
-    exit(-1);
+    fprintf(stderr, "Can't connect to server %s, error: \n", config.address, gs_error);
   }
 
   if (config.debug_level > 0)
     printf("NVIDIA %s, GFE %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
 
-  if (strcmp("list", config.action) == 0) {
-    pair_check(&server);
-    applist(&server);
-  } else if (strcmp("stream", config.action) == 0) {
-    pair_check(&server);
-    enum platform system = platform_check(config.platform);
-    if (config.debug_level > 0)
-      printf("Platform %s\n", platform_name(system));
-
-    if (system == 0) {
-      fprintf(stderr, "Platform '%s' not found\n", config.platform);
-      exit(-1);
-    }
-    config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-
-    stream(&server, &config, system);
-  } else if (strcmp("pair", config.action) == 0) {
-    char pin[5];
-    sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
-    printf("Please enter the following PIN on the target PC: %s\n", pin);
-    if (gs_pair(&server, &pin[0]) != GS_OK) {
-      fprintf(stderr, "Failed to pair to server: %s\n", gs_error);
-    } else {
-      printf("Succesfully paired\n");
-    }
-  } else if (strcmp("unpair", config.action) == 0) {
-    if (gs_unpair(&server) != GS_OK) {
-      fprintf(stderr, "Failed to unpair to server: %s\n", gs_error);
-    } else {
-      printf("Succesfully unpaired\n");
-    }
-  } else if (strcmp("quit", config.action) == 0) {
-    pair_check(&server);
-    gs_quit_app(&server);
-  } else {
-    fprintf(stderr, "%s is not a valid action\n", config.action);
-  }
+  printf("\n");
+  printf("A: list\n");
+  printf("B: stream\n");
+  printf("X: pair\n");
+  printf("Y: unpair\n");
+  printf("+: quit\n");
+  printf("\n");
 
   while(appletMainLoop())
   {
@@ -278,7 +246,46 @@ int main(int argc, char* argv[]) {
       //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
       u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
-      if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+      if (kDown & KEY_A) {
+        if (pair_check(&server)) {
+          applist(&server);
+        }
+      }
+      else if (kDown & KEY_B) {
+        if (pair_check(&server)) {
+          enum platform system = platform_check(config.platform);
+          if (config.debug_level > 0)
+            printf("Platform %s\n", platform_name(system));
+
+          if (system == 0) {
+            fprintf(stderr, "Platform '%s' not found\n", config.platform);
+            exit(-1);
+          }
+          config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
+
+          stream(&server, &config, system);
+        }
+      }
+      else if (kDown & KEY_X) {
+        char pin[5];
+        sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+        printf("Please enter the following PIN on the target PC: %s\n", pin);
+        if (gs_pair(&server, &pin[0]) != GS_OK) {
+          fprintf(stderr, "Failed to pair to server: %s\n", gs_error);
+        } else {
+          printf("Succesfully paired\n");
+        }
+      }
+      else if (kDown & KEY_Y) {
+        if (gs_unpair(&server) != GS_OK) {
+          fprintf(stderr, "Failed to unpair to server: %s\n", gs_error);
+        } else {
+          printf("Succesfully unpaired\n");
+        }
+      }
+      else if (kDown & KEY_PLUS) {
+        break;
+      }
 
       gfxFlushBuffers();
       gfxSwapBuffers();

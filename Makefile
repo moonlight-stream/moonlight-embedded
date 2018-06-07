@@ -67,7 +67,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lssl -lcrypto -lcurl -lz -lexpat -lnx
+LIBS	:=  -lcurl -lssl -lcrypto -lz -lexpat -lnx
 
 
 #---------------------------------------------------------------------------------

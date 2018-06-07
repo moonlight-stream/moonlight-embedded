@@ -45,10 +45,6 @@ CERT_KEY_PAIR mkcert_generate() {
    
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-    
-    OpenSSL_add_all_algorithms();
-
-    ERR_load_crypto_strings();
 
     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
 
@@ -91,11 +87,6 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     RSA *rsa;
     X509_NAME *name = NULL;
     unsigned long e;
-
-    size_t seedlen = 2048;
-    void *seedbuf = malloc(seedlen);
-    randomGet(seedbuf, seedlen);
-    RAND_seed(seedbuf, seedlen);
     
     if (*pkeyp == NULL) {
         if ((pk=EVP_PKEY_new()) == NULL) {

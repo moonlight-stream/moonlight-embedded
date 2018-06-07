@@ -44,7 +44,10 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <openssl/ssl.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 
 #define MOONLIGHT_DATA_DIR "sdmc:/switch/moonlight-switch/"
 
@@ -178,6 +181,17 @@ int main(int argc, char* argv[]) {
   consoleInit(NULL);
   socketInitializeDefault();
 //  nxlinkStdio();
+
+  // Initialize OpenSSL
+  SSL_library_init();
+  OpenSSL_add_all_algorithms();
+  ERR_load_crypto_strings();
+
+  // Seed the OpenSSL PRNG
+  size_t seedlen = 2048;
+  void *seedbuf = malloc(seedlen);
+  csrngGetRandomBytes(seedbuf, seedlen);
+  RAND_seed(seedbuf, seedlen);
 
   // Parse the global Moonlight settings
   CONFIGURATION config;

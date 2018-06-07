@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <switch.h>
 
 #include <sys/socket.h>
@@ -31,8 +32,13 @@
 #include <netdb.h>
 #include <errno.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 static const char *pCertFile = "./client.pem";
 static const char *pKeyFile = "./key.pem";
+
+SSL_CTX *ssl_ctx;
 
 static bool debug; // = true;
 
@@ -44,6 +50,20 @@ int http_init(const char* keyDirectory, int logLevel) {
 
   char keyFilePath[4096];
   sprintf(&keyFilePath[0], "%s/%s", keyDirectory, KEY_FILE_NAME);
+
+  // Create the SSL context
+  ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+  SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE, NULL);
+
+  if (!SSL_CTX_use_certificate_file(ssl_ctx, certificateFilePath, SSL_FILETYPE_PEM)) {
+    gs_error = ERR_error_string(ERR_get_error(), NULL);
+    return GS_FAILED;
+  }
+
+  if (!SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFilePath, SSL_FILETYPE_PEM)) {
+    gs_error = ERR_error_string(ERR_get_error(), NULL);
+    return GS_FAILED;
+  }
 
   return GS_OK;
 }
@@ -67,6 +87,7 @@ int http_request(char* host, int port, char* path, PHTTP_DATA data) {
   }
 
   // Create a socket
+  char *buffer = NULL;
   int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (!sock) {
     gs_error = "Could not create socket";
@@ -91,7 +112,7 @@ int http_request(char* host, int port, char* path, PHTTP_DATA data) {
   }
 
   // Create the HTTP contents
-  char *buffer = calloc(BUFFER_LENGTH, sizeof(char));
+  buffer = calloc(BUFFER_LENGTH, sizeof(char));
   snprintf(buffer, BUFFER_LENGTH, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", path, host);
 
   if (debug) printf("* Sending data: %s\n", buffer);
@@ -141,9 +162,163 @@ int http_request(char* host, int port, char* path, PHTTP_DATA data) {
   }
 
 success:
+  free(buffer);
+
   return GS_OK;
 
 failure:
+  if (buffer)
+    free(buffer);
+
+  close(sock);
+  return GS_FAILED;
+}
+
+
+int https_request(char* host, int port, char* path, PHTTP_DATA data) {
+  bool debug = true;
+
+  if (debug) printf("HTTPS request: %s:%d%s\n", host, port, path);
+
+  if (data->memory_size > 0) {
+    free(data->memory);
+    data->memory = malloc(1);
+
+    if(data->memory == NULL) {
+      gs_error = "Could not malloc() data for HTTP response before request";
+      return GS_OUT_OF_MEMORY;
+    }
+
+    data->memory_size = 0;
+  }
+  else {
+    if (debug) printf("* Allocated some memory\n");
+  }
+
+  // Create a socket
+  char *buffer = NULL;
+  int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (!sock) {
+    gs_error = "Could not create socket";
+    return GS_FAILED;
+  }
+  else {
+    if (debug) printf("* Created socket object\n");
+  }
+
+  // Connect to the server
+  struct sockaddr_in server;
+  server.sin_addr.s_addr = inet_addr(host);
+  server.sin_port = htons(port);
+  server.sin_family = AF_INET;
+
+  if (connect(sock, &server, sizeof(server)) < 0) {
+    gs_error = "Could not connect to server";
+    goto failure;
+  }
+  else {
+    if (debug) printf("* Connected to server\n");
+  }
+
+  // Create the new SSL object
+  SSL *ssl = SSL_new(ssl_ctx);
+
+  if (!ssl) {
+    int e = ERR_get_error();
+    gs_error = ERR_error_string(e, NULL);
+    goto failure;
+  }
+  else {
+    if (debug) printf("* Created SSL object\n");
+  }
+
+  // Set the SSL's socket
+  if (!SSL_set_fd(ssl, sock)) {
+    int e = ERR_get_error();
+    gs_error = ERR_error_string(e, NULL);
+    goto failure;
+  }
+  else {
+    if (debug) printf("* Wired SSL object to socket\n");
+  }
+
+  // Connect via SSL
+  if (SSL_connect(ssl) <= 0) {
+    int e = ERR_get_error();
+    gs_error = ERR_error_string(e, NULL);
+    goto failure;
+  }
+  else {
+    if (debug) printf("* Connected via SSL/TLS to server using cipher `%s`\n", SSL_get_cipher(ssl));
+  }
+
+  // Create the HTTP contents
+  buffer = calloc(BUFFER_LENGTH, sizeof(char));
+  snprintf(buffer, BUFFER_LENGTH, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", path, host);
+
+  if (debug) printf("* Sending data: %s\n", buffer);
+
+  int bytes_sent = SSL_write(ssl, buffer, strlen(buffer));
+  int bytes_to_send = strlen(buffer);
+  if (debug) printf("* Sent %d bytes of %d bytes to server\n", bytes_sent, bytes_to_send);
+
+  // Read the HTTP response
+  while (1) {
+      int bytes_received = SSL_read(ssl, buffer, BUFFER_LENGTH);
+
+      if (bytes_received < 0) {
+        int err = SSL_get_error(ssl, bytes_received);
+
+        if (err == SSL_ERROR_ZERO_RETURN || err == SSL_ERROR_SYSCALL || err == SSL_ERROR_SSL) {
+          if (debug) printf("Errno: %d\n", errno);
+          gs_error = "Received SSL error when trying to read";
+          goto failure;
+        }
+        else {
+          break;
+        }
+      } else if (bytes_received == 0) {
+        break;
+      }
+
+      if (bytes_received > 0) {
+        char *temp = malloc(data->memory_size + bytes_received);
+        if (!temp) {
+          gs_error = "Could not allocate memory for response";
+          goto failure;
+        }
+        memcpy(temp, data->memory, data->memory_size);
+        memcpy(temp + data->memory_size, buffer, bytes_received);
+        free(data->memory);
+        data->memory_size += bytes_received;
+        data->memory = temp;
+      }
+  }
+
+  // Parse the body by looking for the separator between header and body
+  const char *sep = "\r\n\r\n";
+  char *before_sep = strstr(data->memory, sep);
+
+  if (before_sep != NULL) {
+    data->body = before_sep + strlen(sep);
+    data->body_size = data->memory_size - (data->body - data->memory);
+  }
+  else {
+    data->body = data->memory;
+    data->body_size = data->memory_size;
+  }
+
+  if (debug) printf("* Received data: %s\n", data->body);
+
+success:
+  SSL_shutdown(ssl);
+  free(buffer);
+  return GS_OK;
+
+failure:
+  if (buffer)
+    free(buffer);
+
   close(sock);
   return GS_FAILED;
 }

@@ -301,38 +301,54 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
   *slen = 0;
 
   EVP_MD_CTX *ctx = EVP_MD_CTX_create();
-  if (ctx == NULL)
+  if (ctx == NULL) {
+    printf("sign_it: EVP_MD_CTX_create() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     return GS_FAILED;
+  }
 
   const EVP_MD *md = EVP_get_digestbyname("SHA256");
-  if (md == NULL)
+  if (md == NULL) {
+    printf("sign_it: EVP_get_digestbyname(\"SHA256\") failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
+  }
 
   int rc = EVP_DigestInit_ex(ctx, md, NULL);
-  if (rc != 1)
+  if (rc != 1) {
+    printf("sign_it: EVP_DigestInit_ex() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
+  }
 
   rc = EVP_DigestSignInit(ctx, NULL, md, NULL, pkey);
-  if (rc != 1)
+  if (rc != 1) {
+    printf("sign_it: EVP_DigestSignInit() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
+  }
 
   rc = EVP_DigestSignUpdate(ctx, msg, mlen);
-  if (rc != 1)
+  if (rc != 1) {
+    printf("sign_it: EVP_DigestSignUpdate() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
+  }
 
   size_t req = 0;
   rc = EVP_DigestSignFinal(ctx, NULL, &req);
-  if (rc != 1 || !(req > 0))
+  if (rc != 1 || !(req > 0)) {
+    printf("sign_it: EVP_DigestSignFinal(NULL) failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
+  }
 
   *sig = OPENSSL_malloc(req);
-  if (*sig == NULL)
+  if (*sig == NULL) {
+    printf("sign_it: OPENSSL_malloc() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
+  }
 
   *slen = req;
   rc = EVP_DigestSignFinal(ctx, *sig, slen);
-  if (rc != 1 || req != *slen)
+  if (rc != 1 || req != *slen) {
+    printf("sign_it: EVP_DigestSignFinal(*sig) failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
+  }
 
   result = GS_OK;
 
@@ -428,6 +444,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     ret = GS_FAILED;
     goto cleanup;
   }
+  else {
+    printf("gs_pair: `getservercert` succeeded\n");
+  }
 
   free(result);
   result = NULL;
@@ -485,6 +504,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     gs_error = "Pairing failed";
     ret = GS_FAILED;
     goto cleanup;
+  }
+  else {
+    printf("gs_pair: `clientchallenge` succeeded\n");
   }
 
   free(result);
@@ -545,6 +567,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     ret = GS_FAILED;
     goto cleanup;
   }
+  else {
+    printf("gs_pair: `serverchallenge` succeeded\n");
+  }
 
   free(result);
   result = NULL;
@@ -596,16 +621,20 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     ret = GS_FAILED;
     goto cleanup;
   }
+  else {
+    printf("gs_pair: `clientpairingsecret` succeeded\n");
+  }
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
   /// HTTPS!!!!
   snprintf(path, sizeof(path), "/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", unique_id, uuid_str);
-  if ((ret = http_request(server->serverInfo.address, 47984, path, data)) != GS_OK)
+  if ((ret = https_request(server->serverInfo.address, 47984, path, data)) != GS_OK)
     goto cleanup;
 
   free(result);
   result = NULL;
+  printf("After HTTPS request: %s\n", data->body);
   if ((ret = xml_status(data->body, data->body_size) != GS_OK))
     goto cleanup;
   else if ((ret = xml_search(data->body, data->body_size, "paired", &result)) != GS_OK)
@@ -615,6 +644,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     gs_error = "Pairing failed";
     ret = GS_FAILED;
     goto cleanup;
+  }
+  else {
+    printf("gs_pair: `pairchallenge` succeeded\n");
   }
 
   server->paired = true;

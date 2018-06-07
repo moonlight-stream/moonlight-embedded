@@ -20,6 +20,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define CERTIFICATE_FILE_NAME "client.pem"
 #define KEY_FILE_NAME "key.pem"
@@ -33,5 +34,8 @@ typedef struct _HTTP_DATA {
 
 int http_init(const char* keyDirectory, int logLevel);
 PHTTP_DATA http_create_data();
+
 int http_request(char* host, int port, char* path, PHTTP_DATA data);
+int https_request(char* host, int port, char* path, PHTTP_DATA data);
+
 void http_free_data(PHTTP_DATA data);

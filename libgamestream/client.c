@@ -200,14 +200,10 @@ static int load_server_status(PSERVER_DATA server) {
     }
 
     if (http_request(server->serverInfo.address, 47989, path, data) != GS_OK) {
-      printf("\tfailed, error: %s", gs_error);
       ret = GS_IO_ERROR;
       goto cleanup;
     }
 
-//    printf("http_data: ");
-//    fwrite(data->body, data->size, 1, stdout);
-//    printf("\n");
     if (xml_status(data->body, data->body_size) == GS_ERROR) {
       ret = GS_ERROR;
       goto cleanup;
@@ -302,51 +298,43 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
 
   EVP_MD_CTX *ctx = EVP_MD_CTX_create();
   if (ctx == NULL) {
-    printf("sign_it: EVP_MD_CTX_create() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     return GS_FAILED;
   }
 
   const EVP_MD *md = EVP_get_digestbyname("SHA256");
   if (md == NULL) {
-    printf("sign_it: EVP_get_digestbyname(\"SHA256\") failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
   }
 
   int rc = EVP_DigestInit_ex(ctx, md, NULL);
   if (rc != 1) {
-    printf("sign_it: EVP_DigestInit_ex() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
   }
 
   rc = EVP_DigestSignInit(ctx, NULL, md, NULL, pkey);
   if (rc != 1) {
-    printf("sign_it: EVP_DigestSignInit() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
   }
 
   rc = EVP_DigestSignUpdate(ctx, msg, mlen);
   if (rc != 1) {
-    printf("sign_it: EVP_DigestSignUpdate() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
   }
 
   size_t req = 0;
   rc = EVP_DigestSignFinal(ctx, NULL, &req);
   if (rc != 1 || !(req > 0)) {
-    printf("sign_it: EVP_DigestSignFinal(NULL) failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
   }
 
   *sig = OPENSSL_malloc(req);
   if (*sig == NULL) {
-    printf("sign_it: OPENSSL_malloc() failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
   }
 
   *slen = req;
   rc = EVP_DigestSignFinal(ctx, *sig, slen);
   if (rc != 1 || req != *slen) {
-    printf("sign_it: EVP_DigestSignFinal(*sig) failed, error (0x%x): %s\n", ERR_peek_error(), ERR_error_string(ERR_peek_error(), NULL));
     goto cleanup;
   }
 
@@ -789,26 +777,14 @@ int gs_quit_app(PSERVER_DATA server) {
 }
 
 int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int log_level, bool unsupported) {
-  printf("Setting up key directory (%s)... ", keyDirectory);
   mkdirtree(keyDirectory);
-  printf("done.\n");
 
-  printf("Loading " UNIQUE_FILE_NAME "... ");
   if (load_unique_id(keyDirectory) != GS_OK) {
-    printf("failed -- %s.\n", gs_error);
     return GS_FAILED;
-  }
-  else {
-    printf("done.\n");
   }
 
-  printf("Loading " CERTIFICATE_FILE_NAME "... ");
   if (load_cert(keyDirectory)) {
-    printf("failed -- %s.\n", gs_error);
     return GS_FAILED;
-  }
-  else {
-    printf("done.\n");
   }
 
   http_init(keyDirectory, log_level);

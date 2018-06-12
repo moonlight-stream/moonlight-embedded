@@ -26,16 +26,29 @@
 pthread_t main_thread_id = 0;
 bool connection_debug;
 
+static void connection_stage_starting(int stage) {
+//  printf("[*] Stage starting: %d\n", stage);
+}
+static void connection_stage_complete(int stage) {
+//  printf("[*] Stage completed: %d\n", stage);
+}
+static void connection_stage_failed(int stage, long errorCode) {
+//  printf("[*] Stage failed: %d, error: %ld\n", stage, errorCode);
+
+}
+static void connection_started(void) {
+  printf("[*] Connection started\n");
+}
 static void connection_terminated() {
-  printf("connection terminated\n");
+  printf("[*] Connection terminated\n");
 }
 
 static void connection_display_message(const char *msg) {
-  printf("%s\n", msg);
+  printf("[*] %s\n", msg);
 }
 
 static void connection_display_transient_message(const char *msg) {
-  printf("%s\n", msg);
+  printf("[*] %s\n", msg);
 }
 
 static void connection_log_message(const char* format, ...) {
@@ -45,11 +58,12 @@ static void connection_log_message(const char* format, ...) {
   va_end(arglist);
 }
 
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
-  .stageStarting = NULL,
-  .stageComplete = NULL,
-  .stageFailed = NULL,
-  .connectionStarted = NULL,
+  .stageStarting = connection_stage_starting,
+  .stageComplete = connection_stage_complete,
+  .stageFailed = connection_stage_failed,
+  .connectionStarted = connection_started,
   .connectionTerminated = connection_terminated,
   .displayMessage = connection_display_message,
   .displayTransientMessage = connection_display_transient_message,

@@ -50,6 +50,7 @@ INCLUDES	:=	libgamestream \
 				third_party/moonlight-common-c/reedsolomon \
 				third_party/h264bitstream
 
+DATA		:=	data
 EXEFS_SRC	:=	exefs_src
 
 #---------------------------------------------------------------------------------
@@ -57,7 +58,7 @@ EXEFS_SRC	:=	exefs_src
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC
 
-CFLAGS	:=	-g -O2 -ffunction-sections \
+CFLAGS	:=	-g -O2 -Wall -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DHAVE_USLEEP -DHAS_SOCKLEN_T
@@ -67,7 +68,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lcurl -lssl -lcrypto -lz -lexpat -lnx
+LIBS	:=  -lssl -lcrypto -lz -lexpat -lnx
 
 
 #---------------------------------------------------------------------------------
@@ -165,6 +166,7 @@ all: $(BUILD)
 
 $(BUILD):
 	@$(foreach dir,$(SOURCES),mkdir -p $(BUILD)/$(dir);)
+	@$(foreach dir,$(DATA),mkdir -p $(BUILD)/$(dir);)
 	@[ -d $@ ] || mkdir -p $@
 	@mkdir -p $(DIST)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
@@ -201,15 +203,16 @@ $(OUTPUT).elf	:	$(OFILES)
 $(OFILES_SRC)	: $(HFILES_BIN)
 
 %.o:
-	$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $(TOPDIR)/$(addsuffix .c,$(basename $@)) -o $@ $(ERROR_FILTER)
+	-$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $(TOPDIR)/$(addsuffix .c,$(basename $@)) -o $@ $(ERROR_FILTER);
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
 #---------------------------------------------------------------------------------
-%.bin.o	%_bin.h :	%.bin
+data/%.bin.o	data/%_bin.h :	data/%.bin
 #---------------------------------------------------------------------------------
-	@echo $(notdir $<)
+	@echo $(notdir $<) $@ $<
 	@$(bin2o)
+	-cp $@ $(subst _bin.h,.bin.o,$@)
 
 -include $(DEPENDS)
 

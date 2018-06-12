@@ -61,7 +61,7 @@ ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC
 CFLAGS	:=	-g -O2 -Wall -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DHAVE_USLEEP -DHAS_SOCKLEN_T
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DHAVE_USLEEP -DHAS_SOCKLEN_T -DENET_DEBUG -DHAS_POLL -DHAS_FCNTL
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 

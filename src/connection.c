@@ -39,8 +39,8 @@ static void connection_stage_failed(int stage, long errorCode) {
 static void connection_started(void) {
   printf("[*] Connection started\n");
 }
-static void connection_terminated() {
-  printf("[*] Connection terminated\n");
+static void connection_terminated(long error) {
+  perror("[*] Connection terminated");
 }
 
 static void connection_display_message(const char *msg) {

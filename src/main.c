@@ -136,7 +136,18 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
-  printf("Would loop here...");
+  printf("Looping for stream, press + to terminate\n");
+  while (1) {
+    //Scan all the inputs. This should be done once for each frame
+    hidScanInput();
+
+    //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+    u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+
+    if (kDown & KEY_PLUS) {
+      break;
+    }
+  }
 
   LiStopConnection();
   platform_stop(system);
@@ -297,11 +308,14 @@ int main(int argc, char* argv[]) {
           config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
 
           stream(&server, &config, system);
+
+          printf("Terminated streaming\n");
         }
       }
       else if (kDown & KEY_X) {
         char pin[5];
-        sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+//        sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+        sprintf(pin, "%d%d%d%d", 0, 0, 0, 0);
         printf("Please enter the following PIN on the target PC: %s\n", pin);
         if (gs_pair(&server, &pin[0]) != GS_OK) {
           fprintf(stderr, "Failed to pair to server: %s\n", gs_error);

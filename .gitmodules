@@ -1,12 +1,9 @@
 [submodule "common"]
 	path = third_party/moonlight-common-c
-	url = https://github.com/irtimmer/moonlight-common-c.git
+	url = https://github.com/kbhomes/moonlight-common-c.git
 [submodule "third_party/enet"]
 	path = third_party/enet
-	url = https://github.com/lsalzman/enet
-[submodule "third_party/libexpat"]
-	path = third_party/libexpat
-	url = https://github.com/libexpat/libexpat.git
+	url = https://github.com/kbhomes/enet
 [submodule "third_party/inih"]
 	path = third_party/inih
 	url = https://github.com/benhoyt/inih.git

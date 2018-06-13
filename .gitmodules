@@ -3,7 +3,7 @@
 	url = https://github.com/kbhomes/moonlight-common-c.git
 [submodule "third_party/enet"]
 	path = third_party/enet
-	url = https://github.com/kbhomes/enet
+	url = https://github.com/kbhomes/enet.git
 [submodule "third_party/inih"]
 	path = third_party/inih
 	url = https://github.com/benhoyt/inih.git

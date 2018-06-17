@@ -50,7 +50,12 @@ void platform_stop(enum platform system) {
 }
 
 DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
-  return NULL;
+  switch(system) {
+  case SWITCH:
+    return &decoder_callbacks_switch;
+  default:
+    return NULL;
+  }
 }
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system, char* audio_device) {

@@ -70,6 +70,25 @@ static const SocketInitConfig customSocketInitConfig = {
     .dns_timeout                        = 5,
 };
 
+static void stream_loop() {
+  printf("Looping for stream, press + to terminate\n");
+  while (appletMainLoop()) {
+    //Scan all the inputs. This should be done once for each frame
+    hidScanInput();
+
+    //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+    u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+
+    if (kDown & KEY_PLUS) {
+      break;
+    }
+
+    gfxFlushBuffers();
+    gfxSwapBuffers();
+    gfxWaitForVsync();
+  }
+}
+
 static void applist(PSERVER_DATA server) {
   PAPP_LIST list = NULL;
   if (gs_applist(server, &list) != GS_OK) {
@@ -136,18 +155,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
-  printf("Looping for stream, press + to terminate\n");
-  while (1) {
-    //Scan all the inputs. This should be done once for each frame
-    hidScanInput();
-
-    //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-    u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-
-    if (kDown & KEY_PLUS) {
-      break;
-    }
-  }
+  stream_loop();
 
   LiStopConnection();
   platform_stop(system);
@@ -208,7 +216,7 @@ int main(int argc, char* argv[]) {
   gfxInitDefault();
 
   //Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
-  consoleInit(NULL);
+//  consoleInit(NULL);
   socketInitializeDefault();
   nxlinkStdio();
 

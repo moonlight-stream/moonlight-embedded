@@ -39,21 +39,8 @@ int blank_fb(char *path, bool clear) {
     return -1;
 }
 
-uid_t getuid() {
-  return 0;
-}
-
-
-uid_t geteuid() {
-  return 0;
-}
-
-
-gid_t getgid() {
-  return 0;
-}
-
-
-gid_t getegid() {
-  return 0;
-}
+// Temporary fixes for libnx
+uid_t getuid() { return 1; }
+uid_t geteuid() { return 1; }
+gid_t getgid() { return 1; }
+gid_t getegid() { return 1; }

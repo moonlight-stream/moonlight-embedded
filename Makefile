@@ -33,7 +33,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 DIST		:=	dist
 TARGET		:=	$(DIST)/$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/audio src/video src/input \
+SOURCES		:=	src src/audio src/video src/input src/gui \
 				libgamestream \
 				third_party/enet \
 				third_party/inih \
@@ -68,7 +68,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lavcodec -lavutil -lm -lssl -lcrypto -lz -lexpat -lnx
+LIBS	:=  -lsdl2 -lavcodec -lavutil -lm -lssl -lcrypto -lz -lexpat -lnx
 
 
 #---------------------------------------------------------------------------------

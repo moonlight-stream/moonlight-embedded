@@ -17,9 +17,21 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+#include "platform.h"
+
 #include <Limelight.h>
+#include <client.h>
+#include <errors.h>
 
 #include <stdbool.h>
+
+int pair_check(PSERVER_DATA server);
+void get_app_list(PSERVER_DATA server);
+int get_app_id(PSERVER_DATA server, const char *name);
+
+void stream_start(PSERVER_DATA server, PCONFIGURATION config, enum platform system);
+void stream_stop(enum platform system);
 
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
 extern bool connection_debug;

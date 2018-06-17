@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <libavcodec/avcodec.h>
 #include <switch.h>
+#include <SDL2/SDL.h>
 
 static AVCodec *codec;
 static AVCodecContext *decoder;
@@ -109,22 +110,12 @@ static int switch_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     return DR_NEED_IDR;
   }
 
-  // Obtain access to the framebuffer
-  uint32_t width, height;
-  uint8_t *framebuf = gfxGetFramebuffer(&width, &height);
-  uint32_t *fbptr = (uint32_t *)framebuf;
-
-  if (width != frame->width || height != frame->height) {
-    fprintf(stderr, "[VIDEO] Frame dimension mismatch: screen=(%d,%d) frame=(%d,%d)\n", width, height, frame->width, frame->height);
-  }
-
-  // Write the frame to the buffer
-  for (int j = 0; j < height; j++) {
-    for (int i = 0; i < width; i++) {
-      int yy = frame->data[0][(j * frame->linesize[0]) + i];
-      *fbptr++ = RGBA8(yy, yy, yy, 0xff);
-    }
-  }
+  // Submit the frame to the event system
+  SDL_Event frameEvent;
+  frameEvent.type = SDL_USEREVENT;
+  frameEvent.user.code = VIDEO_FRAME_EVENT;
+  frameEvent.user.data1 = frame;
+  SDL_PushEvent(&frameEvent);
 
   return DR_OK;
 }

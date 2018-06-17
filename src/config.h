@@ -17,6 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <Limelight.h>
 
 #include <stdbool.h>

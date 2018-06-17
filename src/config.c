@@ -96,6 +96,8 @@ static int ini_handle(void *out, const char *section, const char *name, const ch
   } else if (strcmp(name, "debug_level") == 0) {
     config->debug_level = INT(value);
   }
+
+  return 1;
 }
 
 bool config_file_parse(char* filename, PCONFIGURATION config) {

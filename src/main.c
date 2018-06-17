@@ -26,8 +26,9 @@
 
 #include "audio/audio.h"
 #include "video/video.h"
-
 #include "input/mapping.h"
+
+#include "gui/gui.h"
 
 #include <Limelight.h>
 
@@ -51,172 +52,10 @@
 
 #define MOONLIGHT_DATA_DIR "sdmc:/switch/moonlight-switch/"
 
-static const SocketInitConfig customSocketInitConfig = {
-    .bsdsockets_version = 1,
-
-    .tcp_tx_buf_size        = 0x8000,
-    .tcp_rx_buf_size        = 0x10000,
-    .tcp_tx_buf_max_size    = 0x40000,
-    .tcp_rx_buf_max_size    = 0x40000,
-
-    .udp_tx_buf_size = 0x2400,
-    .udp_rx_buf_size = 0xA500,
-
-    .sb_efficiency = 4,
-
-    .serialized_out_addrinfos_max_size  = 0x1000,
-    .serialized_out_hostent_max_size    = 0x200,
-    .bypass_nsd                         = false,
-    .dns_timeout                        = 5,
-};
-
-static void stream_loop() {
-  printf("Looping for stream, press + to terminate\n");
-  while (appletMainLoop()) {
-    //Scan all the inputs. This should be done once for each frame
-    hidScanInput();
-
-    //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-    u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-
-    if (kDown & KEY_PLUS) {
-      break;
-    }
-
-    gfxFlushBuffers();
-    gfxSwapBuffers();
-    gfxWaitForVsync();
-  }
-}
-
-static void applist(PSERVER_DATA server) {
-  PAPP_LIST list = NULL;
-  if (gs_applist(server, &list) != GS_OK) {
-    fprintf(stderr, "Can't get app list\n");
-    return;
-  }
-
-  for (int i = 1;list != NULL;i++) {
-    printf("%d. %s\n", i, list->name);
-    list = list->next;
-  }
-}
-
-static int get_app_id(PSERVER_DATA server, const char *name) {
-  PAPP_LIST list = NULL;
-  if (gs_applist(server, &list) != GS_OK) {
-    fprintf(stderr, "Can't get app list\n");
-    return -1;
-  }
-
-  while (list != NULL) {
-    if (strcmp(list->name, name) == 0)
-      return list->id;
-
-    list = list->next;
-  }
-  return -1;
-}
-
-static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
-  int appId = get_app_id(server, config->app);
-  if (appId<0) {
-    fprintf(stderr, "Can't find app %s\n", config->app);
-    exit(-1);
-  }
-
-  int gamepads = 0;
-  int gamepad_mask;
-  for (int i = 0; i < gamepads && i < 4; i++)
-    gamepad_mask = (gamepad_mask << 1) + 1;
-
-  int ret = gs_start_app(server, &config->stream, appId, config->sops, config->localaudio, gamepad_mask);
-  if (ret < 0) {
-    if (ret == GS_NOT_SUPPORTED_4K)
-      fprintf(stderr, "Server doesn't support 4K\n");
-    else if (ret == GS_NOT_SUPPORTED_MODE)
-      fprintf(stderr, "Server doesn't support %dx%d (%d fps) or try --unsupported option\n", config->stream.width, config->stream.height, config->stream.fps);
-    else if (ret == GS_ERROR)
-      fprintf(stderr, "Gamestream error: %s\n", gs_error);
-    else
-      fprintf(stderr, "Errorcode starting app: %d\n", ret);
-    exit(-1);
-  }
-
-  int drFlags = 0;
-  if (config->fullscreen)
-    drFlags |= DISPLAY_FULLSCREEN;
-
-  if (config->debug_level > 0) {
-    printf("Stream %d x %d, %d fps, %d kbps\n", config->stream.width, config->stream.height, config->stream.fps, config->stream.bitrate);
-    connection_debug = true;
-  }
-
-  platform_start(system);
-  LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
-
-  stream_loop();
-
-  LiStopConnection();
-  platform_stop(system);
-}
-
-static void help() {
-  printf("Moonlight Embedded %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-  printf("Usage: moonlight [action] (options) [host]\n");
-  printf("       moonlight [configfile]\n");
-  printf("\n Actions\n\n");
-  printf("\tpair\t\t\tPair device with computer\n");
-  printf("\tunpair\t\t\tUnpair device with computer\n");
-  printf("\tstream\t\t\tStream computer to device\n");
-  printf("\tlist\t\t\tList available games and applications\n");
-  printf("\tquit\t\t\tQuit the application or game being streamed\n");
-  printf("\tmap\t\t\tCreate mapping for gamepad\n");
-  printf("\thelp\t\t\tShow this help\n");
-  printf("\n Global Options\n\n");
-  printf("\t-config <config>\tLoad configuration file\n");
-  printf("\t-save <config>\t\tSave configuration file\n");
-  printf("\t-verbose\t\tEnable verbose output\n");
-  printf("\t-debug\t\t\tEnable verbose and debug output\n");
-  printf("\n Streaming options\n\n");
-  printf("\t-720\t\t\tUse 1280x720 resolution [default]\n");
-  printf("\t-1080\t\t\tUse 1920x1080 resolution\n");
-  printf("\t-4k\t\t\tUse 3840x2160 resolution\n");
-  printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
-  printf("\t-height <height>\tVertical resolution (default 720)\n");
-  printf("\t-fps <fps>\t\tSpecify the fps to use (default -1)\n");
-  printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
-  printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
-  printf("\t-codec <codec>\t\tSelect used codec: auto/h264/h265 (default auto)\n");
-  printf("\t-remote\t\t\tEnable remote optimizations\n");
-  printf("\t-app <app>\t\tName of app to stream\n");
-  printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
-  printf("\t-localaudio\t\tPlay audio locally\n");
-  printf("\t-surround\t\tStream 5.1 surround sound (requires GFE 2.7)\n");
-  printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
-  printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
-  printf("\t-platform <system>\tSpecify system used for audio, video and input: pi/imx/aml/x11/x11_vdpau/sdl/fake (default auto)\n");
-  printf("\t-unsupported\t\tTry streaming if GFE version or options are unsupported\n");
-  printf("\n WM options (SDL and X11 only)\n\n");
-  printf("\t-windowed\t\tDisplay screen in a window\n");
-  printf("\nUse Ctrl+Alt+Shift+Q or Play+Back+LeftShoulder+RightShoulder to exit streaming session\n\n");
-  exit(0);
-}
-
-static int pair_check(PSERVER_DATA server) {
-  if (!server->paired) {
-    fprintf(stderr, "You must pair with the PC first\n");
-    return 0;
-  }
-
-  return 1;
-}
+CONFIGURATION config;
+SERVER_DATA server;
 
 int main(int argc, char* argv[]) {
-  gfxInitDefault();
-
-  //Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
-//  consoleInit(NULL);
   socketInitializeDefault();
   nxlinkStdio();
 
@@ -232,7 +71,6 @@ int main(int argc, char* argv[]) {
   RAND_seed(seedbuf, seedlen);
 
   // Parse the global Moonlight settings
-  CONFIGURATION config;
   config_parse(MOONLIGHT_DATA_DIR "moonlight.ini", &config);
   config.debug_level = 2;
 
@@ -263,7 +101,6 @@ int main(int argc, char* argv[]) {
     config_parse(host_config_file, &config);
 
   // Connect to the given host
-  SERVER_DATA server;
   printf("Connect to %s...\n", config.address);
 
   int ret = gs_init(&server, config.address, MOONLIGHT_DATA_DIR "key", config.debug_level, config.unsupported);
@@ -290,63 +127,11 @@ int main(int argc, char* argv[]) {
   printf("+: quit\n");
   printf("\n");
 
-  while(appletMainLoop())
-  {
-      //Scan all the inputs. This should be done once for each frame
-      hidScanInput();
-
-      //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-      u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-
-      if (kDown & KEY_A) {
-        if (pair_check(&server)) {
-          applist(&server);
-        }
-      }
-      else if (kDown & KEY_B) {
-        if (pair_check(&server)) {
-          enum platform system = platform_check(config.platform);
-          if (config.debug_level > 0)
-            printf("Beginning streaming on platform %s\n", platform_name(system));
-
-          if (system == 0) {
-            fprintf(stderr, "Platform '%s' not found\n", config.platform);
-            break;
-          }
-          config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-
-          stream(&server, &config, system);
-
-          printf("Terminated streaming\n");
-        }
-      }
-      else if (kDown & KEY_X) {
-        char pin[5];
-//        sprintf(pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
-        sprintf(pin, "%d%d%d%d", 0, 0, 0, 0);
-        printf("Please enter the following PIN on the target PC: %s\n", pin);
-        if (gs_pair(&server, &pin[0]) != GS_OK) {
-          fprintf(stderr, "Failed to pair to server: %s\n", gs_error);
-        } else {
-          printf("Succesfully paired\n");
-        }
-      }
-      else if (kDown & KEY_Y) {
-        if (gs_unpair(&server) != GS_OK) {
-          fprintf(stderr, "Failed to unpair to server: %s\n", gs_error);
-        } else {
-          printf("Succesfully unpaired\n");
-        }
-      }
-      else if (kDown & KEY_PLUS) {
-        break;
-      }
-
-      gfxFlushBuffers();
-      gfxSwapBuffers();
-      gfxWaitForVsync();
+  if (gui_init() == 0) {
+    gui_main_loop();
   }
 
-  gfxExit();
+  gui_cleanup();
+
   return 0;
 }

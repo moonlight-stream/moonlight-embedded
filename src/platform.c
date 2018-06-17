@@ -59,11 +59,20 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
 }
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system, char* audio_device) {
-  return NULL;
+  switch(system) {
+  case SWITCH:
+    return &audio_callbacks_switch;
+  default:
+    return NULL;
+  }
 }
 
 bool platform_supports_hevc(enum platform system) {
-  return false;
+  switch(system) {
+  case SWITCH:
+  default:
+    return false;
+  }
 }
 
 char* platform_name(enum platform system) {

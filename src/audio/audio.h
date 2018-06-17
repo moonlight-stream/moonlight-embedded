@@ -24,3 +24,5 @@
 #define MAX_CHANNEL_COUNT 6
 #define FRAME_SIZE 240
 #define FRAME_BUFFER 12
+
+extern AUDIO_RENDERER_CALLBACKS audio_callbacks_switch;

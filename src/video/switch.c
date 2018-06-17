@@ -13,11 +13,11 @@ static AVFrame *frame;
 #define DECODE_BUFFER_SIZE 1024 * 128
 static uint8_t *decodeBuffer;
 
-static void switch_cleanup(void) {
+static void switch_video_cleanup(void) {
   fprintf(stderr, "[VIDEO] Cleaned up renderer\n");
 }
 
-static int switch_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
+static int switch_video_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   fprintf(stderr, "[VIDEO] Setup renderer: videoFormat=%d width=%d height=%d redrawRate=%d\n",
           videoFormat,
           width,
@@ -67,19 +67,19 @@ static int switch_setup(int videoFormat, int width, int height, int redrawRate, 
   return 0;
 
 err:
-  switch_cleanup();
+  switch_video_cleanup();
   return -1;
 }
 
-static void switch_start(void) {
+static void switch_video_start(void) {
   fprintf(stderr, "[VIDEO] Started renderer\n");
 }
 
-static void switch_stop(void) {
+static void switch_video_stop(void) {
   fprintf(stderr, "[VIDEO] Stopped renderer\n");
 }
 
-static int switch_submit_decode_unit(PDECODE_UNIT decodeUnit) {
+static int switch_video_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   int ret;
 
   // Collect the data from this decode unit
@@ -121,10 +121,10 @@ static int switch_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_switch = {
-  .setup = switch_setup,
-  .start = switch_start,
-  .stop = switch_stop,
-  .cleanup = switch_cleanup,
-  .submitDecodeUnit = switch_submit_decode_unit,
+  .setup = switch_video_setup,
+  .start = switch_video_start,
+  .stop = switch_video_stop,
+  .cleanup = switch_video_cleanup,
+  .submitDecodeUnit = switch_video_submit_decode_unit,
   .capabilities = CAPABILITY_DIRECT_SUBMIT,
 };

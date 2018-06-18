@@ -39,6 +39,10 @@ void gui_stream_cleanup();
 SDL_Texture *load_png(void *data, size_t size);
 void draw_texture(SDL_Texture *texture, int x, int y, int w, int h);
 
+uint64_t milliseconds();
+
+uint32_t interpolate(uint32_t a, uint32_t b, double t);
+
 // Client and server configuration
 extern CONFIGURATION config;
 extern SERVER_DATA server;

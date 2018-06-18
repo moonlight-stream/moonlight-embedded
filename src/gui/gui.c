@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <time.h>
 
 static int load_shared_fonts() {
   Result rc = plGetSharedFontByType(&gui.fontData, PlSharedFontType_Standard);
@@ -118,4 +119,23 @@ void draw_texture(SDL_Texture *texture, int x, int y, int w, int h) {
   dst.w = w;
   dst.h = h;
   SDL_RenderCopy(gui.renderer, texture, NULL, &dst);
+}
+
+uint64_t milliseconds() {
+  return svcGetSystemTick() / 19200;
+}
+
+uint32_t interpolate(uint32_t a, uint32_t b, double t) {
+  uint8_t
+      ar = (a & 0xff), br = (b & 0xff),
+      ag = ((a >> 8) & 0xff), bg = ((b >> 8) & 0xff),
+      ab = ((a >> 16) & 0xff), bb = ((b >> 16) & 0xff),
+      aa = ((a >> 24) & 0xff), ba = ((b >> 24) & 0xff);
+
+  return RGBA8(
+      (uint8_t)(ar + t*(br - ar)),
+      (uint8_t)(ag + t*(bg - ag)),
+      (uint8_t)(ab + t*(bb - ab)),
+      (uint8_t)(aa + t*(ba - aa))
+  );
 }

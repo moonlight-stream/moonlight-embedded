@@ -68,7 +68,11 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lsdl2 -lavcodec -lavutil -lm -lssl -lcrypto -lz -lexpat -lnx
+LIBS	:=	-lsdl2 -lsdl2_gfx -lsdl2_image -lpng -ljpeg \
+		-lavcodec -lavutil -lm \
+		-lssl -lcrypto \
+		-lz -lexpat \
+		-lnx
 
 
 #---------------------------------------------------------------------------------
@@ -93,15 +97,10 @@ export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
-# CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-# CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-# SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-# BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
-
-CFILES		:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
-SFILES		:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
-BINFILES	:=	$(foreach dir,$(DATA),$(wildcard $(dir)/*.*))
+export CFILES	:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+export CPPFILES	:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
+export SFILES	:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
+export BINFILES	:=	$(foreach dir,$(DATA),$(wildcard $(dir)/*.*))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -181,6 +180,7 @@ clean:
 else
 .PHONY:	all
 
+
 DEPENDS	:=	$(OFILES:.o=.d)
 
 #---------------------------------------------------------------------------------
@@ -200,19 +200,22 @@ endif
 
 $(OUTPUT).elf	:	$(OFILES)
 
-$(OFILES_SRC)	: $(HFILES_BIN)
+$(OFILES_SRC)	:	$(HFILES_BIN) $(OFILES_BIN)
 
 %.o:
 	-$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $(TOPDIR)/$(addsuffix .c,$(basename $@)) -o $@ $(ERROR_FILTER);
 
+
+$(BINFILES):
+
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
 #---------------------------------------------------------------------------------
-data/%.bin.o	data/%_bin.h :	data/%.bin
+data/%.png.o data/%_png.h : data/%.png
 #---------------------------------------------------------------------------------
-	@echo $(notdir $<) $@ $<
+	@echo $@ $<
+	@cp $(TOPDIR)/$< $<
 	@$(bin2o)
-	-cp $@ $(subst _bin.h,.bin.o,$@)
 
 -include $(DEPENDS)
 

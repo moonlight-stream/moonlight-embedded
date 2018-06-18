@@ -1,8 +1,58 @@
 #include "gui.h"
 
+#include <SDL2/SDL2_gfxPrimitives.h>
+#include <SDL2/SDL_image.h>
+
+#include "moonlight_switch_logo_png.h"
+
+#define MARGIN_SIDE 30
+#define MARGIN_TOP 88
+#define MARGIN_BOTTOM 73
+
+static enum State {
+  StateInitial,
+  StateConnecting,
+  StateGamesList,
+  StateStreaming
+} state;
+
 static bool shouldExitApp = 0;
 
+static SDL_Texture *logoTexture;
+static int logoWidth, logoHeight;
+
+static void render_initial() {
+  SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
+  SDL_RenderClear(gui.renderer);
+
+  // Draw the logo
+  SDL_Rect logoDstRect;
+  logoDstRect.x = (gui.width - logoWidth) / 2;
+  logoDstRect.y = 100;
+  logoDstRect.w = logoWidth;
+  logoDstRect.h = logoHeight;
+  SDL_RenderCopy(gui.renderer, logoTexture, NULL, &logoDstRect);
+
+  // Draw the bottom "toolbar" separator
+  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, gui.height - MARGIN_BOTTOM, RGBA8(0x2d, 0x2d, 0x2d, 0xff));
+
+  SDL_RenderPresent(gui.renderer);
+}
+
+int gui_main_init() {
+  logoTexture = load_png(moonlight_switch_logo_png, moonlight_switch_logo_png_size);
+  if (!logoTexture) {
+    fprintf(stderr, "[GUI] Could not load logo: %s\n", SDL_GetError());
+    return -1;
+  }
+  SDL_QueryTexture(logoTexture, NULL, NULL, &logoWidth, &logoHeight);
+
+  return 0;
+}
+
 void gui_main_loop() {
+  state = StateInitial;
+
   while(appletMainLoop() && !shouldExitApp)
   {
       //Scan all the inputs. This should be done once for each frame
@@ -55,7 +105,17 @@ void gui_main_loop() {
         break;
       }
 
-      SDL_RenderClear(gui.renderer);
-      SDL_RenderPresent(gui.renderer);
+      switch (state) {
+      case StateInitial:
+        render_initial();
+        break;
+      }
+  }
+}
+
+void gui_main_cleanup() {
+  if (logoTexture) {
+    SDL_DestroyTexture(logoTexture);
+    logoTexture = NULL;
   }
 }

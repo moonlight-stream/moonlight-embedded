@@ -4,11 +4,12 @@
 #include <libavcodec/avcodec.h>
 
 static bool shouldExitStream = 0;
+static SDL_Texture *streamTexture;
 
-static void gui_draw_frame(AVFrame *frame) {
+static void draw_frame(AVFrame *frame) {
   // Update the scene texture with the most recent frame
   int ret = SDL_UpdateYUVTexture(
-    gui.streamTexture,
+    streamTexture,
     NULL,
     frame->data[0], frame->linesize[0], // Y
     frame->data[1], frame->linesize[1], // U
@@ -20,6 +21,16 @@ static void gui_draw_frame(AVFrame *frame) {
   }
 }
 
+int gui_stream_init() {
+  streamTexture = SDL_CreateTexture(gui.renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, gui.width, gui.height);
+  if (!streamTexture) {
+    fprintf(stderr, "[GUI] Could not create SDL texture for streaming: %s\n", SDL_GetError());
+    return -1;
+  }
+
+  return 0;
+}
+
 void gui_stream_loop() {
   while (appletMainLoop() && !shouldExitStream) {
     // Read events from the queue
@@ -29,7 +40,7 @@ void gui_stream_loop() {
       case SDL_USEREVENT:
         if (event.user.code == VIDEO_FRAME_EVENT) {
           AVFrame *frame = (AVFrame *)event.user.data1;
-          gui_draw_frame(frame);
+          draw_frame(frame);
         }
         break;
 
@@ -41,7 +52,14 @@ void gui_stream_loop() {
 
     // Display the updated frame
     SDL_RenderClear(gui.renderer);
-    SDL_RenderCopy(gui.renderer, gui.streamTexture, NULL, NULL);
+    SDL_RenderCopy(gui.renderer, streamTexture, NULL, NULL);
     SDL_RenderPresent(gui.renderer);
+  }
+}
+
+void gui_stream_cleanup() {
+  if (streamTexture) {
+    SDL_DestroyTexture(streamTexture);
+    streamTexture = NULL;
   }
 }

@@ -68,10 +68,10 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=	-lsdl2 -lsdl2_gfx -lsdl2_image -lpng -ljpeg \
+LIBS	:=	-lsdl2 -lsdl2_gfx -lsdl2_ttf -lsdl2_image -lpng -ljpeg -lfreetype \
 		-lavcodec -lavutil -lm \
 		-lssl -lcrypto \
-		-lz -lexpat \
+		-lbz2 -lz -lexpat \
 		-lnx
 
 
@@ -216,6 +216,7 @@ data/%.png.o data/%_png.h : data/%.png
 	@echo $@ $<
 	@cp $(TOPDIR)/$< $<
 	@$(bin2o)
+	-@cp $@ $(subst _png.h,.png.o,$@)
 
 -include $(DEPENDS)
 

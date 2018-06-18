@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+
 #include <switch.h>
 #include <stdio.h>
 
@@ -14,6 +16,11 @@ typedef struct {
   SDL_Renderer *renderer;
   int width;
   int height;
+
+  PlFontData fontData;
+  TTF_Font *fontNormal;
+  TTF_Font *fontHeading;
+  TTF_Font *fontMassive;
 } GUI;
 
 GUI gui;
@@ -30,6 +37,7 @@ void gui_stream_loop();
 void gui_stream_cleanup();
 
 SDL_Texture *load_png(void *data, size_t size);
+void draw_texture(SDL_Texture *texture, int x, int y, int w, int h);
 
 // Client and server configuration
 extern CONFIGURATION config;

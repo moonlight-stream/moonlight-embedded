@@ -1,13 +1,19 @@
 #include "gui.h"
+#include "text.h"
 
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <SDL2/SDL_image.h>
 
 #include "moonlight_switch_logo_png.h"
+#include "button_a_png.h"
+#include "button_b_png.h"
 
 #define MARGIN_SIDE 30
 #define MARGIN_TOP 88
 #define MARGIN_BOTTOM 73
+
+#define MARGIN_TOOLBAR_SIDE 30
+#define MARGIN_BETWEEN_ICON_TEXT 10
 
 static enum State {
   StateInitial,
@@ -18,23 +24,39 @@ static enum State {
 
 static bool shouldExitApp = 0;
 
+static uint32_t darkColor = RGBA8(0x2d, 0x2d, 0x2d, 0xff);
+
 static SDL_Texture *logoTexture;
 static int logoWidth, logoHeight;
+
+static SDL_Texture *buttonATexture;
+static SDL_Texture *buttonBTexture;
+static int buttonAWidth, buttonAHeight, buttonBWidth, buttonBHeight;
 
 static void render_initial() {
   SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
   SDL_RenderClear(gui.renderer);
 
   // Draw the logo
-  SDL_Rect logoDstRect;
-  logoDstRect.x = (gui.width - logoWidth) / 2;
-  logoDstRect.y = 100;
-  logoDstRect.w = logoWidth;
-  logoDstRect.h = logoHeight;
-  SDL_RenderCopy(gui.renderer, logoTexture, NULL, &logoDstRect);
+  draw_texture(logoTexture, (gui.width - logoWidth) / 2, 100, logoWidth, logoHeight);
 
   // Draw the bottom "toolbar" separator
-  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, gui.height - MARGIN_BOTTOM, RGBA8(0x2d, 0x2d, 0x2d, 0xff));
+  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, gui.height - MARGIN_BOTTOM, darkColor);
+
+  // Draw the OK button on the bottom toolbar
+  int textOkWidth, textOkHeight, textOkX, textOkY;
+  measure_text(gui.fontNormal, "OK", &textOkWidth, &textOkHeight);
+
+  textOkX = gui.width - MARGIN_SIDE - MARGIN_TOOLBAR_SIDE - textOkWidth;
+  textOkY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - textOkHeight)/2;
+  draw_text(gui.fontNormal, "OK", textOkX, textOkY, darkColor, false);
+  draw_texture(
+      buttonATexture,
+      textOkX - MARGIN_BETWEEN_ICON_TEXT - buttonAWidth,
+      gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - buttonAHeight)/2,
+      buttonAWidth,
+      buttonAHeight
+  );
 
   SDL_RenderPresent(gui.renderer);
 }
@@ -46,6 +68,20 @@ int gui_main_init() {
     return -1;
   }
   SDL_QueryTexture(logoTexture, NULL, NULL, &logoWidth, &logoHeight);
+
+  buttonATexture = load_png(button_a_png, button_a_png_size);
+  if (!buttonATexture) {
+    fprintf(stderr, "[GUI] Could not load button A image: %s\n", SDL_GetError());
+    return -1;
+  }
+  SDL_QueryTexture(buttonATexture, NULL, NULL, &buttonAWidth, &buttonAHeight);
+
+  buttonBTexture = load_png(button_b_png, button_b_png_size);
+  if (!buttonBTexture) {
+    fprintf(stderr, "[GUI] Could not load button B image: %s\n", SDL_GetError());
+    return -1;
+  }
+  SDL_QueryTexture(buttonBTexture, NULL, NULL, &buttonBWidth, &buttonBHeight);
 
   return 0;
 }

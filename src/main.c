@@ -57,6 +57,8 @@ SERVER_DATA server;
 
 int main(int argc, char* argv[]) {
   socketInitializeDefault();
+  setInitialize();
+  plInitialize();
   nxlinkStdio();
 
   // Initialize OpenSSL
@@ -132,6 +134,9 @@ int main(int argc, char* argv[]) {
   }
 
   gui_cleanup();
+
+  plExit();
+  setExit();
 
   return 0;
 }

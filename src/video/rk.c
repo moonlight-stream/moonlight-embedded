@@ -356,8 +356,8 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   }
   assert(plane_id);
 
-  // disable cursor
-  drmModeSetCursor(fd, crtc_id, 0, 0, 0);
+  // hide cursor by move in left lower corner
+  drmModeMoveCursor(fd, crtc_id, 0, crtc_height);
 
   // MPI SETUP
 

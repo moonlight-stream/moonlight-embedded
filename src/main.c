@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
   } else if (ret == GS_UNSUPPORTED_VERSION) {
     fprintf(stderr, "Unsupported version: %s\n", gs_error);
   } else if (ret != GS_OK) {
-    fprintf(stderr, "Can't connect to server %s, error: \n", config.address, gs_error);
+    fprintf(stderr, "Can't connect to server %s, error: %s\n", config.address, gs_error);
   }
 
   if (config.debug_level > 0)

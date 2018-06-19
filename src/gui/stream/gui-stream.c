@@ -1,6 +1,6 @@
-#include "gui.h"
+#include "../gui.h"
 
-#include "../video/video.h"
+#include "../../video/video.h"
 #include <libavcodec/avcodec.h>
 
 static bool shouldExitStream = 0;

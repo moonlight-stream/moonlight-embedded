@@ -33,7 +33,8 @@ include $(DEVKITPRO)/libnx/switch_rules
 DIST		:=	dist
 TARGET		:=	$(DIST)/$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/audio src/video src/input src/gui \
+SOURCES		:=	src src/audio src/video src/input \
+			src/gui src/gui/main src/gui/stream \
 				libgamestream \
 				third_party/enet \
 				third_party/inih \

@@ -13,7 +13,7 @@ static int load_shared_fonts() {
 
   gui.fontNormal = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 22);
   gui.fontHeading = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 28);
-  gui.fontMassive = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 48);
+  gui.fontMassive = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 64);
 
   if (!gui.fontNormal || !gui.fontHeading || !gui.fontMassive) {
     fprintf(stderr, "[GUI] Could not load font into SDL: %s\n", TTF_GetError());
@@ -86,7 +86,7 @@ void gui_cleanup() {
   SDL_Quit();
 }
 
-SDL_Texture *load_png(void *data, size_t size) {
+SDL_Texture *load_png(const void *data, size_t size) {
   SDL_RWops *rwops;
   SDL_Surface *surface;
   SDL_Texture *texture;

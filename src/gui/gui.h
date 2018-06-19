@@ -36,7 +36,7 @@ int gui_stream_init();
 void gui_stream_loop();
 void gui_stream_cleanup();
 
-SDL_Texture *load_png(void *data, size_t size);
+SDL_Texture *load_png(const void *data, size_t size);
 void draw_texture(SDL_Texture *texture, int x, int y, int w, int h);
 
 uint64_t milliseconds();

@@ -3,7 +3,7 @@
 #include "button_a_png.h"
 #include "button_b_png.h"
 
-enum MainState state = StateInitial;
+enum MainState state;
 bool shouldExitApp = 0;
 
 uint32_t darkColor = RGBA8(0x2d, 0x2d, 0x2d, 0xff);
@@ -40,7 +40,7 @@ int gui_main_init() {
 }
 
 void gui_main_loop() {
-  state = StateInitial;
+  state = StateGamesList;
 
   while(appletMainLoop() && !shouldExitApp)
   {
@@ -127,6 +127,9 @@ void draw_bottom_toolbar(int count, ...) {
         iconWidth = buttonBWidth;
         iconHeight = buttonBHeight;
         break;
+
+       default:
+        continue;
     }
 
     // Measure the size of this particular label

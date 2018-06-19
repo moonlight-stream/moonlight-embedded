@@ -5,13 +5,17 @@
 
 enum ButtonSetDirection {
   Vertical,
-  Horizontal
+  Horizontal,
+  FlowVertical,
+  FlowHorizontal
 };
 
 typedef struct _ButtonSet {
   enum ButtonSetDirection direction;
   size_t count;
   size_t capacity;
+  size_t flowSize;
+  bool wrap;
 
   Button **buttons;
 } ButtonSet;

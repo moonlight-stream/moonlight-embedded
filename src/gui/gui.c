@@ -11,11 +11,12 @@ static int load_shared_fonts() {
     return -1;
   }
 
+  gui.fontSmall = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 18);
   gui.fontNormal = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 22);
   gui.fontHeading = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 28);
   gui.fontMassive = TTF_OpenFontRW(SDL_RWFromMem(gui.fontData.address, gui.fontData.size), 1, 64);
 
-  if (!gui.fontNormal || !gui.fontHeading || !gui.fontMassive) {
+  if (!gui.fontSmall || !gui.fontNormal || !gui.fontHeading || !gui.fontMassive) {
     fprintf(stderr, "[GUI] Could not load font into SDL: %s\n", TTF_GetError());
     return -1;
   }
@@ -67,6 +68,7 @@ void gui_cleanup() {
   gui_stream_cleanup();
   gui_main_cleanup();
 
+  if (gui.fontSmall) { TTF_CloseFont(gui.fontSmall); }
   if (gui.fontNormal) { TTF_CloseFont(gui.fontNormal); }
   if (gui.fontHeading) { TTF_CloseFont(gui.fontHeading); }
   if (gui.fontMassive) { TTF_CloseFont(gui.fontMassive); }

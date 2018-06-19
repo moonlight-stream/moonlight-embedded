@@ -1,10 +1,5 @@
 #include "gui-main.h"
 
-#include "../gui.h"
-#include "../text.h"
-#include "../button.h"
-#include "../button-set.h"
-
 #include "moonlight_switch_logo_png.h"
 
 static struct {

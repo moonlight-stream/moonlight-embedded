@@ -18,6 +18,7 @@ typedef struct {
   int height;
 
   PlFontData fontData;
+  TTF_Font *fontSmall;
   TTF_Font *fontNormal;
   TTF_Font *fontHeading;
   TTF_Font *fontMassive;

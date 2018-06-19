@@ -40,17 +40,19 @@ int pair_check(PSERVER_DATA server) {
   return 1;
 }
 
-void get_app_list(PSERVER_DATA server) {
+PAPP_LIST get_app_list(PSERVER_DATA server) {
   PAPP_LIST list = NULL;
   if (gs_applist(server, &list) != GS_OK) {
     fprintf(stderr, "Can't get app list\n");
-    return;
+    return NULL;
   }
 
   for (int i = 1;list != NULL;i++) {
     printf("%d. %s\n", i, list->name);
     list = list->next;
   }
+
+  return list;
 }
 
 int get_app_id(PSERVER_DATA server, const char *name) {

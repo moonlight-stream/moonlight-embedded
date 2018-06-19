@@ -3,6 +3,7 @@
 #include "../gui.h"
 #include "../text.h"
 #include "../button.h"
+#include "../button-set.h"
 
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <SDL2/SDL_image.h>

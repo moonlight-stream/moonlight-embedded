@@ -73,13 +73,7 @@ int get_app_id(PSERVER_DATA server, const char *name) {
   return -1;
 }
 
-void stream_start(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
-  int appId = get_app_id(server, config->app);
-  if (appId<0) {
-    fprintf(stderr, "Can't find app %s\n", config->app);
-    exit(-1);
-  }
-
+int stream_start(PSERVER_DATA server, PCONFIGURATION config, int appId, enum platform system) {
   int gamepads = 0;
   int gamepad_mask = 0;
   for (int i = 0; i < gamepads && i < 4; i++)
@@ -95,7 +89,8 @@ void stream_start(PSERVER_DATA server, PCONFIGURATION config, enum platform syst
       fprintf(stderr, "Gamestream error: %s\n", gs_error);
     else
       fprintf(stderr, "Errorcode starting app: %d\n", ret);
-    exit(-1);
+
+    return -1;
   }
 
   int drFlags = 0;
@@ -109,11 +104,15 @@ void stream_start(PSERVER_DATA server, PCONFIGURATION config, enum platform syst
 
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
+
+  return 0;
 }
 
-void stream_stop(enum platform system) {
+int stream_stop(enum platform system) {
   LiStopConnection();
   platform_stop(system);
+
+  return 0;
 }
 
 // Moonlight connection callbacks

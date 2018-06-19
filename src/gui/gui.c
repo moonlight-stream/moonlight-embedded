@@ -57,15 +57,10 @@ int gui_init() {
     return -1;
   }
 
-  if (gui_stream_init() < 0) {
-    return -1;
-  }
-
   return 0;
 }
 
 void gui_cleanup() {
-  gui_stream_cleanup();
   gui_main_cleanup();
 
   if (gui.fontSmall) { TTF_CloseFont(gui.fontSmall); }

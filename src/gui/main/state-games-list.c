@@ -133,7 +133,18 @@ void main_update_games_list(Input *input) {
     }
   }
 
-  button_set_update(&props.buttonSet, input);
+  Button *clicked = button_set_update(&props.buttonSet, input);
+  if (clicked) {
+    int gameIndex = (int)clicked->user;
+    PAPP_LIST game = props.games;
+
+    for (int i = 0; i < gameIndex; i++) {
+      game = game->next;
+    }
+
+    main_set_streaming_game(game);
+    state = StateStreaming;
+  }
 
   props.frame++;
 }

@@ -4,7 +4,7 @@ int main_init_games_list() {
   return 0;
 }
 
-void main_update_games_list(uint64_t keys) {
+void main_update_games_list(Input *input) {
 
 }
 

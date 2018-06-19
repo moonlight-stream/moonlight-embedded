@@ -5,7 +5,7 @@ int main_init_streaming() {
   return 0;
 }
 
-void main_update_streaming(uint64_t keys) {
+void main_update_streaming(Input *input) {
 
 }
 

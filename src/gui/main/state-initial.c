@@ -3,6 +3,7 @@
 #include "../gui.h"
 #include "../text.h"
 #include "../button.h"
+#include "../button-set.h"
 
 #include "moonlight_switch_logo_png.h"
 
@@ -12,6 +13,8 @@ static struct {
   int logoHeight;
 
   Button connectButton;
+  Button settingsButton;
+  ButtonSet buttons;
 } props = {0};
 
 int main_init_initial() {
@@ -28,11 +31,23 @@ int main_init_initial() {
   props.connectButton.y = 100 + props.logoHeight + (gui.height - MARGIN_BOTTOM - props.logoHeight - 100)/2 - props.connectButton.height/2;
   props.connectButton.focused = true;
 
+  button_init(&props.settingsButton);
+  props.settingsButton.text = "Settings";
+  props.settingsButton.x = gui.width/2 - props.settingsButton.width/2;
+  props.settingsButton.y = props.connectButton.y + props.connectButton.height + 15;
+  props.settingsButton.focused = false;
+
+  button_set_init(&props.buttons, Vertical);
+  button_set_add(&props.buttons, &props.connectButton);
+  button_set_add(&props.buttons, &props.settingsButton);
+
   return 0;
 }
 
-void main_update_initial(uint64_t keys) {
-  if (keys & KEY_A) {
+void main_update_initial(Input *input) {
+  Button *clicked = button_set_update(&props.buttons, input);
+
+  if (clicked == &props.connectButton) {
     state = StateConnecting;
   }
 
@@ -75,23 +90,13 @@ void main_render_initial() {
   SDL_RenderClear(gui.renderer);
 
   // Draw the logo
-  draw_texture(props.logoTexture, (gui.width - props.logoWidth) / 2, 100, props.logoWidth, props.logoHeight);
+  draw_texture(props.logoTexture, (gui.width - props.logoWidth) / 2, 150, props.logoWidth, props.logoHeight);
 
-  // Draw the bottom "toolbar" separator
-  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, gui.height - MARGIN_BOTTOM, darkColor);
+  // Draw the OK action on the bottom toolbar
+  draw_bottom_toolbar(1, "OK", ToolbarActionA);
 
-  // Draw the OK button on the bottom toolbar
-  int textOkWidth, textOkHeight, textOkX, textOkY, buttonOkX, buttonOkY;
-  measure_text(gui.fontNormal, "OK", &textOkWidth, &textOkHeight);
-  textOkX = gui.width - MARGIN_SIDE - MARGIN_TOOLBAR_SIDE - textOkWidth;
-  textOkY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - textOkHeight)/2;
-  buttonOkX = textOkX - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - buttonAWidth;
-  buttonOkY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - buttonAHeight)/2;
-  draw_text(gui.fontNormal, "OK", textOkX, textOkY, darkColor, false);
-  draw_texture(buttonATexture, buttonOkX, buttonOkY, buttonAWidth, buttonAHeight);
-
-  // Draw the main connect button
-  button_render(&props.connectButton);
+  // Draw the main buttons
+  button_set_render(&props.buttons);
 
   SDL_RenderPresent(gui.renderer);
 }

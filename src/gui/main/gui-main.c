@@ -7,6 +7,7 @@ enum MainState state = StateInitial;
 bool shouldExitApp = 0;
 
 uint32_t darkColor = RGBA8(0x2d, 0x2d, 0x2d, 0xff);
+uint32_t lightColor = RGBA8(0x6d, 0x6d, 0x6d, 0xff);
 SDL_Texture *buttonATexture = NULL;
 SDL_Texture *buttonBTexture = NULL;
 int buttonAWidth, buttonAHeight, buttonBWidth, buttonBHeight;
@@ -46,32 +47,32 @@ void gui_main_loop() {
       //Scan all the inputs. This should be done once for each frame
       hidScanInput();
 
-      //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-      u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+      Input input;
+      input.keys = hidKeysDown(CONTROLLER_P1_AUTO);
 
       switch (state) {
       case StateInitial:
-        main_update_initial(kDown);
+        main_update_initial(&input);
         main_render_initial();
         break;
 
       case StateConnecting:
-        main_update_connecting(kDown);
+        main_update_connecting(&input);
         main_render_connecting();
         break;
 
       case StateConnectionFailed:
-        main_update_connection_failed(kDown);
+        main_update_connection_failed(&input);
         main_render_connection_failed();
         break;
 
       case StateGamesList:
-        main_update_games_list(kDown);
+        main_update_games_list(&input);
         main_render_games_list();
         break;
 
       case StateStreaming:
-        main_update_streaming(kDown);
+        main_update_streaming(&input);
         main_render_streaming();
         break;
       }
@@ -94,4 +95,73 @@ void gui_main_cleanup() {
   main_cleanup_connection_failed();
   main_cleanup_games_list();
   main_cleanup_streaming();
+}
+
+void draw_bottom_toolbar(int count, ...) {
+  va_list args;
+  va_start(args, count);
+
+  int baseHeight, _;
+  measure_text(gui.fontNormal, "A", &_, &baseHeight);
+
+  int offsetX = gui.width - MARGIN_SIDE - MARGIN_TOOLBAR_SIDE;
+  int offsetY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - baseHeight)/2;
+
+  for (int i = 0; i < count; i++) {
+    // Obtain the button arguments
+    char *text = va_arg(args, char *);
+    enum ToolbarAction action = va_arg(args, enum ToolbarAction);
+
+    SDL_Texture *iconTexture;
+    int iconWidth, iconHeight;
+
+    switch (action) {
+      case ToolbarActionA:
+        iconTexture = buttonATexture;
+        iconWidth = buttonAWidth;
+        iconHeight = buttonAHeight;
+        break;
+
+      case ToolbarActionB:
+        iconTexture = buttonBTexture;
+        iconWidth = buttonBWidth;
+        iconHeight = buttonBHeight;
+        break;
+    }
+
+    // Measure the size of this particular label
+    int textWidth, textHeight;
+    measure_text(gui.fontNormal, text, &textWidth, &textHeight);
+
+    // Draw the text and icon
+    draw_text(gui.fontNormal, text, offsetX - textWidth, offsetY, darkColor, false);
+    draw_texture(iconTexture,
+                 offsetX - textWidth - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth,
+                 gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - iconHeight)/2,
+                 iconWidth,
+                 iconHeight);
+
+    offsetX = offsetX - textWidth - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth - MARGIN_BETWEEN_TOOLBAR_BUTTONS;
+  }
+
+
+  // Draw the bottom separator
+  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, gui.height - MARGIN_BOTTOM, darkColor);
+
+  va_end(args);
+}
+
+void draw_top_header(char *text) {
+  // Draw the top separator
+  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, MARGIN_TOP, darkColor);
+
+  // Draw the text
+  int textWidth, textHeight;
+  measure_text(gui.fontHeading, text, &textWidth, &textHeight);
+  draw_text(gui.fontHeading,
+            text,
+            MARGIN_SIDE + MARGIN_TOOLBAR_SIDE,
+            (MARGIN_TOP - textHeight)/2 + 10,
+            darkColor,
+            false);
 }

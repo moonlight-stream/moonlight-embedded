@@ -23,6 +23,10 @@ typedef struct {
   TTF_Font *fontMassive;
 } GUI;
 
+typedef struct {
+  uint64_t keys;
+} Input;
+
 GUI gui;
 
 int gui_init();

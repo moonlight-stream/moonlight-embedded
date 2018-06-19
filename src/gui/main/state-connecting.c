@@ -26,7 +26,7 @@ int main_init_connecting() {
   return 0;
 }
 
-void main_update_connecting(uint64_t keys) {
+void main_update_connecting(Input *input) {
   if (props.frame == 0) {
     sprintf(props.pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
   }
@@ -46,10 +46,6 @@ void main_render_connecting()  {
   SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
   SDL_RenderClear(gui.renderer);
 
-  // Draw the "toolbar" separators
-  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, MARGIN_TOP, darkColor);
-  hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, gui.height - MARGIN_BOTTOM, darkColor);
-
   // Draw the connecting image
   draw_texture(props.connectingTexture, (gui.width - props.connectingWidth) / 2, MARGIN_TOP + 75, props.connectingWidth, props.connectingHeight);
 
@@ -68,31 +64,10 @@ void main_render_connecting()  {
   draw_text(gui.fontMassive, props.pin, textPinX, textPinY, darkColor, false);
 
   // Draw the heading
-  int textMoonlightWidth, textMoonlightHeight, textMoonlightX, textMoonlightY;
-  measure_text(gui.fontHeading, "M", &textMoonlightWidth, &textMoonlightHeight);
-  textMoonlightX = MARGIN_SIDE + MARGIN_TOOLBAR_SIDE;
-  textMoonlightY = (MARGIN_TOP - textMoonlightHeight)/2 + 10;
-  draw_text(gui.fontHeading, "Moonlight", textMoonlightX, textMoonlightY, darkColor, false);
+  draw_top_header("Moonlight");
 
-  // Draw the OK button on the bottom toolbar
-  int textOkWidth, textOkHeight, textOkX, textOkY, buttonOkX, buttonOkY;
-  measure_text(gui.fontNormal, "OK", &textOkWidth, &textOkHeight);
-  textOkX = gui.width - MARGIN_SIDE - MARGIN_TOOLBAR_SIDE - textOkWidth;
-  textOkY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - textOkHeight)/2;
-  buttonOkX = textOkX - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - buttonAWidth;
-  buttonOkY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - buttonAHeight)/2;
-  draw_text(gui.fontNormal, "OK", textOkX, textOkY, darkColor, false);
-  draw_texture(buttonATexture, buttonOkX, buttonOkY, buttonAWidth, buttonAHeight);
-
-  // Draw the Back button on the bottom toolbar
-  int textBackWidth, textBackHeight, textBackX, textBackY, buttonBackX, buttonBackY;
-  measure_text(gui.fontNormal, "Back", &textBackWidth, &textBackHeight);
-  textBackX = buttonOkX - MARGIN_BETWEEN_TOOLBAR_BUTTONS - textBackWidth;
-  textBackY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - textBackHeight)/2;
-  buttonBackX = textBackX - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - buttonBWidth;
-  buttonBackY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - buttonBHeight)/2;
-  draw_text(gui.fontNormal, "Back", textBackX, textBackY, darkColor, false);
-  draw_texture(buttonBTexture, buttonBackX, buttonBackY, buttonBWidth, buttonBHeight);
+  // Draw the OK and Back actions on the bottom toolbar
+  draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
 
   SDL_RenderPresent(gui.renderer);
 }

@@ -4,7 +4,7 @@
 #include "button_b_png.h"
 
 enum MainState state;
-bool shouldExitApp = 0;
+bool shouldExitApp;
 
 uint32_t darkColor = RGBA8(0x2d, 0x2d, 0x2d, 0xff);
 uint32_t lightColor = RGBA8(0x6d, 0x6d, 0x6d, 0xff);
@@ -13,6 +13,7 @@ SDL_Texture *buttonBTexture = NULL;
 int buttonAWidth, buttonAHeight, buttonBWidth, buttonBHeight;
 
 int gui_main_init() {
+  state = StateInitial;
   shouldExitApp = false;
   darkColor = RGBA8(0x2d, 0x2d, 0x2d, 0xff);
 
@@ -40,8 +41,6 @@ int gui_main_init() {
 }
 
 void gui_main_loop() {
-  state = StateGamesList;
-
   while(appletMainLoop() && !shouldExitApp)
   {
       //Scan all the inputs. This should be done once for each frame

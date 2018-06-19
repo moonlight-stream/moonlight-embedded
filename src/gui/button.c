@@ -10,6 +10,7 @@ void button_init(Button *button) {
   button->focused = false;
   button->text = "";
   button->renderer = NULL;
+  button->user = NULL;
 }
 
 void button_render(Button *button) {

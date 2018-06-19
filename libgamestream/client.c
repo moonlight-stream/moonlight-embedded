@@ -676,6 +676,33 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
   return ret;
 }
 
+int gs_app_boxart(PSERVER_DATA server, int app_id, char **art_data, size_t *art_data_size) {
+  int ret = GS_OK;
+  char path[4096];
+  uuid_t uuid;
+  char uuid_str[37];
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL)
+    return GS_OUT_OF_MEMORY;
+
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+  snprintf(path, sizeof(path), "/appasset?uniqueid=%s&uuid=%s&appid=%d&AssetType=2&AssetIdx=0", unique_id, uuid_str, app_id);
+  if (https_request(server->serverInfo.address, 47984, path, data) != GS_OK) {
+    ret = GS_IO_ERROR;
+    *art_data_size = 0;
+    *art_data = NULL;
+  }
+  else {
+    *art_data_size = data->body_size;
+    *art_data = malloc(*art_data_size);
+    memcpy(*art_data, data->body, *art_data_size);
+  }
+
+  http_free_data(data);
+  return ret;
+}
+
 int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, bool sops, bool localaudio, int gamepad_mask) {
   int ret = GS_OK;
   uuid_t uuid;

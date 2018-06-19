@@ -23,6 +23,7 @@ typedef struct _Button {
   int width;
   int height;
   bool focused;
+  void *user;
 
   ButtonRenderer renderer;
 } Button;

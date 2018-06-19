@@ -8,42 +8,58 @@
 static struct {
   int frame;
 
-  PAPP_LIST games;
+  PAPP_LIST games;  
   size_t gamesCount;
+
+  SDL_Texture **gamesArtTextures;
+  int *gamesArtWidths;
+  int *gamesArtHeights;
+
   Button **buttons;
   ButtonSet buttonSet;
 } props = {0};
 
-static size_t test_game_list(PAPP_LIST *games) {
-  PAPP_LIST head = NULL;
-  PAPP_LIST prev = NULL;
-  size_t count = 0;
+//static size_t test_game_list(PAPP_LIST *games) {
+//  PAPP_LIST head = NULL;
+//  PAPP_LIST prev = NULL;
+//  size_t count = 0;
 
-  for (int i = 0; i < 8; i++) {
-    PAPP_LIST current = malloc(sizeof(*current));
-    current->id = 0;
-    current->name = malloc(strlen("Game Application XXXX") + 1);
-    sprintf(current->name, "Game Application %d", i+1);
+//  for (int i = 0; i < 8; i++) {
+//    PAPP_LIST current = malloc(sizeof(*current));
+//    current->id = 0;
+//    current->name = malloc(strlen("Game Application XXXX") + 1);
+//    sprintf(current->name, "Game Application %d", i+1);
 
-    if (prev) {
-      prev->next = current;
-    }
-    else {
-      head = current;
-    }
+//    if (prev) {
+//      prev->next = current;
+//    }
+//    else {
+//      head = current;
+//    }
 
-    prev = current;
-    count++;
-  }
+//    prev = current;
+//    count++;
+//  }
 
-  *games = head;
-  return count;
-}
+//  *games = head;
+//  return count;
+//}
 
 static void game_button_renderer(Button *button) {
+  int gameIndex = (int)button->user;
+
   // Measure the size of the game title
   int textWidth, textHeight = text_ascent(gui.fontSmall);
   text_measure(gui.fontSmall, button->text, &textWidth, NULL);
+
+  // Draw the boxart of the game
+  SDL_Texture *artTexture = props.gamesArtTextures[gameIndex];
+  if (artTexture) {
+    int artWidth = props.gamesArtWidths[gameIndex];
+    int artHeight = props.gamesArtHeights[gameIndex];
+
+    draw_texture(artTexture, button->x + 3, button->y + 3, button->width - 6, button->height - 16 - textHeight);
+  }
 
   // Draw a small white border
   for (int i = 0; i < 3; i++) {
@@ -59,7 +75,6 @@ static void game_button_renderer(Button *button) {
            BUTTON_FOCUSED_BACKGROUND);
 
   // Draw the caption
-  /// TODO: truncation of caption
   uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
   text_draw(gui.fontSmall, button->text, button->x + 8, button->y + button->height - 8 - textHeight, textColor, false, button->width - 16);
 }
@@ -74,15 +89,35 @@ int main_init_games_list() {
 
 void main_update_games_list(Input *input) {
   if (props.frame == 0) {
-    props.gamesCount = test_game_list(&props.games);
+    props.gamesCount = get_app_list(&server, &props.games);
     PAPP_LIST game = props.games;
 
-    // Create buttons for each game
+    // Initialize memory for these dynamic items
+    props.gamesArtTextures = malloc(props.gamesCount * sizeof(char *));
+    props.gamesArtWidths = calloc(props.gamesCount, sizeof(int));
+    props.gamesArtHeights = calloc(props.gamesCount, sizeof(int));
     props.buttons = malloc(props.gamesCount * sizeof(Button *));
+
     for (int i = 0; i < props.gamesCount; i++) {
+      // Collect the box art for this game
+      char *artData = NULL;
+      int artSize = 0;
+      int ret = gs_app_boxart(&server, game->id, &artData, &artSize);
+
+      if (artData && artSize) {
+        props.gamesArtTextures[i] = load_png(artData, artSize);
+        SDL_QueryTexture(props.gamesArtTextures[i], NULL, NULL, &props.gamesArtWidths[i], &props.gamesArtWidths[i]);
+
+        free(artData);
+      }
+      else {
+        props.gamesArtTextures[i] = NULL;
+      }
+
       // Allocate and initialize the button for this game
       props.buttons[i] = malloc(sizeof(Button));
       button_init(props.buttons[i]);
+      props.buttons[i]->user = i;
       props.buttons[i]->renderer = &game_button_renderer;
       props.buttons[i]->text = game->name;
       props.buttons[i]->width = GAME_BUTTON_WIDTH;

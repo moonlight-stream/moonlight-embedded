@@ -27,7 +27,7 @@
 #include <stdbool.h>
 
 int pair_check(PSERVER_DATA server);
-PAPP_LIST get_app_list(PSERVER_DATA server);
+size_t get_app_list(PSERVER_DATA server, PAPP_LIST *list);
 int get_app_id(PSERVER_DATA server, const char *name);
 
 void stream_start(PSERVER_DATA server, PCONFIGURATION config, enum platform system);

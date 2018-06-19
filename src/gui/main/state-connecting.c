@@ -50,21 +50,24 @@ void main_render_connecting()  {
   draw_texture(props.connectingTexture, (gui.width - props.connectingWidth) / 2, MARGIN_TOP + 75, props.connectingWidth, props.connectingHeight);
 
   // Draw the guide text
-  int textEnterWidth, textEnterHeight, textEnterX, textEnterY;
-  measure_text(gui.fontNormal, "Enter the following PIN on the target PC:", &textEnterWidth, &textEnterHeight);
+  int textNormalHeight = text_ascent(gui.fontNormal);
+  int textEnterWidth, textEnterX, textEnterY;
+  char *textEnter = "Enter the following PIN on the target PC:";
+  text_measure(gui.fontNormal, textEnter, &textEnterWidth, NULL);
   textEnterX = (gui.width - textEnterWidth) / 2;
   textEnterY = MARGIN_TOP + 75 + props.connectingHeight + 90;
-  draw_text(gui.fontNormal, "Enter the following PIN on the target PC:", textEnterX, textEnterY, darkColor, false);
+  text_draw(gui.fontNormal, textEnter, textEnterX, textEnterY, darkColor, false, -1);
 
   // Draw the PIN text
-  int textPinWidth, textPinHeight, textPinX, textPinY;
-  measure_text(gui.fontMassive, props.pin, &textPinWidth, &textPinHeight);
+  int textMassiveHeight = text_ascent(gui.fontHeading);
+  int textPinWidth, textPinX, textPinY;
+  text_measure(gui.fontMassive, props.pin, &textPinWidth, NULL);
   textPinX = (gui.width - textPinWidth) / 2;
-  textPinY = MARGIN_TOP + 75 + props.connectingHeight + 90 + textEnterHeight + 60;
-  draw_text(gui.fontMassive, props.pin, textPinX, textPinY, darkColor, false);
+  textPinY = MARGIN_TOP + 75 + props.connectingHeight + 90 + textNormalHeight + 60;
+  text_draw(gui.fontMassive, props.pin, textPinX, textPinY, darkColor, false, -1);
 
   // Draw the heading
-  draw_top_header("Moonlight");
+  draw_top_header("Moonlight  ›  Connection");
 
   // Draw the OK and Back actions on the bottom toolbar
   draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);

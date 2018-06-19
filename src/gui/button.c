@@ -25,7 +25,7 @@ void button_render(Button *button) {
   }
   else {
     uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
-    draw_text(gui.fontNormal, button->text, button->x + button->width/2, button->y + button->height/2, textColor, true);
+    text_draw(gui.fontNormal, button->text, button->x + button->width/2, button->y + button->height/2, textColor, true, -1);
   }
 
   // Draw the button border

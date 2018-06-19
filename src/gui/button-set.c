@@ -62,8 +62,6 @@ Button *button_set_update(ButtonSet *buttonSet, Input *input) {
     }
   }
 
-  fprintf(stderr, "[GUI] Button focused: %d\n", focusIndex);
-
   if (focusIndex != -1) {
     // Regular button layouts
     if ((buttonSet->direction == Vertical && input->keys & KEY_DOWN) ||

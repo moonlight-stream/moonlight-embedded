@@ -42,9 +42,8 @@ static size_t test_game_list(PAPP_LIST *games) {
 
 static void game_button_renderer(Button *button) {
   // Measure the size of the game title
-  int textWidth, textHeight;
-  measure_text(gui.fontSmall, button->text, &textWidth, NULL);
-  measure_text(gui.fontSmall, "X", NULL, &textHeight);
+  int textWidth, textHeight = text_ascent(gui.fontSmall);
+  text_measure(gui.fontSmall, button->text, &textWidth, NULL);
 
   // Draw a small white border
   for (int i = 0; i < 3; i++) {
@@ -62,7 +61,7 @@ static void game_button_renderer(Button *button) {
   // Draw the caption
   /// TODO: truncation of caption
   uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
-  draw_text(gui.fontSmall, button->text, button->x + 8, button->y + button->height - 8 - textHeight, textColor, false);
+  text_draw(gui.fontSmall, button->text, button->x + 8, button->y + button->height - 8 - textHeight, textColor, false, button->width - 16);
 }
 
 int main_init_games_list() {
@@ -110,7 +109,7 @@ void main_render_games_list() {
 
   button_set_render(&props.buttonSet);
 
-  draw_top_header("Moonlight");
+  draw_top_header("Moonlight  ›  Games");
   draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
 
   SDL_RenderPresent(gui.renderer);

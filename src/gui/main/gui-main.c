@@ -101,9 +101,7 @@ void draw_bottom_toolbar(int count, ...) {
   va_list args;
   va_start(args, count);
 
-  int baseHeight, _;
-  measure_text(gui.fontNormal, "A", &_, &baseHeight);
-
+  int baseHeight = text_ascent(gui.fontNormal);
   int offsetX = gui.width - MARGIN_SIDE - MARGIN_TOOLBAR_SIDE;
   int offsetY = gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - baseHeight)/2;
 
@@ -133,11 +131,11 @@ void draw_bottom_toolbar(int count, ...) {
     }
 
     // Measure the size of this particular label
-    int textWidth, textHeight;
-    measure_text(gui.fontNormal, text, &textWidth, &textHeight);
+    int textWidth;
+    text_measure(gui.fontNormal, text, &textWidth, NULL);
 
     // Draw the text and icon
-    draw_text(gui.fontNormal, text, offsetX - textWidth, offsetY, darkColor, false);
+    text_draw(gui.fontNormal, text, offsetX - textWidth, offsetY, darkColor, false, -1);
     draw_texture(iconTexture,
                  offsetX - textWidth - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth,
                  gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - iconHeight)/2,
@@ -154,17 +152,18 @@ void draw_bottom_toolbar(int count, ...) {
   va_end(args);
 }
 
-void draw_top_header(char *text) {
+void draw_top_header(const char *text) {
   // Draw the top separator
   hlineColor(gui.renderer, MARGIN_SIDE, gui.width - MARGIN_SIDE, MARGIN_TOP, darkColor);
 
   // Draw the text
-  int textWidth, textHeight;
-  measure_text(gui.fontHeading, text, &textWidth, &textHeight);
-  draw_text(gui.fontHeading,
+  int textWidth, textHeight = text_ascent(gui.fontHeading);
+  text_measure(gui.fontHeading, text, &textWidth, NULL);
+  text_draw(gui.fontHeading,
             text,
             MARGIN_SIDE + MARGIN_TOOLBAR_SIDE,
             (MARGIN_TOP - textHeight)/2 + 10,
             darkColor,
-            false);
+            false,
+            -1);
 }

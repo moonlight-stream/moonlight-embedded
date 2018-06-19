@@ -38,21 +38,22 @@ void main_render_connection_failed() {
                props.connectionFailedHeight);
 
   // Draw the message text
-  int textEnterWidth, textEnterHeight, textEnterX, textEnterY;
-  measure_text(gui.fontNormal, "Unable to connect to the target PC:", &textEnterWidth, &textEnterHeight);
+  int textNormalHeight = text_ascent(gui.fontNormal);
+  int textEnterWidth, textEnterX, textEnterY;
+  text_measure(gui.fontNormal, "Unable to connect to the target PC:", &textEnterWidth, NULL);
   textEnterX = (gui.width - textEnterWidth) / 2;
   textEnterY = MARGIN_TOP + 75 + props.connectionFailedHeight + 90;
-  draw_text(gui.fontNormal, "Unable to connect to the target PC:", textEnterX, textEnterY, darkColor, false);
+  text_draw(gui.fontNormal, "Unable to connect to the target PC:", textEnterX, textEnterY, darkColor, false, -1);
 
   // Draw the error text
-  int textErrorWidth, textErrorHeight, textErrorX, textErrorY;
-  measure_text(gui.fontNormal, gs_error, &textErrorWidth, &textErrorHeight);
+  int textErrorWidth, textErrorX, textErrorY;
+  text_measure(gui.fontNormal, gs_error, &textErrorWidth, NULL);
   textErrorX = (gui.width - textErrorWidth) / 2;
-  textErrorY = textEnterY + textEnterHeight + 10;
-  draw_text(gui.fontNormal, gs_error, textErrorX, textErrorY, lightColor, false);
+  textErrorY = textEnterY + textNormalHeight + 10;
+  text_draw(gui.fontNormal, gs_error, textErrorX, textErrorY, lightColor, false, -1);
 
   // Draw the heading
-  draw_top_header("Moonlight");
+  draw_top_header("Moonlight  ›  Connection");
 
   // Draw the OK and Back actions on the bottom toolbar
   draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);

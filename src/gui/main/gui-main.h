@@ -50,7 +50,7 @@ void draw_bottom_toolbar(int count, ...);
  *
  * @param text    text to display on the top of the header
  */
-void draw_top_header(char *text);
+void draw_top_header(const char *text);
 
 int main_init_initial();
 void main_update_initial(Input *input);

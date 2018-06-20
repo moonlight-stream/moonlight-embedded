@@ -28,7 +28,8 @@ int main_init_connecting() {
 
 void main_update_connecting(Input *input) {
   if (props.frame == 0) {
-    sprintf(props.pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+//    sprintf(props.pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+    sprintf(props.pin, "0000");
   }
   else {
     if (gs_pair(&server, &props.pin[0]) == GS_OK) {

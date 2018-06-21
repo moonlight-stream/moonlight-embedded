@@ -114,7 +114,8 @@ static int switch_video_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   SDL_Event frameEvent;
   frameEvent.type = SDL_USEREVENT;
   frameEvent.user.code = VIDEO_FRAME_EVENT;
-  frameEvent.user.data1 = frame;
+  frameEvent.user.data1 = frame->data;
+  frameEvent.user.data2 = frame->linesize;
   SDL_PushEvent(&frameEvent);
 
   return DR_OK;

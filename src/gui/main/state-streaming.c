@@ -10,14 +10,14 @@ static struct {
   int frame;
 } props = {0};
 
-static void draw_frame(AVFrame *frame) {
+static void draw_frame(uint8_t **data, int *linesize) {
   // Update the scene texture with the most recent frame
   int ret = SDL_UpdateYUVTexture(
     props.streamTexture,
     NULL,
-    frame->data[0], frame->linesize[0], // Y
-    frame->data[1], frame->linesize[1], // U
-    frame->data[2], frame->linesize[2]  // V
+    data[0], linesize[0], // Y
+    data[1], linesize[1], // U
+    data[2], linesize[2]  // V
   );
 
   if (ret < 0) {
@@ -43,15 +43,28 @@ void main_update_streaming(Input *input) {
 
   // Read events from the queue
   SDL_Event event;
+  uint8_t **lastVideoFrameData = NULL;
+  int *lastVideoFrameLineSize = NULL;
+  int framesSkipped = 0;
+
   while (SDL_PollEvent(&event) > 0) {
     switch (event.type) {
     case SDL_USEREVENT:
       if (event.user.code == VIDEO_FRAME_EVENT) {
-        AVFrame *frame = (AVFrame *)event.user.data1;
-        draw_frame(frame);
+        if (lastVideoFrameData) {
+          framesSkipped++;
+        }
+
+        lastVideoFrameData = (uint8_t **)event.user.data1;
+        lastVideoFrameLineSize = (int *)event.user.data2;
       }
       break;
     }
+  }
+
+  if (lastVideoFrameData) {
+    draw_frame(lastVideoFrameData, lastVideoFrameLineSize);
+    fprintf(stderr, "[VIDEO] Skipped %d frames before rendering frame %d\n", framesSkipped, props.frame);
   }
 
   if (input->keys & KEY_PLUS) {

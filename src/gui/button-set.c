@@ -64,34 +64,34 @@ Button *button_set_update(ButtonSet *buttonSet, Input *input) {
 
   if (focusIndex != -1) {
     // Regular button layouts
-    if ((buttonSet->direction == Vertical && input->keys & KEY_DOWN) ||
-        (buttonSet->direction == FlowVertical && input->keys & KEY_DOWN) ||
-        (buttonSet->direction == Horizontal && input->keys & KEY_RIGHT) ||
-        (buttonSet->direction == FlowHorizontal && input->keys & KEY_RIGHT))
+    if ((buttonSet->direction == Vertical && input->buttons.down & KEY_DOWN) ||
+        (buttonSet->direction == FlowVertical && input->buttons.down & KEY_DOWN) ||
+        (buttonSet->direction == Horizontal && input->buttons.down & KEY_RIGHT) ||
+        (buttonSet->direction == FlowHorizontal && input->buttons.down & KEY_RIGHT))
     {
       nextFocusIndex = next_index(buttonSet, focusIndex, +1);
       buttonSet->buttons[focusIndex]->focused = false;
     }
 
-    if ((buttonSet->direction == Vertical && input->keys & KEY_UP) ||
-        (buttonSet->direction == FlowVertical && input->keys & KEY_UP) ||
-        (buttonSet->direction == Horizontal && input->keys & KEY_LEFT) ||
-        (buttonSet->direction == FlowHorizontal && input->keys & KEY_LEFT))
+    if ((buttonSet->direction == Vertical && input->buttons.down & KEY_UP) ||
+        (buttonSet->direction == FlowVertical && input->buttons.down & KEY_UP) ||
+        (buttonSet->direction == Horizontal && input->buttons.down & KEY_LEFT) ||
+        (buttonSet->direction == FlowHorizontal && input->buttons.down & KEY_LEFT))
     {
       nextFocusIndex = next_index(buttonSet, focusIndex, -1);
       buttonSet->buttons[focusIndex]->focused = false;
     }
 
     // Flow button layouts
-    if ((buttonSet->direction == FlowVertical && input->keys & KEY_RIGHT) ||
-        (buttonSet->direction == FlowHorizontal && input->keys & KEY_DOWN))
+    if ((buttonSet->direction == FlowVertical && input->buttons.down & KEY_RIGHT) ||
+        (buttonSet->direction == FlowHorizontal && input->buttons.down & KEY_DOWN))
     {
       nextFocusIndex = next_index(buttonSet, focusIndex, +buttonSet->flowSize);
       buttonSet->buttons[focusIndex]->focused = false;
     }
 
-    if ((buttonSet->direction == FlowVertical && input->keys & KEY_LEFT) ||
-        (buttonSet->direction == FlowHorizontal && input->keys & KEY_UP))
+    if ((buttonSet->direction == FlowVertical && input->buttons.down & KEY_LEFT) ||
+        (buttonSet->direction == FlowHorizontal && input->buttons.down & KEY_UP))
     {
       nextFocusIndex = next_index(buttonSet, focusIndex, -buttonSet->flowSize);
       buttonSet->buttons[focusIndex]->focused = false;
@@ -100,7 +100,7 @@ Button *button_set_update(ButtonSet *buttonSet, Input *input) {
 
   buttonSet->buttons[nextFocusIndex]->focused = true;
 
-  if (input->keys & KEY_A && focusIndex >= 0) {
+  if (input->buttons.down & KEY_A && focusIndex >= 0) {
     return buttonSet->buttons[focusIndex];
   }
 

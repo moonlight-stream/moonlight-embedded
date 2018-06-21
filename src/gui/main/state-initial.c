@@ -45,39 +45,6 @@ void main_update_initial(Input *input) {
   if (clicked == &props.connectButton) {
     state = StateConnecting;
   }
-
-//  if (kDown & KEY_X) {
-//    if (pair_check(&server)) {
-//      get_app_list(&server);
-//    }
-//  }
-//  else if (kDown & KEY_B) {
-//    if (pair_check(&server)) {
-//      enum platform system = platform_check(config.platform);
-//      if (config.debug_level > 0)
-//        printf("Beginning streaming on platform %s\n", platform_name(system));
-
-//      if (system == 0) {
-//        fprintf(stderr, "Platform '%s' not found\n", config.platform);
-//        break;
-//      }
-//      config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
-
-//      stream_start(&server, &config, system);
-//      gui_stream_loop();
-//      stream_stop(system);
-//    }
-//  }
-//  else if (kDown & KEY_Y) {
-//    if (gs_unpair(&server) != GS_OK) {
-//      fprintf(stderr, "Failed to unpair to server: %s\n", gs_error);
-//    } else {
-//      printf("Succesfully unpaired\n");
-//    }
-//  }
-//  else if (kDown & KEY_PLUS) {
-//    break;
-//  }
 }
 
 void main_render_initial() {

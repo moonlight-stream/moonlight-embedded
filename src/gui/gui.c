@@ -1,4 +1,5 @@
 #include "gui.h"
+#include "../input/switch.h"
 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -49,6 +50,10 @@ int gui_init() {
 
   SDL_GetWindowSize(gui.window, &gui.width, &gui.height);
 
+  if (switch_input_init() < 0) {
+    return -1;
+  }
+
   if (load_shared_fonts() < 0) {
     return -1;
   }
@@ -77,6 +82,8 @@ void gui_cleanup() {
     SDL_DestroyWindow(gui.window);
     gui.window = NULL;
   }
+
+  switch_input_cleanup();
 
   TTF_Quit();
   IMG_Quit();

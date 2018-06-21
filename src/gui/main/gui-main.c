@@ -43,35 +43,31 @@ int gui_main_init() {
 void gui_main_loop() {
   while(appletMainLoop() && !shouldExitApp)
   {
-      //Scan all the inputs. This should be done once for each frame
-      hidScanInput();
-
-      Input input;
-      input.keys = hidKeysDown(CONTROLLER_P1_AUTO);
+      Input *input = switch_input_poll(CONTROLLER_P1_AUTO);
 
       switch (state) {
       case StateInitial:
-        main_update_initial(&input);
+        main_update_initial(input);
         main_render_initial();
         break;
 
       case StateConnecting:
-        main_update_connecting(&input);
+        main_update_connecting(input);
         main_render_connecting();
         break;
 
       case StateConnectionFailed:
-        main_update_connection_failed(&input);
+        main_update_connection_failed(input);
         main_render_connection_failed();
         break;
 
       case StateGamesList:
-        main_update_games_list(&input);
+        main_update_games_list(input);
         main_render_games_list();
         break;
 
       case StateStreaming:
-        main_update_streaming(&input);
+        main_update_streaming(input);
         main_render_streaming();
         break;
       }

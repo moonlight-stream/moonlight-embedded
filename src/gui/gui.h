@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include "../input/switch.h"
 
 #include <switch.h>
 #include <stdio.h>
@@ -10,6 +11,7 @@
 #include <client.h>
 #include "../config.h"
 #include "../connection.h"
+
 
 typedef struct {
   SDL_Window *window;
@@ -23,10 +25,6 @@ typedef struct {
   TTF_Font *fontHeading;
   TTF_Font *fontMassive;
 } GUI;
-
-typedef struct {
-  uint64_t keys;
-} Input;
 
 GUI gui;
 

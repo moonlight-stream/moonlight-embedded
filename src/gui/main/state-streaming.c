@@ -41,6 +41,95 @@ void main_update_streaming(Input *input) {
     stream_start(&server, &config, props.game->id, platform_check(config.platform));
   }
 
+  // Send events to the server
+  if (input->touch.touched) {
+    /// TODO: Implement touch/mouse events, and change the touch input reading
+  }
+  else {
+    short buttons = 0;
+    uint8_t leftTrigger = 0, rightTrigger = 0;
+
+    if ((input->buttons.down | input->buttons.held) & KEY_A) {
+      buttons |= A_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_B) {
+      buttons |= B_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_X) {
+      buttons |= X_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_Y) {
+      buttons |= Y_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_DUP) {
+      buttons |= UP_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_DDOWN) {
+      buttons |= DOWN_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_DLEFT) {
+      buttons |= LEFT_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_DRIGHT) {
+      buttons |= RIGHT_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_L) {
+      buttons |= LB_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_R) {
+      buttons |= RB_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_LSTICK) {
+      buttons |= LS_CLK_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_RSTICK) {
+      buttons |= RS_CLK_FLAG;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_ZL) {
+      leftTrigger = 0xff;
+    }
+
+    if ((input->buttons.down | input->buttons.held) & KEY_ZR) {
+      rightTrigger = 0xff;
+    }
+
+    if (switch_input_test(input)) {
+      int ret;
+
+      ret= LiSendControllerEvent(buttons,
+                                 leftTrigger,
+                                 rightTrigger,
+                                 input->joysticks.left.dx,
+                                 input->joysticks.left.dy,
+                                 input->joysticks.right.dx,
+                                 input->joysticks.right.dy);
+      if (ret < 0) {
+        fprintf(stderr, "Could not send controller event: %d\n", ret);
+      }
+
+      short mouseDeltaX = (short)roundf(input->joysticks.right.dx / 32768.f * 20);
+      short mouseDeltaY = -1 * (short)roundf(input->joysticks.right.dy / 32768.f * 20);
+      if (fabsf(mouseDeltaX) >= 2 || fabsf(mouseDeltaY) >= 2) {
+        ret = LiSendMouseMoveEvent(mouseDeltaX, mouseDeltaY);
+        if (ret < 0) {
+          fprintf(stderr, "Could not send mouse movement: %d\n", ret);
+        }
+      }
+    }
+  }
+
   // Read events from the queue
   SDL_Event event;
   uint8_t **lastVideoFrameData = NULL;
@@ -64,10 +153,10 @@ void main_update_streaming(Input *input) {
 
   if (lastVideoFrameData) {
     draw_frame(lastVideoFrameData, lastVideoFrameLineSize);
-    fprintf(stderr, "[VIDEO] Skipped %d frames before rendering frame %d\n", framesSkipped, props.frame);
+//    fprintf(stderr, "[VIDEO] Skipped %d frames before rendering frame %d\n", framesSkipped, props.frame);
   }
 
-  if (input->keys & KEY_PLUS) {
+  if (input->buttons.down & KEY_PLUS) {
     stream_stop(platform_check(config.platform));
     state = StateGamesList;
   }

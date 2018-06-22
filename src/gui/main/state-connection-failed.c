@@ -40,17 +40,17 @@ void main_render_connection_failed() {
   // Draw the message text
   int textNormalHeight = text_ascent(gui.fontNormal);
   int textEnterWidth, textEnterX, textEnterY;
-  text_measure(gui.fontNormal, "Unable to connect to the target PC:", &textEnterWidth, NULL);
+  measure_text(gui.fontNormal, "Unable to connect to the target PC:", &textEnterWidth, NULL);
   textEnterX = (gui.width - textEnterWidth) / 2;
   textEnterY = MARGIN_TOP + 75 + props.connectionFailedHeight + 90;
-  text_draw(gui.fontNormal, "Unable to connect to the target PC:", textEnterX, textEnterY, darkColor, false, -1);
+  draw_text(gui.fontNormal, "Unable to connect to the target PC:", textEnterX, textEnterY, darkColor, false, -1);
 
   // Draw the error text
   int textErrorWidth, textErrorX, textErrorY;
-  text_measure(gui.fontNormal, gs_error, &textErrorWidth, NULL);
+  measure_text(gui.fontNormal, gs_error, &textErrorWidth, NULL);
   textErrorX = (gui.width - textErrorWidth) / 2;
   textErrorY = textEnterY + textNormalHeight + 10;
-  text_draw(gui.fontNormal, gs_error, textErrorX, textErrorY, lightColor, false, -1);
+  draw_text(gui.fontNormal, gs_error, textErrorX, textErrorY, lightColor, false, -1);
 
   // Draw the heading
   draw_top_header("Moonlight  ›  Connection");

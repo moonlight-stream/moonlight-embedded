@@ -14,19 +14,19 @@
 #define BUTTON_DEFAULT_HEIGHT         76
 
 struct _Button;
-typedef void (*ButtonRenderer)(struct _Button *button);
+typedef void (*ButtonContentRenderer)(struct _Button *button);
 
 typedef struct _Button {
+  Element e;
   char *text;
-  int x;
-  int y;
-  int width;
-  int height;
   bool focused;
-  void *user;
 
-  ButtonRenderer renderer;
+  ButtonContentRenderer contentRenderer;
+  void *user;
 } Button;
 
 void button_init(Button *button);
 void button_render(Button *button);
+
+void button_renderer_content_default(Button *button);
+void button_renderer_content_menu(Button *button);

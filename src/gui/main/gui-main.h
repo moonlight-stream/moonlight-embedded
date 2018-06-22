@@ -77,3 +77,8 @@ void main_update_streaming(Input *input);
 void main_render_streaming();
 void main_cleanup_streaming();
 void main_set_streaming_game(PAPP_LIST game);
+
+// Client and server configuration
+extern CONFIGURATION config;
+extern SERVER_DATA server;
+

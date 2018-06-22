@@ -127,10 +127,10 @@ void draw_bottom_toolbar(int count, ...) {
 
     // Measure the size of this particular label
     int textWidth;
-    text_measure(gui.fontNormal, text, &textWidth, NULL);
+    measure_text(gui.fontNormal, text, &textWidth, NULL);
 
     // Draw the text and icon
-    text_draw(gui.fontNormal, text, offsetX - textWidth, offsetY, darkColor, false, -1);
+    draw_text(gui.fontNormal, text, offsetX - textWidth, offsetY, darkColor, false, -1);
     draw_texture(iconTexture,
                  offsetX - textWidth - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth,
                  gui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - iconHeight)/2,
@@ -153,8 +153,8 @@ void draw_top_header(const char *text) {
 
   // Draw the text
   int textWidth, textHeight = text_ascent(gui.fontHeading);
-  text_measure(gui.fontHeading, text, &textWidth, NULL);
-  text_draw(gui.fontHeading,
+  measure_text(gui.fontHeading, text, &textWidth, NULL);
+  draw_text(gui.fontHeading,
             text,
             MARGIN_SIDE + MARGIN_TOOLBAR_SIDE,
             (MARGIN_TOP - textHeight)/2 + 10,

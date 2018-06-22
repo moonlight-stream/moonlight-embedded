@@ -22,14 +22,14 @@ int main_init_initial() {
 
   button_init(&props.connectButton);
   props.connectButton.text = "Connect";
-  props.connectButton.x = gui.width/2 - props.connectButton.width/2;
-  props.connectButton.y = 100 + props.logoHeight + (gui.height - MARGIN_BOTTOM - props.logoHeight - 100)/2 - props.connectButton.height/2;
+  props.connectButton.e.bounds.x = gui.width/2 - props.connectButton.e.bounds.width/2;
+  props.connectButton.e.bounds.y = 100 + props.logoHeight + (gui.height - MARGIN_BOTTOM - props.logoHeight - 100)/2 - props.connectButton.e.bounds.height/2;
   props.connectButton.focused = true;
 
   button_init(&props.settingsButton);
   props.settingsButton.text = "Settings";
-  props.settingsButton.x = gui.width/2 - props.settingsButton.width/2;
-  props.settingsButton.y = props.connectButton.y + props.connectButton.height + 15;
+  props.settingsButton.e.bounds.x = gui.width/2 - props.settingsButton.e.bounds.width/2;
+  props.settingsButton.e.bounds.y = props.connectButton.e.bounds.y + props.connectButton.e.bounds.height + 15;
   props.settingsButton.focused = false;
 
   button_set_init(&props.buttons, Vertical);
@@ -40,7 +40,7 @@ int main_init_initial() {
 }
 
 void main_update_initial(Input *input) {
-  Button *clicked = button_set_update(&props.buttons, input);
+  Button *clicked = button_set_update(&props.buttons, input, NULL);
 
   if (clicked == &props.connectButton) {
     state = StateConnecting;

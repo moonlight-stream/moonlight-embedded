@@ -54,18 +54,18 @@ void main_render_connecting()  {
   int textNormalHeight = text_ascent(gui.fontNormal);
   int textEnterWidth, textEnterX, textEnterY;
   char *textEnter = "Enter the following PIN on the target PC:";
-  text_measure(gui.fontNormal, textEnter, &textEnterWidth, NULL);
+  measure_text(gui.fontNormal, textEnter, &textEnterWidth, NULL);
   textEnterX = (gui.width - textEnterWidth) / 2;
   textEnterY = MARGIN_TOP + 75 + props.connectingHeight + 90;
-  text_draw(gui.fontNormal, textEnter, textEnterX, textEnterY, darkColor, false, -1);
+  draw_text(gui.fontNormal, textEnter, textEnterX, textEnterY, darkColor, false, -1);
 
   // Draw the PIN text
   int textMassiveHeight = text_ascent(gui.fontHeading);
   int textPinWidth, textPinX, textPinY;
-  text_measure(gui.fontMassive, props.pin, &textPinWidth, NULL);
+  measure_text(gui.fontMassive, props.pin, &textPinWidth, NULL);
   textPinX = (gui.width - textPinWidth) / 2;
   textPinY = MARGIN_TOP + 75 + props.connectingHeight + 90 + textNormalHeight + 60;
-  text_draw(gui.fontMassive, props.pin, textPinX, textPinY, darkColor, false, -1);
+  draw_text(gui.fontMassive, props.pin, textPinX, textPinY, darkColor, false, -1);
 
   // Draw the heading
   draw_top_header("Moonlight  ›  Connection");

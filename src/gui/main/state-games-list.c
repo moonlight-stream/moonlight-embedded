@@ -1,4 +1,5 @@
 #include "gui-main.h"
+#include "../scene.h"
 
 #define GAME_BUTTON_WIDTH       228
 #define GAME_BUTTON_HEIGHT      228
@@ -17,14 +18,19 @@ static struct {
 
   Button **buttons;
   ButtonSet buttonSet;
+
+  Scene gamesListScene;
+  Rect sceneClip;
+  Rect sceneClipPadding;
 } props = {0};
 
 //static size_t test_game_list(PAPP_LIST *games) {
 //  PAPP_LIST head = NULL;
 //  PAPP_LIST prev = NULL;
 //  size_t count = 0;
+//  size_t total = 17;
 
-//  for (int i = 0; i < 8; i++) {
+//  for (int i = 0; i < total; i++) {
 //    PAPP_LIST current = malloc(sizeof(*current));
 //    current->id = 0;
 //    current->name = malloc(strlen("Game Application XXXX") + 1);
@@ -48,9 +54,11 @@ static struct {
 static void game_button_renderer(Button *button) {
   int gameIndex = (int)button->user;
 
+  Rect clip = get_clip(button);
+
   // Measure the size of the game title
   int textWidth, textHeight = text_ascent(gui.fontSmall);
-  text_measure(gui.fontSmall, button->text, &textWidth, NULL);
+  measure_text(gui.fontSmall, button->text, &textWidth, NULL);
 
   // Draw the boxart of the game
   SDL_Texture *artTexture = props.gamesArtTextures[gameIndex];
@@ -58,25 +66,42 @@ static void game_button_renderer(Button *button) {
     int artWidth = props.gamesArtWidths[gameIndex];
     int artHeight = props.gamesArtHeights[gameIndex];
 
-    draw_texture(artTexture, button->x + 3, button->y + 3, button->width - 6, button->height - 16 - textHeight);
+    draw_clipped_texture(artTexture,
+                         button->e.bounds.x + 3,
+                         button->e.bounds.y + 3,
+                         button->e.bounds.width - 6,
+                         button->e.bounds.height - 16 - textHeight,
+                         &clip);
   }
 
   // Draw a small white border
   for (int i = 0; i < 3; i++) {
-    rectangleColor(gui.renderer, button->x + i, button->y + i, button->x + button->width - i, button->y + button->height - i, BUTTON_FOCUSED_BACKGROUND);
+    draw_clipped_rectangle(button->e.bounds.x + i,
+                           button->e.bounds.y + i,
+                           button->e.bounds.width - 2*i,
+                           button->e.bounds.height - 2*i,
+                           &clip,
+                           BUTTON_FOCUSED_BACKGROUND);
   }
 
   // Draw the caption box
-  boxColor(gui.renderer,
-           button->x,
-           button->y + button->height - 16 - textHeight,
-           button->x + button->width,
-           button->y + button->height,
-           BUTTON_FOCUSED_BACKGROUND);
+  draw_clipped_box(button->e.bounds.x,
+                   button->e.bounds.y + button->e.bounds.height - 16 - textHeight,
+                   button->e.bounds.width,
+                   16 + textHeight,
+                   &clip,
+                   BUTTON_FOCUSED_BACKGROUND);
 
   // Draw the caption
   uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
-  text_draw(gui.fontSmall, button->text, button->x + 8, button->y + button->height - 8 - textHeight, textColor, false, button->width - 16);
+  draw_clipped_text(gui.fontSmall,
+                    button->text,
+                    button->e.bounds.x + 8,
+                    button->e.bounds.y + button->e.bounds.height - 8 - textHeight,
+                    &clip,
+                    textColor,
+                    false,
+                    button->e.bounds.width - 16);
 }
 
 int main_init_games_list() {
@@ -84,12 +109,23 @@ int main_init_games_list() {
   props.buttonSet.wrap = false;
   props.buttonSet.flowSize = GAME_BUTTON_FLOW_SIZE;
 
+  scene_init(&props.gamesListScene);
+  props.gamesListScene.clip.x = 0;
+  props.gamesListScene.clip.y = MARGIN_TOP + 1;
+  props.gamesListScene.clip.width = gui.width;
+  props.gamesListScene.clip.height = gui.height - MARGIN_TOP - MARGIN_BOTTOM - 2;
+  props.gamesListScene.padded.x = MARGIN_SIDE;
+  props.gamesListScene.padded.y = MARGIN_TOP + MARGIN_SIDE + 1;
+  props.gamesListScene.padded.width = gui.width - 2*MARGIN_SIDE;
+  props.gamesListScene.padded.height = gui.height - MARGIN_TOP - MARGIN_BOTTOM - 2*MARGIN_SIDE - 2;
+
   return 0;
 }
 
 void main_update_games_list(Input *input) {
   if (props.frame == 0) {
     props.gamesCount = get_app_list(&server, &props.games);
+
     PAPP_LIST game = props.games;
 
     // Initialize memory for these dynamic items
@@ -102,11 +138,11 @@ void main_update_games_list(Input *input) {
       // Collect the box art for this game
       char *artData = NULL;
       int artSize = 0;
-      int ret = gs_app_boxart(&server, game->id, &artData, &artSize);
+      gs_app_boxart(&server, game->id, &artData, &artSize);
 
       if (artData && artSize) {
-        props.gamesArtTextures[i] = load_png(artData, artSize);
-        SDL_QueryTexture(props.gamesArtTextures[i], NULL, NULL, &props.gamesArtWidths[i], &props.gamesArtWidths[i]);
+        props.gamesArtTextures[i] = load_png_rescale(artData, artSize, GAME_BUTTON_WIDTH - 6, GAME_BUTTON_HEIGHT - 16 - text_ascent(gui.fontSmall));
+        SDL_QueryTexture(props.gamesArtTextures[i], NULL, NULL, &props.gamesArtWidths[i], &props.gamesArtHeights[i]);
 
         free(artData);
       }
@@ -115,25 +151,31 @@ void main_update_games_list(Input *input) {
       }
 
       // Allocate and initialize the button for this game
-      props.buttons[i] = malloc(sizeof(Button));
-      button_init(props.buttons[i]);
-      props.buttons[i]->user = i;
-      props.buttons[i]->renderer = &game_button_renderer;
-      props.buttons[i]->text = game->name;
-      props.buttons[i]->width = GAME_BUTTON_WIDTH;
-      props.buttons[i]->height = GAME_BUTTON_HEIGHT;
-      props.buttons[i]->x = MARGIN_SIDE + ((i % GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_WIDTH + GAME_BUTTON_SPACING));
-      props.buttons[i]->y = MARGIN_TOP + MARGIN_SIDE+ ((i / GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_HEIGHT + GAME_BUTTON_SPACING));
+      Button *button = malloc(sizeof(Button));
+      button_init(button);
+      button->text = game->name;
+      button->contentRenderer = &game_button_renderer;
+      button->user = i;
+      button->e.bounds.width = GAME_BUTTON_WIDTH;
+      button->e.bounds.height = GAME_BUTTON_HEIGHT;
+      button->e.bounds.x = MARGIN_SIDE + ((i % GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_WIDTH + GAME_BUTTON_SPACING));
+      button->e.bounds.y = MARGIN_TOP + MARGIN_SIDE + ((i / GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_HEIGHT + GAME_BUTTON_SPACING));
+      props.buttons[i] = button;
 
-      // Add the button to the button set
+      // Add the button to the button set and to the list scene
       button_set_add(&props.buttonSet, props.buttons[i]);
+      scene_add_element(&props.gamesListScene, button);
 
       // Visit the next game
       game = game->next;
     }
+
+    scene_print(&props.gamesListScene);
   }
 
-  Button *clicked = button_set_update(&props.buttonSet, input);
+  Button *clicked = NULL, *focused = NULL;
+  clicked = button_set_update(&props.buttonSet, input, &focused);
+
   if (clicked) {
     int gameIndex = (int)clicked->user;
     PAPP_LIST game = props.games;
@@ -146,6 +188,12 @@ void main_update_games_list(Input *input) {
     state = StateStreaming;
   }
 
+  if (focused) {
+    scene_scroll_to_element(&props.gamesListScene, focused);
+  }
+
+  scene_update(&props.gamesListScene, input);
+
   props.frame++;
 }
 
@@ -153,10 +201,10 @@ void main_render_games_list() {
   SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
   SDL_RenderClear(gui.renderer);
 
-  button_set_render(&props.buttonSet);
-
   draw_top_header("Moonlight  ›  Games");
   draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
+
+  scene_render(&props.gamesListScene);
 
   SDL_RenderPresent(gui.renderer);
 }

@@ -5,28 +5,30 @@
 #include <math.h>
 
 void button_init(Button *button) {
-  button->width = BUTTON_DEFAULT_WIDTH;
-  button->height = BUTTON_DEFAULT_HEIGHT;
-  button->focused = false;
+  element_init(button);
+
+  button->e.bounds.width = BUTTON_DEFAULT_WIDTH;
+  button->e.bounds.height = BUTTON_DEFAULT_HEIGHT;
+  button->e.renderer = (Renderer)&button_render;
+
   button->text = "";
-  button->renderer = NULL;
+  button->focused = false;
+  button->contentRenderer = (ButtonContentRenderer)&button_renderer_content_default;
   button->user = NULL;
 }
 
 void button_render(Button *button) {
+  Rect clip = get_clip(button);
+
   // Draw the button background
   if (button->focused) {
     uint32_t bgColor = BUTTON_FOCUSED_BACKGROUND;
-    boxColor(gui.renderer, button->x, button->y, button->x + button->width, button->y + button->height, bgColor);
+    draw_clipped_box_bounds(&button->e.bounds, &clip, bgColor);
   }
 
-  if (button->renderer) {
-    // Call the custom renderer
-    button->renderer(button);
-  }
-  else {
-    uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
-    text_draw(gui.fontNormal, button->text, button->x + button->width/2, button->y + button->height/2, textColor, true, -1);
+  if (button->contentRenderer) {
+    // Call the content renderer
+    button->contentRenderer(button);
   }
 
   // Draw the button border
@@ -38,7 +40,28 @@ void button_render(Button *button) {
     uint32_t borderColor = interpolate(BUTTON_FOCUSED_BORDER_KEY1, BUTTON_FOCUSED_BORDER_KEY2, tcycle);
 
     for (int i = -BUTTON_FOCUSED_BORDER_WIDTH/2; i <= BUTTON_FOCUSED_BORDER_WIDTH/2; i++) {
-      rectangleColor(gui.renderer, button->x - i, button->y - i, button->x + button->width + i, button->y + button->height + i, borderColor);
+      draw_clipped_rectangle(button->e.bounds.x - i,
+                             button->e.bounds.y - i,
+                             button->e.bounds.width + 2*i,
+                             button->e.bounds.height + 2*i,
+                             &clip,
+                             borderColor);
     }
   }
+}
+
+void button_renderer_content_default(Button *button) {
+  // Simply draw the button text in the center of the button
+  uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
+  draw_text(gui.fontNormal,
+            button->text,
+            button->e.bounds.x + button->e.bounds.width/2,
+            button->e.bounds.y + button->e.bounds.height/2,
+            textColor,
+            true,
+            -1);
+}
+
+void button_renderer_content_menu(Button *button) {
+  /// TODO: Implement
 }

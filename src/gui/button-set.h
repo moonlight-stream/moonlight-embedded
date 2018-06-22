@@ -24,6 +24,6 @@ typedef struct _ButtonSet {
 
 int button_set_init(ButtonSet *buttonSet, enum ButtonSetDirection direction);
 int button_set_add(ButtonSet *buttonSet, Button *button);
-Button *button_set_update(ButtonSet *buttonSet, Input *input);
+Button *button_set_update(ButtonSet *buttonSet, Input *input, Button **focused);
 void button_set_render(ButtonSet *buttonSet);
 void button_set_cleanup(ButtonSet *buttonSet);

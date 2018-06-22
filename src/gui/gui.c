@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL2_gfxPrimitives.h>
+#include <SDL2/SDL2_rotozoom.h>
 #include <time.h>
 
 static int load_shared_fonts() {
@@ -90,41 +92,6 @@ void gui_cleanup() {
   SDL_Quit();
 }
 
-SDL_Texture *load_png(const void *data, size_t size) {
-  SDL_RWops *rwops;
-  SDL_Surface *surface;
-  SDL_Texture *texture;
-
-  rwops = SDL_RWFromConstMem(data, size);
-  if (!rwops) {
-    fprintf(stderr, "[GUI] Could not create SDL RW object: %s\n", SDL_GetError());
-    return NULL;
-  }
-
-  surface = IMG_LoadPNG_RW(rwops);
-  if (!surface) {
-    fprintf(stderr, "[GUI] Could not load PNG data into surface: %s\n", IMG_GetError());
-    return NULL;
-  }
-
-  texture = SDL_CreateTextureFromSurface(gui.renderer, surface);
-  if (!texture) {
-    fprintf(stderr, "[GUI] Could not create PNG texture from surface: %s\n", SDL_GetError());
-    return NULL;
-  }
-
-  return texture;
-}
-
-void draw_texture(SDL_Texture *texture, int x, int y, int w, int h) {
-  SDL_Rect dst;
-  dst.x = x;
-  dst.y = y;
-  dst.w = w;
-  dst.h = h;
-  SDL_RenderCopy(gui.renderer, texture, NULL, &dst);
-}
-
 uint64_t milliseconds() {
   return svcGetSystemTick() / 19200;
 }
@@ -142,4 +109,165 @@ uint32_t interpolate(uint32_t a, uint32_t b, double t) {
       (uint8_t)(ab + t*(bb - ab)),
       (uint8_t)(aa + t*(ba - aa))
   );
+}
+
+SDL_Texture *load_png(const void *data, size_t size) {
+  return load_png_rescale(data, size, -1, -1);
+}
+
+SDL_Texture *load_png_rescale(const void *data, size_t size, int width, int height) {
+  SDL_RWops *rwops;
+  SDL_Surface *surface;
+  SDL_Texture *texture;
+
+  rwops = SDL_RWFromConstMem(data, size);
+  if (!rwops) {
+    fprintf(stderr, "[GUI] Could not create SDL RW object: %s\n", SDL_GetError());
+    return NULL;
+  }
+
+  surface = IMG_LoadPNG_RW(rwops);
+  if (!surface) {
+    fprintf(stderr, "[GUI] Could not load PNG data into surface: %s\n", IMG_GetError());
+    return NULL;
+  }
+
+  // Resize the surface if requested
+  if (width != -1 && height != -1) {
+    double sx = (double)width / surface->w;
+    double sy = (double)height / surface->h;
+
+    SDL_Surface *scaled = zoomSurface(surface, sx, sy, SMOOTHING_ON);
+    SDL_FreeSurface(surface);
+    surface = scaled;
+
+    if (!scaled) {
+      fprintf(stderr, "[GUI] Could not resize PNG of size (%d,%d) to size (%d,%d)\n");
+      return NULL;
+    }
+  }
+
+  texture = SDL_CreateTextureFromSurface(gui.renderer, surface);
+  if (!texture) {
+    fprintf(stderr, "[GUI] Could not create PNG texture from surface: %s\n", SDL_GetError());
+    return NULL;
+  }
+  SDL_FreeSurface(surface);
+
+  return texture;
+}
+
+void draw_texture(SDL_Texture *texture, int x, int y, int w, int h) {
+  SDL_Rect dst;
+  dst.x = x;
+  dst.y = y;
+  dst.w = w;
+  dst.h = h;
+  SDL_RenderCopy(gui.renderer, texture, NULL, &dst);
+}
+
+void draw_clipped_texture(SDL_Texture *texture, int x, int y, int w, int h, Rect *clip) {
+  Rect clippedDestination = intersect_bounds_clip(x, y, w, h, clip);
+  Rect clippedSource = {
+    .x = clippedDestination.x - x,
+    .y = clippedDestination.y - y,
+    .width = clippedDestination.width,
+    .height = clippedDestination.height
+  };
+
+  SDL_RenderCopy(
+      gui.renderer,
+      texture,
+      &clippedSource,
+      &clippedDestination
+  );
+}
+
+void draw_clipped_box_bounds(Rect *bounds, Rect *clip, uint32_t color) {
+  draw_clipped_box(bounds->x, bounds->y, bounds->width, bounds->height, clip, color);
+}
+
+void draw_clipped_box(int x, int y, int width, int height, Rect *clip, uint32_t color) {
+  Rect in = intersect_bounds_clip(x, y, width, height, clip);
+
+  // Only draw the box if both dimensions are positive
+  if (in.width > 0 && in.height > 0) {
+    boxColor(gui.renderer, in.x, in.y, in.x + in.width, in.y + in.height, color);
+  }
+}
+
+void draw_clipped_rectangle_bounds(Rect *bounds, Rect *clip, uint32_t color) {
+  draw_clipped_rectangle(bounds->x, bounds->y, bounds->width, bounds->height, clip, color);
+}
+
+void draw_clipped_rectangle(int x, int y, int width, int height, Rect *clip, uint32_t color) {
+  Rect in = intersect_bounds_clip(x, y, width, height, clip);
+
+  // Only draw the rectangle if both dimensions are positive
+  if (in.width > 0 && in.height > 0) {
+    // Top edge
+    if (y == in.y) {
+      hlineColor(gui.renderer, in.x, in.x + in.width, y, color);
+    }
+
+    // Bottom edge
+    if ((y + height) == (in.y + in.height)) {
+      hlineColor(gui.renderer, in.x, in.x + in.width, in.y + in.height, color);
+    }
+
+    // Left edge
+    if (x == in.x) {
+      vlineColor(gui.renderer, x, in.y, in.y + in.height, color);
+    }
+
+    // Right edge
+    if ((x + width) == (in.x + in.width)) {
+      vlineColor(gui.renderer, in.x + in.width, in.y, in.y + in.height, color);
+    }
+  }
+}
+
+Rect get_clip(Element *element) {
+  if (element->_scene) {
+    return element->_scene->clip;
+  }
+
+  Rect clip = {
+    .x = 0,
+    .y = 0,
+    .width = gui.width,
+    .height = gui.height
+  };
+  return clip;
+}
+
+Rect intersect_bounds_clip(int x, int y, int width, int height, Rect *clip) {
+  int x1 = x,
+      y1 = y,
+      x2 = x + width,
+      y2 = y + height;
+
+  if (x1 < clip->x) {
+    x1 = clip->x;
+  }
+
+  if (x2 > (clip->x + clip->width)) {
+    x2 = clip->x + clip->width;
+  }
+
+  if (y1 < clip->y) {
+    y1 = clip->y;
+  }
+
+  if (y2 > (clip->y + clip->height)) {
+    y2 = clip->y + clip->height;
+  }
+
+  Rect intersect = {
+    .x = x1,
+    .y = y1,
+    .width = x2 - x1,
+    .height = y2 - y1
+  };
+  return intersect;
 }

@@ -51,7 +51,7 @@ int button_set_add(ButtonSet *buttonSet, Button *button) {
   return 0;
 }
 
-Button *button_set_update(ButtonSet *buttonSet, Input *input) {
+Button *button_set_update(ButtonSet *buttonSet, Input *input, Button **focused) {
   int focusIndex = -1, nextFocusIndex = 0;
 
   for (int i = 0; i < buttonSet->count; i++) {
@@ -100,8 +100,12 @@ Button *button_set_update(ButtonSet *buttonSet, Input *input) {
 
   buttonSet->buttons[nextFocusIndex]->focused = true;
 
+  if (focused) {
+    *focused = buttonSet->buttons[nextFocusIndex];
+  }
+
   if (input->buttons.down & KEY_A && focusIndex >= 0) {
-    return buttonSet->buttons[focusIndex];
+      return buttonSet->buttons[focusIndex];
   }
 
   return NULL;

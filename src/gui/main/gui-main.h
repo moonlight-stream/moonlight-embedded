@@ -18,6 +18,7 @@
 
 extern enum MainState {
   StateInitial,
+  StateSettings,
   StateConnecting,
   StateConnectionFailed,
   StateGamesList,
@@ -56,6 +57,11 @@ int main_init_initial();
 void main_update_initial(Input *input);
 void main_render_initial();
 void main_cleanup_initial();
+
+int main_init_settings();
+void main_update_settings(Input *input);
+void main_render_settings();
+void main_cleanup_settings();
 
 int main_init_connecting();
 void main_update_connecting(Input *input);

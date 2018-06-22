@@ -45,6 +45,9 @@ void main_update_initial(Input *input) {
   if (clicked == &props.connectButton) {
     state = StateConnecting;
   }
+  else if (clicked == &props.settingsButton) {
+    state = StateSettings;
+  }
 }
 
 void main_render_initial() {

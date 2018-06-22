@@ -32,6 +32,7 @@ int gui_main_init() {
   SDL_QueryTexture(buttonBTexture, NULL, NULL, &buttonBWidth, &buttonBHeight);
 
   main_init_initial();
+  main_init_settings();
   main_init_connecting();
   main_init_connection_failed();
   main_init_games_list();
@@ -49,6 +50,11 @@ void gui_main_loop() {
       case StateInitial:
         main_update_initial(input);
         main_render_initial();
+        break;
+
+      case StateSettings:
+        main_update_settings(input);
+        main_render_settings();
         break;
 
       case StateConnecting:

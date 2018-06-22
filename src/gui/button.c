@@ -63,5 +63,31 @@ void button_renderer_content_default(Button *button) {
 }
 
 void button_renderer_content_menu(Button *button) {
-  /// TODO: Implement
+  uint32_t textColor;
+
+  if (button->focused) {
+    textColor = BUTTON_FOCUSED_TEXT_COLOR;
+
+    for (int i = 0; i < BUTTON_MENU_FOCUSED_LINE_WIDTH; i++) {
+      vlineColor(gui.renderer,
+                 button->e.bounds.x + BUTTON_MENU_FOCUSED_PADDING + i + 1,
+                 button->e.bounds.y + BUTTON_MENU_FOCUSED_PADDING,
+                 button->e.bounds.y + button->e.bounds.height - BUTTON_MENU_FOCUSED_PADDING,
+                 BUTTON_FOCUSED_TEXT_COLOR);
+    }
+  }
+  else {
+    textColor = BUTTON_TEXT_COLOR;
+  }
+
+  int textWidth, textHeight = text_ascent(gui.fontNormal);
+  measure_text(gui.fontNormal, button->text, &textWidth, NULL);
+
+  draw_text(gui.fontNormal,
+            button->text,
+            button->e.bounds.x + 2*BUTTON_MENU_FOCUSED_PADDING + BUTTON_MENU_FOCUSED_LINE_WIDTH,
+            button->e.bounds.y + button->e.bounds.height/2 - textHeight/2,
+            textColor,
+            false,
+            -1);
 }

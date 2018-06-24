@@ -34,8 +34,8 @@ DIST		:=	dist
 TARGET		:=	$(DIST)/$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	src src/audio src/video src/input src/ui \
-				libswitchui libswitchui/switchui \
 				libgamestream \
+				third_party/libswitchui/source \
 				third_party/enet \
 				third_party/inih \
 				third_party/libuuid \
@@ -43,8 +43,8 @@ SOURCES		:=	src src/audio src/video src/input src/ui \
 				third_party/moonlight-common-c/reedsolomon \
 				third_party/h264bitstream 
 
-INCLUDES	:=	libswitchui \
-                                libgamestream \
+INCLUDES	:=	libgamestream \
+                                third_party/libswitchui/include \
                                 third_party/enet/include \
                                 third_party/inih \
                                 third_party/libuuid \
@@ -52,7 +52,7 @@ INCLUDES	:=	libswitchui \
 				third_party/moonlight-common-c/reedsolomon \
 				third_party/h264bitstream
 
-DATA		:=	data
+DATA		:=	data third_party/libswitchui/data
 EXEFS_SRC	:=	exefs_src
 
 #---------------------------------------------------------------------------------
@@ -214,7 +214,7 @@ $(BINFILES):
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
 #---------------------------------------------------------------------------------
-data/%.png.o data/%_png.h : data/%.png
+%.png.o %_png.h : %.png
 #---------------------------------------------------------------------------------
 	@echo $@ $<
 	@cp $(TOPDIR)/$< $<

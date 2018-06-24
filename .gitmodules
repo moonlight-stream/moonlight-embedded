@@ -7,3 +7,6 @@
 [submodule "third_party/inih"]
 	path = third_party/inih
 	url = https://github.com/benhoyt/inih.git
+[submodule "third_party/libswitchui"]
+	path = third_party/libswitchui
+	url = https://github.com/kbhomes/libswitchui.git

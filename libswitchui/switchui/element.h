@@ -24,3 +24,5 @@ typedef struct _SUIElement {
 void sui_element_init(SUIElement *element);
 void sui_element_layout_vertical(int sx, int sy, int spacing, int n, ...);
 void sui_element_layout_horizontal(int sx, int sy, int spacing, int n, ...);
+
+SUIRect sui_element_get_clip(SUIElement *element);

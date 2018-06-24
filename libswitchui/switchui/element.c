@@ -1,4 +1,5 @@
 #include "element.h"
+#include "ui.h"
 
 void sui_element_init(SUIElement *element) {
   element->updater = NULL;
@@ -46,4 +47,18 @@ void sui_element_layout_horizontal(int sx, int sy, int spacing, int n, ...) {
   }
 
   va_end(arg);
+}
+
+SUIRect sui_element_get_clip(SUIElement *element) {
+  if (element->_scene) {
+    return element->_scene->clip;
+  }
+
+  SUIRect clip = {
+    .x = 0,
+    .y = 0,
+    .w = ui.width,
+    .h = ui.height
+  };
+  return clip;
 }

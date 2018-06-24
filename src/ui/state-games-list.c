@@ -53,7 +53,7 @@ static struct {
 static void game_button_renderer(SUIButton *button) {
   int gameIndex = (int)button->user;
 
-  SUIRect clip = sui_get_clip(button);
+  SUIRect clip = sui_element_get_clip(button);
 
   // Measure the size of the game title
   int textWidth, textHeight = sui_text_ascent(ui.fontSmall);

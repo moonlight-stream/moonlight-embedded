@@ -1,6 +1,5 @@
 #include "button.h"
 #include "ui.h"
-#include "util.h"
 
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <math.h>
@@ -19,7 +18,7 @@ void sui_button_init(SUIButton *button) {
 }
 
 void sui_button_render(SUIButton *button) {
-  SUIRect clip = sui_get_clip(button);
+  SUIRect clip = sui_element_get_clip(button);
 
   // Draw the button background
   if (button->focused) {

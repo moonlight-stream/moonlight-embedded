@@ -4,6 +4,7 @@
 #include "element.h"
 #include "scene.h"
 #include "text.h"
+#include "util.h"
 
 #define SUI_MARGIN_SIDE 30
 #define SUI_MARGIN_TOP 88
@@ -70,6 +71,3 @@ void sui_draw_clipped_box(int x, int y, int width, int height, SUIRect *clip, ui
 
 void sui_draw_clipped_rectangle_bounds(SUIRect *bounds, SUIRect *clip, uint32_t color);
 void sui_draw_clipped_rectangle(int x, int y, int width, int height, SUIRect *clip, uint32_t color);
-
-SUIRect sui_get_clip(SUIElement *element);
-SUIRect sui_intersect_bounds_clip(int x, int y, int width, int height, SUIRect *clip);

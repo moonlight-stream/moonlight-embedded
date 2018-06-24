@@ -109,6 +109,24 @@ SUIButton *sui_button_set_update(SUIButtonSet *buttonSet, SUIInput *input, SUIBu
       return buttonSet->buttons[focusIndex];
   }
 
+  // Determine if any of the buttons is touched
+  if (input->touch.touched) {
+    for (int i = 0; i < buttonSet->count; i++) {
+      SUIButton *button = buttonSet->buttons[i];
+
+      if (sui_rect_contains_point(&button->e.bounds, input->touch.position.px, input->touch.position.py)) {
+        buttonSet->buttons[nextFocusIndex]->focused = false;
+        button->focused = true;
+
+        if (focused) {
+          *focused = button;
+        }
+
+        return button;
+      }
+    }
+  }
+
   return NULL;
 }
 

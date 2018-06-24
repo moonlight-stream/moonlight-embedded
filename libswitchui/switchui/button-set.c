@@ -1,7 +1,7 @@
 #include "button-set.h"
 #include "ui.h"
 
-static int next_index(ButtonSet *buttonSet, int index, int delta) {
+static int next_index(SUIButtonSet *buttonSet, int index, int delta) {
   if (buttonSet->wrap) {
     return (index + buttonSet->count + delta) % buttonSet->count;
   }
@@ -19,13 +19,13 @@ static int next_index(ButtonSet *buttonSet, int index, int delta) {
   }
 }
 
-int button_set_init(ButtonSet *buttonSet, enum ButtonSetDirection direction) {
+int sui_button_set_init(SUIButtonSet *buttonSet, enum SUIButtonSetDirection direction) {
   buttonSet->direction = direction;
   buttonSet->wrap = true;
   buttonSet->flowSize = 1;
   buttonSet->count = 0;
-  buttonSet->capacity = BUTTON_SET_DEFAULT_CAPACITY;
-  buttonSet->buttons = malloc(buttonSet->capacity * sizeof(Button *));
+  buttonSet->capacity = SUI_BUTTON_SET_DEFAULT_CAPACITY;
+  buttonSet->buttons = malloc(buttonSet->capacity * sizeof(SUIButton *));
 
   if (!buttonSet->buttons) {
     fprintf(stderr, "[GUI] Could not allocate button set memory\n");
@@ -35,10 +35,10 @@ int button_set_init(ButtonSet *buttonSet, enum ButtonSetDirection direction) {
   return 0;
 }
 
-int button_set_add(ButtonSet *buttonSet, Button *button) {
+int sui_button_set_add(SUIButtonSet *buttonSet, SUIButton *button) {
   if (buttonSet->count == buttonSet->capacity) {
-    buttonSet->capacity += BUTTON_SET_DEFAULT_CAPACITY;
-    buttonSet->buttons = realloc(buttonSet->buttons, buttonSet->capacity * sizeof(Button *));
+    buttonSet->capacity += SUI_BUTTON_SET_DEFAULT_CAPACITY;
+    buttonSet->buttons = realloc(buttonSet->buttons, buttonSet->capacity * sizeof(SUIButton *));
 
     if (!buttonSet->buttons) {
       fprintf(stderr, "[GUI] Could not increase button set capacity memory\n");
@@ -52,7 +52,7 @@ int button_set_add(ButtonSet *buttonSet, Button *button) {
   return 0;
 }
 
-Button *button_set_update(ButtonSet *buttonSet, Input *input, Button **focused) {
+SUIButton *sui_button_set_update(SUIButtonSet *buttonSet, SUIInput *input, SUIButton **focused) {
   int focusIndex = -1, nextFocusIndex = 0;
 
   for (int i = 0; i < buttonSet->count; i++) {
@@ -112,13 +112,13 @@ Button *button_set_update(ButtonSet *buttonSet, Input *input, Button **focused) 
   return NULL;
 }
 
-void button_set_render(ButtonSet *buttonSet) {
+void sui_button_set_render(SUIButtonSet *buttonSet) {
   for (int i = 0; i < buttonSet->count; i++) {
-    button_render(buttonSet->buttons[i]);
+    sui_button_render(buttonSet->buttons[i]);
   }
 }
 
-void button_set_cleanup(ButtonSet *buttonSet) {
+void sui_button_set_cleanup(SUIButtonSet *buttonSet) {
   if (buttonSet->buttons) {
     free(buttonSet->buttons);
     buttonSet->buttons = NULL;

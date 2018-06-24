@@ -1,6 +1,6 @@
 #include "element.h"
 
-void element_init(Element *element) {
+void sui_element_init(SUIElement *element) {
   element->updater = NULL;
   element->renderer = NULL;
   element->fixed = false;
@@ -10,12 +10,12 @@ void element_init(Element *element) {
   element->_next = NULL;
 }
 
-void element_layout_vertical(int sx, int sy, int spacing, int n, ...) {
+void sui_element_layout_vertical(int sx, int sy, int spacing, int n, ...) {
   va_list arg;
   va_start(arg, n);
 
   for (int i = 0; i < n; i++) {
-    Element *element = va_arg(arg, Element *);
+    SUIElement *element = va_arg(arg, SUIElement *);
 
     // Position the current element
     element->bounds.x = sx;
@@ -29,12 +29,12 @@ void element_layout_vertical(int sx, int sy, int spacing, int n, ...) {
   va_end(arg);
 }
 
-void element_layout_horizontal(int sx, int sy, int spacing, int n, ...) {
+void sui_element_layout_horizontal(int sx, int sy, int spacing, int n, ...) {
   va_list arg;
   va_start(arg, n);
 
   for (int i = 0; i < n; i++) {
-    Element *element = va_arg(arg, Element *);
+    SUIElement *element = va_arg(arg, SUIElement *);
 
     // Position the current element
     element->bounds.x = sx;

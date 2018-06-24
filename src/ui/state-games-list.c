@@ -15,12 +15,12 @@ static struct {
   int *gamesArtWidths;
   int *gamesArtHeights;
 
-  Button **buttons;
-  ButtonSet buttonSet;
+  SUIButton **buttons;
+  SUIButtonSet buttonSet;
 
-  Scene gamesListScene;
-  Rect sceneClip;
-  Rect sceneClipPadding;
+  SUIScene gamesListScene;
+  SUIRect sceneClip;
+  SUIRect sceneClipPadding;
 } props = {0};
 
 //static size_t test_game_list(PAPP_LIST *games) {
@@ -50,14 +50,14 @@ static struct {
 //  return count;
 //}
 
-static void game_button_renderer(Button *button) {
+static void game_button_renderer(SUIButton *button) {
   int gameIndex = (int)button->user;
 
-  Rect clip = get_clip(button);
+  SUIRect clip = sui_get_clip(button);
 
   // Measure the size of the game title
-  int textWidth, textHeight = text_ascent(ui.fontSmall);
-  measure_text(ui.fontSmall, button->text, &textWidth, NULL);
+  int textWidth, textHeight = sui_text_ascent(ui.fontSmall);
+  sui_measure_text(ui.fontSmall, button->text, &textWidth, NULL);
 
   // Draw the boxart of the game
   SDL_Texture *artTexture = props.gamesArtTextures[gameIndex];
@@ -65,63 +65,63 @@ static void game_button_renderer(Button *button) {
     int artWidth = props.gamesArtWidths[gameIndex];
     int artHeight = props.gamesArtHeights[gameIndex];
 
-    draw_clipped_texture(artTexture,
-                         button->e.bounds.x + 3,
-                         button->e.bounds.y + 3,
-                         button->e.bounds.w - 6,
-                         button->e.bounds.h - 16 - textHeight,
-                         &clip);
+    sui_draw_clipped_texture(artTexture,
+                             button->e.bounds.x + 3,
+                             button->e.bounds.y + 3,
+                             button->e.bounds.w - 6,
+                             button->e.bounds.h - 16 - textHeight,
+                             &clip);
   }
 
   // Draw a small white border
   for (int i = 0; i < 3; i++) {
-    draw_clipped_rectangle(button->e.bounds.x + i,
-                           button->e.bounds.y + i,
-                           button->e.bounds.w - 2*i,
-                           button->e.bounds.h - 2*i,
-                           &clip,
-                           BUTTON_FOCUSED_BACKGROUND);
+    sui_draw_clipped_rectangle(button->e.bounds.x + i,
+                               button->e.bounds.y + i,
+                               button->e.bounds.w - 2*i,
+                               button->e.bounds.h - 2*i,
+                               &clip,
+                               SUI_BUTTON_FOCUSED_BACKGROUND);
   }
 
   // Draw the caption box
-  draw_clipped_box(button->e.bounds.x,
-                   button->e.bounds.y + button->e.bounds.h - 16 - textHeight,
-                   button->e.bounds.w,
-                   16 + textHeight,
-                   &clip,
-                   BUTTON_FOCUSED_BACKGROUND);
+  sui_draw_clipped_box(button->e.bounds.x,
+                       button->e.bounds.y + button->e.bounds.h - 16 - textHeight,
+                       button->e.bounds.w,
+                       16 + textHeight,
+                       &clip,
+                       SUI_BUTTON_FOCUSED_BACKGROUND);
 
   // Draw the caption
-  uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
-  draw_clipped_text(ui.fontSmall,
-                    button->text,
-                    button->e.bounds.x + 8,
-                    button->e.bounds.y + button->e.bounds.h - 8 - textHeight,
-                    &clip,
-                    textColor,
-                    false,
-                    button->e.bounds.w - 16);
+  uint32_t textColor = button->focused ? SUI_BUTTON_FOCUSED_TEXT_COLOR : SUI_BUTTON_TEXT_COLOR;
+  sui_draw_clipped_text(ui.fontSmall,
+                        button->text,
+                        button->e.bounds.x + 8,
+                        button->e.bounds.y + button->e.bounds.h - 8 - textHeight,
+                        &clip,
+                        textColor,
+                        false,
+                        button->e.bounds.w - 16);
 }
 
 int main_init_games_list() {
-  button_set_init(&props.buttonSet, FlowHorizontal);
+  sui_button_set_init(&props.buttonSet, FlowHorizontal);
   props.buttonSet.wrap = false;
   props.buttonSet.flowSize = GAME_BUTTON_FLOW_SIZE;
 
-  scene_init(&props.gamesListScene);
+  sui_scene_init(&props.gamesListScene);
   props.gamesListScene.clip.x = 0;
-  props.gamesListScene.clip.y = MARGIN_TOP + 1;
+  props.gamesListScene.clip.y = SUI_MARGIN_TOP + 1;
   props.gamesListScene.clip.w = ui.width;
-  props.gamesListScene.clip.h = ui.height - MARGIN_TOP - MARGIN_BOTTOM - 2;
-  props.gamesListScene.padded.x = MARGIN_SIDE;
-  props.gamesListScene.padded.y = MARGIN_TOP + MARGIN_SIDE + 1;
-  props.gamesListScene.padded.w = ui.width - 2*MARGIN_SIDE;
-  props.gamesListScene.padded.h = ui.height - MARGIN_TOP - MARGIN_BOTTOM - 2*MARGIN_SIDE - 2;
+  props.gamesListScene.clip.h = ui.height - SUI_MARGIN_TOP - SUI_MARGIN_BOTTOM - 2;
+  props.gamesListScene.padded.x = SUI_MARGIN_SIDE;
+  props.gamesListScene.padded.y = SUI_MARGIN_TOP + SUI_MARGIN_SIDE + 1;
+  props.gamesListScene.padded.w = ui.width - 2*SUI_MARGIN_SIDE;
+  props.gamesListScene.padded.h = ui.height - SUI_MARGIN_TOP - SUI_MARGIN_BOTTOM - 2*SUI_MARGIN_SIDE - 2;
 
   return 0;
 }
 
-void main_update_games_list(Input *input) {
+void main_update_games_list(SUIInput *input) {
   if (props.frame == 0) {
     props.gamesCount = get_app_list(&server, &props.games);
 
@@ -131,7 +131,7 @@ void main_update_games_list(Input *input) {
     props.gamesArtTextures = malloc(props.gamesCount * sizeof(char *));
     props.gamesArtWidths = calloc(props.gamesCount, sizeof(int));
     props.gamesArtHeights = calloc(props.gamesCount, sizeof(int));
-    props.buttons = malloc(props.gamesCount * sizeof(Button *));
+    props.buttons = malloc(props.gamesCount * sizeof(SUIButton *));
 
     for (int i = 0; i < props.gamesCount; i++) {
       // Collect the box art for this game
@@ -140,7 +140,7 @@ void main_update_games_list(Input *input) {
       gs_app_boxart(&server, game->id, &artData, &artSize);
 
       if (artData && artSize) {
-        props.gamesArtTextures[i] = load_png_rescale(artData, artSize, GAME_BUTTON_WIDTH - 6, GAME_BUTTON_HEIGHT - 16 - text_ascent(ui.fontSmall));
+        props.gamesArtTextures[i] = sui_load_png_rescale(artData, artSize, GAME_BUTTON_WIDTH - 6, GAME_BUTTON_HEIGHT - 16 - sui_text_ascent(ui.fontSmall));
         SDL_QueryTexture(props.gamesArtTextures[i], NULL, NULL, &props.gamesArtWidths[i], &props.gamesArtHeights[i]);
 
         free(artData);
@@ -150,30 +150,30 @@ void main_update_games_list(Input *input) {
       }
 
       // Allocate and initialize the button for this game
-      Button *button = malloc(sizeof(Button));
-      button_init(button);
+      SUIButton *button = malloc(sizeof(SUIButton));
+      sui_button_init(button);
       button->text = game->name;
       button->contentRenderer = &game_button_renderer;
       button->user = i;
       button->e.bounds.w = GAME_BUTTON_WIDTH;
       button->e.bounds.h = GAME_BUTTON_HEIGHT;
-      button->e.bounds.x = MARGIN_SIDE + ((i % GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_WIDTH + GAME_BUTTON_SPACING));
-      button->e.bounds.y = MARGIN_TOP + MARGIN_SIDE + ((i / GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_HEIGHT + GAME_BUTTON_SPACING));
+      button->e.bounds.x = SUI_MARGIN_SIDE + ((i % GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_WIDTH + GAME_BUTTON_SPACING));
+      button->e.bounds.y = SUI_MARGIN_TOP + SUI_MARGIN_SIDE + ((i / GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_HEIGHT + GAME_BUTTON_SPACING));
       props.buttons[i] = button;
 
       // Add the button to the button set and to the list scene
-      button_set_add(&props.buttonSet, props.buttons[i]);
-      scene_add_element(&props.gamesListScene, button);
+      sui_button_set_add(&props.buttonSet, props.buttons[i]);
+      sui_scene_add_element(&props.gamesListScene, button);
 
       // Visit the next game
       game = game->next;
     }
 
-    scene_print(&props.gamesListScene);
+    sui_scene_print(&props.gamesListScene);
   }
 
-  Button *clicked = NULL, *focused = NULL;
-  clicked = button_set_update(&props.buttonSet, input, &focused);
+  SUIButton *clicked = NULL, *focused = NULL;
+  clicked = sui_button_set_update(&props.buttonSet, input, &focused);
 
   if (clicked) {
     int gameIndex = (int)clicked->user;
@@ -184,17 +184,17 @@ void main_update_games_list(Input *input) {
     }
 
     main_set_streaming_game(game);
-    ui_state = state_push(ui_state, StateStreaming);
+    ui_state = sui_state_push(ui_state, &MoonlightUiStateStreaming);
   }
 
   if (focused) {
-    scene_scroll_to_element(&props.gamesListScene, focused);
+    sui_scene_scroll_to_element(&props.gamesListScene, focused);
   }
 
-  scene_update(&props.gamesListScene, input);
+  sui_scene_update(&props.gamesListScene, input);
 
   if (input->buttons.down & KEY_B) {
-    ui_state = state_pop(ui_state);
+    ui_state = sui_state_pop(ui_state);
   }
 
   props.frame++;
@@ -204,10 +204,10 @@ void main_render_games_list() {
   SDL_SetRenderDrawColor(ui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
   SDL_RenderClear(ui.renderer);
 
-  draw_top_header("Moonlight  ›  Games");
-  draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
+  sui_draw_top_header("Moonlight  ›  Games");
+  sui_draw_bottom_toolbar(2, "OK", SUIToolbarActionA, "Back", SUIToolbarActionB);
 
-  scene_render(&props.gamesListScene);
+  sui_scene_render(&props.gamesListScene);
 
   SDL_RenderPresent(ui.renderer);
 }
@@ -227,5 +227,13 @@ void main_cleanup_games_list() {
     props.buttons = NULL;
   }
 
-  button_set_cleanup(&props.buttonSet);
+  sui_button_set_cleanup(&props.buttonSet);
 }
+
+MoonlightUiState MoonlightUiStateGamesList = {
+  .state = 4,
+  .init = &main_init_games_list,
+  .update = &main_update_games_list,
+  .render = &main_render_games_list,
+  .cleanup = &main_cleanup_games_list
+};

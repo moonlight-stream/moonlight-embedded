@@ -2,11 +2,11 @@
 
 #include "common.h"
 
-typedef struct _State {
-  int state;
-  struct _State *next;
-} State;
+typedef struct _SUIState {
+  void *state;
+  struct _SUIState *next;
+} SUIState;
 
-State *state_push(State *top, int state);
-State *state_replace(State *top, int state);
-State *state_pop(State *top);
+SUIState *sui_state_push(SUIState *top, void *state);
+SUIState *sui_state_replace(SUIState *top, void *state);
+SUIState *sui_state_pop(SUIState *top);

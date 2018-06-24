@@ -37,14 +37,14 @@ static void shared_fonts_cleanup() {
 }
 
 static int toolbar_textures_init() {
-  ui.buttonATexture = load_png(button_a_png, button_a_png_size);
+  ui.buttonATexture = sui_load_png(button_a_png, button_a_png_size);
   if (!ui.buttonATexture) {
     fprintf(stderr, "[GUI] Could not load button A image: %s\n", SDL_GetError());
     return -1;
   }
   SDL_QueryTexture(ui.buttonATexture, NULL, NULL, &ui.buttonAWidth, &ui.buttonAHeight);
 
-  ui.buttonBTexture = load_png(button_b_png, button_b_png_size);
+  ui.buttonBTexture = sui_load_png(button_b_png, button_b_png_size);
   if (!ui.buttonBTexture) {
     fprintf(stderr, "[GUI] Could not load button B image: %s\n", SDL_GetError());
     return -1;
@@ -66,7 +66,7 @@ static void toolbar_textures_cleanup() {
   }
 }
 
-int ui_init() {
+int sui_init() {
   memset(&ui, 0, sizeof(ui));
 
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0) {
@@ -91,17 +91,17 @@ int ui_init() {
 
   SDL_GetWindowSize(ui.window, &ui.width, &ui.height);
 
-  if (switch_input_init() < 0) { return -1; }
+  if (sui_input_init() < 0) { return -1; }
   if (shared_fonts_init() < 0) { return -1; }
   if (toolbar_textures_init() < 0) { return -1; }
 
   return 0;
 }
 
-void ui_cleanup() {
+void sui_cleanup() {
   shared_fonts_cleanup();
   toolbar_textures_cleanup();
-  switch_input_cleanup();
+  sui_input_cleanup();
 
   if (ui.renderer) {
     SDL_DestroyRenderer(ui.renderer);
@@ -137,11 +137,11 @@ uint32_t interpolate(uint32_t a, uint32_t b, double t) {
   );
 }
 
-SDL_Texture *load_png(const void *data, size_t size) {
-  return load_png_rescale(data, size, -1, -1);
+SDL_Texture *sui_load_png(const void *data, size_t size) {
+  return sui_load_png_rescale(data, size, -1, -1);
 }
 
-SDL_Texture *load_png_rescale(const void *data, size_t size, int width, int height) {
+SDL_Texture *sui_load_png_rescale(const void *data, size_t size, int width, int height) {
   SDL_RWops *rwops;
   SDL_Surface *surface;
   SDL_Texture *texture;
@@ -183,30 +183,30 @@ SDL_Texture *load_png_rescale(const void *data, size_t size, int width, int heig
   return texture;
 }
 
-void draw_bottom_toolbar(int count, ...) {
+void sui_draw_bottom_toolbar(int count, ...) {
   va_list args;
   va_start(args, count);
 
-  int baseHeight = text_ascent(ui.fontNormal);
-  int offsetX = ui.width - MARGIN_SIDE - MARGIN_TOOLBAR_SIDE;
-  int offsetY = ui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - baseHeight)/2;
+  int baseHeight = sui_text_ascent(ui.fontNormal);
+  int offsetX = ui.width - SUI_MARGIN_SIDE - SUI_MARGIN_TOOLBAR_SIDE;
+  int offsetY = ui.height - SUI_MARGIN_BOTTOM + (SUI_MARGIN_BOTTOM - baseHeight)/2;
 
   for (int i = 0; i < count; i++) {
     // Obtain the button arguments
     char *text = va_arg(args, char *);
-    enum ToolbarAction action = va_arg(args, enum ToolbarAction);
+    enum SUIToolbarAction action = va_arg(args, enum SUIToolbarAction);
 
     SDL_Texture *iconTexture;
     int iconWidth, iconHeight;
 
     switch (action) {
-      case ToolbarActionA:
+      case SUIToolbarActionA:
         iconTexture = ui.buttonATexture;
         iconWidth = ui.buttonAWidth;
         iconHeight = ui.buttonAHeight;
         break;
 
-      case ToolbarActionB:
+      case SUIToolbarActionB:
         iconTexture = ui.buttonBTexture;
         iconWidth = ui.buttonBWidth;
         iconHeight = ui.buttonBHeight;
@@ -218,44 +218,44 @@ void draw_bottom_toolbar(int count, ...) {
 
     // Measure the size of this particular label
     int textWidth;
-    measure_text(ui.fontNormal, text, &textWidth, NULL);
+    sui_measure_text(ui.fontNormal, text, &textWidth, NULL);
 
     // Draw the text and icon
-    draw_text(ui.fontNormal, text, offsetX - textWidth, offsetY, COLOR_DARK, false, -1);
-    draw_texture(iconTexture,
-                 offsetX - textWidth - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth,
-                 ui.height - MARGIN_BOTTOM + (MARGIN_BOTTOM - iconHeight)/2,
+    sui_draw_text(ui.fontNormal, text, offsetX - textWidth, offsetY, SUI_COLOR_DARK, false, -1);
+    sui_draw_texture(iconTexture,
+                 offsetX - textWidth - SUI_MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth,
+                 ui.height - SUI_MARGIN_BOTTOM + (SUI_MARGIN_BOTTOM - iconHeight)/2,
                  iconWidth,
                  iconHeight);
 
-    offsetX = offsetX - textWidth - MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth - MARGIN_BETWEEN_TOOLBAR_BUTTONS;
+    offsetX = offsetX - textWidth - SUI_MARGIN_BETWEEN_TOOLBAR_ICON_TEXT - iconWidth - SUI_MARGIN_BETWEEN_TOOLBAR_BUTTONS;
   }
 
 
   // Draw the bottom separator
-  hlineColor(ui.renderer, MARGIN_SIDE, ui.width - MARGIN_SIDE, ui.height - MARGIN_BOTTOM, COLOR_DARK);
+  hlineColor(ui.renderer, SUI_MARGIN_SIDE, ui.width - SUI_MARGIN_SIDE, ui.height - SUI_MARGIN_BOTTOM, SUI_COLOR_DARK);
 
   va_end(args);
 }
 
-void draw_top_header(const char *text) {
+void sui_draw_top_header(const char *text) {
   // Draw the top separator
-  hlineColor(ui.renderer, MARGIN_SIDE, ui.width - MARGIN_SIDE, MARGIN_TOP, COLOR_DARK);
+  hlineColor(ui.renderer, SUI_MARGIN_SIDE, ui.width - SUI_MARGIN_SIDE, SUI_MARGIN_TOP, SUI_COLOR_DARK);
 
   // Draw the text
-  int textWidth, textHeight = text_ascent(ui.fontHeading);
-  measure_text(ui.fontHeading, text, &textWidth, NULL);
-  draw_text(ui.fontHeading,
+  int textWidth, textHeight = sui_text_ascent(ui.fontHeading);
+  sui_measure_text(ui.fontHeading, text, &textWidth, NULL);
+  sui_draw_text(ui.fontHeading,
             text,
-            MARGIN_SIDE + MARGIN_TOOLBAR_SIDE,
-            (MARGIN_TOP - textHeight)/2 + 10,
-            COLOR_DARK,
+            SUI_MARGIN_SIDE + SUI_MARGIN_TOOLBAR_SIDE,
+            (SUI_MARGIN_TOP - textHeight)/2 + 10,
+            SUI_COLOR_DARK,
             false,
             -1);
 }
 
-void draw_texture(SDL_Texture *texture, int x, int y, int w, int h) {
-  Rect dst;
+void sui_draw_texture(SDL_Texture *texture, int x, int y, int w, int h) {
+  SUIRect dst;
   dst.x = x;
   dst.y = y;
   dst.w = w;
@@ -263,9 +263,9 @@ void draw_texture(SDL_Texture *texture, int x, int y, int w, int h) {
   SDL_RenderCopy(ui.renderer, texture, NULL, &dst);
 }
 
-void draw_clipped_texture(SDL_Texture *texture, int x, int y, int w, int h, Rect *clip) {
-  Rect clippedDestination = intersect_bounds_clip(x, y, w, h, clip);
-  Rect clippedSource = {
+void sui_draw_clipped_texture(SDL_Texture *texture, int x, int y, int w, int h, SUIRect *clip) {
+  SUIRect clippedDestination = sui_intersect_bounds_clip(x, y, w, h, clip);
+  SUIRect clippedSource = {
     .x = clippedDestination.x - x,
     .y = clippedDestination.y - y,
     .w = clippedDestination.w,
@@ -280,12 +280,12 @@ void draw_clipped_texture(SDL_Texture *texture, int x, int y, int w, int h, Rect
   );
 }
 
-void draw_clipped_box_bounds(Rect *bounds, Rect *clip, uint32_t color) {
-  draw_clipped_box(bounds->x, bounds->y, bounds->w, bounds->h, clip, color);
+void sui_draw_clipped_box_bounds(SUIRect *bounds, SUIRect *clip, uint32_t color) {
+  sui_draw_clipped_box(bounds->x, bounds->y, bounds->w, bounds->h, clip, color);
 }
 
-void draw_clipped_box(int x, int y, int width, int height, Rect *clip, uint32_t color) {
-  Rect in = intersect_bounds_clip(x, y, width, height, clip);
+void sui_draw_clipped_box(int x, int y, int width, int height, SUIRect *clip, uint32_t color) {
+  SUIRect in = sui_intersect_bounds_clip(x, y, width, height, clip);
 
   // Only draw the box if both dimensions are positive
   if (in.w > 0 && in.h > 0) {
@@ -293,12 +293,12 @@ void draw_clipped_box(int x, int y, int width, int height, Rect *clip, uint32_t 
   }
 }
 
-void draw_clipped_rectangle_bounds(Rect *bounds, Rect *clip, uint32_t color) {
-  draw_clipped_rectangle(bounds->x, bounds->y, bounds->w, bounds->h, clip, color);
+void sui_draw_clipped_rectangle_bounds(SUIRect *bounds, SUIRect *clip, uint32_t color) {
+  sui_draw_clipped_rectangle(bounds->x, bounds->y, bounds->w, bounds->h, clip, color);
 }
 
-void draw_clipped_rectangle(int x, int y, int width, int height, Rect *clip, uint32_t color) {
-  Rect in = intersect_bounds_clip(x, y, width, height, clip);
+void sui_draw_clipped_rectangle(int x, int y, int width, int height, SUIRect *clip, uint32_t color) {
+  SUIRect in = sui_intersect_bounds_clip(x, y, width, height, clip);
 
   // Only draw the rectangle if both dimensions are positive
   if (in.w > 0 && in.h > 0) {
@@ -324,12 +324,12 @@ void draw_clipped_rectangle(int x, int y, int width, int height, Rect *clip, uin
   }
 }
 
-Rect get_clip(Element *element) {
+SUIRect sui_get_clip(SUIElement *element) {
   if (element->_scene) {
     return element->_scene->clip;
   }
 
-  Rect clip = {
+  SUIRect clip = {
     .x = 0,
     .y = 0,
     .w = ui.width,
@@ -338,7 +338,7 @@ Rect get_clip(Element *element) {
   return clip;
 }
 
-Rect intersect_bounds_clip(int x, int y, int width, int height, Rect *clip) {
+SUIRect sui_intersect_bounds_clip(int x, int y, int width, int height, SUIRect *clip) {
   int x1 = x,
       y1 = y,
       x2 = x + width,
@@ -360,7 +360,7 @@ Rect intersect_bounds_clip(int x, int y, int width, int height, Rect *clip) {
     y2 = clip->y + clip->h;
   }
 
-  Rect intersect = {
+  SUIRect intersect = {
     .x = x1,
     .y = y1,
     .w = x2 - x1,

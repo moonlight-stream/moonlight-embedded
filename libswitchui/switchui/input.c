@@ -1,12 +1,12 @@
 #include "input.h"
 
-Input input;
+SUIInput input;
 
-int switch_input_init() {
+int sui_input_init() {
   return 0;
 }
 
-Input *switch_input_poll(HidControllerID id) {
+SUIInput *sui_input_poll(HidControllerID id) {
   hidScanInput();
 
   // Read the buttons
@@ -30,7 +30,7 @@ Input *switch_input_poll(HidControllerID id) {
   return &input;
 }
 
-bool switch_input_test(Input *input) {
+bool sui_input_test(SUIInput *input) {
   return (
     input->buttons.down ||
     input->buttons.held ||
@@ -43,6 +43,6 @@ bool switch_input_test(Input *input) {
   );
 }
 
-void switch_input_cleanup() {
+void sui_input_cleanup() {
 
 }

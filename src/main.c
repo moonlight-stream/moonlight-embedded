@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
   printf("+: quit\n");
   printf("\n");
 
-  if (ui_init() < 0) {
+  if (sui_init() < 0) {
     fprintf(stderr, "Could not initialize Switch UI\n");
   }
   else if (ui_main_init() < 0) {
@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
   }
 
   ui_main_cleanup();
-  ui_cleanup();
+  sui_cleanup();
 
   plExit();
   setExit();

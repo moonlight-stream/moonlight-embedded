@@ -1,23 +1,23 @@
 #include "state.h"
 
-State *state_push(State *top, int state) {
-  State *pushed = malloc(sizeof(State));
+SUIState *sui_state_push(SUIState *top, void *state) {
+  SUIState *pushed = malloc(sizeof(SUIState));
   pushed->state = state;
   pushed->next = top;
   return pushed;
 }
 
-State *state_replace(State *top, int state) {
-  State *next = state_pop(top);
+SUIState *sui_state_replace(SUIState *top, void *state) {
+  SUIState *next = sui_state_pop(top);
 
-  State *pushed = malloc(sizeof(State));
+  SUIState *pushed = malloc(sizeof(SUIState));
   pushed->state = state;
   pushed->next = next;
   return pushed;
 }
 
-State *state_pop(State *top) {
-  State *next = top->next;
+SUIState *sui_state_pop(SUIState *top) {
+  SUIState *next = top->next;
   free(top);
 
   return next;

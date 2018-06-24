@@ -36,7 +36,7 @@ int main_init_streaming() {
   return 0;
 }
 
-void main_update_streaming(Input *input) {
+void main_update_streaming(SUIInput *input) {
   if (props.frame == 0) {
     stream_start(&server, &config, props.game->id, platform_check(config.platform));
   }
@@ -105,7 +105,7 @@ void main_update_streaming(Input *input) {
       rightTrigger = 0xff;
     }
 
-    if (switch_input_test(input)) {
+    if (sui_input_test(input)) {
       int ret;
 
       ret= LiSendControllerEvent(buttons,
@@ -158,7 +158,7 @@ void main_update_streaming(Input *input) {
 
   if (input->buttons.down & KEY_PLUS) {
     stream_stop(platform_check(config.platform));
-    ui_state = state_pop(ui_state);
+    ui_state = sui_state_pop(ui_state);
   }
 
   props.frame++;
@@ -181,3 +181,11 @@ void main_cleanup_streaming() {
 void main_set_streaming_game(PAPP_LIST game) {
   props.game = game;
 }
+
+MoonlightUiState MoonlightUiStateStreaming = {
+  .state = 5,
+  .init = &main_init_streaming,
+  .update = &main_update_streaming,
+  .render = &main_render_streaming,
+  .cleanup = &main_cleanup_streaming
+};

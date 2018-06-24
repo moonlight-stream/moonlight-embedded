@@ -7,46 +7,46 @@ static struct {
   int logoWidth;
   int logoHeight;
 
-  Button connectButton;
-  Button settingsButton;
-  ButtonSet buttons;
+  SUIButton connectButton;
+  SUIButton settingsButton;
+  SUIButtonSet buttons;
 } props = {0};
 
 int main_init_initial() {
-  props.logoTexture = load_png(moonlight_switch_logo_png, moonlight_switch_logo_png_size);
+  props.logoTexture = sui_load_png(moonlight_switch_logo_png, moonlight_switch_logo_png_size);
   if (!props.logoTexture) {
     fprintf(stderr, "[GUI, initial] Could not load logo: %s\n", SDL_GetError());
     return -1;
   }
   SDL_QueryTexture(props.logoTexture, NULL, NULL, &props.logoWidth, &props.logoHeight);
 
-  button_init(&props.connectButton);
+  sui_button_init(&props.connectButton);
   props.connectButton.text = "Connect";
   props.connectButton.e.bounds.x = ui.width/2 - props.connectButton.e.bounds.w/2;
-  props.connectButton.e.bounds.y = 100 + props.logoHeight + (ui.height - MARGIN_BOTTOM - props.logoHeight - 100)/2 - props.connectButton.e.bounds.h/2;
+  props.connectButton.e.bounds.y = 100 + props.logoHeight + (ui.height - SUI_MARGIN_BOTTOM - props.logoHeight - 100)/2 - props.connectButton.e.bounds.h/2;
   props.connectButton.focused = true;
 
-  button_init(&props.settingsButton);
+  sui_button_init(&props.settingsButton);
   props.settingsButton.text = "Settings";
   props.settingsButton.e.bounds.x = ui.width/2 - props.settingsButton.e.bounds.w/2;
   props.settingsButton.e.bounds.y = props.connectButton.e.bounds.y + props.connectButton.e.bounds.h + 15;
   props.settingsButton.focused = false;
 
-  button_set_init(&props.buttons, Vertical);
-  button_set_add(&props.buttons, &props.connectButton);
-  button_set_add(&props.buttons, &props.settingsButton);
+  sui_button_set_init(&props.buttons, Vertical);
+  sui_button_set_add(&props.buttons, &props.connectButton);
+  sui_button_set_add(&props.buttons, &props.settingsButton);
 
   return 0;
 }
 
-void main_update_initial(Input *input) {
-  Button *clicked = button_set_update(&props.buttons, input, NULL);
+void main_update_initial(SUIInput *input) {
+  SUIButton *clicked = sui_button_set_update(&props.buttons, input, NULL);
 
   if (clicked == &props.connectButton) {
-    ui_state = state_push(ui_state, StateConnecting);
+    ui_state = sui_state_push(ui_state, &MoonlightUiStateConnecting);
   }
   else if (clicked == &props.settingsButton) {
-    ui_state = state_push(ui_state, StateSettings);
+    ui_state = sui_state_push(ui_state, &MoonlightUiStateSettings);
   }
   else if (input->buttons.down & KEY_B) {
     ui_shouldExitApp = true;
@@ -58,13 +58,13 @@ void main_render_initial() {
   SDL_RenderClear(ui.renderer);
 
   // Draw the logo
-  draw_texture(props.logoTexture, (ui.width - props.logoWidth) / 2, 150, props.logoWidth, props.logoHeight);
+  sui_draw_texture(props.logoTexture, (ui.width - props.logoWidth) / 2, 150, props.logoWidth, props.logoHeight);
 
   // Draw the OK action on the bottom toolbar
-  draw_bottom_toolbar(1, "OK", ToolbarActionA);
+  sui_draw_bottom_toolbar(1, "OK", SUIToolbarActionA);
 
   // Draw the main buttons
-  button_set_render(&props.buttons);
+  sui_button_set_render(&props.buttons);
 
   SDL_RenderPresent(ui.renderer);
 }
@@ -75,3 +75,11 @@ void main_cleanup_initial() {
     props.logoTexture = NULL;
   }
 }
+
+MoonlightUiState MoonlightUiStateInitial = {
+  .state = 0,
+  .init = &main_init_initial,
+  .update = &main_update_initial,
+  .render = &main_render_initial,
+  .cleanup = &main_cleanup_initial
+};

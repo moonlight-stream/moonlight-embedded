@@ -4,22 +4,22 @@
 #include "input.h"
 #include "element.h"
 
-#define SCROLL_SPEED 15
+#define SUI_SCROLL_SPEED 15
 
-struct _Scene;
+struct _SUIScene;
 
-typedef struct _Scene {
+typedef struct _SUIScene {
   size_t count;
-  Element *elements;
+  SUIElement *elements;
 
-  Rect clip;
-  Rect padded;
-} Scene;
+  SUIRect clip;
+  SUIRect padded;
+} SUIScene;
 
-void scene_init(Scene *scene);
-void scene_add_element(Scene *scene, Element *element);
-void scene_remove_element(Scene *scene, Element *element);
-void scene_update(Scene *scene, Input *input);
-void scene_render(Scene *scene);
-void scene_scroll_to_element(Scene *scene, Element *element);
-void scene_print(Scene *scene);
+void sui_scene_init(SUIScene *scene);
+void sui_scene_add_element(SUIScene *scene, SUIElement *element);
+void sui_scene_remove_element(SUIScene *scene, SUIElement *element);
+void sui_scene_update(SUIScene *scene, SUIInput *input);
+void sui_scene_render(SUIScene *scene);
+void sui_scene_scroll_to_element(SUIScene *scene, SUIElement *element);
+void sui_scene_print(SUIScene *scene);

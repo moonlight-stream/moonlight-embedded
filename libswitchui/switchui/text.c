@@ -1,27 +1,27 @@
 #include "text.h"
 #include "ui.h"
 
-int text_ascent(TTF_Font *font) {
+int sui_text_ascent(TTF_Font *font) {
   return TTF_FontAscent(font);
 }
 
-void measure_text(TTF_Font *font, const char *text, int *width, int *height) {
+void sui_measure_text(TTF_Font *font, const char *text, int *width, int *height) {
   // Measure the text size
   TTF_SizeUTF8(font, text, width, height);
 }
 
-void draw_text(TTF_Font *font, const char *text, int x, int y, uint32_t color, bool align_center, int truncate_width) {
-  Rect clip = {
+void sui_draw_text(TTF_Font *font, const char *text, int x, int y, uint32_t color, bool align_center, int truncate_width) {
+  SUIRect clip = {
     .x = 0,
     .y = 0,
     .w = ui.width,
     .h = ui.height
   };
 
-  draw_clipped_text(font, text, x, y, &clip, color, align_center, truncate_width);
+  sui_draw_clipped_text(font, text, x, y, &clip, color, align_center, truncate_width);
 }
 
-void draw_clipped_text(TTF_Font *font, const char *text, int x, int y, Rect *clip, uint32_t color, bool align_center, int truncate_width) {
+void sui_draw_clipped_text(TTF_Font *font, const char *text, int x, int y, SUIRect *clip, uint32_t color, bool align_center, int truncate_width) {
   // Measure the text size
   int textWidth, textHeight;
   TTF_SizeUTF8(font, text, &textWidth, &textHeight);
@@ -49,11 +49,11 @@ void draw_clipped_text(TTF_Font *font, const char *text, int x, int y, Rect *cli
     int pitch = textSurface->pitch;
 
     for (size_t y = 0; y < textHeight; y++) {
-      for (size_t x = TRUNCATE_FADE_WIDTH; x > 0; x--) {
+      for (size_t x = SUI_TRUNCATE_FADE_WIDTH; x > 0; x--) {
         size_t pos = y*(pitch/sizeof(uint32_t)) + (textWidth - x);
         uint32_t origColor = pixels[pos];
         uint32_t blankColor = origColor & 0x00ffffff;
-        pixels[pos] = interpolate(blankColor, origColor, (float)x / TRUNCATE_FADE_WIDTH);
+        pixels[pos] = interpolate(blankColor, origColor, (float)x / SUI_TRUNCATE_FADE_WIDTH);
       }
     }
 
@@ -66,7 +66,7 @@ void draw_clipped_text(TTF_Font *font, const char *text, int x, int y, Rect *cli
   SDL_FreeSurface(textSurface);
 
   // Render the surface at a specific location
-  Rect destinationRect;
+  SUIRect destinationRect;
 
   if (align_center) {
       destinationRect.x = x - textWidth/2;
@@ -81,6 +81,6 @@ void draw_clipped_text(TTF_Font *font, const char *text, int x, int y, Rect *cli
     destinationRect.h = textHeight;
   }
 
-  draw_clipped_texture(textTexture, destinationRect.x, destinationRect.y, destinationRect.w, destinationRect.h, clip);
+  sui_draw_clipped_texture(textTexture, destinationRect.x, destinationRect.y, destinationRect.w, destinationRect.h, clip);
   SDL_DestroyTexture(textTexture);
 }

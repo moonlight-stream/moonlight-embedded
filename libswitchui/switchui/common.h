@@ -8,4 +8,4 @@
 
 #include <switch.h>
 
-typedef SDL_Rect Rect;
+typedef SDL_Rect SUIRect;

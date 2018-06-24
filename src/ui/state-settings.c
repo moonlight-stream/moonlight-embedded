@@ -3,25 +3,25 @@
 static struct {
   int frame;
 
-  Sidebar sidebar;
+  SUISidebar sidebar;
 } props = {0};
 
 int main_init_settings() {
-  sidebar_init(&props.sidebar, 5,
+  sui_sidebar_init(&props.sidebar, 5,
                "General",
                "Stream",
                "Input",
-               SIDEBAR_DIVIDER,
+               SUI_SIDEBAR_DIVIDER,
                "About");
 
   return 0;
 }
 
-void main_update_settings(Input *input) {
-  int menu = sidebar_update(&props.sidebar, input);
+void main_update_settings(SUIInput *input) {
+  int menu = sui_sidebar_update(&props.sidebar, input);
 
   if (input->buttons.down & KEY_B) {
-    ui_state = state_pop(ui_state);
+    ui_state = sui_state_pop(ui_state);
   }
 }
 
@@ -30,13 +30,13 @@ void main_render_settings() {
   SDL_RenderClear(ui.renderer);
 
   // Draw the sidebar
-  sidebar_render(&props.sidebar);
+  sui_sidebar_render(&props.sidebar);
 
   // Draw the heading
-  draw_top_header("Moonlight  ›  Settings");
+  sui_draw_top_header("Moonlight  ›  Settings");
 
   // Draw the OK and Back actions on the bottom toolbar
-  draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
+  sui_draw_bottom_toolbar(2, "OK", SUIToolbarActionA, "Back", SUIToolbarActionB);
 
   SDL_RenderPresent(ui.renderer);
 }
@@ -44,3 +44,11 @@ void main_render_settings() {
 void main_cleanup_settings() {
 
 }
+
+MoonlightUiState MoonlightUiStateSettings = {
+  .state = 1,
+  .init = &main_init_settings,
+  .update = &main_update_settings,
+  .render = &main_render_settings,
+  .cleanup = &main_cleanup_settings
+};

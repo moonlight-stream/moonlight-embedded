@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL2_gfxPrimitives.h>
 
-void scene_init(Scene *scene) {
+void sui_scene_init(SUIScene *scene) {
   scene->count = 0;
   scene->elements = NULL;
   scene->clip.x = 0;
@@ -12,7 +12,7 @@ void scene_init(Scene *scene) {
   scene->clip.h = ui.height;
 }
 
-void scene_add_element(Scene *scene, Element *element) {
+void sui_scene_add_element(SUIScene *scene, SUIElement *element) {
   if (element->_scene) {
     // Don't bother adding an element to a scene if it already was added
     if (element->_scene == scene) {
@@ -20,7 +20,7 @@ void scene_add_element(Scene *scene, Element *element) {
     }
 
     // Remove this element from the other scene
-    scene_remove_element(element->_scene, element);
+    sui_scene_remove_element(element->_scene, element);
   }
 
   if (scene->elements == NULL) {
@@ -29,7 +29,7 @@ void scene_add_element(Scene *scene, Element *element) {
   }
   else {
     // Find the last element in the scene
-    Element *end = scene->elements;
+    SUIElement *end = scene->elements;
     while (end->_next) {
       end = end->_next;
     }
@@ -43,7 +43,7 @@ void scene_add_element(Scene *scene, Element *element) {
   scene->count += 1;
 }
 
-void scene_remove_element(Scene *scene, Element *element) {
+void sui_scene_remove_element(SUIScene *scene, SUIElement *element) {
   if (element->_scene != scene) {
     return;
   }
@@ -65,9 +65,9 @@ void scene_remove_element(Scene *scene, Element *element) {
   element->_scene = NULL;
 }
 
-void scene_update(Scene *scene, Input *input) {
+void sui_scene_update(SUIScene *scene, SUIInput *input) {
   // Call each scene element's Updater
-  Element *element = scene->elements;
+  SUIElement *element = scene->elements;
   while (element) {
     if (element->updater) {
       element->updater(element, input);
@@ -77,9 +77,9 @@ void scene_update(Scene *scene, Input *input) {
   }
 }
 
-void scene_render(Scene *scene) {
+void sui_scene_render(SUIScene *scene) {
   // Call each scene element's Renderer
-  Element *element = scene->elements;
+  SUIElement *element = scene->elements;
   while (element) {
     if (element->renderer) {
       element->renderer(element);
@@ -92,8 +92,8 @@ void scene_render(Scene *scene) {
 //  rectangleColor(ui.renderer, scene->clip.x, scene->clip.y, scene->clip.x + scene->clip.width, scene->clip.y + scene->clip.height, RGBA8(255, 0, 0, 255));
 }
 
-void scene_scroll_to_element(Scene *scene, Element *element) {
-  Rect in = intersect_bounds_clip(element->bounds.x, element->bounds.y, element->bounds.w, element->bounds.h, &scene->padded);
+void sui_scene_scroll_to_element(SUIScene *scene, SUIElement *element) {
+  SUIRect in = sui_intersect_bounds_clip(element->bounds.x, element->bounds.y, element->bounds.w, element->bounds.h, &scene->padded);
   int dx = 0, dy = 0;
 
   if (in.x != element->bounds.x || in.y != element->bounds.y) {
@@ -101,21 +101,21 @@ void scene_scroll_to_element(Scene *scene, Element *element) {
     int targetx = (int)fmaxf(element->bounds.x, scene->padded.x);
     int targety = (int)fmaxf(element->bounds.y, scene->padded.y);
 
-    dx = (int)fminf(SCROLL_SPEED, targetx - element->bounds.x);
-    dy = (int)fminf(SCROLL_SPEED, targety - element->bounds.y);
+    dx = (int)fminf(SUI_SCROLL_SPEED, targetx - element->bounds.x);
+    dy = (int)fminf(SUI_SCROLL_SPEED, targety - element->bounds.y);
   }
   else if (in.w != element->bounds.w || in.h != element->bounds.h) {
     // Element is clipped off the bottom or right of the scene's clip
     int targetx = (int)fminf(element->bounds.x, scene->padded.x + (scene->padded.w - element->bounds.w));
     int targety = (int)fminf(element->bounds.y, scene->padded.y + (scene->padded.h - element->bounds.h));
 
-    dx = -1 * (int)fminf(SCROLL_SPEED, element->bounds.x - targetx);
-    dy = -1 * (int)fminf(SCROLL_SPEED, element->bounds.y - targety);
+    dx = -1 * (int)fminf(SUI_SCROLL_SPEED, element->bounds.x - targetx);
+    dy = -1 * (int)fminf(SUI_SCROLL_SPEED, element->bounds.y - targety);
   }
 
   if (dx || dy) {
     // Update the location of every element in the scene by the delta
-    Element *element = scene->elements;
+    SUIElement *element = scene->elements;
     while (element) {
       if (!element->fixed) {
         element->bounds.x += dx;
@@ -127,8 +127,8 @@ void scene_scroll_to_element(Scene *scene, Element *element) {
   }
 }
 
-void scene_print(Scene *scene) {
-  Element *element = scene->elements;
+void sui_scene_print(SUIScene *scene) {
+  SUIElement *element = scene->elements;
   while (element) {
     element = element->_next;
   }

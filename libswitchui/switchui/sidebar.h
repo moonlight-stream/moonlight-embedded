@@ -7,22 +7,22 @@
 #include "scene.h"
 #include "ui.h"
 
-#define SIDEBAR_DIVIDER         "-"
-#define SIDEBAR_DIVIDER_HEIGHT  20
-#define SIDEBAR_DIVIDER_COLOR   0xffd0d0d0
+#define SUI_SIDEBAR_DIVIDER         "-"
+#define SUI_SIDEBAR_DIVIDER_HEIGHT  20
+#define SUI_SIDEBAR_DIVIDER_COLOR   0xffd0d0d0
 
-#define SIDEBAR_WIDTH           410
-#define SIDEBAR_ITEM_WIDTH      (SIDEBAR_WIDTH - 2*MARGIN_SIDE)
-#define SIDEBAR_ITEM_SPACING    5
-#define SIDEBAR_COLOR           0xfff0f0f0
+#define SUI_SIDEBAR_WIDTH           410
+#define SUI_SIDEBAR_ITEM_WIDTH      (SUI_SIDEBAR_WIDTH - 2*SUI_MARGIN_SIDE)
+#define SUI_SIDEBAR_ITEM_SPACING    5
+#define SUI_SIDEBAR_COLOR           0xfff0f0f0
 
-typedef struct _Sidebar {
-  Button *buttons;
-  Element *dividers;
-  Element background;
-  ButtonSet buttonSet;
-  Scene scene;
-} Sidebar;
+typedef struct _SUISidebar {
+  SUIButton *buttons;
+  SUIElement *dividers;
+  SUIElement background;
+  SUIButtonSet buttonSet;
+  SUIScene scene;
+} SUISidebar;
 
 /*
  * Initialize the menu items on the sidebar
@@ -33,7 +33,7 @@ typedef struct _Sidebar {
  *
  * @example `sidebar_init(&sidebar, 3, "General", SIDEBAR_DIVIDER, "About")`
  */
-void sidebar_init(Sidebar *sidebar, int count, ...);
-int sidebar_update(Sidebar *sidebar, Input *input);
-void sidebar_render(Sidebar *sidebar);
-void sidebar_cleanup(Sidebar *sidebar);
+void sui_sidebar_init(SUISidebar *sidebar, int count, ...);
+int sui_sidebar_update(SUISidebar *sidebar, SUIInput *input);
+void sui_sidebar_render(SUISidebar *sidebar);
+void sui_sidebar_cleanup(SUISidebar *sidebar);

@@ -3,24 +3,24 @@
 #include "common.h"
 #include "input.h"
 
-struct _Element;
-struct _Scene;
+struct _SUIElement;
+struct _SUIScene;
 
-typedef void (*Updater)(struct _Element *element, Input *input);
-typedef void (*Renderer)(struct _Element *element);
+typedef void (*SUIUpdater)(struct _SUIElement *element, SUIInput *input);
+typedef void (*SUIRenderer)(struct _SUIElement *element);
 
-typedef struct _Element {
-  Rect bounds;
-  Updater updater;
-  Renderer renderer;
+typedef struct _SUIElement {
+  SUIRect bounds;
+  SUIUpdater updater;
+  SUIRenderer renderer;
   bool fixed;
 
   // Used for tracking children in a scene
-  struct _Element *_previous;
-  struct _Element *_next;
-  struct _Scene *_scene;
-} Element;
+  struct _SUIElement *_previous;
+  struct _SUIElement *_next;
+  struct _SUIScene *_scene;
+} SUIElement;
 
-void element_init(Element *element);
-void element_layout_vertical(int sx, int sy, int spacing, int n, ...);
-void element_layout_horizontal(int sx, int sy, int spacing, int n, ...);
+void sui_element_init(SUIElement *element);
+void sui_element_layout_vertical(int sx, int sy, int spacing, int n, ...);
+void sui_element_layout_horizontal(int sx, int sy, int spacing, int n, ...);

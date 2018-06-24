@@ -18,9 +18,9 @@ typedef struct {
     bool touched;
     touchPosition position;
   } touch;
-} Input;
+} SUIInput;
 
-int switch_input_init();
-Input *switch_input_poll(HidControllerID id);
-bool switch_input_test(Input *input);
-void switch_input_cleanup();
+int sui_input_init();
+SUIInput *sui_input_poll(HidControllerID id);
+bool sui_input_test(SUIInput *input);
+void sui_input_cleanup();

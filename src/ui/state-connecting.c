@@ -29,9 +29,14 @@ void main_update_connecting(Input *input) {
   }
   else {
     if (gs_pair(&server, &props.pin[0]) == GS_OK) {
-      state = StateGamesList;
-    } else {
-      state = StateConnectionFailed;
+      ui_state = state_replace(ui_state, StateGamesList);
+    }
+    else {
+      ui_state = state_replace(ui_state, StateConnectionFailed);
+    }
+
+    if (input->buttons.down & KEY_B) {
+      ui_state = state_pop(ui_state);
     }
   }
 

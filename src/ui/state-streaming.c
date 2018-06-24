@@ -158,7 +158,7 @@ void main_update_streaming(Input *input) {
 
   if (input->buttons.down & KEY_PLUS) {
     stream_stop(platform_check(config.platform));
-    state = StateGamesList;
+    ui_state = state_pop(ui_state);
   }
 
   props.frame++;

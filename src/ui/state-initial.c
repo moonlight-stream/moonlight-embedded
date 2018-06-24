@@ -43,10 +43,13 @@ void main_update_initial(Input *input) {
   Button *clicked = button_set_update(&props.buttons, input, NULL);
 
   if (clicked == &props.connectButton) {
-    state = StateConnecting;
+    ui_state = state_push(ui_state, StateConnecting);
   }
   else if (clicked == &props.settingsButton) {
-    state = StateSettings;
+    ui_state = state_push(ui_state, StateSettings);
+  }
+  else if (input->buttons.down & KEY_B) {
+    ui_shouldExitApp = true;
   }
 }
 

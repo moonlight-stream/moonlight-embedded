@@ -19,6 +19,10 @@ int main_init_settings() {
 
 void main_update_settings(Input *input) {
   int menu = sidebar_update(&props.sidebar, input);
+
+  if (input->buttons.down & KEY_B) {
+    ui_state = state_pop(ui_state);
+  }
 }
 
 void main_render_settings() {

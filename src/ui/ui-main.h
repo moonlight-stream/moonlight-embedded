@@ -6,16 +6,18 @@
 #include "../config.h"
 #include "../connection.h"
 
-extern enum MainState {
+enum MoonlightUiState {
   StateInitial,
   StateSettings,
   StateConnecting,
   StateConnectionFailed,
   StateGamesList,
   StateStreaming
-} state;
+};
 
-extern bool shouldExitApp;
+State *ui_state;
+bool ui_shouldExitApp;
+
 
 int ui_main_init();
 void ui_main_loop();

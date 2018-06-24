@@ -1,11 +1,8 @@
 #include "ui-main.h"
 
-enum MainState state;
-bool shouldExitApp;
-
 int ui_main_init() {
-  state = StateInitial;
-  shouldExitApp = false;
+  ui_state = state_push(NULL, StateInitial);
+  ui_shouldExitApp = false;
 
   main_init_initial();
   main_init_settings();
@@ -18,11 +15,11 @@ int ui_main_init() {
 }
 
 void ui_main_loop() {
-  while(appletMainLoop() && !shouldExitApp)
+  while(appletMainLoop() && !ui_shouldExitApp)
   {
       Input *input = switch_input_poll(CONTROLLER_P1_AUTO);
 
-      switch (state) {
+      switch (ui_state->state) {
       case StateInitial:
         main_update_initial(input);
         main_render_initial();

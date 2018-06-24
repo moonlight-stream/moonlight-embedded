@@ -23,7 +23,9 @@ int main_init_connection_failed() {
 }
 
 void main_update_connection_failed(Input *input) {
-
+  if (input->buttons.down & KEY_B) {
+    ui_state = state_pop(ui_state);
+  }
 }
 
 void main_render_connection_failed() {

@@ -184,7 +184,7 @@ void main_update_games_list(Input *input) {
     }
 
     main_set_streaming_game(game);
-    state = StateStreaming;
+    ui_state = state_push(ui_state, StateStreaming);
   }
 
   if (focused) {
@@ -192,6 +192,10 @@ void main_update_games_list(Input *input) {
   }
 
   scene_update(&props.gamesListScene, input);
+
+  if (input->buttons.down & KEY_B) {
+    ui_state = state_pop(ui_state);
+  }
 
   props.frame++;
 }

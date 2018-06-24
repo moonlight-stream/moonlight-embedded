@@ -67,7 +67,7 @@ void sui_sidebar_init(SUISidebar *sidebar, int count, ...) {
   sui_scene_add_element(&sidebar->scene, &sidebar->background);
 
   // Create and position each item
-  int sx = SUI_MARGIN_SIDE;
+  int sx = SUI_SIDEBAR_MARGIN_SIDE;
   int sy = SUI_MARGIN_TOP + SUI_MARGIN_SIDE;
 
   for (i = 0; i < count; i++) {

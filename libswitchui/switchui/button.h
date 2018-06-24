@@ -1,6 +1,8 @@
 #pragma once
 
-#include "gui.h"
+#include "common.h"
+#include "input.h"
+#include "element.h"
 
 #define BUTTON_TEXT_COLOR             RGBA8(0x2d, 0x2d, 0x2d, 0xff)
 #define BUTTON_FOCUSED_TEXT_COLOR     RGBA8(0x49, 0x28, 0xf0, 0xff)

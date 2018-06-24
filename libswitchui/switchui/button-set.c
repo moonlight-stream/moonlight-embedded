@@ -1,4 +1,5 @@
 #include "button-set.h"
+#include "ui.h"
 
 static int next_index(ButtonSet *buttonSet, int index, int delta) {
   if (buttonSet->wrap) {

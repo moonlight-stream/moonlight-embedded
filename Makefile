@@ -33,8 +33,8 @@ include $(DEVKITPRO)/libnx/switch_rules
 DIST		:=	dist
 TARGET		:=	$(DIST)/$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/audio src/video src/input \
-			src/gui src/gui/main \
+SOURCES		:=	src src/audio src/video src/input src/ui \
+				libswitchui libswitchui/switchui \
 				libgamestream \
 				third_party/enet \
 				third_party/inih \
@@ -43,7 +43,8 @@ SOURCES		:=	src src/audio src/video src/input \
 				third_party/moonlight-common-c/reedsolomon \
 				third_party/h264bitstream 
 
-INCLUDES	:=	libgamestream \
+INCLUDES	:=	libswitchui \
+                                libgamestream \
                                 third_party/enet/include \
                                 third_party/inih \
                                 third_party/libuuid \

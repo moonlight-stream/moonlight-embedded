@@ -1,9 +1,9 @@
-#include "switch.h"
+#include "input.h"
 
 Input input;
 
 int switch_input_init() {
-
+  return 0;
 }
 
 Input *switch_input_poll(HidControllerID id) {
@@ -44,5 +44,5 @@ bool switch_input_test(Input *input) {
 }
 
 void switch_input_cleanup() {
-  /// TODO: Implement
+
 }

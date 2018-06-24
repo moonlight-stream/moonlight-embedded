@@ -1,8 +1,4 @@
-#include "gui-main.h"
-
-#include "../gui.h"
-#include "../text.h"
-#include "../button.h"
+#include "ui-main.h"
 
 #include "moonlight_switch_connecting_png.h"
 
@@ -44,28 +40,28 @@ void main_update_connecting(Input *input) {
 
 
 void main_render_connecting()  {
-  SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
-  SDL_RenderClear(gui.renderer);
+  SDL_SetRenderDrawColor(ui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
+  SDL_RenderClear(ui.renderer);
 
   // Draw the connecting image
-  draw_texture(props.connectingTexture, (gui.width - props.connectingWidth) / 2, MARGIN_TOP + 75, props.connectingWidth, props.connectingHeight);
+  draw_texture(props.connectingTexture, (ui.width - props.connectingWidth) / 2, MARGIN_TOP + 75, props.connectingWidth, props.connectingHeight);
 
   // Draw the guide text
-  int textNormalHeight = text_ascent(gui.fontNormal);
+  int textNormalHeight = text_ascent(ui.fontNormal);
   int textEnterWidth, textEnterX, textEnterY;
   char *textEnter = "Enter the following PIN on the target PC:";
-  measure_text(gui.fontNormal, textEnter, &textEnterWidth, NULL);
-  textEnterX = (gui.width - textEnterWidth) / 2;
+  measure_text(ui.fontNormal, textEnter, &textEnterWidth, NULL);
+  textEnterX = (ui.width - textEnterWidth) / 2;
   textEnterY = MARGIN_TOP + 75 + props.connectingHeight + 90;
-  draw_text(gui.fontNormal, textEnter, textEnterX, textEnterY, darkColor, false, -1);
+  draw_text(ui.fontNormal, textEnter, textEnterX, textEnterY, COLOR_DARK, false, -1);
 
   // Draw the PIN text
-  int textMassiveHeight = text_ascent(gui.fontHeading);
+  int textMassiveHeight = text_ascent(ui.fontHeading);
   int textPinWidth, textPinX, textPinY;
-  measure_text(gui.fontMassive, props.pin, &textPinWidth, NULL);
-  textPinX = (gui.width - textPinWidth) / 2;
+  measure_text(ui.fontMassive, props.pin, &textPinWidth, NULL);
+  textPinX = (ui.width - textPinWidth) / 2;
   textPinY = MARGIN_TOP + 75 + props.connectingHeight + 90 + textNormalHeight + 60;
-  draw_text(gui.fontMassive, props.pin, textPinX, textPinY, darkColor, false, -1);
+  draw_text(ui.fontMassive, props.pin, textPinX, textPinY, COLOR_DARK, false, -1);
 
   // Draw the heading
   draw_top_header("Moonlight  ›  Connection");
@@ -73,7 +69,7 @@ void main_render_connecting()  {
   // Draw the OK and Back actions on the bottom toolbar
   draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
 
-  SDL_RenderPresent(gui.renderer);
+  SDL_RenderPresent(ui.renderer);
 }
 
 void main_cleanup_connecting() {

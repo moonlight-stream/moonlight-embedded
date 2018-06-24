@@ -1,6 +1,7 @@
 #pragma once
 
-#include "gui.h"
+#include "common.h"
+#include "input.h"
 #include "button.h"
 
 #define BUTTON_SET_DEFAULT_CAPACITY 10

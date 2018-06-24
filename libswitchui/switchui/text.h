@@ -1,10 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-#include <switch.h>
-
-#include "gui.h"
+#include "common.h"
 
 #define TRUNCATE_FADE_WIDTH 15
 

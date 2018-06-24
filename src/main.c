@@ -28,7 +28,7 @@
 #include "video/video.h"
 #include "input/mapping.h"
 
-#include "gui/gui.h"
+#include "ui/ui-main.h"
 
 #include <Limelight.h>
 
@@ -148,11 +148,18 @@ int main(int argc, char* argv[]) {
   printf("+: quit\n");
   printf("\n");
 
-  if (gui_init() == 0) {
-    gui_main_loop();
+  if (ui_init() < 0) {
+    fprintf(stderr, "Could not initialize Switch UI\n");
+  }
+  else if (ui_main_init() < 0) {
+    fprintf(stderr, "Could not initialize Moonlight Embedded UI\n");
+  }
+  else {
+    ui_main_loop();
   }
 
-  gui_cleanup();
+  ui_main_cleanup();
+  ui_cleanup();
 
   plExit();
   setExit();

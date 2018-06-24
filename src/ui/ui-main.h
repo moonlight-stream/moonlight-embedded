@@ -1,20 +1,10 @@
 #pragma once
 
-#include "../gui.h"
-#include "../text.h"
-#include "../button.h"
-#include "../button-set.h"
+#include <switchui.h>
 
-#include <SDL2/SDL2_gfxPrimitives.h>
-#include <SDL2/SDL_image.h>
-
-#define MARGIN_SIDE 30
-#define MARGIN_TOP 88
-#define MARGIN_BOTTOM 73
-
-#define MARGIN_TOOLBAR_SIDE 30
-#define MARGIN_BETWEEN_TOOLBAR_ICON_TEXT  10
-#define MARGIN_BETWEEN_TOOLBAR_BUTTONS    44
+#include <Limelight.h>
+#include "../config.h"
+#include "../connection.h"
 
 extern enum MainState {
   StateInitial,
@@ -26,32 +16,10 @@ extern enum MainState {
 } state;
 
 extern bool shouldExitApp;
-extern uint32_t darkColor;
-extern uint32_t lightColor;
-extern SDL_Texture *buttonATexture;
-extern SDL_Texture *buttonBTexture;
-extern int buttonAWidth, buttonAHeight, buttonBWidth, buttonBHeight;
 
-enum ToolbarAction {
-  ToolbarActionA, ToolbarActionB
-};
-
-/*
- * Draw the actions on the bottom toolbar with the chosen icons and text
- *
- * @param count   number of actions that will be drawn
- * @param ...     list of pairs of action text and ToolbarAction
- *
- * @example `draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
- */
-void draw_bottom_toolbar(int count, ...);
-
-/*
- * Draw the text on the top header
- *
- * @param text    text to display on the top of the header
- */
-void draw_top_header(const char *text);
+int ui_main_init();
+void ui_main_loop();
+void ui_main_cleanup();
 
 int main_init_initial();
 void main_update_initial(Input *input);

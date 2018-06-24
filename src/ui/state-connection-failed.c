@@ -1,4 +1,4 @@
-#include "gui-main.h"
+#include "ui-main.h"
 
 #include "moonlight_switch_connection_failed_png.h"
 
@@ -27,30 +27,30 @@ void main_update_connection_failed(Input *input) {
 }
 
 void main_render_connection_failed() {
-  SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
-  SDL_RenderClear(gui.renderer);
+  SDL_SetRenderDrawColor(ui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
+  SDL_RenderClear(ui.renderer);
 
   // Draw the connection failed image
   draw_texture(props.connectionFailedTexture,
-               (gui.width - props.connectionFailedWidth) / 2,
+               (ui.width - props.connectionFailedWidth) / 2,
                MARGIN_TOP + 75,
                props.connectionFailedWidth,
                props.connectionFailedHeight);
 
   // Draw the message text
-  int textNormalHeight = text_ascent(gui.fontNormal);
+  int textNormalHeight = text_ascent(ui.fontNormal);
   int textEnterWidth, textEnterX, textEnterY;
-  measure_text(gui.fontNormal, "Unable to connect to the target PC:", &textEnterWidth, NULL);
-  textEnterX = (gui.width - textEnterWidth) / 2;
+  measure_text(ui.fontNormal, "Unable to connect to the target PC:", &textEnterWidth, NULL);
+  textEnterX = (ui.width - textEnterWidth) / 2;
   textEnterY = MARGIN_TOP + 75 + props.connectionFailedHeight + 90;
-  draw_text(gui.fontNormal, "Unable to connect to the target PC:", textEnterX, textEnterY, darkColor, false, -1);
+  draw_text(ui.fontNormal, "Unable to connect to the target PC:", textEnterX, textEnterY, COLOR_DARK, false, -1);
 
   // Draw the error text
   int textErrorWidth, textErrorX, textErrorY;
-  measure_text(gui.fontNormal, gs_error, &textErrorWidth, NULL);
-  textErrorX = (gui.width - textErrorWidth) / 2;
+  measure_text(ui.fontNormal, gs_error, &textErrorWidth, NULL);
+  textErrorX = (ui.width - textErrorWidth) / 2;
   textErrorY = textEnterY + textNormalHeight + 10;
-  draw_text(gui.fontNormal, gs_error, textErrorX, textErrorY, lightColor, false, -1);
+  draw_text(ui.fontNormal, gs_error, textErrorX, textErrorY, COLOR_LIGHT, false, -1);
 
   // Draw the heading
   draw_top_header("Moonlight  ›  Connection");
@@ -58,7 +58,7 @@ void main_render_connection_failed() {
   // Draw the OK and Back actions on the bottom toolbar
   draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
 
-  SDL_RenderPresent(gui.renderer);
+  SDL_RenderPresent(ui.renderer);
 }
 
 void main_cleanup_connection_failed() {

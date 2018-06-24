@@ -1,6 +1,6 @@
-#include "gui-main.h"
+#include "ui-main.h"
 
-#include "../../video/video.h"
+#include "../video/video.h"
 #include <libavcodec/avcodec.h>
 
 static struct {
@@ -27,7 +27,7 @@ static void draw_frame(uint8_t **data, int *linesize) {
 
 
 int main_init_streaming() {
-  props.streamTexture = SDL_CreateTexture(gui.renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, gui.width, gui.height);
+  props.streamTexture = SDL_CreateTexture(ui.renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, ui.width, ui.height);
   if (!props.streamTexture) {
     fprintf(stderr, "[GUI, streaming] Could not create SDL texture for streaming: %s\n", SDL_GetError());
     return -1;
@@ -166,9 +166,9 @@ void main_update_streaming(Input *input) {
 
 void main_render_streaming() {
   // Display the updated frame
-  SDL_RenderClear(gui.renderer);
-  SDL_RenderCopy(gui.renderer, props.streamTexture, NULL, NULL);
-  SDL_RenderPresent(gui.renderer);
+  SDL_RenderClear(ui.renderer);
+  SDL_RenderCopy(ui.renderer, props.streamTexture, NULL, NULL);
+  SDL_RenderPresent(ui.renderer);
 }
 
 void main_cleanup_streaming() {

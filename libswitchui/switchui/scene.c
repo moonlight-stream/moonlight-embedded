@@ -1,23 +1,15 @@
 #include "scene.h"
-#include "gui.h"
+#include "ui.h"
 
 #include <SDL2/SDL2_gfxPrimitives.h>
-
-void element_init(Element *element) {
-  element->updater = NULL;
-  element->renderer = NULL;
-  element->_scene = NULL;
-  element->_previous = NULL;
-  element->_next = NULL;
-}
 
 void scene_init(Scene *scene) {
   scene->count = 0;
   scene->elements = NULL;
   scene->clip.x = 0;
   scene->clip.y = 0;
-  scene->clip.width = gui.width;
-  scene->clip.height = gui.height;
+  scene->clip.w = ui.width;
+  scene->clip.h = ui.height;
 }
 
 void scene_add_element(Scene *scene, Element *element) {
@@ -31,16 +23,23 @@ void scene_add_element(Scene *scene, Element *element) {
     scene_remove_element(element->_scene, element);
   }
 
-  // Save some cycles by adding to the front of the list
-  if (scene->elements) {
-    scene->elements->_previous = element;
+  if (scene->elements == NULL) {
+    scene->elements = element;
+    element->_previous = NULL;
+  }
+  else {
+    // Find the last element in the scene
+    Element *end = scene->elements;
+    while (end->_next) {
+      end = end->_next;
+    }
+
+    end->_next = element;
+    element->_previous = end;
   }
 
-  element->_previous = NULL;
-  element->_next = scene->elements;
+  element->_next = NULL;
   element->_scene = scene;
-
-  scene->elements = element;
   scene->count += 1;
 }
 
@@ -90,11 +89,11 @@ void scene_render(Scene *scene) {
   }
 
 //  // DEBUG
-//  rectangleColor(gui.renderer, scene->clip.x, scene->clip.y, scene->clip.x + scene->clip.width, scene->clip.y + scene->clip.height, RGBA8(255, 0, 0, 255));
+//  rectangleColor(ui.renderer, scene->clip.x, scene->clip.y, scene->clip.x + scene->clip.width, scene->clip.y + scene->clip.height, RGBA8(255, 0, 0, 255));
 }
 
 void scene_scroll_to_element(Scene *scene, Element *element) {
-  Rect in = intersect_bounds_clip(element->bounds.x, element->bounds.y, element->bounds.width, element->bounds.height, &scene->padded);
+  Rect in = intersect_bounds_clip(element->bounds.x, element->bounds.y, element->bounds.w, element->bounds.h, &scene->padded);
   int dx = 0, dy = 0;
 
   if (in.x != element->bounds.x || in.y != element->bounds.y) {
@@ -105,10 +104,10 @@ void scene_scroll_to_element(Scene *scene, Element *element) {
     dx = (int)fminf(SCROLL_SPEED, targetx - element->bounds.x);
     dy = (int)fminf(SCROLL_SPEED, targety - element->bounds.y);
   }
-  else if (in.width != element->bounds.width || in.height != element->bounds.height) {
+  else if (in.w != element->bounds.w || in.h != element->bounds.h) {
     // Element is clipped off the bottom or right of the scene's clip
-    int targetx = (int)fminf(element->bounds.x, scene->padded.x + (scene->padded.width - element->bounds.width));
-    int targety = (int)fminf(element->bounds.y, scene->padded.y + (scene->padded.height - element->bounds.height));
+    int targetx = (int)fminf(element->bounds.x, scene->padded.x + (scene->padded.w - element->bounds.w));
+    int targety = (int)fminf(element->bounds.y, scene->padded.y + (scene->padded.h - element->bounds.h));
 
     dx = -1 * (int)fminf(SCROLL_SPEED, element->bounds.x - targetx);
     dy = -1 * (int)fminf(SCROLL_SPEED, element->bounds.y - targety);
@@ -118,8 +117,11 @@ void scene_scroll_to_element(Scene *scene, Element *element) {
     // Update the location of every element in the scene by the delta
     Element *element = scene->elements;
     while (element) {
-      element->bounds.x += dx;
-      element->bounds.y += dy;
+      if (!element->fixed) {
+        element->bounds.x += dx;
+        element->bounds.y += dy;
+      }
+
       element = element->_next;
     }
   }

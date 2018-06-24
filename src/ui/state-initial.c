@@ -1,4 +1,4 @@
-#include "gui-main.h"
+#include "ui-main.h"
 
 #include "moonlight_switch_logo_png.h"
 
@@ -22,14 +22,14 @@ int main_init_initial() {
 
   button_init(&props.connectButton);
   props.connectButton.text = "Connect";
-  props.connectButton.e.bounds.x = gui.width/2 - props.connectButton.e.bounds.width/2;
-  props.connectButton.e.bounds.y = 100 + props.logoHeight + (gui.height - MARGIN_BOTTOM - props.logoHeight - 100)/2 - props.connectButton.e.bounds.height/2;
+  props.connectButton.e.bounds.x = ui.width/2 - props.connectButton.e.bounds.w/2;
+  props.connectButton.e.bounds.y = 100 + props.logoHeight + (ui.height - MARGIN_BOTTOM - props.logoHeight - 100)/2 - props.connectButton.e.bounds.h/2;
   props.connectButton.focused = true;
 
   button_init(&props.settingsButton);
   props.settingsButton.text = "Settings";
-  props.settingsButton.e.bounds.x = gui.width/2 - props.settingsButton.e.bounds.width/2;
-  props.settingsButton.e.bounds.y = props.connectButton.e.bounds.y + props.connectButton.e.bounds.height + 15;
+  props.settingsButton.e.bounds.x = ui.width/2 - props.settingsButton.e.bounds.w/2;
+  props.settingsButton.e.bounds.y = props.connectButton.e.bounds.y + props.connectButton.e.bounds.h + 15;
   props.settingsButton.focused = false;
 
   button_set_init(&props.buttons, Vertical);
@@ -51,11 +51,11 @@ void main_update_initial(Input *input) {
 }
 
 void main_render_initial() {
-  SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
-  SDL_RenderClear(gui.renderer);
+  SDL_SetRenderDrawColor(ui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
+  SDL_RenderClear(ui.renderer);
 
   // Draw the logo
-  draw_texture(props.logoTexture, (gui.width - props.logoWidth) / 2, 150, props.logoWidth, props.logoHeight);
+  draw_texture(props.logoTexture, (ui.width - props.logoWidth) / 2, 150, props.logoWidth, props.logoHeight);
 
   // Draw the OK action on the bottom toolbar
   draw_bottom_toolbar(1, "OK", ToolbarActionA);
@@ -63,7 +63,7 @@ void main_render_initial() {
   // Draw the main buttons
   button_set_render(&props.buttons);
 
-  SDL_RenderPresent(gui.renderer);
+  SDL_RenderPresent(ui.renderer);
 }
 
 void main_cleanup_initial() {

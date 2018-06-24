@@ -1,4 +1,5 @@
 #include "text.h"
+#include "ui.h"
 
 int text_ascent(TTF_Font *font) {
   return TTF_FontAscent(font);
@@ -13,8 +14,8 @@ void draw_text(TTF_Font *font, const char *text, int x, int y, uint32_t color, b
   Rect clip = {
     .x = 0,
     .y = 0,
-    .width = gui.width,
-    .height = gui.height
+    .w = ui.width,
+    .h = ui.height
   };
 
   draw_clipped_text(font, text, x, y, &clip, color, align_center, truncate_width);
@@ -61,11 +62,11 @@ void draw_clipped_text(TTF_Font *font, const char *text, int x, int y, Rect *cli
     }
   }
 
-  SDL_Texture *textTexture = SDL_CreateTextureFromSurface(gui.renderer, textSurface);
+  SDL_Texture *textTexture = SDL_CreateTextureFromSurface(ui.renderer, textSurface);
   SDL_FreeSurface(textSurface);
 
   // Render the surface at a specific location
-  SDL_Rect destinationRect;
+  Rect destinationRect;
 
   if (align_center) {
       destinationRect.x = x - textWidth/2;

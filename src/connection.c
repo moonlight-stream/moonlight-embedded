@@ -22,7 +22,6 @@
 #include "config.h"
 #include "platform.h"
 #include "video/video.h"
-#include "gui/gui.h"
 
 #include <stdio.h>
 #include <stdarg.h>

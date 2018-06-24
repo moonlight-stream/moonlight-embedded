@@ -1,5 +1,4 @@
-#include "gui-main.h"
-#include "../scene.h"
+#include "ui-main.h"
 
 #define GAME_BUTTON_WIDTH       228
 #define GAME_BUTTON_HEIGHT      228
@@ -57,8 +56,8 @@ static void game_button_renderer(Button *button) {
   Rect clip = get_clip(button);
 
   // Measure the size of the game title
-  int textWidth, textHeight = text_ascent(gui.fontSmall);
-  measure_text(gui.fontSmall, button->text, &textWidth, NULL);
+  int textWidth, textHeight = text_ascent(ui.fontSmall);
+  measure_text(ui.fontSmall, button->text, &textWidth, NULL);
 
   // Draw the boxart of the game
   SDL_Texture *artTexture = props.gamesArtTextures[gameIndex];
@@ -69,8 +68,8 @@ static void game_button_renderer(Button *button) {
     draw_clipped_texture(artTexture,
                          button->e.bounds.x + 3,
                          button->e.bounds.y + 3,
-                         button->e.bounds.width - 6,
-                         button->e.bounds.height - 16 - textHeight,
+                         button->e.bounds.w - 6,
+                         button->e.bounds.h - 16 - textHeight,
                          &clip);
   }
 
@@ -78,30 +77,30 @@ static void game_button_renderer(Button *button) {
   for (int i = 0; i < 3; i++) {
     draw_clipped_rectangle(button->e.bounds.x + i,
                            button->e.bounds.y + i,
-                           button->e.bounds.width - 2*i,
-                           button->e.bounds.height - 2*i,
+                           button->e.bounds.w - 2*i,
+                           button->e.bounds.h - 2*i,
                            &clip,
                            BUTTON_FOCUSED_BACKGROUND);
   }
 
   // Draw the caption box
   draw_clipped_box(button->e.bounds.x,
-                   button->e.bounds.y + button->e.bounds.height - 16 - textHeight,
-                   button->e.bounds.width,
+                   button->e.bounds.y + button->e.bounds.h - 16 - textHeight,
+                   button->e.bounds.w,
                    16 + textHeight,
                    &clip,
                    BUTTON_FOCUSED_BACKGROUND);
 
   // Draw the caption
   uint32_t textColor = button->focused ? BUTTON_FOCUSED_TEXT_COLOR : BUTTON_TEXT_COLOR;
-  draw_clipped_text(gui.fontSmall,
+  draw_clipped_text(ui.fontSmall,
                     button->text,
                     button->e.bounds.x + 8,
-                    button->e.bounds.y + button->e.bounds.height - 8 - textHeight,
+                    button->e.bounds.y + button->e.bounds.h - 8 - textHeight,
                     &clip,
                     textColor,
                     false,
-                    button->e.bounds.width - 16);
+                    button->e.bounds.w - 16);
 }
 
 int main_init_games_list() {
@@ -112,12 +111,12 @@ int main_init_games_list() {
   scene_init(&props.gamesListScene);
   props.gamesListScene.clip.x = 0;
   props.gamesListScene.clip.y = MARGIN_TOP + 1;
-  props.gamesListScene.clip.width = gui.width;
-  props.gamesListScene.clip.height = gui.height - MARGIN_TOP - MARGIN_BOTTOM - 2;
+  props.gamesListScene.clip.w = ui.width;
+  props.gamesListScene.clip.h = ui.height - MARGIN_TOP - MARGIN_BOTTOM - 2;
   props.gamesListScene.padded.x = MARGIN_SIDE;
   props.gamesListScene.padded.y = MARGIN_TOP + MARGIN_SIDE + 1;
-  props.gamesListScene.padded.width = gui.width - 2*MARGIN_SIDE;
-  props.gamesListScene.padded.height = gui.height - MARGIN_TOP - MARGIN_BOTTOM - 2*MARGIN_SIDE - 2;
+  props.gamesListScene.padded.w = ui.width - 2*MARGIN_SIDE;
+  props.gamesListScene.padded.h = ui.height - MARGIN_TOP - MARGIN_BOTTOM - 2*MARGIN_SIDE - 2;
 
   return 0;
 }
@@ -141,7 +140,7 @@ void main_update_games_list(Input *input) {
       gs_app_boxart(&server, game->id, &artData, &artSize);
 
       if (artData && artSize) {
-        props.gamesArtTextures[i] = load_png_rescale(artData, artSize, GAME_BUTTON_WIDTH - 6, GAME_BUTTON_HEIGHT - 16 - text_ascent(gui.fontSmall));
+        props.gamesArtTextures[i] = load_png_rescale(artData, artSize, GAME_BUTTON_WIDTH - 6, GAME_BUTTON_HEIGHT - 16 - text_ascent(ui.fontSmall));
         SDL_QueryTexture(props.gamesArtTextures[i], NULL, NULL, &props.gamesArtWidths[i], &props.gamesArtHeights[i]);
 
         free(artData);
@@ -156,8 +155,8 @@ void main_update_games_list(Input *input) {
       button->text = game->name;
       button->contentRenderer = &game_button_renderer;
       button->user = i;
-      button->e.bounds.width = GAME_BUTTON_WIDTH;
-      button->e.bounds.height = GAME_BUTTON_HEIGHT;
+      button->e.bounds.w = GAME_BUTTON_WIDTH;
+      button->e.bounds.h = GAME_BUTTON_HEIGHT;
       button->e.bounds.x = MARGIN_SIDE + ((i % GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_WIDTH + GAME_BUTTON_SPACING));
       button->e.bounds.y = MARGIN_TOP + MARGIN_SIDE + ((i / GAME_BUTTON_FLOW_SIZE) * (GAME_BUTTON_HEIGHT + GAME_BUTTON_SPACING));
       props.buttons[i] = button;
@@ -198,15 +197,15 @@ void main_update_games_list(Input *input) {
 }
 
 void main_render_games_list() {
-  SDL_SetRenderDrawColor(gui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
-  SDL_RenderClear(gui.renderer);
+  SDL_SetRenderDrawColor(ui.renderer, 0xeb, 0xeb, 0xeb, 0xff);
+  SDL_RenderClear(ui.renderer);
 
   draw_top_header("Moonlight  ›  Games");
   draw_bottom_toolbar(2, "OK", ToolbarActionA, "Back", ToolbarActionB);
 
   scene_render(&props.gamesListScene);
 
-  SDL_RenderPresent(gui.renderer);
+  SDL_RenderPresent(ui.renderer);
 }
 
 void main_cleanup_games_list() {

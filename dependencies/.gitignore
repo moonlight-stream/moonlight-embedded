@@ -1,0 +1,7 @@
+# Ignore everything:
+*/*
+
+# Except:
+!dependencies.sh
+!*/PKGBUILD
+!*/*.patch

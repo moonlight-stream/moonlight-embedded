@@ -1,0 +1,63 @@
+diff --git a/Makefile.org b/Makefile.org
+index f51f0a7..7311e3b 100644
+--- a/Makefile.org
++++ b/Makefile.org
+@@ -137,7 +137,7 @@ FIPSCANLIB=
+
+ BASEADDR=
+
+-DIRS=   crypto ssl engines apps test tools
++DIRS=   crypto ssl 		# engines apps test tools
+ ENGDIRS= ccgost
+ SHLIBDIRS= crypto ssl
+
+@@ -274,7 +274,7 @@ reflect:
+
+ sub_all: build_all
+
+-build_all: build_libs build_apps build_tests build_tools
++build_all: build_libs 		# build_apps build_tests build_tools
+
+ build_libs: build_libcrypto build_libssl openssl.pc
+
+diff --git a/Configure b/Configure
+index 744b493..405235d 100755
+--- a/Configure
++++ b/Configure
+@@ -1510,6 +1510,11 @@ if ($target =~ /\-icc$/)	# Intel C compiler
+ 		}
+ 	}
+
++#
++# Remove -ldl on Switch
++#
++$lflags=~s/\-ldl//;
++
+ # Unlike other OSes (like Solaris, Linux, Tru64, IRIX) BSD run-time
+ # linkers (tested OpenBSD, NetBSD and FreeBSD) "demand" RPATH set on
+ # .so objects. Apparently application RPATH is not global and does
+diff --git a/crypto/ui/ui_openssl.c b/crypto/ui/ui_openssl.c
+index 8a43590..c317682 100644
+--- a/crypto/ui/ui_openssl.c
++++ b/crypto/ui/ui_openssl.c
+@@ -201,6 +201,10 @@
+ #  undef  TERMIOS
+ #  define TERMIO
+ #  undef  SGTTY
++# elif defined(__SWITCH__)
++#  undef  TERMIOS
++#  undef  TERMIO
++#  undef  SGTTY
+ /*
+  * We know that VMS, MSDOS, VXWORKS, NETWARE use entirely other mechanisms.
+  * MAC_OS_GUSI_SOURCE should probably go away, but that needs to be confirmed.
+@@ -266,7 +270,7 @@ struct IOSB {
+ typedef int sig_atomic_t;
+ #endif
+
+-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(MAC_OS_GUSI_SOURCE) || defined(OPENSSL_SYS_NETWARE)
++#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(MAC_OS_GUSI_SOURCE) || defined(OPENSSL_SYS_NETWARE) || defined(__SWITCH__)
+ /*
+  * This one needs work. As a matter of fact the code is unoperational
+  * and this is only a trick to get it compiled.
+

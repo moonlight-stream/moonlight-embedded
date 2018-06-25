@@ -1,0 +1,38 @@
+pkgname=switch-openssl
+pkgver=1.0.2o
+pkgrel=1
+pkgdesc='OpenSSL is a robust, commercial-grade, and full-featured toolkit for the Transport Layer Security (TLS) and Secure Sockets Layer (SSL) protocols.'
+arch=('any')
+url='https://www.openssl.org/'
+license=(MIT/X)
+options=(!strip libtool staticlibs)
+source=("https://www.openssl.org/source/openssl-$pkgver.tar.gz" "openssl-1.0.2o.patch")
+sha256sums=(
+  'ec3f5c9714ba0fd45cb4e087301eb1336c317e0d20b575a125050470e8089e4d'
+  '1cd40064d2f8f1debe1efdf540e6605efb6c76142fa01858d1e92da82cfa2257'
+)
+makedepends=('switch-pkg-config' 'devkitpro-pkgbuild-helpers')
+
+build() {
+  cd openssl-$pkgver
+
+  source /opt/devkitpro/devkita64.sh
+  source /opt/devkitpro/switchvars.sh
+
+  patch -p1 -i $srcdir/openssl-1.0.2o.patch
+
+  CROSS_COMPILE=aarch64-none-elf- \
+  ./Configure linux-aarch64 --prefix="${PORTLIBS_PREFIX}" --openssldir="${PORTLIBS_PREFIX}" \
+    no-shared no-dso no-engine no-asm no-apps enable-ssl-trace \
+    -D__SWITCH__ -DNO_SYS_UN_H -DNO_SYSLOG -O3 -Wall -g -O2 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec \
+    -I${DEVKITPRO}/devkitA64/aarch64-none-elf/include -I${DEVKITPRO}/libnx/include
+
+  make depend
+  make
+}
+
+package() {
+  cd openssl-$pkgver
+
+  make DESTDIR="$pkgdir" install
+}

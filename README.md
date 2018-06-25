@@ -13,10 +13,15 @@ This is currently in an utterly **unusable state**, since Nintendo Switch homebr
 
 ## Quick start
 
-* Ensure your Nintendo Switch and streaming PC are on the same network
-* Turn on Shield Streaming in the GFE settings
-* Run the Moonlight Switch homebrew application
-* Play games!
+* Deply:
+    - Edit `moonlight.ini` to change the IP address to that of your streaming PC. 
+    - On your SD card, create the folder `/switch/moonlight-switch/` and place `moonlight.ini` in that directory.
+    - Send `moonlight-switch.nro` to your device by either placing it in `/switch/moonlight-switch/` on your SD card, or use `nxlink`. To see stdout and stderr, use the `-s` server option: `nxlink -s moonlight-switch.nro`
+* Running:
+    * Ensure your Nintendo Switch and streaming PC are on the same network
+    * Turn on Shield Streaming in the GFE settings
+    * Run the Moonlight Switch homebrew application
+    * Play games!
 
 ## Bugs
 

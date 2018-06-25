@@ -13,7 +13,7 @@ git clone --recursive https://github.com/kbhomes/moonlight-switch.git
 Dependencies are collected, built, and installed by [`dependencies/dependencies.sh`](https://github.com/kbhomes/moonlight-switch/blob/master/dependencies/dependencies.sh):
 
 ```
-./dependencies/dependencies.sh
+(cd dependencies; ./dependencies.sh)
 ```
 
 On some platforms, you may need root privileges, in which case the script will use `sudo` to ask for your password. This dependency preparation script does the following:

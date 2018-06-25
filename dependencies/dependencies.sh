@@ -4,10 +4,12 @@ if [[ -n $(command -v pacman) ]]; then
     PACMAN="pacman"
     MAKEPKG="makepkg"
     TOUCH="touch"
+    PATCH="patch"
 elif [[ -n $(command -v dkp-pacman) ]]; then 
     PACMAN="sudo dkp-pacman"
     MAKEPKG="dkp-makepkg"
     TOUCH="sudo touch"
+    PATCH="sudo patch"
 else 
     echo "ERROR: Could not find pacman (or dkp-pacman); is $DEVKITPRO set and on the path?"
     exit 1
@@ -17,7 +19,7 @@ echo "Adding missing <sys/termios.h> to devkitA64"
 $TOUCH $DEVKITPRO/devkitA64/aarch64-none-elf/include/sys/termios.h
 
 echo "Applying patch to introduce socklen_t to netdb.h of libnx"
-patch -p1 --forward --directory $DEVKITPRO/libnx/include/ < libnx-netdb-socklen_t.patch
+$PATCH -p1 --forward --directory $DEVKITPRO/libnx/include/ < libnx-netdb-socklen_t.patch
 
 echo "Installing necessary dependencies for moonlight-switch"
 $PACMAN -S --needed --noconfirm \

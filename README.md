@@ -1,6 +1,6 @@
-# Moonlight Switch
-
-![moonlight-switch](https://raw.githubusercontent.com/kbhomes/moonlight-switch/master/data/moonlight_switch_logo.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kbhomes/moonlight-switch/master/data/moonlight_switch_logo.png" />
+</p>
 
 Moonlight Switch allows you to stream your collection of games on your GeForce-equipped PC directly to your Nintendo Switch. Based on @irtimmer's wonderful [`moonlight-embedded`](https://github.com/irtimmer/moonlight-embedded).
 

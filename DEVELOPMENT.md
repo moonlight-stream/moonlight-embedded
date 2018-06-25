@@ -10,10 +10,13 @@ git clone --recursive https://github.com/kbhomes/moonlight-switch.git
 
 ## Dependencies
 
+Ensure that you have followed instructions to [install devKitPro and libnx](http://switchbrew.org/index.php?title=Setting_up_Development_Environment) on your platform.
+
 Dependencies are collected, built, and installed by [`dependencies/dependencies.sh`](https://github.com/kbhomes/moonlight-switch/blob/master/dependencies/dependencies.sh):
 
 ```
-(cd dependencies; ./dependencies.sh)
+cd moonlight-switch/dependencies/
+./dependencies.sh
 ```
 
 On some platforms, you may need root privileges, in which case the script will use `sudo` to ask for your password. This dependency preparation script does the following:
@@ -43,3 +46,7 @@ Build Moonlight Switch by running `make` in the root directory. In the end, this
 - Edit `dist/moonlight.ini` to change the IP address to that of your streaming PC. 
 - On your SD card, create the folder `/switch/moonlight-switch/` and place `moonlight.ini` in that directory.
 - Send `moonlight-switch.nro` to your device by either placing it in `/switch/moonlight-switch/` on your SD card, or use `nxlink`. To see stdout and stderr, use the `-s` server option: `nxlink -s moonlight-switch.nro`
+
+## Troubleshooting
+
+- During dependency installation, you may run into a permission error when building OpenSSL attempting to write inside of `$DEVKITPRO/portlibs/switch/man`. Short of modifying the OpenSSL Makefile more, the solution I used to handle this was to change the owner of the `portlibs` folder to myself: `sudo chown -R $DEVKITPRO/portlibs <myuser>`

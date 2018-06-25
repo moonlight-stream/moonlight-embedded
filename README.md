@@ -1,59 +1,43 @@
-# Moonlight Embedded
+# Moonlight Switch
 
-Moonlight Embedded is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield, but built for Linux.
+![moonlight-switch](https://raw.githubusercontent.com/kbhomes/moonlight-switch/master/data/moonlight_switch_logo.png)
 
-Moonlight Embedded allows you to stream your full collection of games from
-your powerful Windows desktop to your (embedded) Linux system, like Raspberry Pi, CuBox-i and ODROID.
+Moonlight Switch allows you to stream your collection of games on your GeForce-equipped PC directly to your Nintendo Switch. Based on @irtimmer's wonderful [`moonlight-embedded`](https://github.com/irtimmer/moonlight-embedded).
 
-## Documentation
-
-More information about installing and runnning Moonlight Embedded is available on the [wiki](https://github.com/irtimmer/moonlight-embedded/wiki).
+This is currently in an utterly **unusable state**, since Nintendo Switch homebrew do not yet have access to the hardware video decoder (as of this writing). Once that functionality is available, however, Moonlight Switch should be ready to go shortly thereafter.
 
 ## Requirements
 
-* [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GTX 600/700/900/1000 series GPU (for the PC you're streaming from)
-* High-end wireless router (802.11n dual-band recommended) or wired network
-* Geforce Experience 2.1.1 or higher
+* Nintendo Switch with homebrew capability
+* [GFE compatible](http://shield.nvidia.com/play-pc-games/) computer with GeForce Experience 2.1.1 or higher
 
-## Quick Start
+## Quick start
 
-* Ensure your GFE server and client are on the same network
+* Ensure your Nintendo Switch and streaming PC are on the same network
 * Turn on Shield Streaming in the GFE settings
-* Pair Moonlight Embedded with the GFE server
-* Accept the pairing confirmation on your PC
-* Connect to the GFE Server with Moonlight Embedded
+* Run the Moonlight Switch homebrew application
 * Play games!
-
-## Donations
-
-Donations are welcome and will be used to buy new test hardware.
-
-- Bitcoin [1DgheY9CkQhzwgtjaoYpGSudaMzck1swDp](bitcoin:1DgheY9CkQhzwgtjaoYpGSudaMzck1swDp)
-- [PayPal](https://www.paypal.me/itimmer)
-- [Flattr](https://flattr.com/submit/auto?fid=lz111v&url=https%3A%2F%2Fgithub.com%2Firtimmer%2Fmoonlight-embedded)
 
 ## Bugs
 
-Please check the fora, wiki and old bug reports before submitting a new bug report.
+Bugs can be reported to the [issue tracker](https://github.com/kbhomes/moonlight-switch/issues).
 
-Bugs can be reported to the [issue tracker](https://github.com/irtimmer/moonlight-embedded/issues).
+## Development
+
+See the [development guide](https://github.com/kbhomes/moonlight-switch/blob/master/DEVELOPMENT.md) for information on how to pull the sources, install the dependencies, and build the application.
 
 ## See also
 
-[Moonlight-common-c](https://github.com/moonlight-stream/moonlight-common-c) is the shared codebase between
-different C implementations of Moonlight
+- [moonlight-common-c](https://github.com/kbhomes/moonlight-common-c) is the fork of the Moonlight common core used by Moonlight Switch
+- [libswitchui](https://github.com/kbhomes/libswitchui) is the UI library I developed to create interfaces that emulate Nintendo Switch official software
 
-[Moonlight-common-c](https://github.com/irtimmer/moonlight-common-c) is the fork used by Moonlight Embedded
+## Donations
 
-## Discussion
+The largest portion of this software was originally developed by @irtimmer in `moonlight-embedded`, so please send any donations his way! I've included my PayPal as well if you are so inclined! :)
 
-[XDA](http://forum.xda-developers.com/showthread.php?t=2505510) Moonlight in General  
-[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878) Moonlight Embedded for Raspberry Pi  
-[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173) Moonlight Embedded for Cubox-i and Hummingboard  
-[ODROID Forum](http://forum.odroid.com/viewtopic.php?f=91&t=15456) Moonlight Embedded on ODROID  
-
-## Contribute
-
-1. Fork us
-2. Write code
-3. Send Pull Requests
+- @irtimmer
+    - Bitcoin [1DgheY9CkQhzwgtjaoYpGSudaMzck1swDp](bitcoin:1DgheY9CkQhzwgtjaoYpGSudaMzck1swDp)
+    - [PayPal](https://www.paypal.me/itimmer)
+    - [Flattr](https://flattr.com/submit/auto?fid=lz111v&url=https%3A%2F%2Fgithub.com%2Firtimmer%2Fmoonlight-embedded)
+- @kbhomes
+    - [PayPal](https://paypal.me/sajidanwar94)

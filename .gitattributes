@@ -1,0 +1,2 @@
+dependencies/**/PKGBUILD eol=lf
+dependencies/**/*.patch eol=lf

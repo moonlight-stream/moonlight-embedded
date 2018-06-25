@@ -206,7 +206,8 @@ $(OUTPUT).elf	:	$(OFILES)
 $(OFILES_SRC)	:	$(HFILES_BIN) $(OFILES_BIN)
 
 %.o:
-	-$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $(TOPDIR)/$(addsuffix .c,$(basename $@)) -o $@ $(ERROR_FILTER);
+	@echo CC $(addsuffix .c,$(basename $@))
+	-@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $(TOPDIR)/$(addsuffix .c,$(basename $@)) -o $@ $(ERROR_FILTER);
 
 
 $(BINFILES):

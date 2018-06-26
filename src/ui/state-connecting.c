@@ -9,9 +9,25 @@ static struct {
 
   int frame;
   char pin[5];
+
+  Thread pairThread;
+  Mutex pairMutex;
+  bool pairFinished;
+  int pairResult;
 } props = {0};
 
+static void thread_pair(void *unused) {
+  int result = gs_pair(&server, &props.pin[0]);
+
+  mutexLock(&props.pairMutex);
+  props.pairFinished = true;
+  props.pairResult = result;
+  mutexUnlock(&props.pairMutex);
+}
+
 int main_init_connecting() {
+  Result rc;
+
   props.connectingTexture = sui_load_png(moonlight_switch_connecting_png, moonlight_switch_connecting_png_size);
   if (!props.connectingTexture) {
     fprintf(stderr, "[GUI] Could not load connecting image: %s\n", SDL_GetError());
@@ -19,24 +35,50 @@ int main_init_connecting() {
   }
   SDL_QueryTexture(props.connectingTexture, NULL, NULL, &props.connectingWidth, &props.connectingHeight);
 
+  rc = threadCreate(&props.pairThread, &thread_pair, NULL, 0x10000, 0x2C, 2);
+  if (R_FAILED(rc)) {
+    fprintf(stderr, "[GUI] Could not create background pairing thread: %d\n", rc);
+    return -1;
+  }
+  mutexInit(&props.pairMutex);
+
   return 0;
 }
 
 void main_update_connecting(SUIInput *input) {
   if (props.frame == 0) {
-//    sprintf(props.pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
-    sprintf(props.pin, "0000");
+    // Create the random PIN for pairing
+    sprintf(props.pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+
+    // Begin pairing in the background
+    Result rc = threadStart(&props.pairThread);
+    if (R_FAILED(rc)) {
+      fprintf(stderr, "[GUI] Could not start background pairing thread: %d\n", rc);
+      gs_error = "Could not begin pairing process";
+      ui_state = sui_state_replace(ui_state, &MoonlightUiStateConnectionFailed);
+    }
   }
   else {
-    if (gs_pair(&server, &props.pin[0]) == GS_OK) {
-      ui_state = sui_state_replace(ui_state, &MoonlightUiStateGamesList);
-    }
-    else {
-      ui_state = sui_state_replace(ui_state, &MoonlightUiStateConnectionFailed);
+    bool pairFinished;
+    int pairResult;
+
+    mutexLock(&props.pairMutex);
+    pairFinished = props.pairFinished;
+    pairResult = props.pairResult;
+    mutexUnlock(&props.pairMutex);
+
+    if (pairFinished) {
+      if (pairResult == GS_OK) {
+        ui_state = sui_state_replace(ui_state, &MoonlightUiStateGamesList);
+      }
+      else {
+        ui_state = sui_state_replace(ui_state, &MoonlightUiStateConnectionFailed);
+      }
     }
 
     if (input->buttons.down & KEY_B) {
-      ui_state = sui_state_pop(ui_state);
+      gs_error = "Pairing canceled by user";
+      ui_state = sui_state_replace(ui_state, &MoonlightUiStateConnectionFailed);
     }
   }
 
@@ -82,6 +124,8 @@ void main_cleanup_connecting() {
     SDL_DestroyTexture(props.connectingTexture);
     props.connectingTexture = NULL;
   }
+
+  threadClose(&props.pairThread);
 }
 
 MoonlightUiState MoonlightUiStateConnecting = {

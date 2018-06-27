@@ -20,22 +20,40 @@ cd moonlight-switch/dependencies/
 ```
 
 On some platforms, you may need root privileges, in which case the script will use `sudo` to ask for your password. This dependency preparation script does the following:
-- **Adds a missing file `sys/termios.h` to devkitA64**:  
-The existing `termios.h` header in devkitA64 includes `sys/termios.h`, and since OpenSSL includes `termios.h`, building that dependency will fail despite the functionality of `termios.h` not even being used. Adding in an empty version of this file is the simplest solution.
-- **Applies a patch to `netdb.h` of libnx**:  
-The `netdb.h` file in libnx references the `socklen_t` structure but doesn't include `sys/socket.h` where it's defined, causing compilation errors when this file is included. A small patch is applied that adds `#include <sys/socket.h>` to this file.
+
 - **Uses devKitPro's pacman to install existing dependences**:  
-Installs dependencies for Moonlight Switch that already exist in the official devKitPro Switch package repository:
+    Installs dependencies for Moonlight Switch that already exist in the official devKitPro Switch package repository:
+
     - `switch-pkg-config`
     - `devkitpro-pkgbuild-helpers`
     - `switch-sdl2`, `switch-sdl2_gfx`, `switch-sdl2_ttf`, `switch-sdl2_image`
+    - `switch-libexpat`
     - `switch-bzip2`, `switch-zlib`
-- **Builds and installs dependencies not yet in an official package repository**:  
-These dependencies are required by Moonlight Switch, but are not yet published in any official package repositories:
-    - `switch-libavcodec`: used for H.264 video software decoding
-    - `switch-libopus`: used for Opus audio decoding
-    - `switch-libexpat`: used for XML parsing
-    - `switch-openssl`: used for performing HTTPS requests
+
+- **Builds dependencies not yet in an official package repository**:  
+    These dependencies are required by Moonlight Switch, but are not yet published in any official package repositories:
+
+    - `switch-libavcodec`: used for H.264 video software decoding ([in development in official repository][devkitpro-ffmpeg])
+    - `switch-libopus`: used for Opus audio decoding ([in development in official repository][devkitpro-libopus])
+    - `switch-openssl`: used for performing HTTPS requests ([alternative library `mbedtls` in development in official repository][devkitpro-mbedtls])
+
+    [devkitpro-ffmpeg]: https://github.com/devkitPro/pacman-packages/issues/30
+    [devkitpro-libopus]: https://github.com/devkitPro/pacman-packages/pull/36
+    [devkitpro-mbedtls]: https://github.com/devkitPro/pacman-packages/tree/mbedtls/switch/mbedtls
+
+    To avoid conflicting with future packages in the official repositories, these dependencies are built and install local to Moonlight Switch. They will be swapped out with official or alternative packages, if and when those become available.
+    
+- ~~**Adds a missing file `sys/termios.h` to devkitA64**:  
+    The existing `termios.h` header in devkitA64 includes `sys/termios.h`, and since OpenSSL includes `termios.h`, building that dependency will fail despite the functionality of `termios.h` not even being used. Adding in an empty version of this file is the simplest solution.~~
+
+    This step was removed:  
+    - to prevent conflicts with future devkitA64 releases that may include an implementation of `termios`
+    - the OpenSSL dependency on `termios.h` was removed, obviating the need for this patch
+
+- ~~**Applies a patch to `netdb.h` of libnx**:  
+    The `netdb.h` file in libnx references the `socklen_t` structure but doesn't include `sys/socket.h` where it's defined, causing compilation errors when this file is included. A small patch is applied that adds `#include <sys/socket.h>` to this file.~~
+
+    This step was removed as [the change was merge into libnx](https://github.com/switchbrew/libnx/pull/126). To successfully build dependencies, either wait until libnx puts out a new release (and upgrade with pacman), or build libnx from source.
 
 ## Build
 
@@ -46,7 +64,3 @@ Build Moonlight Switch by running `make` in the root directory. In the end, this
 - Edit `dist/moonlight.ini` to change the IP address to that of your streaming PC. 
 - On your SD card, create the folder `/switch/moonlight-switch/` and place `moonlight.ini` in that directory.
 - Send `moonlight-switch.nro` to your device by either placing it in `/switch/moonlight-switch/` on your SD card, or use `nxlink`. To see stdout and stderr, use the `-s` server option: `nxlink -s moonlight-switch.nro`
-
-## Troubleshooting
-
-- During dependency installation, you may run into a permission error when building OpenSSL attempting to write inside of `$DEVKITPRO/portlibs/switch/man`. Short of modifying the OpenSSL Makefile more, the solution I used to handle this was to change the owner of the `portlibs` folder to myself: `sudo chown -R $DEVKITPRO/portlibs <myuser>`

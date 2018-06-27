@@ -1,7 +1,7 @@
 pkgname=switch-libavcodec
 pkgver=4.0.1
 pkgrel=1
-pkgdesc='Generic encoding/decoding framework (h264 decoding only)'
+pkgdesc='Generic encoding/decoding framework (h264 and opus decoding only)'
 arch=('any')
 url='https://ffmpeg.org/'
 license=(LGPL)
@@ -17,7 +17,7 @@ build() {
   source /opt/devkitpro/switchvars.sh
 
   ./configure \
-    --prefix="${PORTLIBS_PREFIX}" \
+    --prefix="${MOONLIGHT_DEPDIR}" \
     --cross-prefix="aarch64-none-elf-" --arch=aarch64 --target-os=none \
     --disable-shared --enable-static \
     --disable-all --enable-avcodec \
@@ -29,5 +29,5 @@ build() {
 package() {
   cd ffmpeg-$pkgver
 
-  make DESTDIR="$pkgdir" install
+  make install
 }

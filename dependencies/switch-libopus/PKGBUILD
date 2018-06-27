@@ -17,7 +17,7 @@ build() {
   source /opt/devkitpro/switchvars.sh
 
   ./configure \
-    --prefix="${PORTLIBS_PREFIX}" \
+    --prefix="${MOONLIGHT_DEPDIR}" \
     --host="aarch64-none-elf" \
     --disable-shared --enable-static 
 
@@ -27,5 +27,5 @@ build() {
 package() {
   cd opus-$pkgver
 
-  make DESTDIR="$pkgdir" install
+  make install
 }

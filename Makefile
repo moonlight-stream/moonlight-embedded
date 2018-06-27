@@ -44,6 +44,7 @@ SOURCES		:=	src src/audio src/video src/input src/ui \
 				third_party/h264bitstream 
 
 INCLUDES	:=	libgamestream \
+                                dependencies/include \
                                 third_party/libswitchui/include \
                                 third_party/enet/include \
                                 third_party/inih \
@@ -82,7 +83,7 @@ LIBS	:=	-lsdl2 -lsdl2_gfx -lsdl2_ttf -lsdl2_image -lpng -ljpeg -lfreetype \
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX)
+LIBDIRS	:= $(PORTLIBS) $(LIBNX) $(TOPDIR)/dependencies
 
 
 #---------------------------------------------------------------------------------

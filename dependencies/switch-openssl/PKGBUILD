@@ -9,7 +9,7 @@ options=(!strip libtool staticlibs)
 source=("https://www.openssl.org/source/openssl-$pkgver.tar.gz" "openssl-1.0.2o.patch")
 sha256sums=(
   'ec3f5c9714ba0fd45cb4e087301eb1336c317e0d20b575a125050470e8089e4d'
-  '1cd40064d2f8f1debe1efdf540e6605efb6c76142fa01858d1e92da82cfa2257'
+  '8a7a271aa31e2f5e7c61325cca88ad9121c21670b4ec4c52148c107e29eb9b4b'
 )
 makedepends=('switch-pkg-config' 'devkitpro-pkgbuild-helpers')
 
@@ -22,7 +22,7 @@ build() {
   patch -p1 -i $srcdir/openssl-1.0.2o.patch
 
   CROSS_COMPILE=aarch64-none-elf- \
-  ./Configure linux-aarch64 --prefix="${PORTLIBS_PREFIX}" --openssldir="${PORTLIBS_PREFIX}" \
+  ./Configure linux-aarch64 --prefix="${MOONLIGHT_DEPDIR}" --openssldir="${MOONLIGHT_DEPDIR}" \
     no-shared no-dso no-engine no-asm no-apps enable-ssl-trace \
     -D__SWITCH__ -DNO_SYS_UN_H -DNO_SYSLOG -O3 -Wall -g -O2 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec \
     -I${DEVKITPRO}/devkitA64/aarch64-none-elf/include -I${DEVKITPRO}/libnx/include
@@ -34,5 +34,5 @@ build() {
 package() {
   cd openssl-$pkgver
 
-  make DESTDIR="$pkgdir" install
+  make install_sw
 }

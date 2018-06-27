@@ -28,17 +28,16 @@ On some platforms, you may need root privileges, in which case the script will u
     - `devkitpro-pkgbuild-helpers`
     - `switch-sdl2`, `switch-sdl2_gfx`, `switch-sdl2_ttf`, `switch-sdl2_image`
     - `switch-libexpat`
+    - `switch-libopus`
     - `switch-bzip2`, `switch-zlib`
 
 - **Builds dependencies not yet in an official package repository**:  
     These dependencies are required by Moonlight Switch, but are not yet published in any official package repositories:
 
     - `switch-libavcodec`: used for H.264 video software decoding ([in development in official repository][devkitpro-ffmpeg])
-    - `switch-libopus`: used for Opus audio decoding ([in development in official repository][devkitpro-libopus])
     - `switch-openssl`: used for performing HTTPS requests ([alternative library `mbedtls` in development in official repository][devkitpro-mbedtls])
 
     [devkitpro-ffmpeg]: https://github.com/devkitPro/pacman-packages/issues/30
-    [devkitpro-libopus]: https://github.com/devkitPro/pacman-packages/pull/36
     [devkitpro-mbedtls]: https://github.com/devkitPro/pacman-packages/tree/mbedtls/switch/mbedtls
 
     To avoid conflicting with future packages in the official repositories, these dependencies are built and install local to Moonlight Switch. They will be swapped out with official or alternative packages, if and when those become available.

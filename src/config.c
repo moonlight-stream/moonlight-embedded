@@ -49,129 +49,6 @@ bool inputAdded = false;
 static bool mapped = true;
 const char* audio_device = NULL;
 
-static struct option long_options[] = {
-  {"720",         no_argument,        NULL, 'a'},
-  {"1080",        no_argument,        NULL, 'b'},
-  {"width",       required_argument,  NULL, 'c'},
-  {"height",      required_argument,  NULL, 'd'},
-  {"bitrate",     required_argument,  NULL, 'g'},
-  {"packetsize",  required_argument,  NULL, 'h'},
-  {"app",         required_argument,  NULL, 'i'},
-  {"input",       required_argument,  NULL, 'j'},
-  {"mapping",     required_argument,  NULL, 'k'},
-  {"nosops",      no_argument,        NULL, 'l'},
-  {"audio",       required_argument,  NULL, 'm'},
-  {"localaudio",  no_argument,        NULL, 'n'},
-  {"config",      required_argument,  NULL, 'o'},
-  {"platform",    required_argument,  0,    'p'},
-  {"save",        required_argument,  NULL, 'q'},
-  {"keydir",      required_argument,  NULL, 'r'},
-  {"remote",      no_argument,        NULL, 's'},
-  {"windowed",    no_argument,        NULL, 't'},
-  {"surround",    no_argument,        NULL, 'u'},
-  {"fps",         required_argument,  NULL, 'v'},
-  {"forcehevc",   no_argument,        NULL, 'x'},
-  {"unsupported", no_argument,        NULL, 'y'},
-  {0, 0, 0, 0},
-};
-
-static void parse_argument(int c, char* value, PCONFIGURATION config) {
-  switch (c) {
-  case 'a':
-    config->stream.width = 1280;
-    config->stream.height = 720;
-    break;
-  case 'b':
-    config->stream.width = 1920;
-    config->stream.height = 1080;
-    break;
-  case 'c':
-    config->stream.width = atoi(value);
-    break;
-  case 'd':
-    config->stream.height = atoi(value);
-    break;
-  case 'g':
-    config->stream.bitrate = atoi(value);
-    break;
-  case 'h':
-    config->stream.packetSize = atoi(value);
-    break;
-  case 'i':
-    config->app = value;
-    break;
-  case 'j':
-    if (config->inputsCount >= MAX_INPUTS) {
-      perror("Too many inputs specified");
-      exit(-1);
-    }
-    config->inputs[config->inputsCount].path = value;
-    config->inputs[config->inputsCount].mapping = config->mapping;
-    config->inputsCount++;
-    inputAdded = true;
-    mapped = true;
-    break;
-  case 'k':
-    config->mapping = value;
-    if (config->mapping == NULL) {
-      fprintf(stderr, "Unable to open custom mapping file: %s\n", value);
-      exit(-1);
-    }
-    mapped = false;
-    break;
-  case 'l':
-    config->sops = false;
-    break;
-  case 'm':
-    audio_device = value;
-    break;
-  case 'n':
-    config->localaudio = true;
-    break;
-  case 'o':
-    if (!config_file_parse(value, config))
-      exit(EXIT_FAILURE);
-
-    break;
-  case 'p':
-    config->platform = value;
-    break;
-  case 'q':
-    config->config_file = value;
-    break;
-  case 'r':
-    strcpy(config->key_dir, value);
-    break;
-  case 's':
-    config->stream.streamingRemotely = 1;
-    break;
-  case 't':
-    config->fullscreen = false;
-    break;
-  case 'u':
-    config->stream.audioConfiguration = AUDIO_CONFIGURATION_51_SURROUND;
-    break;
-  case 'v':
-    config->stream.fps = atoi(value);
-    break;
-  case 'x':
-    config->stream.supportsHevc = true;
-    break;
-  case 'y':
-    config->unsupported = true;
-    break;
-  case 1:
-    if (config->action == NULL)
-      config->action = value;
-    else if (config->address == NULL)
-      config->address = value;
-    else {
-      perror("Too many options");
-      exit(-1);
-    }
-  }
-}
-
 static int ini_handle(void *out, const char *section, const char *name,
                       const char *value) {
 #define HEX(v) strtol((v), NULL, 16)
@@ -313,7 +190,6 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
-  config->unsupported = false;
   config->unsupported_version = false;
   config->save_debug_log = false;
   config->disable_powersave = true;

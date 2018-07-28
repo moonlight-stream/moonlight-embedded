@@ -6,7 +6,7 @@ Moonlight is an open source implementation of NVIDIA GameStream.
 ## Documentation
 
 More information can find [moonlight-docs][1], [moonlight-embedded][2], and our [wiki][3].
-If you need more help, join a [discord][4].
+If you need more help, join the #vita-help channel in [discord][4].
 
 [1]: https://github.com/moonlight-stream/moonlight-docs/wiki
 [2]: https://github.com/irtimmer/moonlight-embedded/wiki

@@ -1,4 +1,6 @@
 ## Unreleased
+
+## 0.3.3
 * Update latest moonlight-common-c (8e77710)
 * Cherry pick upstream change about gamepad masking (933d700)
 * Reduce mismatch between upstream (e2d7910, e3cad393)

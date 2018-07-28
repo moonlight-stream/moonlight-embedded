@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
 <changes app_ver="00.03"><![CDATA[
+## 0.3.3<br>
+* Update latest moonlight-common-c (8e77710)<br>
+* Cherry pick upstream change about gamepad masking (933d700)<br>
+* Reduce mismatch between upstream (e2d7910, e3cad393)<br>
+<br>
 ## 0.3.2<br>
 * New configure option about streaming optimization (d2c974a)<br>
 * Fix cannot use 960x544 resolution (653afa6)<br>

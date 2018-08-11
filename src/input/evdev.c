@@ -636,7 +636,7 @@ void evdev_map(char* device) {
   
   struct mapping map;
   strncpy(map.name, libevdev_get_name(evdev), sizeof(map.name));
-  strncpy(map.guid, str_guid, sizeof(map.name));
+  strncpy(map.guid, str_guid, sizeof(map.guid));
 
   libevdev_free(evdev);
   close(fd);

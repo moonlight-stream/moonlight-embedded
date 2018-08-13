@@ -24,14 +24,6 @@ More information about installing and runnning Moonlight Embedded is available o
 * Connect to the GFE Server with Moonlight Embedded
 * Play games!
 
-## Donations
-
-Donations are welcome and will be used to buy new test hardware.
-
-- Bitcoin [1DgheY9CkQhzwgtjaoYpGSudaMzck1swDp](bitcoin:1DgheY9CkQhzwgtjaoYpGSudaMzck1swDp)
-- [PayPal](https://www.paypal.me/itimmer)
-- [Flattr](https://flattr.com/submit/auto?fid=lz111v&url=https%3A%2F%2Fgithub.com%2Firtimmer%2Fmoonlight-embedded)
-
 ## Bugs
 
 Please check the fora, wiki and old bug reports before submitting a new bug report.

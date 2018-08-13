@@ -104,6 +104,12 @@ static int x11_handler(int fd) {
       case Button3:
         button = BUTTON_RIGHT;
         break;
+      case Button4:
+        LiSendScrollEvent(1);
+        break;
+      case Button5:
+        LiSendScrollEvent(-1);
+        break;
       }
 
       if (button != 0)

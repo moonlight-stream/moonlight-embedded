@@ -9,6 +9,7 @@
 #include "../configuration.h"
 #include "../video.h"
 #include "../config.h"
+#include "../util.h"
 
 #include "client.h"
 #include "discover.h"
@@ -260,6 +261,7 @@ int ui_connect(char *address) {
     }
 
     if (server_applist != NULL) {
+      sort_app_list(server_applist);
       PAPP_LIST list = server_applist;
       while (list) {
         list = list->next;

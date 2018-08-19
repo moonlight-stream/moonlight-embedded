@@ -43,6 +43,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/loop.c
 	src/main.c
 	src/platform.c
+	src/util.c
 
 	src/audio/vita.c
 	src/video/vita.c

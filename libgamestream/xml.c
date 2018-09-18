@@ -118,11 +118,8 @@ static void XMLCALL _xml_start_status_element(void *userData, const char *name, 
     for (int i = 0; atts[i]; i += 2) {
       if (strcmp("status_code", atts[i]) == 0)
         *status = atoi(atts[i + 1]);
-      else if (*status != STATUS_OK && strcmp("status_message", atts[i]) == 0) {
-        gs_error = malloc(strlen(atts[i + 1]));
-        if (gs_error)
-          strcpy((char*) gs_error, atts[i + 1]);
-      }
+      else if (*status != STATUS_OK && strcmp("status_message", atts[i]) == 0)
+        gs_error = strdup(atts[i + 1]);
     }
   }
 }

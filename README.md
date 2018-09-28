@@ -39,6 +39,7 @@ different C implementations of Moonlight
 
 ## Discussion
 
+[Discord](https://discord.gg/6ERtzFY) Moonlight in General with Moonlight Embedded channel  
 [XDA](http://forum.xda-developers.com/showthread.php?t=2505510) Moonlight in General  
 [Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878) Moonlight Embedded for Raspberry Pi  
 [SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173) Moonlight Embedded for Cubox-i and Hummingboard  

@@ -23,8 +23,10 @@
 
 static unsigned int settings_special_codes[] = {0,
   // special
+  INPUT_TYPE_DEF_NAME | INPUT_TYPE_SPECIAL,
   INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL,
   // gamepad
+  INPUT_TYPE_DEF_NAME | INPUT_TYPE_GAMEPAD,
   SPECIAL_FLAG | INPUT_TYPE_GAMEPAD,
   LB_FLAG | INPUT_TYPE_GAMEPAD,
   RB_FLAG | INPUT_TYPE_GAMEPAD,
@@ -33,29 +35,35 @@ static unsigned int settings_special_codes[] = {0,
   LEFT_TRIGGER | INPUT_TYPE_ANALOG,
   RIGHT_TRIGGER | INPUT_TYPE_ANALOG,
   // mouse
+  INPUT_TYPE_DEF_NAME | INPUT_TYPE_MOUSE,
   BUTTON_LEFT | INPUT_TYPE_MOUSE,
   BUTTON_RIGHT | INPUT_TYPE_MOUSE,
   BUTTON_MIDDLE | INPUT_TYPE_MOUSE,
   BUTTON_X1 | INPUT_TYPE_MOUSE,
   BUTTON_X2 | INPUT_TYPE_MOUSE,
   // keyboard
+  INPUT_TYPE_DEF_NAME | INPUT_TYPE_KEYBOARD,
   27,    73,  77,  9,
   112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123
 };
 
 static char *settings_special_names[] = {"None",
   // special
+  "Special inputs",
   "Pause stream",
   // gamepad
+  "Gamepad buttons",
   "Special (XBox button)",
   "LB", "RB", "LS", "RS", "LT", "RT",
   // mouse
-  "Left mouse button",
-  "Right mouse button",
-  "Middle mouse button",
-  "X1(4th) mouse button",
-  "X2(5th) mouse button",
+  "Mouse buttons",
+  "Left",
+  "Right",
+  "Middle(wheel)",
+  "X1(4th)",
+  "X2(5th)",
   // keyboard
+  "Keyboard input codes",
   "Esc",
   "I", "M", "Tab",
   "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
@@ -228,11 +236,17 @@ static int select_special_key_loop(int id, void *context, const input_data *inpu
 }
 
 static int select_special_key_menu(int *code) {
+  // TODO: sizeof(codes) / sizeof(int) ?
   menu_entry menu[64];
   int idx = 0;
   for (int i = 0; i < sizeof(settings_special_codes) / sizeof(int); i++) {
-    menu[idx++] = (menu_entry) { .name = malloc(sizeof(char) * 256), .id = settings_special_codes[i] };
-    special_keys_name(settings_special_codes[i], menu[idx-1].name);
+    unsigned int id = settings_special_codes[i];
+    menu[idx++] = (menu_entry) {
+      .id = id,
+      .name = malloc(sizeof(char) * 256),
+      .disabled = (id >= INPUT_TYPE_DEF_NAME)
+    };
+    special_keys_name(id, menu[idx-1].name);
   }
 
   menu[idx++] = (menu_entry) { .name = "", .disabled = true, .separator = true };

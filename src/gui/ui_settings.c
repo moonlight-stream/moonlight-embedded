@@ -21,7 +21,10 @@
 #include <vita2d.h>
 #include <Limelight.h>
 
-static unsigned int settings_special_codes[] = {0, INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL,
+static unsigned int settings_special_codes[] = {0,
+  // special
+  INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL,
+  // gamepad
   SPECIAL_FLAG | INPUT_TYPE_GAMEPAD,
   LB_FLAG | INPUT_TYPE_GAMEPAD,
   RB_FLAG | INPUT_TYPE_GAMEPAD,
@@ -29,14 +32,35 @@ static unsigned int settings_special_codes[] = {0, INPUT_SPECIAL_KEY_PAUSE | INP
   RS_CLK_FLAG | INPUT_TYPE_GAMEPAD,
   LEFT_TRIGGER | INPUT_TYPE_ANALOG,
   RIGHT_TRIGGER | INPUT_TYPE_ANALOG,
+  // mouse
   BUTTON_LEFT | INPUT_TYPE_MOUSE,
   BUTTON_RIGHT | INPUT_TYPE_MOUSE,
   BUTTON_MIDDLE | INPUT_TYPE_MOUSE,
-  27,    73,  77,  9,     112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123 };
-static char *settings_special_names[] = {"None", "Pause stream",
-  "Special (XBox button)", "LB", "RB", "LS", "RS", "LT", "RT",
-  "LMB", "RMB", "MMB",
-  "Esc", "I", "M", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12" };
+  BUTTON_X1 | INPUT_TYPE_MOUSE,
+  BUTTON_X2 | INPUT_TYPE_MOUSE,
+  // keyboard
+  27,    73,  77,  9,
+  112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123
+};
+
+static char *settings_special_names[] = {"None",
+  // special
+  "Pause stream",
+  // gamepad
+  "Special (XBox button)",
+  "LB", "RB", "LS", "RS", "LT", "RT",
+  // mouse
+  "Left mouse button",
+  "Right mouse button",
+  "Middle mouse button",
+  "X1(4th) mouse button",
+  "X2(5th) mouse button",
+  // keyboard
+  "Esc",
+  "I", "M", "Tab",
+  "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
+};
+
 static bool settings_loop_setup = 1;
 
 /*

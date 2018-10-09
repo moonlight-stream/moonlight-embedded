@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
+<changes app_ver="00.04"><![CDATA[
+## 0.4.0<br>
+* Sort app list alphabetically (#127)<br>
+* Improve special button settings (#130)<br>
+* Implement video cleanup for fixing connection issue (#131)<br>
+]]></changes>
 <changes app_ver="00.03"><![CDATA[
 ## 0.3.3<br>
 * Update latest moonlight-common-c (8e77710)<br>

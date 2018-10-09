@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.4.0
+* Sort app list alphabetically (#127)
+* Improve special button settings (#130)
+* Implement video cleanup for fixing connection issue (#131)
+
 ## 0.3.3
 * Update latest moonlight-common-c (8e77710)
 * Cherry pick upstream change about gamepad masking (933d700)

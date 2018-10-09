@@ -28,7 +28,7 @@ NVIDIA GAMESTREAM CLIENT</str>
     <frame id="frame5">
         <liveitem>
             <text origin="background" align="right" line-align="right" text-valign="bottom" margin-bottom="0" margin-right="20">
-                <str size="18" bold="off" shadow="on" color="#999999">v0.3.3</str>
+                <str size="18" bold="off" shadow="on" color="#999999">v0.4.0</str>
             </text>
         </liveitem>
     </frame>

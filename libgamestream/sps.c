@@ -21,7 +21,7 @@
 
 #include "h264_stream.h"
 
-static h264_stream_t* h264_stream;
+static h264_stream_t* h264_stream = NULL;
 static int initial_width, initial_height;
 
 static int replay_sps;
@@ -30,6 +30,13 @@ void gs_sps_init(int width, int height) {
   h264_stream = h264_new();
   initial_width = width;
   initial_height = height;
+}
+
+void gs_sps_stop() {
+  if (h264_stream) {
+    h264_free(h264_stream);
+    h264_stream = NULL;
+  }
 }
 
 void gs_sps_fix(PDECODE_UNIT decodeUnit, int flags) {

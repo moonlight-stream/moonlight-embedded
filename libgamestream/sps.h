@@ -23,4 +23,5 @@
 #define GS_SPS_BASELINE_HACK 0x02
 
 void gs_sps_init(int width, int height);
+void gs_sps_stop();
 void gs_sps_fix(PDECODE_UNIT decodeUnit, int flags);

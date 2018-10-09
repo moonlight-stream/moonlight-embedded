@@ -246,6 +246,12 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       case BTN_RIGHT:
         mouseCode = BUTTON_RIGHT;
         break;
+      case BTN_SIDE:
+        mouseCode = BUTTON_X1;
+        break;
+      case BTN_EXTRA:
+        mouseCode = BUTTON_X2;
+        break;
       default:
         gamepadModified = true;
         if (dev->map == NULL)

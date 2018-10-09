@@ -96,6 +96,12 @@ int sdlinput_handle_event(SDL_Event* event) {
     case SDL_BUTTON_RIGHT:
       button = BUTTON_RIGHT;
       break;
+    case SDL_BUTTON_X1:
+      button = BUTTON_X1;
+      break;
+    case SDL_BUTTON_X2:
+      button = BUTTON_X2;
+      break;
     }
 
     if (button != 0)

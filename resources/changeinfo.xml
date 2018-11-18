@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
 <changes app_ver="00.04"><![CDATA[
+## 0.4.1<br>
+* Update latest moonlight-common-c (2c9d61c)<br>
+<br>
 ## 0.4.0<br>
 * Sort app list alphabetically (#127)<br>
 * Improve special button settings (#130)<br>

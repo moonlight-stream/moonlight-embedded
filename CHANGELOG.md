@@ -1,5 +1,8 @@
 ## Unreleased
 
+## 0.4.1
+* Update latest moonlight-common-c (2c9d61c)
+
 ## 0.4.0
 * Sort app list alphabetically (#127)
 * Improve special button settings (#130)

@@ -5,6 +5,7 @@
 
 #include "ui_settings.h"
 #include "ui_connect.h"
+#include "ui_device.h"
 
 #include "../config.h"
 #include "../connection.h"
@@ -25,6 +26,7 @@
 
 enum {
   MAIN_MENU_CONNECT = 100,
+  MAIN_MENU_SEARCH,
   MAIN_MENU_CONNECT_SAVED,
   MAIN_MENU_SETTINGS,
   MAIN_MENU_QUIT
@@ -37,6 +39,9 @@ int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
   switch (cursor) {
     case MAIN_MENU_CONNECT:
       ui_connect_ip();
+      return 2;
+    case MAIN_MENU_SEARCH:
+      ui_search_device();
       return 2;
     case MAIN_MENU_CONNECT_SAVED:
       ui_connect_saved();
@@ -94,6 +99,7 @@ int ui_main_menu() {
   MENU_ENTRY(MAIN_MENU_CONNECT_SAVED, name, !ui_connect_connected() && !config.address);
 
   MENU_ENTRY(MAIN_MENU_CONNECT, "Connect to ...", ui_connect_connected());
+  MENU_ENTRY(MAIN_MENU_SEARCH, "Search devices ...", false);
   MENU_SEPARATOR();
   MENU_ENTRY(MAIN_MENU_SETTINGS, "Settings", false);
   MENU_ENTRY(MAIN_MENU_QUIT, "Quit", false);

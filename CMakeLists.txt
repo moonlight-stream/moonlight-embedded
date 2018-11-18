@@ -32,6 +32,7 @@ include_directories(
 	third_party/h264bitstream/
 	third_party/enet/include/
 	third_party/inih/
+	third_party/mdns/
 )
 
 add_executable(${PROJECT_NAME}.elf
@@ -56,6 +57,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/gui/ui.c
 	src/gui/ui_settings.c
 	src/gui/ui_connect.c
+	src/gui/ui_device.c
 
 	libgamestream/client.c
 	libgamestream/http.c

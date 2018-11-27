@@ -222,7 +222,7 @@ static int select_special_key_loop(int id, void *context, const input_data *inpu
     return 1;
   }
   char key_code_value[512];
-  if (ime_dialog(key_code_value, "Enter key code:", "") == 0) {
+  if (ime_dialog_number(key_code_value, "Enter key code:", "") == 0) {
       int key_code = atoi(key_code_value);
       if (key_code) {
         *code = key_code;
@@ -471,7 +471,7 @@ static int settings_loop(int id, void *context, const input_data *input) {
       }
       char value[512];
       int ret;
-      if ((ret = ime_dialog(value, "Enter bitrate: ", "")) == 0) {
+      if ((ret = ime_dialog_number(value, "Enter bitrate: ", "")) == 0) {
         int bitrate = atoi(value);
         if (bitrate) {
           config.stream.bitrate = bitrate;

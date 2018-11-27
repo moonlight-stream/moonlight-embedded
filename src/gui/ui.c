@@ -47,7 +47,7 @@ int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
   }
   switch (cursor) {
     case MAIN_MENU_CONNECT:
-      ui_connect_ip();
+      ui_connect_manual();
       return 2;
     case MAIN_MENU_SEARCH:
       ui_search_device();

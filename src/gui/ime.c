@@ -68,7 +68,7 @@ void utf8_to_utf16(uint8_t *src, uint16_t *dst) {
   *dst = '\0';
 }
 
-void initImeDialog(char *title, char *initial_text, int max_text_length) {
+void initImeDialog(SceImeType type, char *title, char *initial_text, int max_text_length) {
   // Convert UTF8 to UTF16
   utf8_to_utf16((uint8_t *)title, ime_title_utf16);
   utf8_to_utf16((uint8_t *)initial_text, ime_initial_text_utf16);
@@ -76,16 +76,16 @@ void initImeDialog(char *title, char *initial_text, int max_text_length) {
   SceImeDialogParam param;
   sceImeDialogParamInit(&param);
 
-  param.sdkVersion = 0x03150021,
-    param.supportedLanguages = 0x0001FFFF;
+  param.sdkVersion = 0x03150021;
+  param.supportedLanguages = 0x0001FFFF;
   param.languagesForced = SCE_TRUE;
-  param.type = SCE_IME_TYPE_EXTENDED_NUMBER;
+  param.type = type;
   param.title = ime_title_utf16;
   param.maxTextLength = max_text_length;
   param.initialText = ime_initial_text_utf16;
   param.inputTextBuffer = ime_input_text_utf16;
 
-  //int res = 
+  //int res =
   sceImeDialogInit(&param);
   return ;
 }
@@ -97,7 +97,7 @@ void oslOskGetText(char *text){
 }
 
 
-int ime_dialog(char *text, char *title, char *def) {
+int ime_dialog_type(SceImeType type, char *text, const char *title, const char *def) {
   sceCommonDialogSetConfigParam(&(SceCommonDialogConfigParam){});
 
   char userText[512];
@@ -106,7 +106,7 @@ int ime_dialog(char *text, char *title, char *def) {
   }
 
   int ret = 0;
-  initImeDialog(title, userText, 128);
+  initImeDialog(type, title, userText, 128);
 
   while (1) {
     vita2d_start_drawing();
@@ -138,4 +138,12 @@ int ime_dialog(char *text, char *title, char *def) {
 
   sceImeDialogTerm();
   return ret;
+}
+
+int ime_dialog_string(char *text, const char *title, const char *def) {
+  return ime_dialog_type(SCE_IME_TYPE_DEFAULT, text, title, def);
+}
+
+int ime_dialog_number(char *text, const char *title, const char *def) {
+  return ime_dialog_type(SCE_IME_TYPE_EXTENDED_NUMBER, text, title, def);
 }

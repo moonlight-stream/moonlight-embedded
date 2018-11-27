@@ -360,9 +360,9 @@ void ui_connect_saved() {
   while (ui_connect(config.address) == QUIT_RELOAD);
 }
 
-void ui_connect_ip() {
+void ui_connect_manual() {
   char ip[512];
-  switch (ime_dialog(ip, "Enter IP:", "192.168.")) {
+  switch (ime_dialog_string(ip, "Enter Address:", "192.168.")) {
     case 0:
       if (config.address)
         free(config.address);

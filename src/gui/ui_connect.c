@@ -377,7 +377,7 @@ void ui_connect_manual() {
 }
 
 void ui_connect_paired_device(int idx) {
-  struct device_info *info = NULL;
+  device_info_t *info = NULL;
   // check external ip
   char *addr = NULL;
 

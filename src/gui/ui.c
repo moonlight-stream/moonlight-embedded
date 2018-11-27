@@ -25,7 +25,7 @@
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
 
-struct device_infos paired_devices = {0};
+device_infos_t paired_devices = {0};
 
 enum {
   MAIN_MENU_CONNECTED = 100,
@@ -118,7 +118,7 @@ int ui_main_menu() {
 
     MENU_SEPARATOR("Paired computers");
     for (int i = 0; i < paired_devices.count; i++) {
-        struct device_info *cur = paired_devices.devices[i];
+        device_info_t *cur = paired_devices.devices[i];
         if (!strcmp(cur->internal, addr) || !strcmp(cur->external, addr)) {
             continue;
         }

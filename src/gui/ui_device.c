@@ -49,7 +49,7 @@ enum {
 
 int search_thread_status = SEARCH_THREAD_IDLE;
 
-static struct device_info devices[64];
+static device_info_t devices[64];
 static int DEVICE_ENTRY_IDX[64];
 static int found_device = 0;
 
@@ -72,7 +72,7 @@ static int mdns_discovery_callback(const struct sockaddr* from,
                                    size_t length) {
   switch (type) {
     case MDNS_RECORDTYPE_PTR:
-      memset(&devices[found_device], 0, sizeof(struct device_info));
+      memset(&devices[found_device], 0, sizeof(device_info_t));
       break;
     case MDNS_RECORDTYPE_SRV:
       {
@@ -171,7 +171,7 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
     SERVER_DATA server;
 
     // TODO: connect
-    struct device_info *info = &devices[id - DEVICE_ITEM];
+    device_info_t *info = &devices[id - DEVICE_ITEM];
     flash_message("Test connecting to:\n %s...", info->internal);
     char key_dir[4096];
     sprintf(key_dir, "%s/%s", config.key_dir, info->name);

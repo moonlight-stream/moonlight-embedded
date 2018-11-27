@@ -10,6 +10,7 @@
 #include "../video.h"
 #include "../config.h"
 #include "../util.h"
+#include "../device.h"
 
 #include "client.h"
 #include "discover.h"
@@ -373,6 +374,14 @@ void ui_connect_ip() {
     default:
       return;
   }
+}
+
+void ui_connect_paired_device(int idx) {
+  struct device_info *info = NULL;
+  // check external ip
+  char *addr = NULL;
+
+  while (ui_connect(addr) == QUIT_RELOAD);
 }
 
 bool ui_connect_connected() {

@@ -4,6 +4,8 @@
 #include "ime.h"
 
 #include "../config.h"
+#include "../device.h"
+#include "../connection.h"
 //#include "../debug.h"
 #include "../input/vita.h"
 
@@ -25,14 +27,9 @@
 #include <psp2/kernel/processmgr.h>
 #include <vita2d.h>
 #include <Limelight.h>
+#include <client.h>
+#include <errors.h>
 #include <mdns.h>
-
-struct device_info {
-  char name[256];
-  char internal[256];
-  // TODO: stun check
-  // char *external;
-};
 
 enum {
   DEVICE_EXIT_SEARCH = 100,
@@ -171,8 +168,63 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
     return 1;
   }
   if (id >= DEVICE_ITEM) {
+    SERVER_DATA server;
+
     // TODO: connect
-    return 0;
+    struct device_info *info = &devices[id - DEVICE_ITEM];
+    flash_message("Test connecting to:\n %s...", info->internal);
+    char key_dir[4096];
+    sprintf(key_dir, "%s/%s", config.key_dir, info->name);
+    int ret = gs_init(&server, info->internal, key_dir, 0, true);
+
+    if (ret == GS_OUT_OF_MEMORY) {
+      display_error("Not enough memory");
+      return 0;
+    } else if (ret == GS_INVALID) {
+      display_error("Invalid data received from server: %s\n", info->internal, gs_error);
+      return 0;
+    } else if (ret == GS_UNSUPPORTED_VERSION) {
+      if (!config.unsupported_version) {
+        display_error("Unsupported version: %s\n", gs_error);
+        return 0;
+      }
+    } else if (ret == GS_ERROR) {
+      display_error("Gamestream error: %s\n", gs_error);
+      return 0;
+    } else if (ret != GS_OK) {
+      display_error("Can't connect to server\n%s", info->internal);
+      return 0;
+    }
+
+    connection_reset();
+
+    if (server.paired) {
+      // no more need, next action
+      connection_terminate();
+      return 1;
+    }
+
+    char pin[5];
+    char message[256];
+    sprintf(pin, "%d%d%d%d",
+            (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
+    flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
+
+    ret = gs_pair(&server, pin);
+    if (ret != GS_OK) {
+      display_error("Pairing failed: %d", ret);
+      connection_terminate();
+      return 0;
+    }
+    connection_paired();
+    if (connection_terminate()) {
+      display_error("Reconnect failed: %d", -2);
+      return 0;
+    }
+
+    // if connect, need to find external ip using stun server
+    connection_terminate();
+    return 1;
   }
 }
 
@@ -212,6 +264,11 @@ int ui_search_device_loop() {
   for (int i = 0; i < found_device; i++) {
     if (devices[i].internal[0] == '\0') {
       continue;
+    }
+    for (int i = 0; i < paired_devices.count; i++) {
+      if (is_paired(&devices[i])) {
+        continue;
+      }
     }
     MENU_ENTRY(DEVICE_ITEM + i, DEVICE_VIEW_ITEM + i, devices[i].name, devices[i].internal);
   }

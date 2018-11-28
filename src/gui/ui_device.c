@@ -31,6 +31,9 @@
 #include <errors.h>
 #include <mdns.h>
 
+#define MILLISECOND 1000
+#define SECOND      (1000 * MILLISECOND)
+
 enum {
   DEVICE_EXIT_SEARCH = 100,
   DEVICE_ITEM,
@@ -128,7 +131,7 @@ int mdns_discovery_main(SceSize args, void *argp) {
     if (empty_cnt >= 30 || found_device >= 50) {
       break;
     }
-    sceKernelDelayThread(1000000);
+    sceKernelDelayThread(SECOND);
   }
 exit:
   if (buffer) {
@@ -139,21 +142,25 @@ exit:
   return 0;
 }
 
-int start_search_thread() {
+SceUID start_search_thread() {
   found_device = 0;
-  SceUID tid = sceKernelCreateThread("mdns", mdns_discovery_main, 0x10000100, 0x10000, 0, 0, NULL);
-  if (tid < 0) {
+  SceUID thid = sceKernelCreateThread("mdns", mdns_discovery_main, 0x10000100, 0x10000, 0, 0, NULL);
+  if (thid < 0) {
     return -1;
   }
-  sceKernelStartThread(tid, 0, 0);
+  sceKernelStartThread(thid, 0, 0);
+  return thid;
 }
 
-int end_search_thread() {
+int end_search_thread(SceUID thid) {
   search_thread_status = SEARCH_THREAD_REQ_STOP;
 
-  while (search_thread_status != SEARCH_THREAD_IDLE) {
-    sceKernelDelayThread(1000000);
-  }
+  SceUInt timeout;
+  do {
+    timeout = 100 * MILLISECOND;
+  } while (sceKernelWaitThreadEnd(thid, NULL, &timeout) < 0);
+
+  sceKernelDeleteThread(thid);
 }
 
 static int ui_search_device_callback(int id, void *context, const input_data *input) {
@@ -279,9 +286,9 @@ int ui_search_device_loop() {
 }
 
 void ui_search_device() {
-  start_search_thread();
+  SceUID thid = start_search_thread();
 
   while (ui_search_device_loop() == 2);
 
-  end_search_thread();
+  end_search_thread(thid);
 }

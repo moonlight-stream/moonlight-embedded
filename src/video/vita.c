@@ -18,6 +18,7 @@
  */
 
 #include "../video.h"
+#include "../config.h"
 #include "sps.h"
 
 #include <Limelight.h>
@@ -354,7 +355,7 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
         framebuf.width = SCREEN_WIDTH;
         framebuf.height = SCREEN_HEIGHT;
 
-        int ret = sceDisplaySetFrameBuf(&framebuf, 1);
+        int ret = sceDisplaySetFrameBuf(&framebuf, (config.disable_vsync) ? SCE_DISPLAY_SETBUF_IMMEDIATE : SCE_DISPLAY_SETBUF_NEXTFRAME);
         backbuffer = (backbuffer + 1) % 2;
         if (ret < 0)
           printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);

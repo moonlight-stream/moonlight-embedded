@@ -24,6 +24,7 @@
 #include <psp2/ctrl.h>
 #include <psp2/rtc.h>
 #include <psp2/touch.h>
+#include <psp2/io/stat.h>
 #include <psp2/kernel/processmgr.h>
 #include <vita2d.h>
 #include <Limelight.h>
@@ -182,6 +183,8 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
     flash_message("Test connecting to:\n %s...", info->internal);
     char key_dir[4096];
     sprintf(key_dir, "%s/%s", config.key_dir, info->name);
+    sceIoMkdir(key_dir, 0777);
+
     int ret = gs_init(&server, info->internal, key_dir, 0, true);
 
     if (ret == GS_OUT_OF_MEMORY) {
@@ -205,10 +208,11 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
 
     connection_reset();
 
+    save_device_info(info);
+
     if (server.paired) {
       // no more need, next action
-      connection_terminate();
-      return 1;
+      goto normal_exit;
     }
 
     char pin[5];
@@ -230,6 +234,10 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
     }
 
     // if connect, need to find external ip using stun server
+normal_exit:
+    info->paired = true;
+    save_device_info(info);
+
     connection_terminate();
     return 1;
   }
@@ -272,8 +280,8 @@ int ui_search_device_loop() {
     if (devices[i].internal[0] == '\0') {
       continue;
     }
-    for (int i = 0; i < paired_devices.count; i++) {
-      if (is_paired(&devices[i])) {
+    for (int i = 0; i < known_devices.count; i++) {
+      if (!known_devices.devices[i].paired) {
         continue;
       }
     }

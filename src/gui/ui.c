@@ -25,8 +25,6 @@
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
 
-device_infos_t known_devices = {0};
-
 enum {
   MAIN_MENU_CONNECTED = 100,
   MAIN_MENU_SEARCH,
@@ -116,13 +114,15 @@ int ui_main_menu() {
     MENU_ENTRY(MAIN_MENU_SEARCH, "Search devices ...", false);
     MENU_ENTRY(MAIN_MENU_CONNECT, "Add manually ...", false);
 
-    MENU_SEPARATOR("Paired computers");
-    for (int i = 0; i < known_devices.count; i++) {
-      device_info_t *cur = &known_devices.devices[i];
-      if (!cur->paired) {
-        continue;
+    if (known_devices.count) {
+      MENU_SEPARATOR("Paired computers");
+      for (int i = 0; i < known_devices.count; i++) {
+        device_info_t *cur = &known_devices.devices[i];
+        if (!cur->paired) {
+          continue;
+        }
+        MENU_ENTRY(MAIN_MENU_CONNECT + i, cur->name, false);
       }
-      MENU_ENTRY(MAIN_MENU_CONNECT + i, cur->name, false);
     }
   }
 

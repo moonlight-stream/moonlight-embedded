@@ -55,6 +55,7 @@
 #include <psp2/rtc.h>
 
 #include "graphics.h"
+#include "device.h"
 #include "gui/ui.h"
 #include "power/vita.h"
 
@@ -123,6 +124,8 @@ int main(int argc, char* argv[]) {
   vitainput_config(config);
 
   config.log_file = fopen("ux0:data/moonlight/moonlight.log", "w");
+
+  load_all_known_devices();
 
   gui_loop();
 }

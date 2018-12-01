@@ -69,6 +69,26 @@ void ipv4_address_to_string(const struct sockaddr_in *addr, char *ip, const size
   sceNetInetNtop(AF_INET, &addr->sin_addr.s_addr, ip, len);
 }
 
+// part of publib. BSD license
+// https://github.com/ajkaijanaho/publib/blob/master/strutil/strrstr.c
+char* strrstr(const char *str, const char *pat) {
+  size_t len, patlen;
+  const char *p;
+
+  assert(str != NULL);
+  assert(pat != NULL);
+
+  len = strlen(str);
+  patlen = strlen(pat);
+
+  if (patlen > len)
+    return NULL;
+  for (p = str + (len - patlen); p > str; --p)
+    if (*p == *pat && strncmp(p, pat, patlen) == 0)
+      return (char *) p;
+  return NULL;
+}
+
 static int mdns_discovery_callback(const struct sockaddr* from,
                                    mdns_entry_type_t entry, uint16_t type,
                                    uint16_t rclass, uint32_t ttl,
@@ -82,7 +102,15 @@ static int mdns_discovery_callback(const struct sockaddr* from,
       {
         mdns_record_srv_t srv = mdns_record_parse_srv(data, size, offset, length,
                                                       namebuffer, sizeof(namebuffer));
-        strncpy(devices[found_device].name, srv.name.str, 255);
+        // remove ".local." postfix
+        // last . occurs problem between libgamestream and common logic
+        char *p = strrstr(srv.name.str, ".local.");
+        size_t len = p - srv.name.str;
+        if (len > 255) {
+          len = 255;
+        }
+        // FIXME: remove special codes
+        strncpy(devices[found_device].name, srv.name.str, p - srv.name.str);
       }
       break;
     case MDNS_RECORDTYPE_A:
@@ -166,6 +194,7 @@ int end_search_thread(SceUID thid) {
 
 static int ui_search_device_callback(int id, void *context, const input_data *input) {
   if ((input->buttons & SCE_CTRL_CROSS) == 0 || (input->buttons & SCE_CTRL_HOLD) != 0) {
+    // if remain slot, reload discovered devices
     if (!DEVICE_ENTRY_IDX[DEVICE_VIEW_ITEM + found_device - 1]) {
       return 2;
     }
@@ -178,7 +207,6 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
   if (id >= DEVICE_ITEM) {
     SERVER_DATA server;
 
-    // TODO: connect
     device_info_t *info = &devices[id - DEVICE_ITEM];
     flash_message("Test connecting to:\n %s...", info->internal);
     char key_dir[4096];
@@ -208,11 +236,18 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
 
     connection_reset();
 
-    save_device_info(info);
+    device_info_t *p = append_device(info);
+    if (p == NULL) {
+      display_error("Can't add device list\n%s", info->name);
+      return 0;
+    }
+
+    save_device_info(p);
 
     if (server.paired) {
       // no more need, next action
-      goto normal_exit;
+      connection_paired();
+      goto paired;
     }
 
     char pin[5];
@@ -228,17 +263,19 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
       return 0;
     }
     connection_paired();
+
+    // if connect, need to find external ip using stun server
+paired:
+    info->paired = true;
+    p->paired = true;
+
+    save_device_info(p);
+
     if (connection_terminate()) {
       display_error("Reconnect failed: %d", -2);
       return 0;
     }
 
-    // if connect, need to find external ip using stun server
-normal_exit:
-    info->paired = true;
-    save_device_info(info);
-
-    connection_terminate();
     return 1;
   }
 }
@@ -280,10 +317,9 @@ int ui_search_device_loop() {
     if (devices[i].internal[0] == '\0') {
       continue;
     }
-    for (int i = 0; i < known_devices.count; i++) {
-      if (!known_devices.devices[i].paired) {
-        continue;
-      }
+    device_info_t *p = find_device(devices[i].name);
+    if (p && p->paired) {
+      continue;
     }
     MENU_ENTRY(DEVICE_ITEM + i, DEVICE_VIEW_ITEM + i, devices[i].name, devices[i].internal);
   }

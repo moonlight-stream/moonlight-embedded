@@ -18,7 +18,9 @@ struct device_infos {
 
 extern device_infos_t known_devices;
 
-bool is_paired(device_info_t *info);
+device_info_t* find_device(const char *name);
+device_info_t* append_device();
+bool update_device();
 void load_all_known_devices();
-void load_device_info(device_info_t *info);
+bool load_device_info(device_info_t *info);
 void save_device_info(const device_info_t *info);

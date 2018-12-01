@@ -4,26 +4,33 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <ini.h>
+
+#include <psp2/io/dirent.h>
+
 #include "device.h"
+#include "debug.h"
 
 #define DATA_DIR "ux0:data/moonlight"
 #define DEVICE_FILE "device.ini"
 
 #define BOOL(v) strcmp((v), "true") == 0
+#define write_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value ? "true" : "false");
+#define write_string(fd, key, value) fprintf(fd, "%s = %s\n", key, value)
 
-bool is_paired(device_info_t *info) {
+device_infos_t known_devices = {0};
+
+device_info_t* find_device(const char *name) {
+  // TODO: mutex
   for (int i = 0; i < known_devices.count; i++) {
-    if (!strcmp(info->name, known_devices.devices[i].name) &&
-        !strcmp(info->internal, known_devices.devices[i].internal)) {
-      return known_devices.devices[i].paired;
+    if (!strcmp(name, known_devices.devices[i].name)) {
+      return &known_devices.devices[i];
     }
   }
-  return false;
+  return NULL;
 }
 
-static int device_file_path(char *out, const char *dir) {
+static void device_file_path(char *out, const char *dir) {
   sprintf(out, DATA_DIR "/%s/" DEVICE_FILE, dir);
-  return access(out, F_OK);
 }
 
 static int device_ini_handle(void *out, const char *section, const char *name,
@@ -38,13 +45,17 @@ static int device_ini_handle(void *out, const char *section, const char *name,
   }
 }
 
-bool append_device(device_info_t *info) {
+device_info_t* append_device(device_info_t *info) {
+  if (find_device(info->name)) {
+    return NULL;
+  }
+  // FIXME: need mutex
   if (known_devices.size == 0) {
     known_devices.devices = malloc(sizeof(device_info_t) * 4);
     if (known_devices.devices == NULL) {
-      return false;
+      return NULL;
     }
-    known_devices.size = 0;
+    known_devices.size = 4;
   } else if (known_devices.size == known_devices.count) {
     //if (known_devices.size == 64) {
     //  return false;
@@ -52,9 +63,10 @@ bool append_device(device_info_t *info) {
     size_t new_size = sizeof(device_info_t) * (known_devices.size * 2);
     device_info_t *tmp = realloc(known_devices.devices, new_size);
     if (tmp == NULL) {
-      return false;
+      return NULL;
     }
     known_devices.devices = tmp;
+    known_devices.size *= 2;
   }
   device_info_t *p = &known_devices.devices[known_devices.count];
 
@@ -64,44 +76,59 @@ bool append_device(device_info_t *info) {
   strncpy(p->external, info->external, 255);
 
   known_devices.count++;
+  return p;
+}
+
+bool update_device(device_info_t *info) {
+  device_info_t *p = find_device(info->name);
+  if (p == NULL) {
+    return false;
+  }
+  //strncpy(p->name, info->name, 255);
+  p->paired = info->paired;
+  strncpy(p->internal, info->internal, 255);
+  strncpy(p->external, info->external, 255);
+  return true;
 }
 
 void load_all_known_devices() {
-  struct dirent *ent;
   char path[512];
   struct stat st;
   device_info_t info;
 
-  DIR *dp = opendir(DATA_DIR);
-  while (ent = readdir(dp)) {
-    if (strcmp(".", ent->d_name) == 0 || strcmp("..", ent->d_name)) {
+  SceUID dfd = sceIoDopen(DATA_DIR);
+  if (dfd < 0) {
+    return;
+  }
+  do {
+    SceIoDirent ent = {0};
+    if (sceIoDread(dfd, &ent) <= 0) {
+      break;
+    }
+    if (strcmp(".", ent.d_name) == 0 || strcmp("..", ent.d_name) == 0) {
       continue;
     }
-    sprintf(path, DATA_DIR "/%s", ent->d_name);
-    if (stat(path, &st)) {
-      continue;
-    }
-    if (!S_ISDIR(st.st_mode)) {
-      continue;
-    }
-    if (!device_file_path(path, ent->d_name)) {
+    if (!SCE_S_ISDIR(ent.d_stat.st_mode)) {
       continue;
     }
 
     memset(&info, 0, sizeof(device_info_t));
-    strncpy(info.name, ent->d_name, 255);
-    load_device_info(&info);
+    strncpy(info.name, ent.d_name, 255);
+    if (!load_device_info(&info)) {
+      continue;
+    }
     append_device(&info);
-  }
-  closedir(dp);
+  } while(true);
+
+  sceIoDclose(dfd);
   return;
 }
 
-void load_device_info(device_info_t *info) {
+bool load_device_info(device_info_t *info) {
   char path[512];
   device_file_path(path, info->name);
 
-  ini_parse(path, device_ini_handle, info);
+  return ini_parse(path, device_ini_handle, info) == 0;
 }
 
 void save_device_info(const device_info_t *info) {
@@ -109,10 +136,13 @@ void save_device_info(const device_info_t *info) {
   device_file_path(path, info->name);
 
   FILE* fd = fopen(path, "w");
+  if (!fd) {
+    // FIXME
+    return;
+  }
 
-#define write_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value ? "true" : "false");
-#define write_string(fd, key, value) fprintf(fd, "%s = %s\n", key, value)
   write_bool(fd, "paired", info->paired);
   write_string(fd, "internal", info->internal);
   write_string(fd, "external", info->external);
+  fclose(fd);
 }

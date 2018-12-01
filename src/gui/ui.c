@@ -97,6 +97,7 @@ int ui_main_menu() {
 
   char name[256] = {0};
   char addr[256] = {0};
+  char resume_msg[256] = {0};
   //if (ui_connect_connected()) {
   //  ui_connect_address(addr);
   //  sprintf(name, "Resume connection to %s", addr);
@@ -106,7 +107,6 @@ int ui_main_menu() {
 
   if (ui_connect_connected()) {
     MENU_SEPARATOR("Current connection");
-    char resume_msg[256];
     ui_connect_address(addr);
     sprintf(resume_msg, "Resume connection to %s", addr);
     MENU_ENTRY(MAIN_MENU_CONNECT_RESUME, resume_msg, false);

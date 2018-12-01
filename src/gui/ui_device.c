@@ -265,7 +265,6 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
     }
     connection_paired();
 
-    // if connect, need to find external ip using stun server
 paired:
     info->paired = true;
 

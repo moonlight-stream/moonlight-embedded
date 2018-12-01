@@ -409,9 +409,9 @@ void ui_connect_paired_device(device_info_t *info) {
     return;
   }
   char *addr = NULL;
-  if (check_connection(info->name, info->internal)) {
+  if (info->internal && check_connection(info->name, info->internal)) {
     addr = info->internal;
-  } else if (check_connection(info->name, info->external)) {
+  } else if (info->external && check_connection(info->name, info->external)) {
     addr = info->external;
   }
   if (addr == NULL) {

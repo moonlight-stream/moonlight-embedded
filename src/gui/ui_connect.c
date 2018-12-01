@@ -30,6 +30,7 @@
 
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
+#include <psp2/io/stat.h>
 #include <vita2d.h>
 
 int get_app_id(PAPP_LIST list, char *name) {
@@ -364,25 +365,90 @@ int ui_connected_menu() {
   return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, &menu);
 }
 
+device_info_t* ui_connect_and_pairing(device_info_t *info) {
+  flash_message("Test connecting to:\n %s...", info->internal);
+  char key_dir[4096];
+  sprintf(key_dir, "%s/%s", config.key_dir, info->name);
+  sceIoMkdir(key_dir, 0777);
+
+  int ret = gs_init(&server, info->internal, key_dir, 0, true);
+
+  if (ret == GS_OUT_OF_MEMORY) {
+    display_error("Not enough memory");
+    return NULL;
+  } else if (ret == GS_INVALID) {
+    display_error("Invalid data received from server: %s\n", info->internal, gs_error);
+    return NULL;
+  } else if (ret == GS_UNSUPPORTED_VERSION) {
+    if (!config.unsupported_version) {
+      display_error("Unsupported version: %s\n", gs_error);
+      return NULL;
+    }
+  } else if (ret == GS_ERROR) {
+    display_error("Gamestream error: %s\n", gs_error);
+    return NULL;
+  } else if (ret != GS_OK) {
+    display_error("Can't connect to server\n%s", info->internal);
+    return NULL;
+  }
+
+  connection_reset();
+
+  device_info_t *p = append_device(info);
+  if (p == NULL) {
+    display_error("Can't add device list\n%s", info->name);
+    return NULL;
+  }
+
+  info = p;
+  // connectable address
+  save_device_info(info);
+
+  if (server.paired) {
+    // no more need, move next action
+    goto paired;
+  }
+
+  char pin[5];
+  char message[256];
+  sprintf(pin, "%d%d%d%d",
+          (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
+  flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
+
+  ret = gs_pair(&server, pin);
+  if (ret != GS_OK) {
+    display_error("Pairing failed: %d", ret);
+    connection_terminate();
+    return NULL;
+  }
+
+paired:
+  connection_paired();
+
+  info->paired = true;
+  save_device_info(info);
+
+  if (connection_terminate()) {
+    display_error("Reconnect failed: %d", -2);
+    return info;
+  }
+
+  return info;
+}
+
 void ui_connect_resume() {
   while (ui_connected_menu() == QUIT_RELOAD);
 }
 
 void ui_connect_manual() {
-  char ip[512];
-  switch (ime_dialog_string(ip, "Enter Address:", "192.168.")) {
-    case 0:
-      if (config.address)
-        free(config.address);
-      config.address = malloc(sizeof(char) * strlen(ip));
-      // TODO reimplement
-      //strcpy(config.address, ip);
-      //ui_settings_save_config();
-      //ui_connect_resume();
-      break;
-    default:
-      return;
+  device_info_t info;
+  if (ime_dialog_string(info.name, "Enter Name:", "") != 0) {
+    return;
   }
+  if (ime_dialog_string(info.internal, "Enter IP or Address:", "") != 0) {
+    return;
+  }
+  ui_connect_and_pairing(&info);
 }
 
 bool check_connection(const char *name, char *addr) {

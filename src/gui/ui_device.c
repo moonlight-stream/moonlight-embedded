@@ -8,6 +8,7 @@
 #include "../connection.h"
 //#include "../debug.h"
 #include "../input/vita.h"
+#include "ui_connect.h"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -207,66 +208,10 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
   if (id >= DEVICE_ITEM) {
     SERVER_DATA server;
 
-    device_info_t *info = &devices[id - DEVICE_ITEM];
-    flash_message("Test connecting to:\n %s...", info->internal);
-    char key_dir[4096];
-    sprintf(key_dir, "%s/%s", config.key_dir, info->name);
-    sceIoMkdir(key_dir, 0777);
-
-    int ret = gs_init(&server, info->internal, key_dir, 0, true);
-
-    if (ret == GS_OUT_OF_MEMORY) {
-      display_error("Not enough memory");
-      return 0;
-    } else if (ret == GS_INVALID) {
-      display_error("Invalid data received from server: %s\n", info->internal, gs_error);
-      return 0;
-    } else if (ret == GS_UNSUPPORTED_VERSION) {
-      if (!config.unsupported_version) {
-        display_error("Unsupported version: %s\n", gs_error);
-        return 0;
-      }
-    } else if (ret == GS_ERROR) {
-      display_error("Gamestream error: %s\n", gs_error);
-      return 0;
-    } else if (ret != GS_OK) {
-      display_error("Can't connect to server\n%s", info->internal);
+    device_info_t *info = ui_connect_and_pairing(&devices[id - DEVICE_ITEM]);
+    if (info == NULL) {
       return 0;
     }
-
-    connection_reset();
-
-    device_info_t *p = append_device(info);
-    if (p == NULL) {
-      display_error("Can't add device list\n%s", info->name);
-      return 0;
-    }
-    info = p;
-
-    save_device_info(info);
-
-    if (server.paired) {
-      // no more need, next action
-      connection_paired();
-      goto paired;
-    }
-
-    char pin[5];
-    char message[256];
-    sprintf(pin, "%d%d%d%d",
-            (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
-    flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
-
-    ret = gs_pair(&server, pin);
-    if (ret != GS_OK) {
-      display_error("Pairing failed: %d", ret);
-      connection_terminate();
-      return 0;
-    }
-    connection_paired();
-
-paired:
-    info->paired = true;
 
     uint32_t extern_addr = 0;
     if (LiFindExternalAddressIP4("stun.stunprotocol.org", 3478, &extern_addr) == 0) {
@@ -275,12 +220,8 @@ paired:
       addr.sin_addr.s_addr = extern_addr;
       ipv4_address_to_string(&addr, info->external, 16);
     }
-    save_device_info(info);
 
-    if (connection_terminate()) {
-      display_error("Reconnect failed: %d", -2);
-      return 0;
-    }
+    save_device_info(info);
 
     return 1;
   }

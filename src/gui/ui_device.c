@@ -241,8 +241,9 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
       display_error("Can't add device list\n%s", info->name);
       return 0;
     }
+    info = p;
 
-    save_device_info(p);
+    save_device_info(info);
 
     if (server.paired) {
       // no more need, next action
@@ -267,9 +268,15 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
     // if connect, need to find external ip using stun server
 paired:
     info->paired = true;
-    p->paired = true;
 
-    save_device_info(p);
+    uint32_t extern_addr = 0;
+    if (LiFindExternalAddressIP4("stun.stunprotocol.org", 3478, &extern_addr) == 0) {
+      struct sockaddr_in addr;
+      addr.sin_family = AF_INET;
+      addr.sin_addr.s_addr = extern_addr;
+      ipv4_address_to_string(&addr, info->external, 16);
+    }
+    save_device_info(info);
 
     if (connection_terminate()) {
       display_error("Reconnect failed: %d", -2);

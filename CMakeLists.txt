@@ -98,6 +98,7 @@ add_executable(${PROJECT_NAME}.elf
 	third_party/moonlight-common-c/src/VideoDepacketizer.c
 	third_party/moonlight-common-c/src/VideoStream.c
 	third_party/moonlight-common-c/src/RtpFecQueue.c
+	third_party/moonlight-common-c/src/SimpleStun.c
 	third_party/moonlight-common-c/reedsolomon/rs.c
 
 	third_party/enet/callbacks.c

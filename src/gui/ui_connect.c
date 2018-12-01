@@ -226,11 +226,15 @@ disconnect:
   return 1;
 }
 
-int ui_connect(char *address) {
+int ui_connect(char *name, char *address) {
   int ret;
   if (!connection_is_ready()) {
     flash_message("Connecting to:\n %s...", address);
-    ret = gs_init(&server, address, config.key_dir, 0, true);
+
+    char key_dir[4096];
+    sprintf(key_dir, "%s/%s", config.key_dir, name);
+
+    ret = gs_init(&server, address, key_dir, 0, true);
     if (ret == GS_OUT_OF_MEMORY) {
       display_error("Not enough memory");
       return 0;
@@ -252,7 +256,11 @@ int ui_connect(char *address) {
 
     connection_reset();
   }
+  return 1;
+}
 
+int ui_connected_menu() {
+  int ret;
   int app_count = 0;
   if (server.paired) {
     ret = gs_applist(&server, &server_applist);
@@ -298,7 +306,7 @@ int ui_connect(char *address) {
   char server_info[256];
   snprintf(server_info, 256,
            "IP: %s, GPU %s, GFE %s",
-           address,
+           server.serverInfo.address,
            server.gpuType,
            server.serverInfo.serverInfoGfeVersion);
 
@@ -356,8 +364,8 @@ int ui_connect(char *address) {
   return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, &menu);
 }
 
-void ui_connect_saved() {
-  while (ui_connect(config.address) == QUIT_RELOAD);
+void ui_connect_resume() {
+  while (ui_connected_menu() == QUIT_RELOAD);
 }
 
 void ui_connect_manual() {
@@ -367,20 +375,53 @@ void ui_connect_manual() {
       if (config.address)
         free(config.address);
       config.address = malloc(sizeof(char) * strlen(ip));
-      strcpy(config.address, ip);
-      ui_settings_save_config();
-      ui_connect_saved();
+      // TODO reimplement
+      //strcpy(config.address, ip);
+      //ui_settings_save_config();
+      //ui_connect_resume();
       break;
     default:
       return;
   }
 }
 
-void ui_connect_paired_device(device_info_t *info) {
-  // check external ip
-  char *addr = info->internal;
+bool check_connection(const char *name, char *addr) {
+  // someone already connected
+  if (connection_is_ready()) {
+    return false;
+  }
 
-  while (ui_connect(addr) == QUIT_RELOAD);
+  flash_message("Check connecting to:\n %s...", addr);
+
+  char key_dir[4096];
+  sprintf(key_dir, "%s/%s", config.key_dir, name);
+
+  if (gs_init(&server, addr, key_dir, 0, true) != GS_OK) {
+    return false;
+  }
+  connection_terminate();
+  return true;
+}
+
+void ui_connect_paired_device(device_info_t *info) {
+  if (!info->paired) {
+    display_error("Unpaired device\n%s", info->name);
+    return;
+  }
+  char *addr = NULL;
+  if (check_connection(info->name, info->internal)) {
+    addr = info->internal;
+  } else if (check_connection(info->name, info->external)) {
+    addr = info->external;
+  }
+  if (addr == NULL) {
+    display_error("Can't connect to server\n%s", info->name);
+    return;
+  }
+  if (!ui_connect(info->name, addr)) {
+    return;
+  }
+  while (ui_connected_menu() == QUIT_RELOAD);
 }
 
 bool ui_connect_connected() {

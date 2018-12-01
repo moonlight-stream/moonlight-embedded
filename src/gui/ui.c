@@ -28,7 +28,7 @@
 enum {
   MAIN_MENU_CONNECTED = 100,
   MAIN_MENU_SEARCH,
-  MAIN_MENU_CONNECT_SAVED,
+  MAIN_MENU_CONNECT_RESUME,
   MAIN_MENU_SETTINGS,
   MAIN_MENU_CONNECT,
   MAIN_MENU_CONNECT_PAIRED,
@@ -51,8 +51,8 @@ int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
     case MAIN_MENU_SEARCH:
       ui_search_device();
       return 2;
-    case MAIN_MENU_CONNECT_SAVED:
-      ui_connect_saved();
+    case MAIN_MENU_CONNECT_RESUME:
+      ui_connect_resume();
       return 2;
     case MAIN_MENU_SETTINGS:
       ui_settings_menu();
@@ -109,7 +109,7 @@ int ui_main_menu() {
     char resume_msg[256];
     ui_connect_address(addr);
     sprintf(resume_msg, "Resume connection to %s", addr);
-    MENU_ENTRY(MAIN_MENU_CONNECT_SAVED, resume_msg, false);
+    MENU_ENTRY(MAIN_MENU_CONNECT_RESUME, resume_msg, false);
   } else {
     MENU_SEPARATOR("Add new computer");
     MENU_ENTRY(MAIN_MENU_SEARCH, "Search devices ...", false);

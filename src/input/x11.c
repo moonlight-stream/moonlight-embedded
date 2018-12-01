@@ -32,6 +32,7 @@
 #include <poll.h>
 
 #define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
+#define QUIT_KEY 0x18  /* KEY_Q */
 
 static Display *display;
 static Window window;
@@ -57,7 +58,7 @@ static int x11_handler(int fd) {
     case KeyRelease:
       if (event.xkey.keycode >= 8 && event.xkey.keycode < (sizeof(keyCodes)/sizeof(keyCodes[0]) + 8)) {
         if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event.type == KeyRelease) {
-          if (event.xkey.keycode == 0x18)
+          if (event.xkey.keycode == QUIT_KEY)
             return LOOP_RETURN;
           else {
             grabbed = !grabbed;

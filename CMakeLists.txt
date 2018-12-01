@@ -32,6 +32,7 @@ include_directories(
 	third_party/h264bitstream/
 	third_party/enet/include/
 	third_party/inih/
+	third_party/mdns/
 )
 
 add_executable(${PROJECT_NAME}.elf
@@ -44,6 +45,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/main.c
 	src/platform.c
 	src/util.c
+	src/device.c
 
 	src/audio/vita.c
 	src/video/vita.c
@@ -56,6 +58,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/gui/ui.c
 	src/gui/ui_settings.c
 	src/gui/ui_connect.c
+	src/gui/ui_device.c
 
 	libgamestream/client.c
 	libgamestream/http.c
@@ -95,6 +98,7 @@ add_executable(${PROJECT_NAME}.elf
 	third_party/moonlight-common-c/src/VideoDepacketizer.c
 	third_party/moonlight-common-c/src/VideoStream.c
 	third_party/moonlight-common-c/src/RtpFecQueue.c
+	third_party/moonlight-common-c/src/SimpleStun.c
 	third_party/moonlight-common-c/reedsolomon/rs.c
 
 	third_party/enet/callbacks.c

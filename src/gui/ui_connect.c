@@ -10,6 +10,7 @@
 #include "../video.h"
 #include "../config.h"
 #include "../util.h"
+#include "../device.h"
 
 #include "client.h"
 #include "discover.h"
@@ -29,6 +30,7 @@
 
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
+#include <psp2/io/stat.h>
 #include <vita2d.h>
 
 int get_app_id(PAPP_LIST list, char *name) {
@@ -225,11 +227,15 @@ disconnect:
   return 1;
 }
 
-int ui_connect(char *address) {
+int ui_connect(char *name, char *address) {
   int ret;
   if (!connection_is_ready()) {
     flash_message("Connecting to:\n %s...", address);
-    ret = gs_init(&server, address, config.key_dir, 0, true);
+
+    char key_dir[4096];
+    sprintf(key_dir, "%s/%s", config.key_dir, name);
+
+    ret = gs_init(&server, address, key_dir, 0, true);
     if (ret == GS_OUT_OF_MEMORY) {
       display_error("Not enough memory");
       return 0;
@@ -251,7 +257,11 @@ int ui_connect(char *address) {
 
     connection_reset();
   }
+  return 1;
+}
 
+int ui_connected_menu() {
+  int ret;
   int app_count = 0;
   if (server.paired) {
     ret = gs_applist(&server, &server_applist);
@@ -297,7 +307,7 @@ int ui_connect(char *address) {
   char server_info[256];
   snprintf(server_info, 256,
            "IP: %s, GPU %s, GFE %s",
-           address,
+           server.serverInfo.address,
            server.gpuType,
            server.serverInfo.serverInfoGfeVersion);
 
@@ -355,24 +365,129 @@ int ui_connect(char *address) {
   return display_menu(menu, idx, NULL, &ui_connect_loop, NULL, NULL, &menu);
 }
 
-void ui_connect_saved() {
-  while (ui_connect(config.address) == QUIT_RELOAD);
+device_info_t* ui_connect_and_pairing(device_info_t *info) {
+  flash_message("Test connecting to:\n %s...", info->internal);
+  char key_dir[4096];
+  sprintf(key_dir, "%s/%s", config.key_dir, info->name);
+  sceIoMkdir(key_dir, 0777);
+
+  int ret = gs_init(&server, info->internal, key_dir, 0, true);
+
+  if (ret == GS_OUT_OF_MEMORY) {
+    display_error("Not enough memory");
+    return NULL;
+  } else if (ret == GS_INVALID) {
+    display_error("Invalid data received from server: %s\n", info->internal, gs_error);
+    return NULL;
+  } else if (ret == GS_UNSUPPORTED_VERSION) {
+    if (!config.unsupported_version) {
+      display_error("Unsupported version: %s\n", gs_error);
+      return NULL;
+    }
+  } else if (ret == GS_ERROR) {
+    display_error("Gamestream error: %s\n", gs_error);
+    return NULL;
+  } else if (ret != GS_OK) {
+    display_error("Can't connect to server\n%s", info->internal);
+    return NULL;
+  }
+
+  connection_reset();
+
+  device_info_t *p = append_device(info);
+  if (p == NULL) {
+    display_error("Can't add device list\n%s", info->name);
+    return NULL;
+  }
+
+  info = p;
+  // connectable address
+  save_device_info(info);
+
+  if (server.paired) {
+    // no more need, move next action
+    goto paired;
+  }
+
+  char pin[5];
+  char message[256];
+  sprintf(pin, "%d%d%d%d",
+          (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
+  flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
+
+  ret = gs_pair(&server, pin);
+  if (ret != GS_OK) {
+    display_error("Pairing failed: %d", ret);
+    connection_terminate();
+    return NULL;
+  }
+
+paired:
+  connection_paired();
+
+  info->paired = true;
+  save_device_info(info);
+
+  if (connection_terminate()) {
+    display_error("Reconnect failed: %d", -2);
+    return info;
+  }
+
+  return info;
 }
 
-void ui_connect_ip() {
-  char ip[512];
-  switch (ime_dialog(ip, "Enter IP:", "192.168.")) {
-    case 0:
-      if (config.address)
-        free(config.address);
-      config.address = malloc(sizeof(char) * strlen(ip));
-      strcpy(config.address, ip);
-      ui_settings_save_config();
-      ui_connect_saved();
-      break;
-    default:
-      return;
+void ui_connect_resume() {
+  while (ui_connected_menu() == QUIT_RELOAD);
+}
+
+void ui_connect_manual() {
+  device_info_t info;
+  if (ime_dialog_string(info.name, "Enter Name:", "") != 0) {
+    return;
   }
+  if (ime_dialog_string(info.internal, "Enter IP or Address:", "") != 0) {
+    return;
+  }
+  ui_connect_and_pairing(&info);
+}
+
+bool check_connection(const char *name, char *addr) {
+  // someone already connected
+  if (connection_is_ready()) {
+    return false;
+  }
+
+  flash_message("Check connecting to:\n %s...", addr);
+
+  char key_dir[4096];
+  sprintf(key_dir, "%s/%s", config.key_dir, name);
+
+  if (gs_init(&server, addr, key_dir, 0, true) != GS_OK) {
+    return false;
+  }
+  connection_terminate();
+  return true;
+}
+
+void ui_connect_paired_device(device_info_t *info) {
+  if (!info->paired) {
+    display_error("Unpaired device\n%s", info->name);
+    return;
+  }
+  char *addr = NULL;
+  if (info->internal && check_connection(info->name, info->internal)) {
+    addr = info->internal;
+  } else if (info->external && check_connection(info->name, info->external)) {
+    addr = info->external;
+  }
+  if (addr == NULL) {
+    display_error("Can't connect to server\n%s", info->name);
+    return;
+  }
+  if (!ui_connect(info->name, addr)) {
+    return;
+  }
+  while (ui_connected_menu() == QUIT_RELOAD);
 }
 
 bool ui_connect_connected() {

@@ -5,8 +5,10 @@
 
 #include "ui_settings.h"
 #include "ui_connect.h"
+#include "ui_device.h"
 
 #include "../config.h"
+#include "../device.h"
 #include "../connection.h"
 #include "../video/vita.h"
 #include "../input/vita.h"
@@ -24,22 +26,33 @@
 #include <psp2/ctrl.h>
 
 enum {
-  MAIN_MENU_CONNECT = 100,
-  MAIN_MENU_CONNECT_SAVED,
+  MAIN_MENU_CONNECTED = 100,
+  MAIN_MENU_SEARCH,
+  MAIN_MENU_CONNECT_RESUME,
   MAIN_MENU_SETTINGS,
-  MAIN_MENU_QUIT
+  MAIN_MENU_CONNECT,
+  MAIN_MENU_CONNECT_PAIRED,
+  MAIN_MENU_QUIT = 999,
 };
 
 int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
   if ((input->buttons & SCE_CTRL_CROSS) == 0 || (input->buttons & SCE_CTRL_HOLD) != 0) {
     return 0;
   }
+  if (cursor >= MAIN_MENU_CONNECT_PAIRED && cursor < MAIN_MENU_QUIT) {
+    device_info_t *info = &known_devices.devices[cursor - MAIN_MENU_CONNECT_PAIRED];
+    ui_connect_paired_device(info);
+    return 2;
+  }
   switch (cursor) {
     case MAIN_MENU_CONNECT:
-      ui_connect_ip();
+      ui_connect_manual();
       return 2;
-    case MAIN_MENU_CONNECT_SAVED:
-      ui_connect_saved();
+    case MAIN_MENU_SEARCH:
+      ui_search_device();
+      return 2;
+    case MAIN_MENU_CONNECT_RESUME:
+      ui_connect_resume();
       return 2;
     case MAIN_MENU_SETTINGS:
       ui_settings_menu();
@@ -72,9 +85,9 @@ int ui_main_menu() {
     menu[idx] = (menu_entry) { .name = (NAME), .disabled = (DISABLED), .id = (ID) }; \
     idx++; \
   } while(0)
-#define MENU_SEPARATOR() \
+#define MENU_SEPARATOR(NAME) \
   do { \
-    menu[idx] = (menu_entry) { .name = "", .disabled = true, .separator = true }; \
+    menu[idx] = (menu_entry) { .name = (NAME), .disabled = true, .separator = true }; \
     idx++; \
   } while(0)
 
@@ -82,19 +95,39 @@ int ui_main_menu() {
   snprintf(program_info, 256, "Moonlight v%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
   MENU_TITLE(program_info);
 
-  char name[256];
+  char name[256] = {0};
+  char addr[256] = {0};
+  char resume_msg[256] = {0};
+  //if (ui_connect_connected()) {
+  //  ui_connect_address(addr);
+  //  sprintf(name, "Resume connection to %s", addr);
+  //} else {
+  //  sprintf(name, "Connect to %s", config.address ? config.address : "none");
+  //}
+
   if (ui_connect_connected()) {
-    char addr[256];
+    MENU_SEPARATOR("Current connection");
     ui_connect_address(addr);
-    sprintf(name, "Resume connection to %s", addr);
+    sprintf(resume_msg, "Resume connection to %s", addr);
+    MENU_ENTRY(MAIN_MENU_CONNECT_RESUME, resume_msg, false);
   } else {
-    sprintf(name, "Connect to %s", config.address ? config.address : "none");
+    MENU_SEPARATOR("Add new computer");
+    MENU_ENTRY(MAIN_MENU_SEARCH, "Search devices ...", false);
+    MENU_ENTRY(MAIN_MENU_CONNECT, "Add manually ...", false);
+
+    if (known_devices.count) {
+      MENU_SEPARATOR("Paired computers");
+      for (int i = 0; i < known_devices.count; i++) {
+        device_info_t *cur = &known_devices.devices[i];
+        if (!cur->paired) {
+          continue;
+        }
+        MENU_ENTRY(MAIN_MENU_CONNECT_PAIRED + i, cur->name, false);
+      }
+    }
   }
 
-  MENU_ENTRY(MAIN_MENU_CONNECT_SAVED, name, !ui_connect_connected() && !config.address);
-
-  MENU_ENTRY(MAIN_MENU_CONNECT, "Connect to ...", ui_connect_connected());
-  MENU_SEPARATOR();
+  MENU_SEPARATOR("");
   MENU_ENTRY(MAIN_MENU_SETTINGS, "Settings", false);
   MENU_ENTRY(MAIN_MENU_QUIT, "Quit", false);
 

@@ -376,10 +376,9 @@ void ui_connect_manual() {
   }
 }
 
-void ui_connect_paired_device(int idx) {
-  device_info_t *info = NULL;
+void ui_connect_paired_device(device_info_t *info) {
   // check external ip
-  char *addr = NULL;
+  char *addr = info->internal;
 
   while (ui_connect(addr) == QUIT_RELOAD);
 }

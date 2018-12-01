@@ -40,8 +40,9 @@ int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
     return 0;
   }
   if (cursor >= MAIN_MENU_CONNECT_PAIRED && cursor < MAIN_MENU_QUIT) {
-      ui_connect_paired_device(cursor - MAIN_MENU_CONNECT);
-      return 2;
+    device_info_t *info = &known_devices.devices[cursor - MAIN_MENU_CONNECT_PAIRED];
+    ui_connect_paired_device(info);
+    return 2;
   }
   switch (cursor) {
     case MAIN_MENU_CONNECT:
@@ -121,7 +122,7 @@ int ui_main_menu() {
         if (!cur->paired) {
           continue;
         }
-        MENU_ENTRY(MAIN_MENU_CONNECT + i, cur->name, false);
+        MENU_ENTRY(MAIN_MENU_CONNECT_PAIRED + i, cur->name, false);
       }
     }
   }

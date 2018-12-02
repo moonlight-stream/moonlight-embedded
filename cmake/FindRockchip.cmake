@@ -4,7 +4,7 @@ find_path(DRM_INCLUDE_DIR
   PATHS /usr/local/include/libdrm /usr/include/libdrm /usr/include)
 mark_as_advanced(DRM_INCLUDE_DIR)
 
-find_path(DRM_LIBRARY
+find_library(DRM_LIBRARY
   NAMES libdrm.so
   DOC "Path to libdrm Library"
   PATHS /usr/local/lib /usr/lib /usr/lib/aarch64-linux-gnu /usr/lib/arm-linux-gnueabihf)

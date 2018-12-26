@@ -290,14 +290,6 @@ static unsigned numframes;
 static bool active_video_thread = true;
 
 static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  #if 0
-  PLENTRY entry = decodeUnit->bufferList;
-  while (entry != NULL) {
-    fwrite(entry->data, entry->length, 1, fd);
-    entry = entry->next;
-  }
-  #endif
-
   SceAvcdecAu au = {0};
   SceAvcdecArrayPicture array_picture = {0};
   struct SceAvcdecPicture picture = {0};
@@ -338,14 +330,6 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     }
 
     if (array_picture.numOfOutput == 1) {
-#if 0
-      static uint64_t prev_frame;
-      uint64_t cur_frame;
-      sceRtcGetCurrentTick(&cur_frame);
-      sceClibPrintf("got frame in %d us\n", (int)(cur_frame - prev_frame));
-      prev_frame = cur_frame;
-#endif
-
       if (active_video_thread) {
         SceDisplayFrameBuf framebuf = { 0 };
         framebuf.size = sizeof(framebuf);

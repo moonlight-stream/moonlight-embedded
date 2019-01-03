@@ -18,8 +18,8 @@ echo "Installing necessary dependencies for moonlight-switch"
 $PACMAN -S --needed --noconfirm \
     switch-pkg-config devkitpro-pkgbuild-helpers \
     switch-sdl2 switch-sdl2_gfx switch-sdl2_ttf switch-sdl2_image \
-    switch-libexpat switch-libopus switch-bzip2 switch-zlib
+    switch-libexpat switch-bzip2 switch-zlib \
+    switch-libopus switch-ffmpeg
 
 echo "Building and installing the bundled dependencies to $MOONLIGHT_DEPDIR"
-(cd switch-libavcodec; $MAKEPKG --needed --noconfirm;)
 (cd switch-openssl; $MAKEPKG --needed --noconfirm;)

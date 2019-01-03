@@ -172,6 +172,6 @@ void config_parse(char *filename, PCONFIGURATION config) {
     else if (config->stream.height >= 1080 || config->stream.fps >= 60)
       config->stream.bitrate = 10000;
     else
-      config->stream.bitrate = 5000;
+      config->stream.bitrate = 500;
   }
 }

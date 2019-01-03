@@ -40,7 +40,7 @@ static const char *pKeyFile = "./key.pem";
 
 SSL_CTX *ssl_ctx;
 
-static bool debug; // = true;
+static bool debug = false;
 
 #define BUFFER_LENGTH 4096
 
@@ -162,8 +162,14 @@ int http_request(char* host, int port, char* path, PHTTP_DATA data) {
   }
 
 success:
+  if (debug) {
+      printf("* Received %d bytes from server\n", data->memory_size);
+      printf("* Received:\n%s\n\n", data->memory);
+  }
+
   free(buffer);
 
+  close(sock);
   return GS_OK;
 
 failure:
@@ -309,8 +315,14 @@ int https_request(char* host, int port, char* path, PHTTP_DATA data) {
   if (debug) printf("* Received data: %s\n", data->body);
 
 success:
+  if (debug) {
+      printf("* Received %d bytes from server\n", data->memory_size);
+      printf("* Received:\n%s\n\n", data->memory);
+  }
+
   SSL_shutdown(ssl);
   free(buffer);
+  close(sock);
   return GS_OK;
 
 failure:

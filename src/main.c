@@ -55,7 +55,7 @@
 CONFIGURATION config;
 SERVER_DATA server;
 
-static const SocketInitConfig g_defaultSocketInitConfig = {
+static const SocketInitConfig g_socketConfig = {
     .bsdsockets_version = 1,
 
     .tcp_tx_buf_size        = 0x8000,
@@ -63,10 +63,11 @@ static const SocketInitConfig g_defaultSocketInitConfig = {
     .tcp_tx_buf_max_size    = 0x40000,
     .tcp_rx_buf_max_size    = 0x40000,
 
-    .udp_tx_buf_size = 0x80000,
-    .udp_rx_buf_size = 0x80000,
+    .udp_tx_buf_size = 0x2400,
+    .udp_rx_buf_size = 0xA500,
 
-    .sb_efficiency = 4,
+    // Increase number of buffers to prevent ENOBUFS error
+    .sb_efficiency = 8,
 
     .serialized_out_addrinfos_max_size  = 0x1000,
     .serialized_out_hostent_max_size    = 0x200,
@@ -75,7 +76,7 @@ static const SocketInitConfig g_defaultSocketInitConfig = {
 };
 
 int main(int argc, char* argv[]) {
-  socketInitialize(&g_defaultSocketInitConfig);
+  socketInitialize(&g_socketConfig);
   setInitialize();
   plInitialize();
   nxlinkStdio();
@@ -140,14 +141,6 @@ int main(int argc, char* argv[]) {
   if (config.debug_level > 0)
     printf("NVIDIA %s, GFE %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
 
-  printf("\n");
-  printf("A: list\n");
-  printf("B: stream\n");
-  printf("X: pair\n");
-  printf("Y: unpair\n");
-  printf("+: quit\n");
-  printf("\n");
-
   if (sui_init() < 0) {
     fprintf(stderr, "Could not initialize Switch UI\n");
   }
@@ -163,6 +156,7 @@ int main(int argc, char* argv[]) {
 
   plExit();
   setExit();
+  socketExit();
 
   return 0;
 }

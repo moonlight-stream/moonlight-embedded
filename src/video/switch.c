@@ -1,4 +1,5 @@
 #include "video.h"
+#include "sps.h"
 
 #include <stdio.h>
 #include <libavcodec/avcodec.h>
@@ -24,6 +25,8 @@ static int switch_video_setup(int videoFormat, int width, int height, int redraw
           height,
           redrawRate
           );
+
+  gs_sps_init(width, height);
 
   codec = avcodec_find_decoder(AV_CODEC_ID_H264);
   if (!codec) {
@@ -81,6 +84,9 @@ static void switch_video_stop(void) {
 
 static int switch_video_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   int ret;
+
+  // Decode the SPS headers for the H.264 frame
+  gs_sps_fix(decodeUnit, 0);
 
   // Collect the data from this decode unit
   PLENTRY bufferEntry = decodeUnit->bufferList;

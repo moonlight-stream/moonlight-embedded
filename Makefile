@@ -72,11 +72,12 @@ ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:=	-lsdl2 -lsdl2_gfx -lsdl2_ttf -lsdl2_image -lpng -ljpeg -lfreetype \
+                -lEGL -lglapi -ldrm_nouveau \
 		-lavcodec -lavutil \
 		-lopus \
 		-lssl -lcrypto \
 		-lbz2 -lz -lexpat -lm \
-		-lnx
+		-lstdc++ -lnx
 
 
 #---------------------------------------------------------------------------------

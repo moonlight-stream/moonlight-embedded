@@ -40,7 +40,36 @@ static const char *pKeyFile = "./key.pem";
 
 SSL_CTX *ssl_ctx;
 
-static bool debug = false;
+static bool debug = true;
+
+/**
+ * Workaround for issues stemming from SSL.
+ * Implementation courtesy of @Noah on the ReSwitched Discord.
+ *
+ * Per @natinusala, this method is called prior to every SSL read.
+ */
+typedef struct {
+    u32 is_valid;
+    nvioctl_fence nv_fences[4];
+} PACKED bufferProducerFence;
+
+Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout)
+{
+    Result rc;
+    do {
+        u32 event_res;
+        rc = nvioctlNvhostCtrl_EventWait(-1, syncpt_id, threshold, timeout, 0, &event_res);
+    } while (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout)); // todo: Fix timeout error
+    return rc;
+}
+
+void FIXSLAB() {
+    bufferProducerFence tmp_fence;
+    nvgfxEventWait(tmp_fence.nv_fences[0].id,tmp_fence.nv_fences[0].value,-1);
+}
+/**
+ * END SSL workaround.
+ */
 
 #define BUFFER_LENGTH 4096
 
@@ -56,11 +85,13 @@ int http_init(const char* keyDirectory, int logLevel) {
   SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE, NULL);
 
   if (!SSL_CTX_use_certificate_file(ssl_ctx, certificateFilePath, SSL_FILETYPE_PEM)) {
+    if (debug) fprintf(stderr, "* ERROR: error loading certificate file: %s\n", ERR_error_string(ERR_get_error(), NULL));
     gs_error = ERR_error_string(ERR_get_error(), NULL);
     return GS_FAILED;
   }
 
   if (!SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFilePath, SSL_FILETYPE_PEM)) {
+    if (debug) fprintf(stderr, "* ERROR: error loading private key file: %s\n", ERR_error_string(ERR_get_error(), NULL));
     gs_error = ERR_error_string(ERR_get_error(), NULL);
     return GS_FAILED;
   }
@@ -229,6 +260,7 @@ int https_request(char* host, int port, char* path, PHTTP_DATA data) {
 
   if (!ssl) {
     int e = ERR_get_error();
+    if (debug) fprintf(stderr, "* ERROR: error creating new SSL context: %s\n", ERR_error_string(e, NULL));
     gs_error = ERR_error_string(e, NULL);
     goto failure;
   }
@@ -239,6 +271,7 @@ int https_request(char* host, int port, char* path, PHTTP_DATA data) {
   // Set the SSL's socket
   if (!SSL_set_fd(ssl, sock)) {
     int e = ERR_get_error();
+    if (debug) fprintf(stderr, "* ERROR: error wiring SSL context to socket: %s\n", ERR_error_string(e, NULL));
     gs_error = ERR_error_string(e, NULL);
     goto failure;
   }
@@ -247,8 +280,10 @@ int https_request(char* host, int port, char* path, PHTTP_DATA data) {
   }
 
   // Connect via SSL
+  FIXSLAB();
   if (SSL_connect(ssl) <= 0) {
     int e = ERR_get_error();
+    if (debug) fprintf(stderr, "* ERROR: error connecting to server via SSL/TLS: %s\n", ERR_error_string(e, NULL));
     gs_error = ERR_error_string(e, NULL);
     goto failure;
   }
@@ -268,6 +303,7 @@ int https_request(char* host, int port, char* path, PHTTP_DATA data) {
 
   // Read the HTTP response
   while (1) {
+      FIXSLAB();
       int bytes_received = SSL_read(ssl, buffer, BUFFER_LENGTH);
 
       if (bytes_received < 0) {

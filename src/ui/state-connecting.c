@@ -7,7 +7,7 @@ static struct {
   int connectingWidth;
   int connectingHeight;
 
-  int frame;
+  FpsCounter counter;
   char pin[5];
 } props = {0};
 
@@ -23,7 +23,7 @@ int main_init_connecting() {
 }
 
 void main_update_connecting(SUIInput *input) {
-  if (props.frame == 0) {
+  if (props.counter.frame == 0) {
 //    sprintf(props.pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
     sprintf(props.pin, "0000");
   }
@@ -40,7 +40,7 @@ void main_update_connecting(SUIInput *input) {
     }
   }
 
-  props.frame++;
+  ui_update_fps(&props.counter);
 }
 
 
@@ -73,6 +73,8 @@ void main_render_connecting()  {
 
   // Draw the OK and Back actions on the bottom toolbar
   sui_draw_bottom_toolbar(2, "OK", SUIToolbarActionA, "Back", SUIToolbarActionB);
+
+  ui_draw_fps(&props.counter);
 
   SDL_RenderPresent(ui.renderer);
 }

@@ -7,7 +7,8 @@ static struct {
   SDL_Texture *streamTexture;
   PAPP_LIST game;
 
-  int frame;
+  FpsCounter counter;
+  FpsCounter streamCounter;
 } props = {0};
 
 static void draw_frame(uint8_t **data, int *linesize) {
@@ -37,7 +38,7 @@ int main_init_streaming() {
 }
 
 void main_update_streaming(SUIInput *input) {
-  if (props.frame == 0) {
+  if (props.counter.frame == 0) {
     stream_start(&server, &config, props.game->id, platform_check(config.platform));
   }
 
@@ -153,7 +154,7 @@ void main_update_streaming(SUIInput *input) {
 
   if (lastVideoFrameData) {
     draw_frame(lastVideoFrameData, lastVideoFrameLineSize);
-//    fprintf(stderr, "[VIDEO] Skipped %d frames before rendering frame %d\n", framesSkipped, props.frame);
+    ui_update_fps(&props.streamCounter);
   }
 
   if (input->buttons.down & KEY_PLUS) {
@@ -161,13 +162,17 @@ void main_update_streaming(SUIInput *input) {
     ui_state = sui_state_pop(ui_state);
   }
 
-  props.frame++;
+  ui_update_fps(&props.counter);
 }
 
 void main_render_streaming() {
-  // Display the updated frame
   SDL_RenderClear(ui.renderer);
+
+  // Display the updated frame
   SDL_RenderCopy(ui.renderer, props.streamTexture, NULL, NULL);
+
+  ui_draw_fps(&props.streamCounter);
+
   SDL_RenderPresent(ui.renderer);
 }
 

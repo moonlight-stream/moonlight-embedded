@@ -10,6 +10,8 @@ static struct {
   SUIButton connectButton;
   SUIButton settingsButton;
   SUIButtonSet buttons;
+
+  FpsCounter counter;
 } props = {0};
 
 int main_init_initial() {
@@ -51,6 +53,8 @@ void main_update_initial(SUIInput *input) {
   else if (input->buttons.down & KEY_B) {
     ui_shouldExitApp = true;
   }
+
+  ui_update_fps(&props.counter);
 }
 
 void main_render_initial() {
@@ -65,6 +69,8 @@ void main_render_initial() {
 
   // Draw the main buttons
   sui_button_set_render(&props.buttons);
+
+  ui_draw_fps(&props.counter);
 
   SDL_RenderPresent(ui.renderer);
 }

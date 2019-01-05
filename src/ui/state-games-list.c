@@ -6,7 +6,7 @@
 #define GAME_BUTTON_FLOW_SIZE   5
 
 static struct {
-  int frame;
+  FpsCounter counter;
 
   PAPP_LIST games;  
   size_t gamesCount;
@@ -122,7 +122,7 @@ int main_init_games_list() {
 }
 
 void main_update_games_list(SUIInput *input) {
-  if (props.frame == 0) {
+  if (props.counter.frame == 0) {
     props.gamesCount = get_app_list(&server, &props.games);
 
     PAPP_LIST game = props.games;
@@ -197,7 +197,7 @@ void main_update_games_list(SUIInput *input) {
     ui_state = sui_state_pop(ui_state);
   }
 
-  props.frame++;
+  ui_update_fps(&props.counter);
 }
 
 void main_render_games_list() {
@@ -208,6 +208,8 @@ void main_render_games_list() {
   sui_draw_bottom_toolbar(2, "OK", SUIToolbarActionA, "Back", SUIToolbarActionB);
 
   sui_scene_render(&props.gamesListScene);
+
+  ui_draw_fps(&props.counter);
 
   SDL_RenderPresent(ui.renderer);
 }

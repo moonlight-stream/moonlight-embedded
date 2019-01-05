@@ -7,7 +7,7 @@ static struct {
   int connectionFailedWidth;
   int connectionFailedHeight;
 
-  int frame;
+  FpsCounter counter;
   char pin[5];
 } props = {0};
 
@@ -26,6 +26,8 @@ void main_update_connection_failed(SUIInput *input) {
   if (input->buttons.down & KEY_B) {
     ui_state = sui_state_pop(ui_state);
   }
+
+  ui_update_fps(&props.counter);
 }
 
 void main_render_connection_failed() {
@@ -59,6 +61,8 @@ void main_render_connection_failed() {
 
   // Draw the OK and Back actions on the bottom toolbar
   sui_draw_bottom_toolbar(2, "OK", SUIToolbarActionA, "Back", SUIToolbarActionB);
+
+  ui_draw_fps(&props.counter);
 
   SDL_RenderPresent(ui.renderer);
 }

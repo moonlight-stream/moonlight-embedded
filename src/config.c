@@ -88,6 +88,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->stream.width = INT(value);
     } else if (strcmp(name, "height") == 0) {
       config->stream.height = INT(value);
+    } else if (strcmp(name, "fps") == 0) {
+      config->stream.fps = INT(value);
     } else if (strcmp(name, "bitrate") == 0) {
       config->stream.bitrate = INT(value);
     } else if (strcmp(name, "sops") == 0) {
@@ -177,7 +179,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
 
   config->stream.width = 1280;
   config->stream.height = 720;
-  config->stream.fps = -1;
+  config->stream.fps = 60;
   config->stream.bitrate = -1;
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;

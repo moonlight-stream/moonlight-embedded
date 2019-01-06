@@ -96,8 +96,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->sops = BOOL(value);
     } else if (strcmp(name, "localaudio") == 0) {
       config->localaudio = BOOL(value);
-    } else if (strcmp(name, "enable_vsync") == 0) {
-      config->enable_vsync = BOOL(value);
+    } else if (strcmp(name, "enable_frame_pacer") == 0) {
+      config->enable_frame_pacer = BOOL(value);
     } else if (strcmp(name, "disable_powersave") == 0) {
       config->disable_powersave = BOOL(value);
     } else if (strcmp(name, "save_debug_log") == 0) {
@@ -149,7 +149,7 @@ void config_save(const char* filename, PCONFIGURATION config) {
   if (strcmp(config->app, "Steam") != 0)
     write_config_string(fd, "app", config->app);
 
-  write_config_bool(fd, "enable_vsync", config->enable_vsync);
+  write_config_bool(fd, "enable_frame_pacer", config->enable_frame_pacer);
   write_config_bool(fd, "disable_powersave", config->disable_powersave);
   write_config_bool(fd, "save_debug_log", config->save_debug_log);
 
@@ -198,7 +198,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported_version = false;
   config->save_debug_log = false;
   config->disable_powersave = true;
-  config->enable_vsync = false;
+  config->enable_frame_pacer = true;
 
   config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL;
   config->special_keys.sw = SPECIAL_FLAG | INPUT_TYPE_GAMEPAD;

@@ -57,7 +57,7 @@ typedef struct _CONFIGURATION {
   struct touchscreen_deadzone back_deadzone;
   struct special_keys special_keys;
   bool disable_powersave;
-  bool enable_vsync;
+  bool enable_frame_pacer;
   bool save_debug_log;
   struct input_config inputs[MAX_INPUTS];
   int inputsCount;

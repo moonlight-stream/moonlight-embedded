@@ -124,7 +124,7 @@ static int vita_pacer_thread_main(SceSize args, void *argp) {
     if (!active_video_thread) {
     //  carry = 0;
     } else {
-      if (config.enable_vsync && curr_frame_count > max_fps) {
+      if (config.enable_frame_pacer && curr_frame_count > max_fps) {
         //carry += curr_frame_count - max_fps;
         //if (carry > 1) {
         //  need_drop += (int)carry;

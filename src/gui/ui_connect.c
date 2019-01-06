@@ -33,6 +33,10 @@
 #include <psp2/io/stat.h>
 #include <vita2d.h>
 
+SERVER_DATA server;
+PAPP_LIST server_applist;
+int pos[2];
+
 int get_app_id(PAPP_LIST list, char *name) {
   while (list != NULL) {
     if (strcmp(list->name, name) == 0)
@@ -56,9 +60,9 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
   return 0;
 }
 
-void ui_connect_stream(PSERVER_DATA server, int appId) {
+void ui_connect_stream(int appId) {
   // TODO support force controller id
-  int ret = gs_start_app(server, &config.stream, appId, config.sops, config.localaudio, 1);
+  int ret = gs_start_app(&server, &config.stream, appId, config.sops, config.localaudio, 1);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
       display_error("Server doesn't support 4K\n");
@@ -83,12 +87,12 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
     video_callback->capabilities &= ~CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC;
   }
 
-  ret = LiStartConnection(&server->serverInfo, &config.stream, &connection_callbacks,
+  ret = LiStartConnection(&server.serverInfo, &config.stream, &connection_callbacks,
                           video_callback, platform_get_audio(system),
                           NULL, drFlags, NULL, 0);
 
   if (ret == 0) {
-    server->currentGame = appId;
+    server.currentGame = appId;
   } else {
     char *stage;
     switch (connection_failed_stage) {
@@ -109,10 +113,6 @@ void ui_connect_stream(PSERVER_DATA server, int appId) {
     return;
   }
 }
-
-static SERVER_DATA server;
-static PAPP_LIST server_applist;
-static int pos[2];
 
 enum {
   CONNECT_PAIRUNPAIR = 13,
@@ -202,7 +202,7 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
           // TODO: stop previous stream
         case LI_PAIRED:
           flash_message("Stream starting...");
-          ui_connect_stream(&server, id);
+          ui_connect_stream(id);
           break;
       }
 

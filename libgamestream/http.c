@@ -40,7 +40,7 @@ static const char *pKeyFile = "./key.pem";
 
 SSL_CTX *ssl_ctx;
 
-static bool debug = true;
+static bool debug = false;
 
 /**
  * Workaround for issues stemming from SSL.

@@ -30,30 +30,39 @@ include $(DEVKITPRO)/libnx/switch_rules
 #     - icon.jpg
 #     - <libnx folder>/default_icon.jpg
 #---------------------------------------------------------------------------------
-DIST		:=	dist
-TARGET		:=	$(DIST)/$(notdir $(CURDIR))
+APP_TITLE	:= 	Moonlight Switch
+APP_AUTHOR	:=	kbhomes
+APP_VERSION	:= 	0.1
+
+TARGET		:=	moonlight-switch
 BUILD		:=	build
-SOURCES		:=	src src/audio src/video src/input src/ui \
+SOURCES		:=	src \
+				src/ui \
+				src/ui/switch \
+				#src/audio \
+				src/video \
+				src/input \
 				libgamestream \
-				third_party/libswitchui/source \
 				third_party/enet \
 				third_party/inih \
 				third_party/libuuid \
 				third_party/moonlight-common-c/src \
 				third_party/moonlight-common-c/reedsolomon \
+				third_party/libswitchui/source \
 				third_party/h264bitstream 
 
 INCLUDES	:=	libgamestream \
-                                dependencies/include \
-                                third_party/libswitchui/include \
-                                third_party/enet/include \
-                                third_party/inih \
-                                third_party/libuuid \
+				dependencies/include \
+				third_party/enet/include \
+				third_party/inih \
+				third_party/libuuid \
 				third_party/moonlight-common-c/src \
 				third_party/moonlight-common-c/reedsolomon \
-				third_party/h264bitstream
+				third_party/h264bitstream \
+				# third_party/libswitchui/include \
 
-DATA		:=	data third_party/libswitchui/data
+DATA		:=	data \
+				#third_party/libswitchui/data
 EXEFS_SRC	:=	exefs_src
 
 #---------------------------------------------------------------------------------
@@ -62,22 +71,22 @@ EXEFS_SRC	:=	exefs_src
 ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC
 
 CFLAGS	:=	-g -O2 -Wall -ffunction-sections \
-			$(ARCH) $(DEFINES)
+			$(ARCH) $(DEFINES) $(CFLAGS)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DHAVE_USLEEP -DHAS_SOCKLEN_T -DENET_DEBUG -DHAS_POLL -DHAS_FCNTL
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++17 $(CXXFLAGS)
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:=	-lsdl2 -lsdl2_gfx -lsdl2_ttf -lsdl2_image -lpng -ljpeg -lfreetype \
-                -lEGL -lglapi -ldrm_nouveau \
-		-lavcodec -lavutil \
-		-lopus \
-		-lssl -lcrypto \
-		-lbz2 -lz -lexpat -lm \
-		-lstdc++ -lnx
+			-lEGL -lglapi -ldrm_nouveau \
+			-lavcodec -lavutil \
+			-lopus \
+			-lssl -lcrypto \
+			-lbz2 -lz -lexpat -lm \
+			-lstdc++ -lnx
 
 
 #---------------------------------------------------------------------------------
@@ -94,7 +103,7 @@ LIBDIRS	:= $(PORTLIBS) $(LIBNX) $(TOPDIR)/dependencies
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT	:=	$(CURDIR)/dist/$(TARGET)
 export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -102,10 +111,10 @@ export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
-export CFILES	:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
-export CPPFILES	:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
-export SFILES	:=	$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.s))
-export BINFILES	:=	$(foreach dir,$(DATA),$(wildcard $(dir)/*.*))
+CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -169,10 +178,7 @@ endif
 all: $(BUILD)
 
 $(BUILD):
-	@$(foreach dir,$(SOURCES),mkdir -p $(BUILD)/$(dir);)
-	@$(foreach dir,$(DATA),mkdir -p $(BUILD)/$(dir);)
-	@[ -d $@ ] || mkdir -p $@
-	@mkdir -p $(DIST)
+	@[ -d $@ ] || mkdir -p $@ $(CURDIR)/dist
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
@@ -185,7 +191,6 @@ clean:
 else
 .PHONY:	all
 
-
 DEPENDS	:=	$(OFILES:.o=.d)
 
 #---------------------------------------------------------------------------------
@@ -197,32 +202,25 @@ $(OUTPUT).pfs0	:	$(OUTPUT).nso
 
 $(OUTPUT).nso	:	$(OUTPUT).elf
 
-ifeq ($(strip $(NO_NACP)),)
-$(OUTPUT).nro	:	$(OUTPUT).elf $(OUTPUT).nacp
-else
 $(OUTPUT).nro	:	$(OUTPUT).elf
-endif
 
 $(OUTPUT).elf	:	$(OFILES)
 
-$(OFILES_SRC)	:	$(HFILES_BIN) $(OFILES_BIN)
-
-%.o:
-	@echo CC $(addsuffix .c,$(basename $@))
-	-@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $(TOPDIR)/$(addsuffix .c,$(basename $@)) -o $@ $(ERROR_FILTER);
-
-
-$(BINFILES):
+$(OFILES_SRC)	: $(HFILES_BIN)
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
 #---------------------------------------------------------------------------------
-%.png.o %_png.h : %.png
+%.bin.o	%_bin.h :	%.bin
 #---------------------------------------------------------------------------------
-	@echo $@ $<
-	@cp $(TOPDIR)/$< $<
+	@echo $(notdir $<)
 	@$(bin2o)
-	-@cp $@ $(subst _png.h,.png.o,$@)
+	
+#---------------------------------------------------------------------------------
+%.png.o %_png.h :	%.png
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
 
 -include $(DEPENDS)
 

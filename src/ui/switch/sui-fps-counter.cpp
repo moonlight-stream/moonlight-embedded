@@ -1,8 +1,9 @@
-#include "ui-fps-counter.h"
+#include "sui-fps-counter.h"
+#include "sui-graphics.h"
+#include "sui.h"
 
-UiFpsCounter::UiFpsCounter(SUI *ui) 
-    : ui_(ui),
-      tick_list_{}
+SUIFpsCounter::SUIFpsCounter() 
+    : tick_list_{}
 {
     frame_ = 0;
     frames_per_second_ = 0;
@@ -12,7 +13,12 @@ UiFpsCounter::UiFpsCounter(SUI *ui)
     tick_index_ = 0;
     tick_sum_ = 0;
 }
-void UiFpsCounter::update() {
+
+SUIFpsCounter::~SUIFpsCounter() {
+    
+}
+
+void SUIFpsCounter::update(SUIInput *input) {
     uint64_t now = svcGetSystemTick();
 
     if (last_time_) {
@@ -33,16 +39,16 @@ void UiFpsCounter::update() {
     frame_++;
 }
 
-void UiFpsCounter::render() {
+void SUIFpsCounter::render() {
     uint32_t fps_color = RGBA8(180, 0, 0, 255);
     char fps_text[20];
     int fps_text_width, fps_text_height;
     snprintf(fps_text, 20, "FPS: %ld", frames_per_second_);
-    ui_->measureText(ui_->font_small, fps_text, &fps_text_width, &fps_text_height);
+    graphics()->measureText(ui_->font_small, fps_text, &fps_text_width, &fps_text_height);
 
-    ui_->drawBox(8, 8, 10 + fps_text_width, fps_text_height + 2, RGBA8(255, 255, 255, 200));
-    ui_->drawText(ui_->font_small, fps_text, 18, 10, fps_color, false, -1);
+    graphics()->drawBox(8, 8, 10 + fps_text_width, fps_text_height + 2, RGBA8(255, 255, 255, 200));
+    graphics()->drawText(ui_->font_small, fps_text, 18, 10, fps_color, false, -1);
 
     short progressDigit = frame_ % fps_text_height;
-    ui_->drawBox(10, 10, 2, progressDigit, fps_color);
+    graphics()->drawBox(10, 10, 2, progressDigit, fps_color);
 }

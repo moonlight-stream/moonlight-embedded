@@ -15,20 +15,28 @@ UiStateInitial::UiStateInitial(Application *application)
     }
     SDL_QueryTexture(logo_texture_, NULL, NULL, &logo_width_, &logo_height_);
 
-    scene_ = new SUIScene(ui());    
+    logo_image_ = new SUIImage(logo_texture_);
+    logo_image_->bounds()->x = (ui()->width - logo_width_) / 2;
+    logo_image_->bounds()->y = 150;
+    logo_image_->bounds()->w = logo_width_;
+    logo_image_->bounds()->h = logo_height_;
 
-    connect_button_ = new SUIButton(scene_, "Connect");
+    connect_button_ = new SUIButton("Connect");
     connect_button_->bounds()->x = ui()->width/2 - connect_button_->bounds()->w/2;
     connect_button_->bounds()->y = 100 + logo_height_ + (ui()->height - SUI_MARGIN_BOTTOM - logo_height_ - 100)/2 - connect_button_->bounds()->h/2;
     connect_button_->setFocused(true);
 
-    settings_button_ = new SUIButton(scene_, "Settings");
+    settings_button_ = new SUIButton("Settings");
     settings_button_->bounds()->x = ui()->width/2 - settings_button_->bounds()->w/2;
     settings_button_->bounds()->y = connect_button_->bounds()->y + connect_button_->bounds()->h + 15;
     settings_button_->setFocused(false);
     
-    scene_->addElement(connect_button_);
-    scene_->addElement(settings_button_);
+    content()->addChild(logo_image_);
+    content()->addChild(connect_button_);
+    content()->addChild(settings_button_);
+
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem(std::string("OK"), SUIToolbarActionA));
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem(std::string("Exit"), SUIToolbarActionB));
 }
 
 UiStateInitial::~UiStateInitial() {
@@ -40,9 +48,6 @@ UiStateInitial::~UiStateInitial() {
 
     if (settings_button_) 
         delete settings_button_;
-
-    if (scene_) 
-        delete scene_;
 }
 
 UiStateResult UiStateInitial::update(SUIInput *input) {
@@ -68,18 +73,4 @@ UiStateResult UiStateInitial::update(SUIInput *input) {
 
 void UiStateInitial::render() {
     UiState::render();
-    
-    // Draw the logo
-    ui()->drawTexture(logo_texture_, (ui()->width - logo_width_) / 2, 150, logo_width_, logo_height_);
-
-    // Draw the OK action on the bottom toolbar
-    ui()->drawBottomToolbar({
-        std::make_tuple(std::string("OK"), SUIToolbarActionA)
-    });
-
-    // Draw the main buttons
-    scene_->render();
-
-    // Show the FPS meter
-    counter_->render();
 }

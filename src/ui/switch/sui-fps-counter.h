@@ -1,26 +1,23 @@
 #pragma once
 
-#include "switch/sui.h"
-
-#include <switch.h>
+#include "sui-element.h"
 
 #define MAX_TICK_SAMPLES 100
 #define TICKS_PER_SECOND 19200000
 
-class UiFpsCounter {
+class SUIFpsCounter : public SUIElement {
 public:
-    UiFpsCounter(SUI *ui);
+    SUIFpsCounter();
+    ~SUIFpsCounter();
 
-    void update();
-    void render();
+    void update(SUIInput *) override;
+    void render() override;
 
     uint64_t frame();
     uint64_t framesPerSecond();
     uint64_t ticksPerFrame();
 
 private:
-    SUI *ui_;
-
     uint64_t frame_;
     uint64_t frames_per_second_;
     uint64_t ticks_per_frame_;

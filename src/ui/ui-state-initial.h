@@ -7,9 +7,6 @@ public:
     UiStateInitial(Application *application);
     ~UiStateInitial();
 
-    // void enter(UiState *parent);
-    // void exit();
-
     UiStateResult update(SUIInput *input) override;
     void render() override;
 
@@ -18,7 +15,7 @@ private:
     int logo_width_;
     int logo_height_;
 
-    SUIScene *scene_;
+    SUIImage *logo_image_;
     SUIButton *connect_button_;
     SUIButton *settings_button_;
     // SUIButtonSet buttons_;

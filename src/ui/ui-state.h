@@ -1,8 +1,6 @@
 #pragma once
 
-#include "ui-fps-counter.h"
 #include "switch/sui.h"
-#include "switch/sui-scene.h"
 
 #include <switch.h>
 #include <memory>
@@ -25,10 +23,20 @@ public:
     virtual UiStateResult update(SUIInput *input);
     virtual void render();
 
+    inline SUIElement *stage() { return stage_; }
+    inline SUIElement *content() { return content_; }
+    inline SUIElement *overlay() { return overlay_; }
+
 protected:
     friend class Application;
 
     SUI *ui();
     Application *application_;
-    UiFpsCounter *counter_;
+
+    SUIElement *stage_;
+    SUIElement *content_;
+    SUIElement *overlay_;
+    SUIFpsCounter *counter_;
+
+    std::vector<SUIToolbarActionItem> toolbar_items_;
 };

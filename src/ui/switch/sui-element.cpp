@@ -59,17 +59,6 @@ void SUIElement::removeChild(SUIElement *element) {
     children_.erase(std::remove(children_.begin(), children_.end(), element), children_.end());
 }
 
-SUIRect *SUIElement::bounds() { 
-    return &bounds_; 
-}
-
-void SUIElement::setBounds(SUIRect *bounds) { 
-    bounds_.x = bounds->x;
-    bounds_.y = bounds->y;
-    bounds_.w = bounds->w;
-    bounds_.h = bounds->h;
-}
-
 bool SUIElement::isFocusable() {
     return false;
 }
@@ -94,30 +83,30 @@ void SUIElement::scrollToChild(SUIElement *element) {
     SUIRect in = graphics()->clipBounds(element->bounds(), this->bounds());
     int dx = 0, dy = 0;
 
-    if (in.x != element->bounds()->x || in.y != element->bounds()->y) {
+    if (in.x != element->bounds().x || in.y != element->bounds().y) {
         // Element is clipped off the top or the left of the scene's clip
-        int targetx = (int)fmaxf(element->bounds()->x, this->bounds()->x);
-        int targety = (int)fmaxf(element->bounds()->y, this->bounds()->y);
+        int targetx = (int)fmaxf(element->bounds().x, this->bounds().x);
+        int targety = (int)fmaxf(element->bounds().y, this->bounds().y);
 
-        dx = (int)fminf(SUI_SCROLL_SPEED, targetx - element->bounds()->x);
-        dy = (int)fminf(SUI_SCROLL_SPEED, targety - element->bounds()->y);
+        dx = (int)fminf(SUI_SCROLL_SPEED, targetx - element->bounds().x);
+        dy = (int)fminf(SUI_SCROLL_SPEED, targety - element->bounds().y);
     }
-    else if (in.w != element->bounds()->w || in.h != element->bounds()->h)
+    else if (in.w != element->bounds().w || in.h != element->bounds().h)
     {
         // Element is clipped off the bottom or right of the scene's clip
-        int targetx = (int)fminf(element->bounds()->x, this->bounds()->x + (this->bounds()->w - element->bounds()->w));
-        int targety = (int)fminf(element->bounds()->y, this->bounds()->y + (this->bounds()->h - element->bounds()->h));
+        int targetx = (int)fminf(element->bounds().x, this->bounds().x + (this->bounds().w - element->bounds().w));
+        int targety = (int)fminf(element->bounds().y, this->bounds().y + (this->bounds().h - element->bounds().h));
 
-        dx = -1 * (int)fminf(SUI_SCROLL_SPEED, element->bounds()->x - targetx);
-        dy = -1 * (int)fminf(SUI_SCROLL_SPEED, element->bounds()->y - targety);
+        dx = -1 * (int)fminf(SUI_SCROLL_SPEED, element->bounds().x - targetx);
+        dy = -1 * (int)fminf(SUI_SCROLL_SPEED, element->bounds().y - targety);
     }
 
     if (dx || dy) {
         // Update the location of every element in the scene by the delta
         for (auto e : children_) {
             if (!e->isFixedPosition()) {
-                e->bounds()->x += dx;
-                e->bounds()->y += dy;
+                e->bounds().x += dx;
+                e->bounds().y += dy;
             }
         }
     }
@@ -247,11 +236,34 @@ SUI *SUIElement::ui() {
     return ui_;
 }
 
-SUIRect *SUIElement::clip() {
+SUIRect &SUIElement::bounds() { 
+    return bounds_; 
+}
+
+void SUIElement::setBounds(const SUIRect &bounds) { 
+    bounds_.x = bounds.x;
+    bounds_.y = bounds.y;
+    bounds_.w = bounds.w;
+    bounds_.h = bounds.h;
+}
+
+SUIRect SUIElement::globalClip() {
     if (parent_) {
-        return parent_->bounds();
+        return parent_->globalBounds();
     }
     else {
-        return &bounds_;
+        return ui_->bounds;
+    }
+}
+
+SUIRect SUIElement::globalBounds() {
+    if (parent_) {
+        SUIRect b = parent_->globalBounds();
+        b.x += bounds_.x;
+        b.y += bounds_.y;
+        return b;
+    }
+    else {
+        return bounds_;
     }
 }

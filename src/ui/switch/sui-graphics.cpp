@@ -8,10 +8,6 @@ SUIGraphics::SUIGraphics(SUIElement *element)
     
 }
 
-SUIToolbarActionItem SUIGraphics::makeToolbarActionItem(const char *text, SUIToolbarAction action) {
-    return std::make_tuple(std::string(text), action);
-}
-
 SUIToolbarActionItem SUIGraphics::makeToolbarActionItem(std::string text, SUIToolbarAction action) {
     return std::make_tuple(text, action);
 }
@@ -82,41 +78,26 @@ void SUIGraphics::drawTopHeader(std::string text) {
 }
 
 void SUIGraphics::drawTexture(SDL_Texture *texture, int x, int y, int w, int h) {
-    SUIRect dst;
-    dst.x = x;
-    dst.y = y;
-    dst.w = w;
-    dst.h = h;
-    SDL_RenderCopy(ui()->renderer, texture, NULL, &dst);
+    drawTextureClipped(texture, {x, y, w, h}, element()->globalClip());
 }
 
-void SUIGraphics::drawTexture(SDL_Texture *texture, SUIRect *bounds) {
-    SDL_RenderCopy(ui()->renderer, texture, NULL, bounds);
+void SUIGraphics::drawTexture(SDL_Texture *texture, const SUIRect &bounds) {
+    drawTextureClipped(texture, bounds, element()->globalClip());
 }
 
-void SUIGraphics::drawTextureClipped(SDL_Texture *texture, int x, int y, int w, int h, SUIRect *clip) {
-    SUIRect clipped_destination = clipBounds(x, y, w, h, clip);
-    SUIRect clipped_source;
-    clipped_source.x = clipped_destination.x - x;
-    clipped_source.y = clipped_destination.y - y;
-    clipped_source.w = clipped_destination.w;
-    clipped_source.h = clipped_destination.h;
-
-    SDL_RenderCopy(
-        ui()->renderer,
-        texture,
-        &clipped_source,
-        &clipped_destination
-    );
+void SUIGraphics::drawTextureClipped(SDL_Texture *texture, int x, int y, int w, int h, const SUIRect &clip) {
+    drawTextureClipped(texture, {x, y, w, h}, clip);
 }
 
-void SUIGraphics::drawTextureClipped(SDL_Texture *texture, SUIRect *bounds, SUIRect *clip) {
-    SUIRect clipped_destination = clipBounds(bounds, clip);
-    SUIRect clipped_source;
-    clipped_source.x = clipped_destination.x - bounds->x;
-    clipped_source.y = clipped_destination.y - bounds->y;
-    clipped_source.w = clipped_destination.w;
-    clipped_source.h = clipped_destination.h;
+void SUIGraphics::drawTextureClipped(SDL_Texture *texture, const SUIRect &bounds, const SUIRect &clip) {
+    SUIRect offset_bounds = offsetGlobal(bounds);
+    SUIRect clipped_destination = clipBounds(offset_bounds, clip);
+    SUIRect clipped_source = {
+        clipped_destination.x - offset_bounds.x,
+        clipped_destination.y - offset_bounds.y,
+        clipped_destination.w,
+        clipped_destination.h
+    };
 
     SDL_RenderCopy(
         ui()->renderer,
@@ -127,86 +108,82 @@ void SUIGraphics::drawTextureClipped(SDL_Texture *texture, SUIRect *bounds, SUIR
 }
 
 void SUIGraphics::drawBox(int x, int y, int width, int height, uint32_t color) {
-    boxColor(ui()->renderer, x, y, x + width, y + height, color);
+    drawBoxClipped({x, y, width, height}, element()->globalClip(), color);
 }
 
-void SUIGraphics::drawBox(SUIRect *bounds, uint32_t color) {
-    drawBox(bounds->x, bounds->y, bounds->w, bounds->h, color);
+void SUIGraphics::drawBox(const SUIRect &bounds, uint32_t color) {
+    drawBoxClipped(bounds, element()->globalClip(), color);
 }
 
-void SUIGraphics::drawBoxClipped(int x, int y, int width, int height, SUIRect *clip, uint32_t color) {
-    SUIRect in = clipBounds(x, y, width, height, clip);
+void SUIGraphics::drawBoxClipped(int x, int y, int width, int height, const SUIRect &clip, uint32_t color) {
+    drawBoxClipped({x, y, width, height}, clip, color);
+}
 
-    // Only draw the box if both dimensions are positive
+void SUIGraphics::drawBoxClipped(const SUIRect &bounds, const SUIRect &clip, uint32_t color) {
+    SUIRect offset_bounds = offsetGlobal(bounds);
+    SUIRect in = clipBounds(offset_bounds, clip);
+
     if (in.w > 0 && in.h > 0) {
-        boxColor(ui()->renderer, in.x, in.y, in.x + in.w, in.y + in.h, color);
+        boxColor(ui()->renderer, 
+                 offset_bounds.x,
+                 offset_bounds.y, 
+                 offset_bounds.x + offset_bounds.w, 
+                 offset_bounds.y + offset_bounds.h, color);
     }
 }
 
-void SUIGraphics::drawBoxClipped(SUIRect *bounds, SUIRect *clip, uint32_t color) {
-    drawBoxClipped(bounds->x, bounds->y, bounds->w, bounds->h, clip, color);
-}
-
 void SUIGraphics::drawRectangle(int x, int y, int width, int height, uint32_t color) {
-    drawRectangleClipped(x, y, width, height, element_->bounds(), color);
+    drawRectangleClipped({x, y, width, height}, element()->globalClip(), color);
 }
 
-void SUIGraphics::drawRectangle(SUIRect *bounds, uint32_t color) {
-    drawRectangleClipped(bounds, element_->bounds(), color);
+void SUIGraphics::drawRectangle(const SUIRect &bounds, uint32_t color) {
+    drawRectangleClipped(bounds, element()->globalClip(), color);
 }
 
-void SUIGraphics::drawRectangleClipped(int x, int y, int width, int height, SUIRect *clip, uint32_t color) {
-    SUIRect in = clipBounds(x, y, width, height, clip);
+void SUIGraphics::drawRectangleClipped(int x, int y, int width, int height, const SUIRect &clip, uint32_t color) {
+    drawRectangleClipped({x, y, width, height}, clip, color);
+}
+
+void SUIGraphics::drawRectangleClipped(const SUIRect &bounds, const SUIRect &clip, uint32_t color) {
+    SUIRect offset_bounds = offsetGlobal(bounds);
+    SUIRect in = clipBounds(offset_bounds, clip);
 
     // Only draw the rectangle if both dimensions are positive
     if (in.w > 0 && in.h > 0) {
         // Top edge
-        if (y == in.y) {
-            hlineColor(ui()->renderer, in.x, in.x + in.w, y, color);
+        if (offset_bounds.y == in.y) {
+            hlineColor(ui()->renderer, in.x, in.x + in.w, in.y, color);
         }
 
         // Bottom edge
-        if ((y + height) == (in.y + in.h)) {
+        if ((offset_bounds.y + offset_bounds.h) == (in.y + in.h)) {
             hlineColor(ui()->renderer, in.x, in.x + in.w, in.y + in.h, color);
         }
 
         // Left edge
-        if (x == in.x) {
-            vlineColor(ui()->renderer, x, in.y, in.y + in.h, color);
+        if (offset_bounds.x == in.x) {
+            vlineColor(ui()->renderer, in.x, in.y, in.y + in.h, color);
         }
 
         // Right edge
-        if ((x + width) == (in.x + in.w)) {
+        if ((offset_bounds.x + offset_bounds.w) == (in.x + in.w)) {
             vlineColor(ui()->renderer, in.x + in.w, in.y, in.y + in.h, color);
         }
-    }
-}
-
-void SUIGraphics::drawRectangleClipped(SUIRect *bounds, SUIRect *clip, uint32_t color) {
-    drawRectangleClipped(bounds->x, bounds->y, bounds->w, bounds->h, clip, color);
-}
+    }}
 
 int SUIGraphics::measureTextAscent(TTF_Font *font) {
     return TTF_FontAscent(font);
-}
-
-void SUIGraphics::measureText(TTF_Font *font, const char *text, int *width, int *height) {
-    TTF_SizeUTF8(font, text, width, height);
 }
 
 void SUIGraphics::measureText(TTF_Font *font, std::string text, int *width, int *height) {
     TTF_SizeUTF8(font, text.c_str(), width, height);
 }
 
-void SUIGraphics::drawText(TTF_Font *font, const char *text, int x, int y, uint32_t color, bool align_center, int truncate_width) {
-    drawTextClipped(font, text, x, y, element_->bounds(), color, align_center, truncate_width);
-}
-
 void SUIGraphics::drawText(TTF_Font *font, std::string text, int x, int y, uint32_t color, bool align_center, int truncate_width) {
-    drawTextClipped(font, text.c_str(), x, y, element_->clip(), color, align_center, truncate_width);
+    drawTextClipped(font, text.c_str(), x, y, element()->globalClip(), color, align_center, truncate_width);
 }
 
-void SUIGraphics::drawTextClipped(TTF_Font *font, const char *text, int x, int y, SUIRect *clip, uint32_t color, bool align_center, int truncate_width) {
+void SUIGraphics::drawTextClipped(TTF_Font *font, std::string text, int x, int y, const SUIRect &clip, uint32_t color, bool align_center, int truncate_width) {
     // Measure the text size
     int text_width, text_height;
     measureText(font, text, &text_width, &text_height);
@@ -218,7 +195,7 @@ void SUIGraphics::drawTextClipped(TTF_Font *font, const char *text, int x, int y
     fg.b = (color >> 16) & 0xFF;
     fg.a = (color >> 24) & 0xFF;
 
-    SDL_Surface *text_surface = TTF_RenderUTF8_Blended(font, text, fg);
+    SDL_Surface *text_surface = TTF_RenderUTF8_Blended(font, text.c_str(), fg);
 
     // Handle truncation
     if (truncate_width >= 0 && truncate_width < text_width)
@@ -273,46 +250,37 @@ void SUIGraphics::drawTextClipped(TTF_Font *font, const char *text, int x, int y
         destination_rect.h = text_height;
     }
 
-    drawTextureClipped(text_texture, &destination_rect, clip);
+    drawTextureClipped(text_texture, destination_rect, clip);
     SDL_DestroyTexture(text_texture);
 }
 
-void SUIGraphics::drawTextClipped(TTF_Font *font, std::string text, int x, int y, SUIRect *clip, uint32_t color, bool align_center, int truncate_width) {
-    drawTextClipped(font, text.c_str(), x, y, clip, color, align_center, truncate_width);
+SUIRect SUIGraphics::clipBounds(int x, int y, int width, int height, const SUIRect &clip) {
+    return clipBounds({x, y, width, height}, clip);
 }
 
-SUIRect SUIGraphics::clipBounds(int x, int y, int width, int height, SUIRect *clip) {
-    int x1 = x,
-        y1 = y,
-        x2 = x + width,
-        y2 = y + height;
+SUIRect SUIGraphics::clipBounds(const SUIRect &bounds, const SUIRect &clip) {
+    int x1 = bounds.x,
+        y1 = bounds.y,
+        x2 = bounds.x + bounds.w,
+        y2 = bounds.y + bounds.h;
 
-    if (x1 < clip->x) {
-        x1 = clip->x;
+    if (x1 < clip.x) {
+        x1 = clip.x;
     }
 
-    if (x2 > (clip->x + clip->w)) {
-        x2 = clip->x + clip->w;
+    if (x2 > (clip.x + clip.w)) {
+        x2 = clip.x + clip.w;
     }
 
-    if (y1 < clip->y) {
-        y1 = clip->y;
+    if (y1 < clip.y) {
+        y1 = clip.y;
     }
 
-    if (y2 > (clip->y + clip->h)) {
-        y2 = clip->y + clip->h;
+    if (y2 > (clip.y + clip.h)) {
+        y2 = clip.y + clip.h;
     }
 
-    SUIRect intersect;
-    intersect.x = x1;
-    intersect.y = y1;
-    intersect.w = x2 - x1;
-    intersect.h = y2 - y1;
-    return intersect;
-}
-
-SUIRect SUIGraphics::clipBounds(SUIRect *bounds, SUIRect *clip) {
-    return clipBounds(bounds->x, bounds->y, bounds->w, bounds->h, clip);
+    return {x1, y1, x2 - x1, y2 - y1};
 }
 
 uint32_t SUIGraphics::interpolate(uint32_t a, uint32_t b, double t) {
@@ -331,6 +299,21 @@ uint32_t SUIGraphics::interpolate(uint32_t a, uint32_t b, double t) {
     );
 }
 
+SUIRect SUIGraphics::offsetGlobal(const SUIRect &bounds) {
+    const SUIRect &offset = element()->globalBounds();
+
+    return {
+        bounds.x + offset.x,
+        bounds.y + offset.y,
+        bounds.w,
+        bounds.h
+    };
+}
+
 SUI *SUIGraphics::ui() {
     return element_->ui();
+}
+
+SUIElement *SUIGraphics::element() {
+    return element_;
 }

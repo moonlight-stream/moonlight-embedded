@@ -27,7 +27,7 @@ void SUIButton::update(SUIInput *input) {
 void SUIButton::render() {
     // Draw the button background
     if (isFocused()) {
-        graphics()->drawBoxClipped(bounds(), clip(), SUI_BUTTON_FOCUSED_BACKGROUND);
+        graphics()->drawBox(0, 0, bounds().w, bounds().h, SUI_BUTTON_FOCUSED_BACKGROUND);
     }
 
     // if (button->contentRenderer) {
@@ -36,14 +36,13 @@ void SUIButton::render() {
     // }
     // else {
     uint32_t text_color = isFocused() ? SUI_BUTTON_FOCUSED_TEXT_COLOR : SUI_BUTTON_TEXT_COLOR;
-    graphics()->drawTextClipped(ui()->font_normal,
-                                text_,
-                                bounds_.x + bounds_.w / 2,
-                                bounds_.y + bounds_.h / 2,
-                                clip(),
-                                text_color,
-                                true,
-                                -1);
+    graphics()->drawText(ui()->font_normal,
+                         text_,
+                         bounds_.w / 2,
+                         bounds_.h / 2,
+                         text_color,
+                         true,
+                         -1);
     //}
 
     // Draw the button border
@@ -54,14 +53,13 @@ void SUIButton::render() {
 
         uint32_t border_color = graphics()->interpolate(SUI_BUTTON_FOCUSED_BORDER_KEY1, SUI_BUTTON_FOCUSED_BORDER_KEY2, tcycle);
 
-        for (int i = -SUI_BUTTON_FOCUSED_BORDER_WIDTH / 2; i <= SUI_BUTTON_FOCUSED_BORDER_WIDTH / 2; i++)
+        for (int i = 0; i <= SUI_BUTTON_FOCUSED_BORDER_WIDTH; i++)
         {
-            graphics()->drawRectangleClipped(bounds_.x - i,
-                                             bounds_.y - i,
-                                             bounds_.w + 2 * i,
-                                             bounds_.h + 2 * i,
-                                             clip(),
-                                             border_color);
+            graphics()->drawRectangle(i,
+                                      i,
+                                      bounds_.w - 2*i,
+                                      bounds_.h - 2*i,
+                                      border_color);
         }
     }
 }

@@ -4,7 +4,9 @@
 
 SUIGridContainer::SUIGridContainer()
     : SUIElement(),
-      grid_()
+      grid_(),
+      minimum_row_spacing_(0),
+      minimum_column_spacing_(0)
 {
 
 }
@@ -24,8 +26,8 @@ void SUIGridContainer::layout() {
     // Compute the heights and widths of each cell
     for (auto grid_item : grid_) {
         SUIElement *child = grid_item.first;
-        int child_height = child->bounds()->h;
-        int child_width = child->bounds()->w;
+        int child_height = child->bounds().h;
+        int child_width = child->bounds().w;
 
         int row = grid_item.second.first;
         int col = grid_item.second.second;
@@ -39,20 +41,20 @@ void SUIGridContainer::layout() {
         if (child_height > row_heights[row])
             row_heights[row] = child_height;
 
-        if (child_width > col_widths[row])
-            col_widths[row] = child_width;
+        if (child_width > col_widths[col])
+            col_widths[col] = child_width;
     }
     
     // Compute spacing needed between elements
-    int row_spacing = 0, col_spacing = 0;
+    float row_spacing = minimum_row_spacing_, col_spacing = minimum_column_spacing_;
     int row_total_height = std::accumulate(row_heights.begin(), row_heights.end(), 0);
     int col_total_width = std::accumulate(col_widths.begin(), col_widths.end(), 0);
 
-    if (row_total_height < bounds()->h)
-        row_spacing = (bounds()->h - row_total_height) / row_heights.size();
+    if (row_total_height < bounds().h)
+        row_spacing = (float)(bounds().h - row_total_height) / (row_heights.size() - 1);
 
-    if (col_total_width < bounds()->h)
-        col_spacing = (bounds()->h - col_total_width) / col_widths.size();
+    if (col_total_width < bounds().w)
+        col_spacing = (float)(bounds().w - col_total_width) / (col_widths.size() - 1);
 
     // Layout!
     for (auto grid_item : grid_) {
@@ -60,7 +62,7 @@ void SUIGridContainer::layout() {
         int row = grid_item.second.first;
         int col = grid_item.second.second;
 
-        int x = 0, y = 0;
+        float x = 0, y = 0;
 
         for (int r = 0; r < row; r++) {
             y += row_heights[r];
@@ -72,7 +74,13 @@ void SUIGridContainer::layout() {
             x += col_spacing;
         }
 
-        child->bounds()->x = x;
-        child->bounds()->y = y;
+        child->bounds().x = static_cast<int>(round(x));
+        child->bounds().y = static_cast<int>(round(y));
     }
 }
+
+int SUIGridContainer::minimumRowSpacing() { return minimum_row_spacing_; }
+void SUIGridContainer::setMinimumRowSpacing(int val) { minimum_row_spacing_ = val; }
+
+int SUIGridContainer::minimumColumnSpacing() { return minimum_column_spacing_; }
+void SUIGridContainer::setMinimumColumnSpacing(int val) { minimum_column_spacing_ = val; }

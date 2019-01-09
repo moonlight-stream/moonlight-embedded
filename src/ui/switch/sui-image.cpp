@@ -18,5 +18,5 @@ void SUIImage::update(SUIInput *) {
 }
 
 void SUIImage::render() {
-    graphics()->drawTexture(image_, bounds());
+    graphics()->drawTexture(image_, 0, 0, bounds().w, bounds().h);
 }

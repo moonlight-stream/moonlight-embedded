@@ -17,15 +17,12 @@ public:
     virtual void update(SUIInput *input);
     virtual void render();
 
-    SUIRect *bounds();
-    void setBounds(SUIRect *bounds);
+    SUIGraphics *graphics();
+    SUI *ui();
     
     virtual bool isFocusable();
     bool isFocused();
     void setFocused(bool val);
-
-    bool isFixedPosition();
-    void setFixedPosition(bool val);  
 
     void addChild(SUIElement *element);
     void removeChild(SUIElement *element);
@@ -33,9 +30,14 @@ public:
     std::vector<SUIElement *> &children();
     SUIElement *parent();
 
-    SUIGraphics *graphics();
-    SUI *ui();
-    SUIRect *clip();
+    SUIRect &bounds();
+    void setBounds(const SUIRect &bounds);
+    
+    SUIRect globalClip();
+    SUIRect globalBounds();
+
+    bool isFixedPosition();
+    void setFixedPosition(bool val);  
 
 protected:
     friend class SUIGraphics;

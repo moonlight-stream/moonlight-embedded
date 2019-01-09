@@ -30,6 +30,10 @@ SUI::SUI()
     }
 
     SDL_GetWindowSize(this->window, &this->width, &this->height);
+    bounds.x = 0;
+    bounds.y = 0;
+    bounds.w = this->width;
+    bounds.h = this->height;
 
     // Load the fonts
     rc = plGetSharedFontByType(&font_data, PlSharedFontType_Standard);

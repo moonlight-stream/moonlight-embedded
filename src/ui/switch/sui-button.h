@@ -17,16 +17,16 @@
 class SUIButton : public SUIElement {
 public:
     SUIButton();
-    SUIButton(char *text);
+    SUIButton(std::string text);
     virtual ~SUIButton();
 
     void update(SUIInput *input) override;
     void render() override;
 
     bool isFocusable() override;
-    char *text();
-    void setText(char *text);
+    std::string text();
+    void setText(std::string text);
 
 protected:
-    char *text_;
+    std::string text_;
 };

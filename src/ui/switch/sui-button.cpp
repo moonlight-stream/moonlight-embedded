@@ -8,7 +8,7 @@ SUIButton::SUIButton()
 
 }
 
-SUIButton::SUIButton(char *text) 
+SUIButton::SUIButton(std::string text) 
     : SUIElement()
 {
     bounds_.w = SUI_BUTTON_DEFAULT_WIDTH;
@@ -70,10 +70,10 @@ bool SUIButton::isFocusable() {
     return true;
 }
 
-char *SUIButton::text() { 
+std::string SUIButton::text() { 
     return text_; 
 }
 
-void SUIButton::setText(char *text) { 
+void SUIButton::setText(std::string text) { 
     text_ = text; 
 }

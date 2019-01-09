@@ -3,6 +3,7 @@
 #include "sui-common.h"
 #include "sui-graphics.h"
 #include "sui-element.h"
+#include "sui-grid-container.h"
 #include "sui-button.h"
 #include "sui-image.h"
 #include "sui-fps-counter.h"

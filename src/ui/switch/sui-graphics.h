@@ -30,7 +30,7 @@ public:
     SUIToolbarActionItem makeToolbarActionItem(std::string text, SUIToolbarAction action);
 
     void drawBottomToolbar(std::vector<SUIToolbarActionItem> items);
-    void drawTopHeader(char *text);
+    void drawTopHeader(std::string text);
 
     void drawTexture(SDL_Texture *texture, int x, int y, int w, int h);
     void drawTexture(SDL_Texture *texture, SUIRect *bounds);

@@ -8,7 +8,8 @@ SUIElement::SUIElement(SUI *ui)
       parent_(nullptr),
       children_(),
       bounds_(),
-      fixed_position_(false)
+      fixed_position_(false),
+      focused_(false)
 {
     if (ui) {
         bounds_.x = 0;
@@ -142,16 +143,21 @@ void SUIElement::updateFocus(SUIInput *input) {
         }
     }
 
-    if (focus_previous && focus_current && focus_next) {
-        if (input->buttons.down & KEY_UP || input->buttons.down & KEY_DUP) {
-            focus_current->setFocused(false);
-            focus_previous->setFocused(true);
+    if (focus_current) {
+        if (focus_previous && focus_current && focus_next) {
+            if (input->buttons.down & KEY_UP || input->buttons.down & KEY_DUP) {
+                focus_current->setFocused(false);
+                focus_previous->setFocused(true);
+            }
+            
+            if (input->buttons.down & KEY_DOWN || input->buttons.down & KEY_DDOWN) {
+                focus_current->setFocused(false);
+                focus_next->setFocused(true);
+            }
         }
-        
-        if (input->buttons.down & KEY_DOWN || input->buttons.down & KEY_DDOWN) {
-            focus_current->setFocused(false);
-            focus_next->setFocused(true);
-        }
+    }
+    else if (focusables.size()) {
+        focusables[0]->setFocused(true);
     }
 
     // if (focusIndex != -1) {

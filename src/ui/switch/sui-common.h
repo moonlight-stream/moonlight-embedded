@@ -9,9 +9,12 @@
 
 #include <initializer_list>
 #include <tuple>
+#include <utility>
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <map>
+#include <numeric>
 
 typedef SDL_Rect SUIRect;
 

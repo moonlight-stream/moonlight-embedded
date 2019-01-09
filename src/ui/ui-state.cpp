@@ -34,6 +34,10 @@ UiStateResult UiState::update(SUIInput *input) {
 void UiState::render() {
     stage_->render();
 
+    if (header_text_.size()) {
+        content_->graphics()->drawTopHeader(header_text_);
+    }
+
     if (toolbar_items_.size()) {
         content_->graphics()->drawBottomToolbar(toolbar_items_);
     }

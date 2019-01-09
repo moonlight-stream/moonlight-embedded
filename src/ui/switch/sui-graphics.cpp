@@ -65,15 +65,15 @@ void SUIGraphics::drawBottomToolbar(std::vector<std::tuple<std::string, SUIToolb
     hlineColor(ui()->renderer, SUI_MARGIN_SIDE, ui()->width - SUI_MARGIN_SIDE, ui()->height - SUI_MARGIN_BOTTOM, SUI_COLOR_DARK);
 }
 
-void SUIGraphics::drawTopHeader(char *text) {
+void SUIGraphics::drawTopHeader(std::string text) {
     // Draw the top separator
     hlineColor(ui()->renderer, SUI_MARGIN_SIDE, ui()->width - SUI_MARGIN_SIDE, SUI_MARGIN_TOP, SUI_COLOR_DARK);
 
     // Draw the text
     int text_width, text_height = measureTextAscent(ui()->font_heading);
-    measureText(ui()->font_heading, text, &text_width, NULL);
+    measureText(ui()->font_heading, text.c_str(), &text_width, NULL);
     drawText(ui()->font_heading,
-             text,
+             text.c_str(),
              SUI_MARGIN_SIDE + SUI_MARGIN_TOOLBAR_SIDE,
              (SUI_MARGIN_TOP - text_height) / 2 + 10,
              SUI_COLOR_DARK,

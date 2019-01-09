@@ -38,5 +38,6 @@ protected:
     SUIElement *overlay_;
     SUIFpsCounter *counter_;
 
+    std::string header_text_;
     std::vector<SUIToolbarActionItem> toolbar_items_;
 };

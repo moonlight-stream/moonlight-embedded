@@ -1,4 +1,6 @@
 #include "ui-state-initial.h"
+#include "ui-state-connecting.h"
+#include "ui-state-games-list.h"
 #include "../application.h"
 
 // Binary file that contains the logo payload
@@ -43,6 +45,9 @@ UiStateInitial::~UiStateInitial() {
     if (logo_texture_)
         SDL_DestroyTexture(logo_texture_);
 
+    if (logo_image_)
+        delete logo_image_;
+
     if (connect_button_) 
         delete connect_button_;
 
@@ -66,6 +71,14 @@ UiStateResult UiStateInitial::update(SUIInput *input) {
     // else
     if (input->buttons.down & KEY_B) {
         return UiStateResultExit;
+    }
+
+    if (input->buttons.down & KEY_A) {
+        application_->push_state(new UiStateConnecting(application_));
+    }
+
+    if (input->buttons.down & KEY_X) {
+        application_->push_state(new UiStateGamesList(application_));
     }
 
     return UiStateResultNormal;

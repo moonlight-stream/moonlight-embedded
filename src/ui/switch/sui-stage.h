@@ -9,4 +9,12 @@ public:
 
     void update(SUIInput *input) override;
     void render() override;
+
+    SUIElement *focusedElement();
+    void setFocusedElement(SUIElement *element);
+
+    SUIFocusResult updateFocus(SUIInput *input, SUIElement *previous = nullptr) override;
+
+private:
+    SUIElement *focused_element_;
 };

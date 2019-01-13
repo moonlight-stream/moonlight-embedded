@@ -3,7 +3,9 @@
 #include "sui-common.h"
 
 class SUI;
+class SUIContainer;
 class SUIGraphics;
+class SUIStage;
 
 #define SUI_SCROLL_SPEED 15
 #define SUI_BUTTON_SET_DEFAULT_CAPACITY 10
@@ -18,13 +20,15 @@ public:
     virtual void render();
 
     SUI *ui();
+    std::string& name();
     SUIGraphics *graphics();
-    SUIElement *parent();
+    SUIContainer *parent();
+    SUIStage *stage();
     
+    virtual bool isContainer();
     virtual bool isFocusable();
     bool isFocused();
-    void setFocused(bool val);
-
+    virtual SUIElement *acceptFocus();
 
     SUIRect &bounds();
     void setBounds(const SUIRect &bounds);
@@ -32,22 +36,19 @@ public:
     SUIRect globalClip();
     SUIRect globalBounds();
 
-    bool isFixedPosition();
-    void setFixedPosition(bool val);  
-
 protected:
+    friend class SUIStage;
     friend class SUIContainer;
     friend class SUIGraphics;
     
     std::string name_;
     SUI *ui_;
     SUIGraphics *graphics_;
-    SUIElement *parent_;
+    SUIContainer *parent_;
+    SUIStage *stage_;
 
     SUIRect bounds_;
-    bool fixed_position_;
 
     // Focus set capabilities
     bool focusable_;
-    bool focused_;
 };

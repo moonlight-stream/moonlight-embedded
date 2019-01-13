@@ -19,6 +19,11 @@
 
 typedef SDL_Rect SUIRect;
 
+enum SUIFocusResult {
+    SUIFocusRetain,
+    SUIFocusRelease
+};
+
 typedef struct {
     struct {
         uint64_t down;

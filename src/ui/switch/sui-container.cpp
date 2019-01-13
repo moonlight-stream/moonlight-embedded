@@ -2,13 +2,19 @@
 #include "sui.h"
 
 SUIContainer::SUIContainer(std::string name)
-    : SUIElement(name)
+    : SUIElement(name),
+      children_(),
+      last_focus_(nullptr)
 {
     
 }
 
 SUIContainer::~SUIContainer() {
 
+}
+
+bool SUIContainer::isContainer() {
+    return true;
 }
 
 bool SUIContainer::isFocusable() {
@@ -27,49 +33,72 @@ void SUIContainer::render() {
     }
 }
 
-SUIFocusResult SUIContainer::updateFocus(SUIInput *input) {
-    // SUIElement *focus_previous = nullptr,
-    //            *focus_current = nullptr,
-    //            *focus_next = nullptr;
+SUIFocusResult SUIContainer::updateFocus(SUIInput *input, SUIElement *previous) {
+    last_focus_ = previous;
 
-    // std::vector<SUIContainer *> containers;
-    // std::copy_if(children_.begin(), children_.end(), std::back_inserter(containers), [](SUIElement *e) { 
-    //     return e->isFocusable(); 
-    // });
+    auto previous_find = std::find(children_.begin(), children_.end(), previous);
+    int previous_index = std::distance(children_.begin(), previous_find);
 
-    // for (int i = 0; i < focusables.size(); i++) {  
-    //     SUIElement *child = focusables[i];
+    // printf("\tIndex of previous in container: %d\n", previous_index);
 
-    //     if (child->isFocused()) {
-    //         focus_previous = focusables[(i - 1 + focusables.size()) % focusables.size()];
-    //         focus_current = child;
-    //         focus_next = focusables[(i + 1 + focusables.size()) % focusables.size()];
-    //         break;
-    //     }
-    // }
+    SUIElement *next_candidate;
+    int next_index = previous_index;
 
-    // if (focus_current) {
-    //     if (focus_current->updateFocus(input) == SUIFocusRetain) {
-    //         return SUIFocusRetain;
-    //     }
+    while (next_index >= 0 && next_index < children_.size()) {
+        if (input->buttons.down & KEY_UP) {
+            next_index = next_index - 1;
+        }
+        else if (input->buttons.down & KEY_DOWN) {
+            next_index = next_index + 1;
+        }
 
-    //     if (focus_previous && focus_current && focus_next) {
-    //         if (input->buttons.down & KEY_UP) {
-    //             focus_current->setFocused(false);
-    //             focus_previous->setFocused(true);
-    //         }
-            
-    //         if (input->buttons.down & KEY_DOWN) {
-    //             focus_current->setFocused(false);
-    //             focus_next->setFocused(true);
-    //         }
-    //     }
-    // }
-    // else if (focusables.size()) {
-    //     focusables[0]->setFocused(true);
-    // }
+        // printf("\tNext index to check: %d\n", next_index);
+        if (next_index >= 0 && next_index < children_.size()) {
+            next_candidate = children_[next_index];
 
-    return SUIFocusRelease;
+            if (next_candidate) {
+                // printf("\tChecking acceptFocus() of %s\n", next_candidate->name_.c_str());
+                next_candidate = next_candidate->acceptFocus();
+            }
+
+            if (next_candidate) {
+                // printf("\tGot non-null acceptFocus() with name %s\n", next_candidate->name_.c_str());
+                break;
+            }
+        }
+    }
+
+    if (next_candidate) {
+        stage()->setFocusedElement(next_candidate);
+        return SUIFocusRetain;
+    }
+    else {
+        return SUIFocusRelease;
+    }
+}
+
+SUIElement *SUIContainer::acceptFocus() {
+    SUIElement *next = nullptr; 
+
+    if (last_focus_) {
+        if (last_focus_->parent() == this) {
+            next = last_focus_->acceptFocus();
+        }
+        else {
+            last_focus_ = nullptr;
+        }
+    }
+
+    if (!next) {
+        for (auto child : children_) {
+            next = child->acceptFocus();
+            if (next) {
+                break;
+            }
+        }
+    }
+
+    return next;
 }
 
 void SUIContainer::scrollToChild(SUIElement *element) {
@@ -97,10 +126,10 @@ void SUIContainer::scrollToChild(SUIElement *element) {
     if (dx || dy) {
         // Update the location of every element in the scene by the delta
         for (auto e : children_) {
-            if (!e->isFixedPosition()) {
+            // if (!e->isFixedPosition()) {
                 e->bounds().x += dx;
                 e->bounds().y += dy;
-            }
+            // }
         }
     }
 }
@@ -113,6 +142,7 @@ void SUIContainer::addChild(SUIElement *element) {
     children_.push_back(element);
     element->ui_ = ui_;
     element->parent_ = this;
+    element->stage_ = stage_;
 
     if (!element->bounds_.x && !element->bounds_.y && !element->bounds_.w && !element->bounds_.h) {
         element->bounds_.w = bounds_.w;
@@ -123,5 +153,6 @@ void SUIContainer::addChild(SUIElement *element) {
 void SUIContainer::removeChild(SUIElement *element) {
     element->ui_ = nullptr;
     element->parent_ = nullptr;
+    element->stage_ = nullptr;
     children_.erase(std::remove(children_.begin(), children_.end(), element), children_.end());
 }

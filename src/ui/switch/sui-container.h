@@ -2,16 +2,12 @@
 
 #include "sui-element.h"
 
-enum SUIFocusResult {
-    SUIFocusRetain,
-    SUIFocusRelease
-};
-
 class SUIContainer : public SUIElement {
 public:
     SUIContainer(std::string name);
     ~SUIContainer();
 
+    bool isContainer() override;
     bool isFocusable() override;
 
     void update(SUIInput *input) override;
@@ -20,10 +16,12 @@ public:
     void addChild(SUIElement *element);
     void removeChild(SUIElement *element);
     std::vector<SUIElement *> &children();
-
-protected: 
-    virtual SUIFocusResult updateFocus(SUIInput *input);
+ 
+    virtual SUIFocusResult updateFocus(SUIInput *input, SUIElement *previous = nullptr);
+    SUIElement *acceptFocus() override;
     void scrollToChild(SUIElement *element);
 
+protected:
     std::vector<SUIElement *> children_;
+    SUIElement *last_focus_;
 };

@@ -16,8 +16,7 @@ public:
     void addChildCell(SUIElement *element, int row, int column);
     void layout();
 
-protected:
-    SUIFocusResult updateFocus(SUIInput *input) override;
+    SUIFocusResult updateFocus(SUIInput *input, SUIElement *previous = nullptr) override;
 
 private:
     void resizeGrid(int rows, int columns);

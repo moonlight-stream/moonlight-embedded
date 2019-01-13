@@ -1,13 +1,12 @@
 #include "sui-element.h"
+#include "sui-stage.h"
 #include "sui-graphics.h"
 #include "sui.h"
 
 SUIElement::SUIElement(std::string name) 
     : name_(name),
       parent_(nullptr),
-      bounds_(),
-      fixed_position_(false),
-      focused_(false)
+      bounds_()
 {
     graphics_ = new SUIGraphics(this);
 }
@@ -24,27 +23,31 @@ void SUIElement::render() {
 
 }
 
+bool SUIElement::isContainer() {
+    return false;
+}
+
 bool SUIElement::isFocusable() {
     return true;
 }
 
 bool SUIElement::isFocused() {
-    return focused_;
+    return stage_->focusedElement() == this;
 }
 
-void SUIElement::setFocused(bool val) {
-    focused_ = val;
+SUIElement *SUIElement::acceptFocus() {
+    return isFocusable() ? this : nullptr;
 }
 
-bool SUIElement::isFixedPosition() { 
-    return fixed_position_; 
+std::string& SUIElement::name() {
+    return name_;
 }
 
-void SUIElement::setFixedPosition(bool val) { 
-    fixed_position_ = val; 
+SUIStage *SUIElement::stage() {
+    return stage_;
 }
 
-SUIElement *SUIElement::parent() {
+SUIContainer *SUIElement::parent() {
     return parent_;
 }
 

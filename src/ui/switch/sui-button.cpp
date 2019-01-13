@@ -2,14 +2,14 @@
 #include "sui-graphics.h"
 #include "sui.h"
 
-SUIButton::SUIButton() 
-    : SUIButton( "")
+SUIButton::SUIButton(std::string name) 
+    : SUIButton(name, "")
 {
 
 }
 
-SUIButton::SUIButton(std::string text) 
-    : SUIElement()
+SUIButton::SUIButton(std::string name, std::string text) 
+    : SUIElement(name)
 {
     bounds_.w = SUI_BUTTON_DEFAULT_WIDTH;
     bounds_.h = SUI_BUTTON_DEFAULT_HEIGHT;

@@ -10,25 +10,21 @@ class SUIGraphics;
 
 class SUIElement {
 public:
-    SUIElement();
-    SUIElement(SUI *ui);
+    SUIElement(std::string name);
+
     virtual ~SUIElement();
 
     virtual void update(SUIInput *input);
     virtual void render();
 
-    SUIGraphics *graphics();
     SUI *ui();
+    SUIGraphics *graphics();
+    SUIElement *parent();
     
     virtual bool isFocusable();
     bool isFocused();
     void setFocused(bool val);
 
-    void addChild(SUIElement *element);
-    void removeChild(SUIElement *element);
-    void scrollToChild(SUIElement *element);
-    std::vector<SUIElement *> &children();
-    SUIElement *parent();
 
     SUIRect &bounds();
     void setBounds(const SUIRect &bounds);
@@ -40,12 +36,13 @@ public:
     void setFixedPosition(bool val);  
 
 protected:
+    friend class SUIContainer;
     friend class SUIGraphics;
     
+    std::string name_;
     SUI *ui_;
     SUIGraphics *graphics_;
     SUIElement *parent_;
-    std::vector<SUIElement *> children_;
 
     SUIRect bounds_;
     bool fixed_position_;
@@ -53,7 +50,4 @@ protected:
     // Focus set capabilities
     bool focusable_;
     bool focused_;
-
-private:
-    void updateFocus(SUIInput *input);
 };

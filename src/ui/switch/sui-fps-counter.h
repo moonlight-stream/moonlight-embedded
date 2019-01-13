@@ -7,7 +7,7 @@
 
 class SUIFpsCounter : public SUIElement {
 public:
-    SUIFpsCounter();
+    SUIFpsCounter(std::string name);
     ~SUIFpsCounter();
 
     void update(SUIInput *) override;
@@ -16,6 +16,10 @@ public:
     uint64_t frame();
     uint64_t framesPerSecond();
     uint64_t ticksPerFrame();
+
+    inline bool isFocusable() override {
+        return false;
+    };
 
 private:
     uint64_t frame_;

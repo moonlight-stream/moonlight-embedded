@@ -2,8 +2,9 @@
 #include "sui-graphics.h"
 #include "sui.h"
 
-SUIFpsCounter::SUIFpsCounter() 
-    : tick_list_{}
+SUIFpsCounter::SUIFpsCounter(std::string name) 
+    : SUIElement(name),
+      tick_list_{}
 {
     frame_ = 0;
     frames_per_second_ = 0;

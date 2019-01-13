@@ -14,7 +14,7 @@ UiStateConnecting::UiStateConnecting(Application *application)
     }
     SDL_QueryTexture(connecting_texture_, NULL, NULL, &connecting_width_, &connecting_height_);
 
-    connecting_image_ = new SUIImage(connecting_texture_);
+    connecting_image_ = new SUIImage("image-connecting", connecting_texture_);
     connecting_image_->bounds().x = (ui()->width - connecting_width_) / 2;
     connecting_image_->bounds().y = SUI_MARGIN_TOP + 75;
     connecting_image_->bounds().w = connecting_width_;

@@ -7,7 +7,7 @@
 #include "moonlight_switch_logo_png.h"
 
 UiStateInitial::UiStateInitial(Application *application) 
-: UiState(application) 
+    : UiState(application) 
 {
     logo_texture_ = ui()->loadPNG(moonlight_switch_logo_png, moonlight_switch_logo_png_size);
     
@@ -17,18 +17,18 @@ UiStateInitial::UiStateInitial(Application *application)
     }
     SDL_QueryTexture(logo_texture_, NULL, NULL, &logo_width_, &logo_height_);
 
-    logo_image_ = new SUIImage(logo_texture_);
+    logo_image_ = new SUIImage("image-logo", logo_texture_);
     logo_image_->bounds().x = (ui()->width - logo_width_) / 2;
     logo_image_->bounds().y = 150;
     logo_image_->bounds().w = logo_width_;
     logo_image_->bounds().h = logo_height_;
 
-    connect_button_ = new SUIButton("Connect");
+    connect_button_ = new SUIButton("button-connect", "Connect");
     connect_button_->bounds().x = ui()->width/2 - connect_button_->bounds().w/2;
     connect_button_->bounds().y = 100 + logo_height_ + (ui()->height - SUI_MARGIN_BOTTOM - logo_height_ - 100)/2 - connect_button_->bounds().h/2;
     connect_button_->setFocused(true);
 
-    settings_button_ = new SUIButton("Settings");
+    settings_button_ = new SUIButton("button-settings", "Settings");
     settings_button_->bounds().x = ui()->width/2 - settings_button_->bounds().w/2;
     settings_button_->bounds().y = connect_button_->bounds().y + connect_button_->bounds().h + 15;
     settings_button_->setFocused(false);

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "sui-element.h"
+#include "sui-container.h"
 
-class SUIGridContainer : public SUIElement {
+class SUIGridContainer : public SUIContainer {
 public:
-    SUIGridContainer();
+    SUIGridContainer(std::string name);
     ~SUIGridContainer();
 
     int minimumRowSpacing();
@@ -16,8 +16,18 @@ public:
     void addChildCell(SUIElement *element, int row, int column);
     void layout();
 
+protected:
+    SUIFocusResult updateFocus(SUIInput *input) override;
+
 private:
-    std::map<SUIElement *, std::pair<int, int>> grid_;
+    void resizeGrid(int rows, int columns);
+
+    std::vector<std::vector<SUIElement *>> grid_;
+    std::pair<int, int> grid_size_;
+
+    std::pair<int, int> grid_first_position_;
+    std::pair<int, int> grid_last_position_;
+
     int minimum_row_spacing_;
     int minimum_column_spacing_;
 };

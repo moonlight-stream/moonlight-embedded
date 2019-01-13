@@ -2,8 +2,8 @@
 #include "sui-graphics.h"
 #include "sui.h"
 
-SUIImage::SUIImage(SDL_Texture *image)
-    : SUIElement(),
+SUIImage::SUIImage(std::string name, SDL_Texture *image)
+    : SUIElement(name),
       image_(image)
 {
 

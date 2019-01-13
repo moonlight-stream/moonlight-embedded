@@ -8,7 +8,7 @@ UiStateGamesList::UiStateGamesList(Application *application)
     toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("OK", SUIToolbarActionA));
     toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("Exit", SUIToolbarActionB));
 
-    grid_ = new SUIGridContainer();
+    grid_ = new SUIGridContainer("game-grid");
     grid_->bounds().x = SUI_MARGIN_SIDE;
     grid_->bounds().y = SUI_MARGIN_TOP + SUI_MARGIN_SIDE;
     grid_->bounds().w = ui()->width - 2*SUI_MARGIN_SIDE;
@@ -18,9 +18,9 @@ UiStateGamesList::UiStateGamesList(Application *application)
     for (int r = 0; r < 3; r++) {
         for (int c = 0; c < 5; c++) {
             char label[20];
-            snprintf(label, sizeof(label), "Game %d / %d", r, c);
+            snprintf(label, sizeof(label), "game-button-%d-%d", r, c);
 
-            SUIElement *button = new SUIButton("Test");
+            SUIElement *button = new SUIButton(label, "Test");
             button->bounds().w = 150;
             button->bounds().h = 150;
             grid_->addChildCell(button, r, c);

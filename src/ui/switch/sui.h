@@ -3,6 +3,8 @@
 #include "sui-common.h"
 #include "sui-graphics.h"
 #include "sui-element.h"
+#include "sui-stage.h"
+#include "sui-container.h"
 #include "sui-grid-container.h"
 #include "sui-button.h"
 #include "sui-image.h"

@@ -4,15 +4,21 @@
 UiState::UiState(Application *application)
     : application_(application)
 {
-    stage_ = new SUIElement(ui());
-    content_ = new SUIElement(ui());
-    overlay_ = new SUIElement(ui());
+    stage_ = new SUIStage(ui(), "stage");
+    content_ = new SUIContainer("content");
+    overlay_ = new SUIContainer("overlay");
 
-    // Add the counter to the overlay
-    counter_ = new SUIFpsCounter();
-    overlay_->addChild(counter_);
+    // Add the containers to the stage
     stage_->addChild(content_);
     stage_->addChild(overlay_);
+    
+    // Position and resize the containers
+    content_->setBounds(stage_->bounds());
+    overlay_->setBounds(stage_->bounds());
+
+    // Add the counter to the overlay
+    counter_ = new SUIFpsCounter("fps-counter");
+    overlay_->addChild(counter_);
 }
 
 UiState::~UiState() {
@@ -22,8 +28,17 @@ UiState::~UiState() {
     delete stage_;
 }
 
-void UiState::enter(UiState *parent) {}
-void UiState::exit() {}
+SUI *UiState::ui() {
+    return application_->ui();
+}
+
+void UiState::enter(UiState *parent) {
+
+}
+
+void UiState::exit() {
+
+}
 
 UiStateResult UiState::update(SUIInput *input) {
     stage_->update(input);
@@ -35,14 +50,10 @@ void UiState::render() {
     stage_->render();
 
     if (header_text_.size()) {
-        content_->graphics()->drawTopHeader(header_text_);
+        overlay_->graphics()->drawTopHeader(header_text_);
     }
 
     if (toolbar_items_.size()) {
-        content_->graphics()->drawBottomToolbar(toolbar_items_);
+        overlay_->graphics()->drawBottomToolbar(toolbar_items_);
     }
-}
-
-SUI *UiState::ui() {
-    return application_->ui();
 }

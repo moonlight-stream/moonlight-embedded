@@ -16,8 +16,8 @@
 
 class SUIButton : public SUIElement {
 public:
-    SUIButton();
-    SUIButton(std::string text);
+    SUIButton(std::string name);
+    SUIButton(std::string name, std::string text);
     virtual ~SUIButton();
 
     void update(SUIInput *input) override;

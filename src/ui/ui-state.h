@@ -23,19 +23,19 @@ public:
     virtual UiStateResult update(SUIInput *input);
     virtual void render();
 
-    inline SUIElement *stage() { return stage_; }
-    inline SUIElement *content() { return content_; }
-    inline SUIElement *overlay() { return overlay_; }
+    SUI *ui();
+    inline SUIStage *stage() { return stage_; }
+    inline SUIContainer *content() { return content_; }
+    inline SUIContainer *overlay() { return overlay_; }
 
 protected:
     friend class Application;
 
-    SUI *ui();
     Application *application_;
 
-    SUIElement *stage_;
-    SUIElement *content_;
-    SUIElement *overlay_;
+    SUIStage *stage_;
+    SUIContainer *content_;
+    SUIContainer *overlay_;
     SUIFpsCounter *counter_;
 
     std::string header_text_;

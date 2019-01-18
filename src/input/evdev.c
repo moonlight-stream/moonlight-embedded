@@ -93,7 +93,7 @@ static bool grabbingDevices;
 
 int evdev_gamepads = 0;
 
-#define QUIT_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
+#define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY KEY_Q
 #define QUIT_BUTTONS (PLAY_FLAG|BACK_FLAG|LB_FLAG|RB_FLAG)
 
@@ -224,7 +224,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       }
 
       // Quit the stream if all the required quit keys are down
-      if ((dev->modifiers & QUIT_MODIFIERS) == QUIT_MODIFIERS &&
+      if ((dev->modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS &&
           ev->code == QUIT_KEY && ev->value != 0) {
         return false;
       }

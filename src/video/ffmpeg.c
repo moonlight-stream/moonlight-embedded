@@ -49,6 +49,9 @@ enum decoders ffmpeg_decoder;
 int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer_count, int thread_count) {
   // Initialize the avcodec library and register codecs
   av_log_set_level(AV_LOG_QUIET);
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58,10,100)
+  avcodec_register_all();
+#endif
 
   av_init_packet(&pkt);
 

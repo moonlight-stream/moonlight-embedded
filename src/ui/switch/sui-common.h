@@ -16,6 +16,7 @@
 #include <vector>
 #include <map>
 #include <numeric>
+#include <functional>
 
 typedef SDL_Rect SUIRect;
 
@@ -23,6 +24,14 @@ enum SUIFocusResult {
     SUIFocusRetain,
     SUIFocusRelease
 };
+
+enum SUIEvent {
+    SUIEventClick,
+    SUIEventFocus
+};
+
+class SUIElement;
+typedef std::function<void(SUIElement *, SUIEvent)> SUIEventListener;
 
 typedef struct {
     struct {

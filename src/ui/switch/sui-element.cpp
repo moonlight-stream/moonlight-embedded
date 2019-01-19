@@ -39,6 +39,17 @@ SUIElement *SUIElement::acceptFocus() {
     return isFocusable() ? this : nullptr;
 }
 
+void SUIElement::triggerListener(SUIEvent event) {
+    auto event_range = listeners_.equal_range(event);
+    for (auto it = event_range.first; it != event_range.second; it++) {
+        it->second(this, event);
+    }
+}
+
+void SUIElement::addListener(SUIEvent event, SUIEventListener listener) {
+    listeners_.insert(std::make_pair(event, listener));
+}
+
 std::string& SUIElement::name() {
     return name_;
 }
@@ -84,6 +95,8 @@ SUIRect SUIElement::globalBounds() {
         SUIRect b = parent_->globalBounds();
         b.x += bounds_.x;
         b.y += bounds_.y;
+        b.w = bounds_.w;
+        b.h = bounds_.h;
         return b;
     }
     else {

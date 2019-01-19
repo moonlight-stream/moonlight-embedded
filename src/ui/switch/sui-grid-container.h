@@ -7,11 +7,8 @@ public:
     SUIGridContainer(std::string name);
     ~SUIGridContainer();
 
-    int minimumRowSpacing();
-    void setMinimumRowSpacing(int val);
-
-    int minimumColumnSpacing();
-    void setMinimumColumnSpacing(int val);
+    int& minimumRowSpacing();
+    int& minimumColumnSpacing();
 
     void addChildCell(SUIElement *element, int row, int column);
     void layout();

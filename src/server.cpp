@@ -22,12 +22,19 @@
 #include <stdio.h>
 #include <functional>
 
+#include <errors.h>
+
 #define MOONLIGHT_DATA_DIR "sdmc:/switch/moonlight-switch/"
 
 Server::Server(PCONFIGURATION config)
     : config_(config),
-      opened_(false)
+      opened_(false),
+      pin_{0}
 {
+    // Initialize the random PIN used for authentication
+    // sprintf(props.pin, "%d%d%d%d", (int)random() % 10, (int)random() % 10, (int)random() % 10, (int)random() % 10);
+    sprintf(pin_, "0000");
+
     threadCreate(
         &worker_thread_,
         [](void *context) { static_cast<Server *>(context)->thread_(); },
@@ -63,56 +70,47 @@ bool Server::opened() {
 }
 
 bool Server::paired() {
-//    return server_.paired;
-    return false;
+    return server_.paired;
 }
 
-future<PAPP_LIST> Server::apps()
-{
+promise<bool, ServerError>::future *Server::connect() {
+    // Tell the worker to initiate the connection to the server
+    ueventSignal(&event_connect_);
+    return connect_promise_.get_future();
+}
+
+promise<bool, ServerError>::future *Server::pair() {
+    // Tell the worker to initiate server pairing
+    ueventSignal(&event_pair_);
+    return pair_promise_.get_future();
+}
+
+promise<PAPP_LIST, ServerError>::future *Server::apps() {
     // Tell the worker to fetch the app list, and return a future
     ueventSignal(&event_apps_);
     return apps_promise_.get_future();
 }
 
-void Server::startStream()
-{
+void Server::startStream() {
 
 }
 
-void Server::stopStream()
-{
+void Server::stopStream() {
 
 }
 
-CONNECTION_LISTENER_CALLBACKS Server::getCallbacks()
-{
+CONNECTION_LISTENER_CALLBACKS Server::getCallbacks() {
     return {0};
 }
 
-void Server::thread_()
-{
-//    int ret = gs_init(&server_, config_->address, MOONLIGHT_DATA_DIR "key", config_->debug_level, config_->unsupported);
-//    if (ret == GS_OUT_OF_MEMORY) {
-//        fprintf(stderr, "Not enough memory\n");
-//    }
-//    else if (ret == GS_ERROR) {
-//        fprintf(stderr, "GameStream error: %s\n", gs_error);
-//    }
-//    else if (ret == GS_INVALID) {
-//        fprintf(stderr, "Invalid data received from server: %s\n", gs_error);
-//    }
-//    else if (ret == GS_UNSUPPORTED_VERSION) {
-//        fprintf(stderr, "Unsupported version: %s\n", gs_error);
-//    }
-//    else if (ret != GS_OK) {
-//        fprintf(stderr, "Can't connect to server %s, error: %s\n", config_->address, gs_error);
-//    }
-
+void Server::thread_() {
     Result rc;
     int index = -1;
 
     while (1) {
         rc = waitMulti(&index, -1,
+                       waiterForUEvent(&event_connect_),
+                       waiterForUEvent(&event_pair_),
                        waiterForUEvent(&event_apps_),
                        waiterForUEvent(&event_start_stream_),
                        waiterForUEvent(&event_stop_stream_),
@@ -120,17 +118,41 @@ void Server::thread_()
 
         if (R_SUCCEEDED(rc)) {
             switch (index) {
-            case 0: threadApps_(); break;
-            case 1: threadStartStream_(); break;
-            case 2: threadStopStream_(); break;
+            case 0: threadConnect_(); break;
+            case 1: threadPair_(); break;
+            case 2: threadApps_(); break;
+            case 3: threadStartStream_(); break;
+            case 4: threadStopStream_(); break;
             }
 
-            if (index == 3) {
+            if (index == 5) {
                 // Close connection
                 break;
             }
         }
     };
+}
+
+void Server::threadConnect_() {
+    int ret = gs_init(&server_, config_->address, MOONLIGHT_DATA_DIR "key", config_->debug_level, config_->unsupported);
+
+    if (ret == GS_OK) {
+        connect_promise_.resolve(true);
+    }
+    else {
+        connect_promise_.reject(ServerError(ret, gs_error));
+    }
+}
+
+void Server::threadPair_() {
+    int ret = gs_pair(&server_, &pin_[0]);
+
+    if (ret == GS_OK) {
+        pair_promise_.resolve(true);
+    }
+    else {
+        pair_promise_.reject(ServerError(ret, gs_error));
+    }
 }
 
 void Server::threadApps_() {
@@ -141,14 +163,19 @@ void Server::threadApps_() {
 //      apps_ = nullptr;
 //    }
 
-    svcSleepThread(3000000000ull);
+    // svcSleepThread(3000000000ull);
 
     // Update the promise state
-    apps_promise_.resolve("Sample apps string");
+    // apps_promise_.resolve("Sample apps string");
 }
 
-void Server::threadStartStream_() {}
-void Server::threadStopStream_() {}
+void Server::threadStartStream_() {
+
+}
+
+void Server::threadStopStream_() {
+    
+}
 
 
 ////pthread_t main_thread_id = 0;

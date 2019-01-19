@@ -114,10 +114,10 @@ SUIFocusResult SUIGridContainer::updateFocus(SUIInput *input, SUIElement *previo
     }
 
     if (focus_current == nullptr) {
-        // printf("\tCould not find element '%s' in grid '%s'\n", previous ? previous->name().c_str() : "<null>", name().c_str());
+        // ;printf("\tCould not find element '%s' in grid '%s'\n", previous ? previous->name().c_str() : "<null>", name().c_str());
     }
     else {
-        // printf("\tFound element '%s' in grid '%s'\n", previous->name().c_str(), name().c_str());
+        // ;printf("\tFound element '%s' in grid '%s'\n", previous->name().c_str(), name().c_str());
     }
 
     if ((focus_row == 0 && input->buttons.down & KEY_UP) ||
@@ -223,11 +223,8 @@ SUIFocusResult SUIGridContainer::updateFocus(SUIInput *input, SUIElement *previo
     return SUIFocusRetain;
 }
 
-int SUIGridContainer::minimumRowSpacing() { return minimum_row_spacing_; }
-void SUIGridContainer::setMinimumRowSpacing(int val) { minimum_row_spacing_ = val; }
-
-int SUIGridContainer::minimumColumnSpacing() { return minimum_column_spacing_; }
-void SUIGridContainer::setMinimumColumnSpacing(int val) { minimum_column_spacing_ = val; }
+int& SUIGridContainer::minimumRowSpacing() { return minimum_row_spacing_; }
+int& SUIGridContainer::minimumColumnSpacing() { return minimum_column_spacing_; }
 
 void SUIGridContainer::resizeGrid(int rows, int columns) {
     grid_.resize(rows);

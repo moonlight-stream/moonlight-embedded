@@ -1,6 +1,5 @@
 #include "ui-state-initial.h"
-#include "ui-state-connecting.h"
-#include "ui-state-games-list.h"
+#include "ui-state-connection.h"
 #include "ui-state-settings.h"
 #include "../application.h"
 
@@ -27,11 +26,13 @@ UiStateInitial::UiStateInitial(Application *application)
     connect_button_ = new SUIButton("button-connect", "Connect");
     connect_button_->bounds().x = ui()->width/2 - connect_button_->bounds().w/2;
     connect_button_->bounds().y = 100 + logo_height_ + (ui()->height - SUI_MARGIN_BOTTOM - logo_height_ - 100)/2 - connect_button_->bounds().h/2;
+    connect_button_->addListener(SUIEventClick, std::bind(&UiStateInitial::handleConnectClick, this, _1, _2));
 
     settings_button_ = new SUIButton("button-settings", "Settings");
     settings_button_->bounds().x = ui()->width/2 - settings_button_->bounds().w/2;
     settings_button_->bounds().y = connect_button_->bounds().y + connect_button_->bounds().h + 15;
-    
+    settings_button_->addListener(SUIEventClick, std::bind(&UiStateInitial::handleSettingsClick, this, _1, _2));
+
     content()->addChild(logo_image_);
     content()->addChild(connect_button_);
     content()->addChild(settings_button_);
@@ -59,36 +60,17 @@ UiStateInitial::~UiStateInitial() {
 UiStateResult UiStateInitial::update(SUIInput *input) {
     UiState::update(input);
 
-    // scene_->update(input);
-
-    // SUIButton *clicked = sui_button_set_update(&buttons_, input, NULL);
-
-    // if (clicked == &connect_button_) {
-    //     // application_->push_state(nullptr);
-    // }
-    // else if (clicked == &settings_button_) {
-    //     // application_->push_state(nullptr);
-    // }
-    // else
     if (input->buttons.down & KEY_B) {
         return UiStateResultExit;
-    }
-
-    if (input->buttons.down & KEY_A) {
-        application_->push_state(new UiStateConnecting(application_));
-    }
-
-    if (input->buttons.down & KEY_X) {
-        application_->push_state(new UiStateGamesList(application_));
-    }
-
-    if (input->buttons.down & KEY_Y) {
-        application_->push_state(new UiStateSettings(application_));
     }
 
     return UiStateResultNormal;
 }
 
-void UiStateInitial::render() {
-    UiState::render();
+void UiStateInitial::handleConnectClick(SUIElement *, SUIEvent) {
+    application_->push_state(new UiStateConnection(application_));
+}
+
+void UiStateInitial::handleSettingsClick(SUIElement *, SUIEvent) {
+    application_->push_state(new UiStateSettings(application_));
 }

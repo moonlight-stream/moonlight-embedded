@@ -22,6 +22,7 @@ public:
     void start();
     void stop();
 
+    Server *server();
     SUI *ui();
     void push_state(UiState *state);
     void pop_state();

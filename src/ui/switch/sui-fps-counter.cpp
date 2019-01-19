@@ -13,6 +13,8 @@ SUIFpsCounter::SUIFpsCounter(std::string name)
     last_time_ = 0;
     tick_index_ = 0;
     tick_sum_ = 0;
+
+    first_tick_ = svcGetSystemTick();
 }
 
 SUIFpsCounter::~SUIFpsCounter() {
@@ -52,4 +54,20 @@ void SUIFpsCounter::render() {
 
     short progressDigit = frame_ % fps_text_height;
     graphics()->drawBox(10, 10, 2, progressDigit, fps_color);
+}
+
+uint64_t SUIFpsCounter::frame() {
+    return frame_;
+}
+
+uint64_t SUIFpsCounter::framesPerSecond() {
+    return frames_per_second_;
+}
+
+uint64_t SUIFpsCounter::ticksPerFrame() {
+    return ticks_per_frame_;
+}
+
+float SUIFpsCounter::secondsSinceFirstTick() {
+    return (float)(svcGetSystemTick() - first_tick_) / TICKS_PER_SECOND;
 }

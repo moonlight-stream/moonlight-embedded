@@ -21,7 +21,9 @@ SUIButton::~SUIButton() {
 }
 
 void SUIButton::update(SUIInput *input) {
-
+    if (isFocused() && input->buttons.down & KEY_A) {
+        triggerListener(SUIEventClick);
+    }
 }
 
 void SUIButton::render() {
@@ -30,20 +32,8 @@ void SUIButton::render() {
         graphics()->drawBox(0, 0, bounds().w, bounds().h, SUI_BUTTON_FOCUSED_BACKGROUND);
     }
 
-    // if (button->contentRenderer) {
-    //     // Call the content renderer
-    //     button->contentRenderer(button);
-    // }
-    // else {
-    uint32_t text_color = isFocused() ? SUI_BUTTON_FOCUSED_TEXT_COLOR : SUI_BUTTON_TEXT_COLOR;
-    graphics()->drawText(ui()->font_normal,
-                         text_,
-                         bounds_.w / 2,
-                         bounds_.h / 2,
-                         text_color,
-                         true,
-                         -1);
-    //}
+    // Render the content of the button
+    renderContent();
 
     // Draw the button border
     if (isFocused()) {
@@ -64,14 +54,21 @@ void SUIButton::render() {
     }
 }
 
+void SUIButton::renderContent() {
+    uint32_t text_color = isFocused() ? SUI_BUTTON_FOCUSED_TEXT_COLOR : SUI_BUTTON_TEXT_COLOR;
+    graphics()->drawText(ui()->font_normal,
+                         text_,
+                         bounds_.w / 2,
+                         bounds_.h / 2,
+                         text_color,
+                         true,
+                         -1);
+}
+
 bool SUIButton::isFocusable() {
     return true;
 }
 
-std::string SUIButton::text() { 
+std::string &SUIButton::text() { 
     return text_; 
-}
-
-void SUIButton::setText(std::string text) { 
-    text_ = text; 
 }

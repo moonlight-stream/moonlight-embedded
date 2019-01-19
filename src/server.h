@@ -24,13 +24,21 @@
 #include "config.h"
 #include "promise.h"
 
-//#include <Limelight.h>
-//#include <client.h>
-//#include <errors.h>
+#include <Limelight.h>
+#include <client.h>
+#include <errors.h>
 
-typedef char* PAPP_LIST;
-typedef void* CONNECTION_LISTENER_CALLBACKS;
-typedef void* SERVER_DATA;
+#include <string>
+
+struct ServerError {
+    int code;
+    std::string error;
+
+    ServerError(int code, std::string error)
+        : code(code),
+          error(error)
+    { }
+};
 
 class Server {
 public:
@@ -42,7 +50,10 @@ public:
 
     bool opened();
     bool paired();
-    future<PAPP_LIST> apps();
+
+    promise<bool, ServerError>::future *connect();
+    promise<bool, ServerError>::future *pair();
+    promise<PAPP_LIST, ServerError>::future *apps();
 
     void startStream();
     void stopStream();
@@ -51,6 +62,8 @@ public:
 
 private:
     void thread_();
+    void threadConnect_();
+    void threadPair_();
     void threadApps_();
     void threadStartStream_();
     void threadStopStream_();
@@ -58,16 +71,22 @@ private:
 
     SERVER_DATA server_;
     PCONFIGURATION config_;
+    char pin_[5];
 
     bool opened_;
     Thread worker_thread_;
+    UEvent event_connect_;
+    UEvent event_pair_;
     UEvent event_apps_;
     UEvent event_start_stream_;
     UEvent event_stop_stream_;
     UEvent event_close_;
 
+    promise<bool, ServerError> connect_promise_;
+    promise<bool, ServerError> pair_promise_;
+
     PAPP_LIST apps_;
-    promise<PAPP_LIST> apps_promise_;
+    promise<PAPP_LIST, ServerError> apps_promise_;
 
     CONNECTION_LISTENER_CALLBACKS callbacks_;
 };

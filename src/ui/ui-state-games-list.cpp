@@ -13,16 +13,17 @@ UiStateGamesList::UiStateGamesList(Application *application)
     grid_->bounds().y = SUI_MARGIN_TOP + SUI_MARGIN_SIDE;
     grid_->bounds().w = ui()->width - 2*SUI_MARGIN_SIDE;
     grid_->bounds().h = ui()->height - 2*(SUI_MARGIN_TOP + SUI_MARGIN_SIDE);
+    grid_->minimumColumnSpacing() = 20;
+    grid_->minimumRowSpacing() = 20;
     content()->addChild(grid_);
     
     for (int r = 0; r < 3; r++) {
         for (int c = 0; c < 5; c++) {
             char label[20];
-            snprintf(label, sizeof(label), "game-button-%d-%d", r, c);
+            snprintf(label, sizeof(label), "Game (%d-%d)", r + 1, c + 1);
 
-            SUIElement *button = new SUIButton(label, "Test");
-            button->bounds().w = 150;
-            button->bounds().h = 150;
+            UiGameButton *button = new UiGameButton(label);
+            button->text() = label;
             grid_->addChildCell(button, r, c);
             buttons_.push_back(button);
         }
@@ -45,8 +46,4 @@ UiStateResult UiStateGamesList::update(SUIInput *input) {
     } 
 
     return UiStateResultNormal;
-}
-
-void UiStateGamesList::render() {
-    UiState::render();
 }

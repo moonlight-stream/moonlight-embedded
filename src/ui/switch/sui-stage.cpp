@@ -25,6 +25,10 @@ SUIElement *SUIStage::focusedElement() {
 
 void SUIStage::setFocusedElement(SUIElement *element) {
     focused_element_ = element;
+
+    if (element) {
+        element->triggerListener(SUIEventFocus);
+    }
 }
 
 void SUIStage::update(SUIInput *input) {
@@ -40,22 +44,22 @@ void SUIStage::render() {
 }
 
 SUIFocusResult SUIStage::updateFocus(SUIInput *input, SUIElement *) {
-    // printf("[SUIStage] updateFocus():\n");
+    // ;printf("[SUIStage] updateFocus():\n");
 
-    // printf("\tfocused element is '%s'\n", focused_element_ ? focused_element_->name().c_str() : "<null>");
+    // ;printf("\tfocused element is '%s'\n", focused_element_ ? focused_element_->name().c_str() : "<null>");
     if (focused_element_ == nullptr) {
-        // printf("\tCalling acceptFocus()\n");
+        // ;printf("\tCalling acceptFocus()\n");
         SUIElement *element = acceptFocus();
 
         if (element) {
-            // printf("\tFocusing on: %s\n", element->name_.c_str());
+            // ;printf("\tFocusing on: %s\n", element->name_.c_str());
         }
         else {
-            // printf("\tNo element to focus on\n");
+            // ;printf("\tNo element to focus on\n");
         }
 
         setFocusedElement(element);
-        // printf("\n");
+        // ;printf("\n");
         return SUIFocusRetain;
     }
 
@@ -63,14 +67,14 @@ SUIFocusResult SUIStage::updateFocus(SUIInput *input, SUIElement *) {
     SUIElement *last_container = focused_element_;
 
     while (focused_container && focused_container != this) {
-        // printf("\tCurrent focused_container is %s\n", focused_container->name_.c_str());
-        // printf("\tCurrent last_container is %s\n", last_container->name_.c_str());
+        // ;printf("\tCurrent focused_container is %s\n", focused_container->name_.c_str());
+        // ;printf("\tCurrent last_container is %s\n", last_container->name_.c_str());
 
         SUIFocusResult result = focused_container->updateFocus(input, last_container);
-        // printf("\tResult is %s\n", result == SUIFocusRetain ? "SUIFocusRetain" : "SUIFocusRelease");
+        // ;printf("\tResult is %s\n", result == SUIFocusRetain ? "SUIFocusRetain" : "SUIFocusRelease");
 
         if (result == SUIFocusRetain) {
-            // printf("\tFocused is %s\n", focused_element_ ? focused_element_->name_.c_str() : "<null>");
+            // ;printf("\tFocused is %s\n", focused_element_ ? focused_element_->name_.c_str() : "<null>");
             break;
         }
         else {
@@ -79,6 +83,6 @@ SUIFocusResult SUIStage::updateFocus(SUIInput *input, SUIElement *) {
         }
     }
 
-    // printf("\n");
+    // ;printf("\n");
     return SUIFocusRetain;
 }

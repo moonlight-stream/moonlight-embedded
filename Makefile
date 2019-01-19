@@ -39,7 +39,7 @@ BUILD		:=	build
 SOURCES		:=	src \
 				src/ui \
 				src/ui/switch \
-				#src/audio \
+				src/audio \
 				src/video \
 				src/input \
 				libgamestream \
@@ -48,7 +48,6 @@ SOURCES		:=	src \
 				third_party/libuuid \
 				third_party/moonlight-common-c/src \
 				third_party/moonlight-common-c/reedsolomon \
-				third_party/libswitchui/source \
 				third_party/h264bitstream 
 
 INCLUDES	:=	libgamestream \
@@ -58,11 +57,9 @@ INCLUDES	:=	libgamestream \
 				third_party/libuuid \
 				third_party/moonlight-common-c/src \
 				third_party/moonlight-common-c/reedsolomon \
-				third_party/h264bitstream \
-				# third_party/libswitchui/include \
+				third_party/h264bitstream 
 
-DATA		:=	data \
-				#third_party/libswitchui/data
+DATA		:=	data
 EXEFS_SRC	:=	exefs_src
 
 #---------------------------------------------------------------------------------

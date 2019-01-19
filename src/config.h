@@ -19,13 +19,11 @@
 
 #pragma once
 
-//#include <Limelight.h>
+#include <Limelight.h>
 
 #include <stdbool.h>
 
 #define MAX_INPUTS 6
-
-typedef void* STREAM_CONFIGURATION;
 
 enum codecs { CODEC_UNSPECIFIED, CODEC_H264, CODEC_HEVC };
 

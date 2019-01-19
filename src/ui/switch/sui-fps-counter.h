@@ -16,12 +16,14 @@ public:
     uint64_t frame();
     uint64_t framesPerSecond();
     uint64_t ticksPerFrame();
+    float secondsSinceFirstTick();
 
     inline bool isFocusable() override {
         return false;
     };
 
 private:
+    uint64_t first_tick_;
     uint64_t frame_;
     uint64_t frames_per_second_;
     uint64_t ticks_per_frame_;

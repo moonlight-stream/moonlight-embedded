@@ -39,7 +39,7 @@ SUIFocusResult SUIContainer::updateFocus(SUIInput *input, SUIElement *previous) 
     auto previous_find = std::find(children_.begin(), children_.end(), previous);
     int previous_index = std::distance(children_.begin(), previous_find);
 
-    // printf("\tIndex of previous in container: %d\n", previous_index);
+    // ;printf("\tIndex of previous in container: %d\n", previous_index);
 
     SUIElement *next_candidate;
     int next_index = previous_index;
@@ -52,17 +52,17 @@ SUIFocusResult SUIContainer::updateFocus(SUIInput *input, SUIElement *previous) 
             next_index = next_index + 1;
         }
 
-        // printf("\tNext index to check: %d\n", next_index);
+        // ;printf("\tNext index to check: %d\n", next_index);
         if (next_index >= 0 && next_index < children_.size()) {
             next_candidate = children_[next_index];
 
             if (next_candidate) {
-                // printf("\tChecking acceptFocus() of %s\n", next_candidate->name_.c_str());
+                // ;printf("\tChecking acceptFocus() of %s\n", next_candidate->name_.c_str());
                 next_candidate = next_candidate->acceptFocus();
             }
 
             if (next_candidate) {
-                // printf("\tGot non-null acceptFocus() with name %s\n", next_candidate->name_.c_str());
+                // ;printf("\tGot non-null acceptFocus() with name %s\n", next_candidate->name_.c_str());
                 break;
             }
         }

@@ -28,6 +28,10 @@ UiState::~UiState() {
     delete stage_;
 }
 
+Application *UiState::application() {
+    return application_;
+}
+
 SUI *UiState::ui() {
     return application_->ui();
 }

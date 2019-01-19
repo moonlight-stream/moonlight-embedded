@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui-state.h"
+#include "ui-game-button.h"
 
 class UiStateGamesList : public UiState {
 public:
@@ -8,9 +9,8 @@ public:
     ~UiStateGamesList();
 
     UiStateResult update(SUIInput *input) override;
-    void render() override;
 
 private:
     SUIGridContainer *grid_;
-    std::vector<SUIElement *> buttons_;
+    std::vector<UiGameButton *> buttons_;
 };

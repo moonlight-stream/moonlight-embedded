@@ -30,6 +30,9 @@ public:
     bool isFocused();
     virtual SUIElement *acceptFocus();
 
+    void triggerListener(SUIEvent event);
+    void addListener(SUIEvent event, SUIEventListener listener);
+
     SUIRect &bounds();
     void setBounds(const SUIRect &bounds);
     
@@ -48,6 +51,8 @@ protected:
     SUIStage *stage_;
 
     SUIRect bounds_;
+
+    std::multimap<SUIEvent, SUIEventListener> listeners_;
 
     // Focus set capabilities
     bool focusable_;

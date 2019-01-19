@@ -23,6 +23,7 @@ public:
     virtual UiStateResult update(SUIInput *input);
     virtual void render();
 
+    Application *application();
     SUI *ui();
     inline SUIStage *stage() { return stage_; }
     inline SUIContainer *content() { return content_; }

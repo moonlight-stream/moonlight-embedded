@@ -33,7 +33,7 @@ Application::~Application() {
 }
 
 void Application::start() {
-    // Begin the connection to the server
+    // Begin the server worker thread
     server_->open();
 
     // Begin the UI main loop
@@ -59,6 +59,10 @@ void Application::start() {
 
 void Application::stop() {
     ui_should_exit_ = true;
+}
+
+Server *Application::server() {
+    return server_.get();
 }
 
 SUI *Application::ui() {

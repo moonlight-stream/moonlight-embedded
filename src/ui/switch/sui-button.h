@@ -24,9 +24,10 @@ public:
     void render() override;
 
     bool isFocusable() override;
-    std::string text();
-    void setText(std::string text);
+    std::string &text();
 
 protected:
+    virtual void renderContent();
+    
     std::string text_;
 };

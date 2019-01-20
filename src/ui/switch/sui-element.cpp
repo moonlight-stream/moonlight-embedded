@@ -6,7 +6,8 @@
 SUIElement::SUIElement(std::string name) 
     : name_(name),
       parent_(nullptr),
-      bounds_()
+      bounds_(),
+      visible_(true)
 {
     graphics_ = new SUIGraphics(this);
 }
@@ -37,6 +38,14 @@ bool SUIElement::isFocused() {
 
 SUIElement *SUIElement::acceptFocus() {
     return isFocusable() ? this : nullptr;
+}
+
+bool SUIElement::isVisible() {
+    return visible_;
+}
+
+void SUIElement::setVisible(bool value) {
+    visible_ = value;
 }
 
 void SUIElement::triggerListener(SUIEvent event) {

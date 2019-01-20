@@ -50,7 +50,7 @@ void SUIFpsCounter::render() {
     graphics()->measureText(ui_->font_small, fps_text, &fps_text_width, &fps_text_height);
 
     graphics()->drawBox(8, 8, 10 + fps_text_width, fps_text_height + 2, RGBA8(255, 255, 255, 200));
-    graphics()->drawText(ui_->font_small, fps_text, 18, 10, fps_color, false, -1);
+    graphics()->drawText(ui()->font_small, fps_text, 18, 10, fps_color, false, -1);
 
     short progressDigit = frame_ % fps_text_height;
     graphics()->drawBox(10, 10, 2, progressDigit, fps_color);

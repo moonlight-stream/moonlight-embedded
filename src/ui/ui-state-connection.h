@@ -10,10 +10,28 @@ public:
     ~UiStateConnection();
 
     void enter(UiState *parent) override;
-    void exit() override;
     UiStateResult update(SUIInput *input) override;
 
 private:
+    void enterInitial();
+    UiStateResult updateInitial(SUIInput *input);
+
+    void enterConnecting();
+    UiStateResult updateConnecting(SUIInput *input);
+
+    void enterPairing();
+    UiStateResult updatePairing(SUIInput *input);
+
+    void enterFailed();
+    UiStateResult updateFailed(SUIInput *input);
+
+    enum class ConnectionState {
+        Initial,
+        Connecting,
+        Pairing,
+        Failed
+    } state_;
+
     SDL_Texture *connecting_texture_;
     int connecting_width_;
     int connecting_height_;

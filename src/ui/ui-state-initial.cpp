@@ -26,12 +26,12 @@ UiStateInitial::UiStateInitial(Application *application)
     connect_button_ = new SUIButton("button-connect", "Connect");
     connect_button_->bounds().x = ui()->width/2 - connect_button_->bounds().w/2;
     connect_button_->bounds().y = 100 + logo_height_ + (ui()->height - SUI_MARGIN_BOTTOM - logo_height_ - 100)/2 - connect_button_->bounds().h/2;
-    connect_button_->addListener(SUIEventClick, std::bind(&UiStateInitial::handleConnectClick, this, _1, _2));
+    connect_button_->addListener(SUIEvent::Click, std::bind(&UiStateInitial::handleConnectClick, this, _1, _2));
 
     settings_button_ = new SUIButton("button-settings", "Settings");
     settings_button_->bounds().x = ui()->width/2 - settings_button_->bounds().w/2;
     settings_button_->bounds().y = connect_button_->bounds().y + connect_button_->bounds().h + 15;
-    settings_button_->addListener(SUIEventClick, std::bind(&UiStateInitial::handleSettingsClick, this, _1, _2));
+    settings_button_->addListener(SUIEvent::Click, std::bind(&UiStateInitial::handleSettingsClick, this, _1, _2));
 
     content()->addChild(logo_image_);
     content()->addChild(connect_button_);
@@ -39,8 +39,8 @@ UiStateInitial::UiStateInitial(Application *application)
 
     stage()->setFocusedElement(connect_button_);
 
-    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem(std::string("OK"), SUIToolbarActionA));
-    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem(std::string("Exit"), SUIToolbarActionB));
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem(std::string("OK"), SUIToolbarAction::A));
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem(std::string("Exit"), SUIToolbarAction::B));
 }
 
 UiStateInitial::~UiStateInitial() {
@@ -61,16 +61,16 @@ UiStateResult UiStateInitial::update(SUIInput *input) {
     UiState::update(input);
 
     if (input->buttons.down & KEY_B) {
-        return UiStateResultExit;
+        return UiStateResultType::PopState;
     }
 
-    return UiStateResultNormal;
+    return UiStateResultType::Normal;
 }
 
 void UiStateInitial::handleConnectClick(SUIElement *, SUIEvent) {
-    application_->push_state(new UiStateConnection(application_));
+    application_->pushState(new UiStateConnection(application_));
 }
 
 void UiStateInitial::handleSettingsClick(SUIElement *, SUIEvent) {
-    application_->push_state(new UiStateSettings(application_));
+    application_->pushState(new UiStateSettings(application_));
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util.h"
 #include <switch.h>
 #include <stdio.h>
 #include <optional>
@@ -18,11 +19,15 @@ public:
     }
 
     inline bool get() {
+        logPrint("promise.get\n");
+
         int index;
         Result rc = waitMulti(&index, -1,
             waiterForUEvent(&resolve_event_), 
             waiterForUEvent(&reject_event_)
         );
+
+        logPrint("promise.get: wait completed\n");
 
         if (R_SUCCEEDED(rc)) {
             if (index == 0) {
@@ -54,12 +59,14 @@ public:
 
     inline void resolve(TResolve value) {
         // Signal that this ptromise was resolved
+        logPrint("promise.resolve\n");
         resolve_value_ = value;
         ueventSignal(&resolve_event_);
     };
 
     inline void reject(TReject value) {
         // Signal that this promise was rejected
+        logPrint("promise.reject\n");
         reject_value_ = value;
         ueventSignal(&reject_event_);
     };

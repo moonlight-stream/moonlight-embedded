@@ -40,7 +40,7 @@ Application::Application() :
     config_parse(MOONLIGHT_DATA_DIR "moonlight.ini", &config_);
     config_.debug_level = 2;
 
-    push_state(new UiStateInitial(this));
+    pushState(new UiStateInitial(this));
 }
 
 Application::~Application() {
@@ -69,14 +69,19 @@ void Application::start() {
         UiState *state = ui_states_.back();
         UiStateResult state_result = state->update(input);
 
-        if (state_result == UiStateResultNormal) {
+        if (state_result.type == UiStateResultType::PopState || state_result.type == UiStateResultType::ReplaceState) {
+            popState();
+        }
+
+        if (state_result.type == UiStateResultType::PushState || state_result.type == UiStateResultType::ReplaceState) {
+            pushState(state_result.state);
+        }
+
+        if (state_result.type == UiStateResultType::Normal) {
             SDL_SetRenderDrawColor(ui()->renderer, 0xeb, 0xeb, 0xeb, 0xff);
             SDL_RenderClear(ui()->renderer);
             state->render();
             SDL_RenderPresent(ui()->renderer);
-        }
-        else if (state_result == UiStateResultExit) {
-            pop_state();
         }
     }
 }
@@ -93,17 +98,16 @@ SUI *Application::ui() {
     return ui_;
 }
 
-void Application::push_state(UiState *state) {
+void Application::pushState(UiState *state) {
     // Notify the new state that it is being entered
     UiState *parent = ui_states_.size() ? ui_states_.back() : nullptr;
     state->enter(parent);
     ui_states_.push_back(state);
 }
 
-void Application::pop_state() {
+void Application::popState() {
     // Notify the current state that it is being exited
     UiState *state = ui_states_.back();
-
     state->exit();
     ui_states_.pop_back();
     delete state;

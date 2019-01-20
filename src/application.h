@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util.h"
 #include "server.h"
 #include "promise.h"
 #include "ui/ui-state.h"
@@ -24,8 +25,10 @@ public:
 
     Server *server();
     SUI *ui();
-    void push_state(UiState *state);
-    void pop_state();
+    void pushState(UiState *state);
+    void popState();
+
+    void log(const char *format, ...);
 
 private:
     CONFIGURATION config_;
@@ -35,4 +38,6 @@ private:
     SUI *ui_;
     std::vector<UiState *> ui_states_;
     bool ui_should_exit_;
+
+    Mutex log_mutex_;
 };

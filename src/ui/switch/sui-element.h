@@ -30,6 +30,9 @@ public:
     bool isFocused();
     virtual SUIElement *acceptFocus();
 
+    bool isVisible();
+    void setVisible(bool value);
+
     void triggerListener(SUIEvent event);
     void addListener(SUIEvent event, SUIEventListener listener);
 
@@ -54,6 +57,6 @@ protected:
 
     std::multimap<SUIEvent, SUIEventListener> listeners_;
 
-    // Focus set capabilities
+    bool visible_;
     bool focusable_;
 };

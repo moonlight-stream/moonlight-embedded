@@ -26,13 +26,13 @@ void SUIGraphics::drawBottomToolbar(std::vector<std::tuple<std::string, SUIToolb
 
         switch (action)
         {
-        case SUIToolbarActionA:
+        case SUIToolbarAction::A:
             icon_texture = ui()->button_a_texture;
             icon_width = ui()->button_a_width;
             icon_height = ui()->button_a_height;
             break;
 
-        case SUIToolbarActionB:
+        case SUIToolbarAction::B:
             icon_texture = ui()->button_b_texture;
             icon_width = ui()->button_b_width;
             icon_height = ui()->button_b_height;
@@ -180,7 +180,11 @@ void SUIGraphics::measureText(TTF_Font *font, std::string text, int *width, int 
 }
 
 void SUIGraphics::drawText(TTF_Font *font, std::string text, int x, int y, uint32_t color, bool align_center, int truncate_width) {
-    drawTextClipped(font, text.c_str(), x, y, element()->globalClip(), color, align_center, truncate_width);
+    drawTextClipped(font, text, x, y, element()->globalClip(), color, align_center, truncate_width);
+}
+
+void SUIGraphics::drawText(TTF_Font *font, std::string text, const SUIRect &bounds, uint32_t color, bool align_center) {
+    drawTextClipped(font, text, bounds, element()->globalClip(), color, align_center);
 }
 
 void SUIGraphics::drawTextClipped(TTF_Font *font, std::string text, int x, int y, const SUIRect &clip, uint32_t color, bool align_center, int truncate_width) {
@@ -251,6 +255,43 @@ void SUIGraphics::drawTextClipped(TTF_Font *font, std::string text, int x, int y
     }
 
     drawTextureClipped(text_texture, destination_rect, clip);
+    SDL_DestroyTexture(text_texture);
+}
+
+void SUIGraphics::drawTextClipped(TTF_Font *font, std::string text, const SUIRect &bounds, const SUIRect &clip, uint32_t color, bool align_center) {
+    // Measure the text size
+    int text_width, text_height;
+    measureText(font, text, &text_width, &text_height);
+
+    // Render the text into a surface
+    SDL_Color fg;
+    fg.r = color & 0xFF;
+    fg.g = (color >> 8) & 0xFF;
+    fg.b = (color >> 16) & 0xFF;
+    fg.a = (color >> 24) & 0xFF;
+
+    SDL_Surface *text_surface = TTF_RenderUTF8_Blended(font, text.c_str(), fg);
+    SDL_Texture *text_texture = SDL_CreateTextureFromSurface(ui()->renderer, text_surface);
+    SDL_FreeSurface(text_surface);
+
+    // Render the surface at a specific location
+    SUIRect global_bounds = offsetGlobal(bounds);
+    SUIRect clip_rect = clipBounds(global_bounds, clip);
+    SUIRect destination_rect;
+
+    if (align_center)
+    {
+        destination_rect.x = bounds.x + bounds.w/2 - text_width/2;
+        destination_rect.y = bounds.y + bounds.h/2 - text_height/2;
+        destination_rect.w = text_width;
+        destination_rect.h = text_height;
+    }
+    else
+    {
+        destination_rect = bounds;
+    }
+
+    drawTextureClipped(text_texture, destination_rect, clip_rect);
     SDL_DestroyTexture(text_texture);
 }
 

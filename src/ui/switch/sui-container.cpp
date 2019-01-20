@@ -29,7 +29,9 @@ void SUIContainer::update(SUIInput *input) {
 
 void SUIContainer::render() {
     for (auto child : children_) {
-        child->render();
+        if (child->isVisible()) {
+            child->render();
+        }
     }
 }
 
@@ -70,10 +72,10 @@ SUIFocusResult SUIContainer::updateFocus(SUIInput *input, SUIElement *previous) 
 
     if (next_candidate) {
         stage()->setFocusedElement(next_candidate);
-        return SUIFocusRetain;
+        return SUIFocusResult::Retain;
     }
     else {
-        return SUIFocusRelease;
+        return SUIFocusResult::Release;
     }
 }
 

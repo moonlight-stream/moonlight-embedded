@@ -5,8 +5,8 @@ UiStateGamesList::UiStateGamesList(Application *application)
 : UiState(application) 
 {
     header_text_ = "Moonlight  ›  Games";
-    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("OK", SUIToolbarActionA));
-    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("Exit", SUIToolbarActionB));
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("OK", SUIToolbarAction::A));
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("Exit", SUIToolbarAction::B));
 
     grid_ = new SUIGridContainer("game-grid");
     grid_->bounds().x = SUI_MARGIN_SIDE;
@@ -42,8 +42,8 @@ UiStateResult UiStateGamesList::update(SUIInput *input) {
     UiState::update(input);
 
     if (input->buttons.down & KEY_B) {
-        return UiStateResultExit;
+        return UiStateResultType::PopState;
     } 
 
-    return UiStateResultNormal;
+    return UiStateResultType::Normal;
 }

@@ -15,8 +15,8 @@
 
 #define SUI_TRUNCATE_FADE_WIDTH 15
 
-enum SUIToolbarAction {
-  SUIToolbarActionA, SUIToolbarActionB
+enum class SUIToolbarAction {
+  A, B
 };
 
 typedef std::tuple<std::string, SUIToolbarAction> SUIToolbarActionItem;
@@ -49,7 +49,9 @@ public:
     int measureTextAscent(TTF_Font *font);
     void measureText(TTF_Font *font, std::string text, int *width, int *height);
     void drawText(TTF_Font *font, std::string text, int x, int y, uint32_t color, bool align_center, int truncate_width);
+    void drawText(TTF_Font *font, std::string text, const SUIRect &bounds, uint32_t color, bool align_center);
     void drawTextClipped(TTF_Font *font, std::string text, int x, int y, const SUIRect &clip, uint32_t color, bool align_center, int truncate_width);
+    void drawTextClipped(TTF_Font *font, std::string text, const SUIRect &bounds, const SUIRect &clip, uint32_t color, bool align_center);
 
     SUIRect clipBounds(int x, int y, int width, int height, const SUIRect &clip);
     SUIRect clipBounds(const SUIRect &bounds, const SUIRect &clip);

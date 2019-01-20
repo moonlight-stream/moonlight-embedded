@@ -20,14 +20,14 @@
 
 typedef SDL_Rect SUIRect;
 
-enum SUIFocusResult {
-    SUIFocusRetain,
-    SUIFocusRelease
+enum class SUIFocusResult {
+    Retain,
+    Release
 };
 
-enum SUIEvent {
-    SUIEventClick,
-    SUIEventFocus
+enum class SUIEvent {
+    Click,
+    Focus
 };
 
 class SUIElement;

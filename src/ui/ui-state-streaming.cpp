@@ -57,10 +57,10 @@ UiStateResult UiStateStreaming::update(SUIInput *input) {
 
     // Exit the stream on + click
     if (input->buttons.down & KEY_PLUS) {
-        return UiStateResultExit;
+        return UiStateResultType::PopState;
     }
 
-    return UiStateResultNormal;
+    return UiStateResultType::Normal;
 }
 
 void UiStateStreaming::drawFrame(uint8_t **data, int *linesize) {

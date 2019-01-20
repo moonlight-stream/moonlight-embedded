@@ -89,12 +89,16 @@ bool Server::paired() {
 promise<bool, ServerError> *Server::connect() {
     // Tell the worker to initiate the connection to the server
     ueventSignal(&event_connect_);
+
+    logPrint("Did signal connect\n");
     return connect_promise_;
 }
 
 promise<bool, ServerError> *Server::pair() {
     // Tell the worker to initiate server pairing
     ueventSignal(&event_pair_);
+    
+    logPrint("Did signal pair\n");
     return pair_promise_;
 }
 
@@ -117,7 +121,7 @@ CONNECTION_LISTENER_CALLBACKS Server::getCallbacks() {
 }
 
 void Server::thread_() {
-    printf("Server thread started\n");
+    logPrint("Server thread started\n");
 
     Result rc;
     int index = -1;
@@ -132,7 +136,7 @@ void Server::thread_() {
                        waiterForUEvent(&event_close_));
 
         if (R_SUCCEEDED(rc)) {
-            printf("Got index of thread event: %d\n", index);
+            logPrint("Got index of thread event: %d\n", index);
 
             switch (index) {
             case 0: threadConnect_(); break;
@@ -151,26 +155,28 @@ void Server::thread_() {
 }
 
 void Server::threadConnect_() {
-    printf("[server] connect\n");
     int ret = gs_init(&server_, config_->address, MOONLIGHT_DATA_DIR "key", config_->debug_level, config_->unsupported);
 
     if (ret == GS_OK) {
-        printf("[server] connect.resolve\n");
         connect_promise_->resolve(true);
     }
     else {
-        printf("[server] connect.reject\n");
         connect_promise_->reject(ServerError(ret, gs_error));
     }
 }
 
 void Server::threadPair_() {
+    logPrint("Before gs_pair\n");
+    
     int ret = gs_pair(&server_, &pin_[0]);
+    logPrint("Got gs_pair result: %d\n", ret);
 
     if (ret == GS_OK) {
+        logPrint("Resolving gs_pair\n");
         pair_promise_->resolve(true);
     }
     else {
+        logPrint("[thread:%ld] Rejecting gs_pair\n");
         pair_promise_->reject(ServerError(ret, gs_error));
     }
 }

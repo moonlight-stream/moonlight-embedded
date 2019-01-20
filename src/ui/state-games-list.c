@@ -205,7 +205,7 @@
 //   SDL_RenderClear(ui.renderer);
 
 //   sui_draw_top_header("Moonlight  ›  Games");
-//   sui_draw_bottom_toolbar(2, "OK", SUIToolbarActionA, "Back", SUIToolbarActionB);
+//   sui_draw_bottom_toolbar(2, "OK", SUIToolbarAction::A, "Back", SUIToolbarAction::B);
 
 //   sui_scene_render(&props.gamesListScene);
 

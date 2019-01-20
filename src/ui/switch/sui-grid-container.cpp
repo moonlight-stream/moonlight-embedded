@@ -125,7 +125,7 @@ SUIFocusResult SUIGridContainer::updateFocus(SUIInput *input, SUIElement *previo
         (focus_col == 0 && input->buttons.down & KEY_LEFT) ||
         (focus_col == grid_size_.second - 1 && input->buttons.down & KEY_RIGHT))
     {
-        return SUIFocusRelease;
+        return SUIFocusResult::Release;
     }
     
     if (input->buttons.down & KEY_UP) {
@@ -147,7 +147,7 @@ SUIFocusResult SUIGridContainer::updateFocus(SUIInput *input, SUIElement *previo
             stage()->setFocusedElement(next_focus);
         }
         else {
-            return SUIFocusRelease;
+            return SUIFocusResult::Release;
         }
     }
     
@@ -170,7 +170,7 @@ SUIFocusResult SUIGridContainer::updateFocus(SUIInput *input, SUIElement *previo
             stage()->setFocusedElement(next_focus);
         }
         else {
-            return SUIFocusRelease;
+            return SUIFocusResult::Release;
         }
     }
     
@@ -193,7 +193,7 @@ SUIFocusResult SUIGridContainer::updateFocus(SUIInput *input, SUIElement *previo
             stage()->setFocusedElement(next_focus);
         }
         else {
-            return SUIFocusRelease;
+            return SUIFocusResult::Release;
         }
     }
     
@@ -216,11 +216,11 @@ SUIFocusResult SUIGridContainer::updateFocus(SUIInput *input, SUIElement *previo
             stage()->setFocusedElement(next_focus);
         }
         else {
-            return SUIFocusRelease;
+            return SUIFocusResult::Release;
         }
     }
 
-    return SUIFocusRetain;
+    return SUIFocusResult::Retain;
 }
 
 int& SUIGridContainer::minimumRowSpacing() { return minimum_row_spacing_; }

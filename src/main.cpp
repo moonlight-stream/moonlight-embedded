@@ -19,6 +19,7 @@
 
 #include <switch.h>
 
+#include "util.h"
 #include "application.h"
 //#include "configuration.h"
 //#include "config.h"
@@ -54,6 +55,7 @@
 
 
 int main(int argc, char* argv[]) {
+    logInit(true);
     
     auto application = std::make_unique<Application>();
     application->start();

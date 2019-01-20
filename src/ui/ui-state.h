@@ -6,10 +6,27 @@
 #include <memory>
 
 class Application;
+class UiState;
 
-enum UiStateResult {
-    UiStateResultNormal,
-    UiStateResultExit
+enum class UiStateResultType {
+    Normal,
+    PushState,
+    ReplaceState,
+    PopState
+};
+
+struct UiStateResult {
+    UiStateResultType type;
+    UiState *state;
+
+    UiStateResult()
+      : type(UiStateResultType::Normal), state(nullptr) {};
+
+    UiStateResult(UiStateResultType type)
+      : type(type), state(nullptr) {};
+
+    UiStateResult(UiStateResultType type, UiState *state)
+      : type(type), state(state) {};
 };
 
 class UiState {

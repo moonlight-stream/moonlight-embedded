@@ -47,7 +47,7 @@ void UiState::exit() {
 UiStateResult UiState::update(SUIInput *input) {
     stage_->update(input);
 
-    return UiStateResultNormal;
+    return UiStateResultType::Normal;
 }
 
 void UiState::render() {

@@ -65,7 +65,7 @@
 //   sui_draw_texture(props.logoTexture, (ui.width - props.logoWidth) / 2, 150, props.logoWidth, props.logoHeight);
 
 //   // Draw the OK action on the bottom toolbar
-//   sui_draw_bottom_toolbar(1, "OK", SUIToolbarActionA);
+//   sui_draw_bottom_toolbar(1, "OK", SUIToolbarAction::A);
 
 //   // Draw the main buttons
 //   sui_button_set_render(&props.buttons);

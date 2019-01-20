@@ -22,7 +22,7 @@ SUIButton::~SUIButton() {
 
 void SUIButton::update(SUIInput *input) {
     if (isFocused() && input->buttons.down & KEY_A) {
-        triggerListener(SUIEventClick);
+        triggerListener(SUIEvent::Click);
     }
 }
 
@@ -58,11 +58,9 @@ void SUIButton::renderContent() {
     uint32_t text_color = isFocused() ? SUI_BUTTON_FOCUSED_TEXT_COLOR : SUI_BUTTON_TEXT_COLOR;
     graphics()->drawText(ui()->font_normal,
                          text_,
-                         bounds_.w / 2,
-                         bounds_.h / 2,
+                         {0, 0, bounds().w, bounds().h},
                          text_color,
-                         true,
-                         -1);
+                         true);
 }
 
 bool SUIButton::isFocusable() {

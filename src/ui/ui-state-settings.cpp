@@ -5,8 +5,8 @@ UiStateSettings::UiStateSettings(Application *application)
 : UiState(application) 
 {
     header_text_ = "Moonlight  ›  Settings";
-    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("OK", SUIToolbarActionA));
-    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("Exit", SUIToolbarActionB));
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("OK", SUIToolbarAction::A));
+    toolbar_items_.push_back(content()->graphics()->makeToolbarActionItem("Exit", SUIToolbarAction::B));
 
     state_grid_ = new SUIGridContainer("state-grid");
     state_grid_->bounds().x = SUI_MARGIN_SIDE;
@@ -62,8 +62,8 @@ UiStateResult UiStateSettings::update(SUIInput *input) {
     UiState::update(input);
 
     if (input->buttons.down & KEY_B) {
-        return UiStateResultExit;
+        return UiStateResultType::PopState;
     } 
 
-    return UiStateResultNormal;
+    return UiStateResultType::Normal;
 }

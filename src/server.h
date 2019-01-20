@@ -21,6 +21,7 @@
 
 #include <switch.h>
 
+#include "util.h"
 #include "promise.h"
 
 extern "C" {

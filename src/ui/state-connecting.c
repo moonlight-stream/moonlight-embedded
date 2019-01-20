@@ -72,7 +72,7 @@
 //   sui_draw_top_header("Moonlight  ›  Connection");
 
 //   // Draw the OK and Back actions on the bottom toolbar
-//   sui_draw_bottom_toolbar(2, "OK", SUIToolbarActionA, "Back", SUIToolbarActionB);
+//   sui_draw_bottom_toolbar(2, "OK", SUIToolbarAction::A, "Back", SUIToolbarAction::B);
 
 //   ui_draw_fps(&props.counter);
 

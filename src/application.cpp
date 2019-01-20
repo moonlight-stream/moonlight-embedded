@@ -3,7 +3,14 @@
 #include <time.h>
 #include <string.h>
 
-Application::Application() {
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+
+Application::Application() :
+    config_{0}
+{
     // Initialize Switch services
     SocketInitConfig socketConfig;
     memcpy(&socketConfig, socketGetDefaultInitConfig(), sizeof(SocketInitConfig));
@@ -13,10 +20,26 @@ Application::Application() {
     plInitialize();
     nxlinkStdio();
 
-    server_ = std::make_unique<Server>(&config_);
+    // Initialize OpenSSL
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    ERR_load_crypto_strings();
+
+    // Seed the OpenSSL PRNG
+    size_t seedlen = 2048;
+    void *seedbuf = malloc(seedlen);
+    csrngGetRandomBytes(seedbuf, seedlen);
+    RAND_seed(seedbuf, seedlen);
+
+    // Initialize application members
+    server_ = new Server(&config_);
     ui_ = new SUI();
     ui_should_exit_ = false;
-    
+
+    // Parse the global Moonlight settings
+    config_parse(MOONLIGHT_DATA_DIR "moonlight.ini", &config_);
+    config_.debug_level = 2;
+
     push_state(new UiStateInitial(this));
 }
 
@@ -25,6 +48,7 @@ Application::~Application() {
         server_->close();
     }
 
+    delete server_;
     delete ui_;
 
     plExit();
@@ -62,7 +86,7 @@ void Application::stop() {
 }
 
 Server *Application::server() {
-    return server_.get();
+    return server_;
 }
 
 SUI *Application::ui() {

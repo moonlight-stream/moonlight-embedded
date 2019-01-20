@@ -50,6 +50,7 @@ UiStateConnection::~UiStateConnection() {
 void UiStateConnection::enter(UiState *parent) {
     printf("[%f] Starting server connection\n", counter_->secondsSinceFirstTick());
     connection_promise_ = application()->server()->connect();
+    printf("[%f] Got server connection promise\n", counter_->secondsSinceFirstTick());
 }
 
 void UiStateConnection::exit() {
@@ -60,7 +61,7 @@ UiStateResult UiStateConnection::update(SUIInput *input) {
     UiState::update(input);
 
     if (connection_promise_) {
-        if (connection_promise_->resolved()) {
+        if (connection_promise_->isResolved()) {
             printf("[%f] Connection succeeded\n", counter_->secondsSinceFirstTick());
 
             if (pairing_promise_ == nullptr) {
@@ -68,17 +69,17 @@ UiStateResult UiStateConnection::update(SUIInput *input) {
                 pairing_promise_ = application()->server()->pair();
             }
         }
-        else if (connection_promise_->rejected()) {
-            printf("[%f] Connection failed: %s\n", counter_->secondsSinceFirstTick(), connection_promise_->rejectedValue().error.c_str());
+        else if (connection_promise_->isRejected()) {
+            printf("[%f] Connection failed: %s\n", counter_->secondsSinceFirstTick(), connection_promise_->rejectedValue()->error.c_str());
         }
     }
 
     if (pairing_promise_) {
-        if (pairing_promise_->resolved()) {
+        if (pairing_promise_->isResolved()) {
             printf("[%f] Pairing succeeded\n", counter_->secondsSinceFirstTick());
         }
-        else if (pairing_promise_->rejected()) {
-            printf("[%f] Pairing failed: %s\n", counter_->secondsSinceFirstTick(), pairing_promise_->rejectedValue().error.c_str());
+        else if (pairing_promise_->isRejected()) {
+            printf("[%f] Pairing failed: %s\n", counter_->secondsSinceFirstTick(), pairing_promise_->rejectedValue()->error.c_str());
         }
     }
 

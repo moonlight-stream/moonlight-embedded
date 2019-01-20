@@ -2,37 +2,72 @@
 
 #include <switch.h>
 #include <stdio.h>
+#include <optional>
 
 template <typename TResolve, typename TReject>
-struct promise {
+class promise {
 public:
-    struct future {
-    public:
-        bool get();
-        bool resolved();
-        bool rejected();
-        TResolve resolvedValue();
-        TReject rejectedValue();
+    promise() : 
+        resolve_value_{}, 
+        reject_value_{}
+    {
+        // UEvent should not auto-clear, so that the promise will stay resolved and future
+        // calls to `promise.get_future().get()` will not block.
+        ueventCreate(&resolve_event_, false);
+        ueventCreate(&reject_event_, false);
+    }
 
-    private:
-        future(promise<TResolve, TReject> *promise);
+    inline bool get() {
+        int index;
+        Result rc = waitMulti(&index, -1,
+            waiterForUEvent(&resolve_event_), 
+            waiterForUEvent(&reject_event_)
+        );
 
-        promise<TResolve, TReject> *promise_;
-        bool resolved_;
-        bool rejected_;
+        if (R_SUCCEEDED(rc)) {
+            if (index == 0) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    inline bool isResolved() {
+        return resolve_value_.has_value();
+    }
+
+    inline bool isRejected(){
+        return reject_value_.has_value();
+    }
+
+    inline std::optional<TResolve> resolvedValue() {
+        return resolve_value_;
+    }
+
+    inline std::optional<TReject> rejectedValue() {
+        return reject_value_;
+    }
+
+    inline void resolve(TResolve value) {
+        // Signal that this ptromise was resolved
+        resolve_value_ = value;
+        ueventSignal(&resolve_event_);
     };
 
-    promise();
-    void resolve(TResolve value);
-    void reject(TReject value);
-    future *get_future();
+    inline void reject(TReject value) {
+        // Signal that this promise was rejected
+        reject_value_ = value;
+        ueventSignal(&reject_event_);
+    };
 
 private:
     UEvent resolve_event_;
     UEvent reject_event_;
     
-    TResolve resolve_value_;
-    TReject reject_value_;
-
-    future future_;
+    std::optional<TResolve> resolve_value_;
+    std::optional<TReject> reject_value_;
 };

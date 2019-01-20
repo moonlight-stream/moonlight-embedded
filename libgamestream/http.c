@@ -40,7 +40,7 @@ static const char *pKeyFile = "./key.pem";
 
 SSL_CTX *ssl_ctx;
 
-static bool debug = false;
+static bool debug = true;
 
 /**
  * Workaround for issues stemming from SSL.
@@ -82,6 +82,15 @@ int http_init(const char* keyDirectory, int logLevel) {
 
   // Create the SSL context
   ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+
+  if (ssl_ctx == NULL) {
+    if (debug) fprintf(stderr, "* ERROR: error creating SSL context: %s\n", ERR_error_string(ERR_get_error(), NULL));
+    return GS_FAILED;
+  }
+  else {
+    if (debug) fprintf(stderr, "* Successfully created SSL context\n");
+  }
+
   SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE, NULL);
 
   if (!SSL_CTX_use_certificate_file(ssl_ctx, certificateFilePath, SSL_FILETYPE_PEM)) {

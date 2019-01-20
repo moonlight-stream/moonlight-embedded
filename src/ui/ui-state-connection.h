@@ -25,6 +25,6 @@ private:
     SUIImage *connecting_image_;
     SUIImage *connection_failed_image_;
 
-    promise<bool, ServerError>::future *connection_promise_;
-    promise<bool, ServerError>::future *pairing_promise_;
+    promise<bool, ServerError> *connection_promise_;
+    promise<bool, ServerError> *pairing_promise_;
 };

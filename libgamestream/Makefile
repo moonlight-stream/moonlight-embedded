@@ -18,11 +18,15 @@ TARGET		:=	$(notdir $(CURDIR))
 SOURCES		:=	. \
 				../third_party/moonlight-common-c/src/ \
 				../third_party/moonlight-common-c/reedsolomon \
-				../third_party/h264bitstream 
+				../third_party/h264bitstream \
+				../third_party/libuuid \
+				../third_party/enet
 INCLUDES	:=  . \
 				../third_party/moonlight-common-c/reedsolomon \
 				../third_party/moonlight-common-c/src \
-				../third_party/h264bitstream
+				../third_party/h264bitstream \
+				../third_party/libuuid \
+				../third_party/enet/include
 
 #---------------------------------------------------------------------------------
 # options for code generation

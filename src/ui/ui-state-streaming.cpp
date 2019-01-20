@@ -1,6 +1,9 @@
 #include "ui-state-streaming.h"
 
-#include "../video/video.h"
+extern "C" {
+    #include "../video/video.h"
+}
+
 #include <libavcodec/avcodec.h>
 
 UiStateStreaming::UiStateStreaming(Application *application)

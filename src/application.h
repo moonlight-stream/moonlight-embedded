@@ -29,7 +29,7 @@ public:
 
 private:
     CONFIGURATION config_;
-    std::unique_ptr<Server> server_;
+    Server *server_;
 
     // UI
     SUI *ui_;

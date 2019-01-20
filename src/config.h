@@ -46,4 +46,4 @@ typedef struct _CONFIGURATION {
   enum codecs codec;
 } CONFIGURATION, *PCONFIGURATION;
 
-//void config_parse(char* filename, PCONFIGURATION config);
+void config_parse(char* filename, PCONFIGURATION config);

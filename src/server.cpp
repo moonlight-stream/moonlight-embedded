@@ -22,13 +22,16 @@
 #include <stdio.h>
 #include <functional>
 
-#include <errors.h>
+extern "C" {
+    #include "libgamestream/errors.h"
+}
 
 #define MOONLIGHT_DATA_DIR "sdmc:/switch/moonlight-switch/"
 
 Server::Server(PCONFIGURATION config)
     : config_(config),
       opened_(false),
+      server_{0},
       pin_{0}
 {
     // Initialize the random PIN used for authentication
@@ -44,14 +47,24 @@ Server::Server(PCONFIGURATION config)
         -2
     );
 
+    ueventCreate(&event_connect_, true);
+    ueventCreate(&event_pair_, true);
     ueventCreate(&event_apps_, true);
     ueventCreate(&event_start_stream_, true);
     ueventCreate(&event_stop_stream_, true);
     ueventCreate(&event_close_, true);
+
+    connect_promise_ = new promise<bool, ServerError>();
+    pair_promise_ = new promise<bool, ServerError>();
+    apps_promise_ = new promise<PAPP_LIST, ServerError>();
 }
 
 Server::~Server() {
     threadClose(&worker_thread_);
+
+    delete connect_promise_;
+    delete pair_promise_;
+    delete apps_promise_;
 }
 
 void Server::open() {
@@ -73,22 +86,22 @@ bool Server::paired() {
     return server_.paired;
 }
 
-promise<bool, ServerError>::future *Server::connect() {
+promise<bool, ServerError> *Server::connect() {
     // Tell the worker to initiate the connection to the server
     ueventSignal(&event_connect_);
-    return connect_promise_.get_future();
+    return connect_promise_;
 }
 
-promise<bool, ServerError>::future *Server::pair() {
+promise<bool, ServerError> *Server::pair() {
     // Tell the worker to initiate server pairing
     ueventSignal(&event_pair_);
-    return pair_promise_.get_future();
+    return pair_promise_;
 }
 
-promise<PAPP_LIST, ServerError>::future *Server::apps() {
+promise<PAPP_LIST, ServerError> *Server::apps() {
     // Tell the worker to fetch the app list, and return a future
     ueventSignal(&event_apps_);
-    return apps_promise_.get_future();
+    return apps_promise_;
 }
 
 void Server::startStream() {
@@ -104,6 +117,8 @@ CONNECTION_LISTENER_CALLBACKS Server::getCallbacks() {
 }
 
 void Server::thread_() {
+    printf("Server thread started\n");
+
     Result rc;
     int index = -1;
 
@@ -117,6 +132,8 @@ void Server::thread_() {
                        waiterForUEvent(&event_close_));
 
         if (R_SUCCEEDED(rc)) {
+            printf("Got index of thread event: %d\n", index);
+
             switch (index) {
             case 0: threadConnect_(); break;
             case 1: threadPair_(); break;
@@ -134,13 +151,16 @@ void Server::thread_() {
 }
 
 void Server::threadConnect_() {
+    printf("[server] connect\n");
     int ret = gs_init(&server_, config_->address, MOONLIGHT_DATA_DIR "key", config_->debug_level, config_->unsupported);
 
     if (ret == GS_OK) {
-        connect_promise_.resolve(true);
+        printf("[server] connect.resolve\n");
+        connect_promise_->resolve(true);
     }
     else {
-        connect_promise_.reject(ServerError(ret, gs_error));
+        printf("[server] connect.reject\n");
+        connect_promise_->reject(ServerError(ret, gs_error));
     }
 }
 
@@ -148,10 +168,10 @@ void Server::threadPair_() {
     int ret = gs_pair(&server_, &pin_[0]);
 
     if (ret == GS_OK) {
-        pair_promise_.resolve(true);
+        pair_promise_->resolve(true);
     }
     else {
-        pair_promise_.reject(ServerError(ret, gs_error));
+        pair_promise_->reject(ServerError(ret, gs_error));
     }
 }
 

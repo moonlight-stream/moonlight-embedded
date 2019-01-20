@@ -1,5 +1,5 @@
 #include "video.h"
-#include "sps.h"
+#include "libgamestream/sps.h"
 
 #include <stdio.h>
 #include <libavcodec/avcodec.h>

@@ -21,12 +21,14 @@
 
 #include <switch.h>
 
-#include "config.h"
 #include "promise.h"
 
-#include <Limelight.h>
-#include <client.h>
-#include <errors.h>
+extern "C" {
+    #include "config.h"
+    #include "libgamestream/client.h"
+    #include "libgamestream/errors.h"
+    #include <Limelight.h>
+}
 
 #include <string>
 
@@ -51,9 +53,9 @@ public:
     bool opened();
     bool paired();
 
-    promise<bool, ServerError>::future *connect();
-    promise<bool, ServerError>::future *pair();
-    promise<PAPP_LIST, ServerError>::future *apps();
+    promise<bool, ServerError> *connect();
+    promise<bool, ServerError> *pair();
+    promise<PAPP_LIST, ServerError> *apps();
 
     void startStream();
     void stopStream();
@@ -82,11 +84,11 @@ private:
     UEvent event_stop_stream_;
     UEvent event_close_;
 
-    promise<bool, ServerError> connect_promise_;
-    promise<bool, ServerError> pair_promise_;
+    promise<bool, ServerError> *connect_promise_;
+    promise<bool, ServerError> *pair_promise_;
 
     PAPP_LIST apps_;
-    promise<PAPP_LIST, ServerError> apps_promise_;
+    promise<PAPP_LIST, ServerError> *apps_promise_;
 
     CONNECTION_LISTENER_CALLBACKS callbacks_;
 };

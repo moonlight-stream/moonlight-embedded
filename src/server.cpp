@@ -86,6 +86,10 @@ bool Server::paired() {
     return server_.paired;
 }
 
+const char *Server::pin() {
+    return pin_;
+}
+
 promise<bool, ServerError> *Server::connect() {
     // Tell the worker to initiate the connection to the server
     ueventSignal(&event_connect_);

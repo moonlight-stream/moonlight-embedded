@@ -7,7 +7,8 @@ SUIElement::SUIElement(std::string name)
     : name_(name),
       parent_(nullptr),
       bounds_(),
-      visible_(true)
+      visible_(true),
+      listeners_{}
 {
     graphics_ = new SUIGraphics(this);
 }

@@ -53,6 +53,7 @@ public:
 
     bool opened();
     bool paired();
+    const char *pin();
 
     promise<bool, ServerError> *connect();
     promise<bool, ServerError> *pair();

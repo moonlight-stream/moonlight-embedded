@@ -25,3 +25,19 @@ void SUIText::render() {
         centered_
     );
 }
+
+std::string &SUIText::text() {
+    return text_;
+}
+
+bool &SUIText::centered() {
+    return centered_;
+}
+
+TTF_Font *&SUIText::font() {
+    return font_;
+}
+
+uint32_t &SUIText::color() {
+    return color_;
+}

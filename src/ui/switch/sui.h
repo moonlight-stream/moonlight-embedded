@@ -6,6 +6,7 @@
 #include "sui-stage.h"
 #include "sui-container.h"
 #include "sui-grid-container.h"
+#include "sui-text.h"
 #include "sui-button.h"
 #include "sui-image.h"
 #include "sui-fps-counter.h"

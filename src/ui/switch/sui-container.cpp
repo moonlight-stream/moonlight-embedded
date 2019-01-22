@@ -142,13 +142,26 @@ std::vector<SUIElement *>& SUIContainer::children() {
 
 void SUIContainer::addChild(SUIElement *element) {
     children_.push_back(element);
-    element->ui_ = ui_;
     element->parent_ = this;
-    element->stage_ = stage_;
 
     if (!element->bounds_.x && !element->bounds_.y && !element->bounds_.w && !element->bounds_.h) {
         element->bounds_.w = bounds_.w;
         element->bounds_.h = bounds_.h;
+    }
+
+    // Update the SUI pointer for this tree of elements
+    std::vector<SUIElement *> nodes;
+    nodes.push_back(element);
+    while (nodes.size()) {
+        SUIElement *current = nodes.back();
+        current->ui_ = ui_;
+        current->stage_ = stage_;
+
+        nodes.pop_back();
+        if (current->isContainer()) {
+            SUIContainer *current_container = static_cast<SUIContainer *>(current);
+            nodes.insert(nodes.end(), current_container->children().begin(), current_container->children().end());
+        }
     }
 }
 

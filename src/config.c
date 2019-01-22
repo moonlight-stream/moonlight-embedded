@@ -65,6 +65,7 @@ static struct option long_options[] = {
   {"fps", required_argument, NULL, 'v'},
   {"codec", required_argument, NULL, 'x'},
   {"unsupported", no_argument, NULL, 'y'},
+  {"quitappafter", no_argument, NULL, '1'},
   {"verbose", no_argument, NULL, 'z'},
   {"debug", no_argument, NULL, 'Z'},
   {0, 0, 0, 0},
@@ -212,6 +213,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'y':
     config->unsupported = true;
     break;
+  case '1':
+    config->quitappafter = true;
+    break;
   case 'z':
     config->debug_level = 1;
     break;
@@ -249,6 +253,8 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
         config->sops = strcmp("true", value) == 0;
       } else if (strcmp(key, "localaudio") == 0) {
         config->localaudio = strcmp("true", value) == 0;
+      } else if (strcmp(key, "quitappafter") == 0) {
+        config->quitappafter = strcmp("true", value) == 0;
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
           if (strcmp(long_options[i].name, key) == 0) {
@@ -285,6 +291,8 @@ void config_save(char* filename, PCONFIGURATION config) {
     write_config_bool(fd, "sops", config->sops);
   if (config->localaudio)
     write_config_bool(fd, "localaudio", config->localaudio);
+  if (config->quitappafter)
+    write_config_bool(fd, "quitappafter", config->quitappafter);
 
   if (strcmp(config->app, "Steam") != 0)
     write_config_string(fd, "app", config->app);
@@ -315,6 +323,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->localaudio = false;
   config->fullscreen = true;
   config->unsupported = false;
+  config->quitappafter = false;
   config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;

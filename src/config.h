@@ -40,6 +40,7 @@ typedef struct _CONFIGURATION {
   bool localaudio;
   bool fullscreen;
   bool unsupported;
+  bool quitappafter;
   char* inputs[MAX_INPUTS];
   int inputsCount;
   enum codecs codec;

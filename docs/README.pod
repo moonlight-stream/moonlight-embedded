@@ -145,6 +145,10 @@ Select platform for audio and video output and input.
 
 Try streaming if GFE version or options are unsupported
 
+=item B<-quitappafter>
+
+Send quit app request to remote after quitting session
+
 =item B<-verbose>
 
 Enable verbose output

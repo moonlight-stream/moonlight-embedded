@@ -135,6 +135,13 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   #endif
 
   LiStopConnection();
+
+  if (config->quitappafter) {
+    if (config->debug_level > 0)
+      printf("Sending app quit request ...\n");
+    gs_quit_app(server);
+  }
+
   platform_stop(system);
 }
 
@@ -174,6 +181,7 @@ static void help() {
   printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
   printf("\t-platform <system>\tSpecify system used for audio, video and input: pi/imx/aml/rk/x11/x11_vdpau/sdl/fake (default auto)\n");
   printf("\t-unsupported\t\tTry streaming if GFE version or options are unsupported\n");
+  printf("\t-quitappafter\t\tSend quit app request to remote after quitting session\n");
   #if defined(HAVE_SDL) || defined(HAVE_X11)
   printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");

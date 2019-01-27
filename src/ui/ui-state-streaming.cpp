@@ -11,10 +11,19 @@ UiStateStreaming::UiStateStreaming(Application *application, ApplicationInfo *ap
     : UiState(application),
       app_(app)
 {
+    // Create a new black texture
     stream_texture_ = SDL_CreateTexture(ui()->renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, ui()->width, ui()->height);
+    clearFrame();
     stream_image_ = new SUIImage("stream-image", stream_texture_);
     stream_image_->bounds() = { 0, 0, ui()->width, ui()->height};
-    content_->addChild(stream_image_);
+
+    spinner_ = new SUILoadingSpinner("loading-spinner");
+    spinner_->color() = RGBA8(0xFF, 0xFF, 0xFF, 0xFF);
+    spinner_->bounds().x = ui()->width/2 - spinner_->bounds().w/2;
+    spinner_->bounds().y = ui()->height/2 - spinner_->bounds().h/2;
+    
+    content()->addChild(stream_image_);
+    overlay()->addChild(spinner_);
 }
 
 UiStateStreaming::~UiStateStreaming() {
@@ -54,6 +63,10 @@ UiStateResult UiStateStreaming::update(SUIInput *input) {
     }
 
     if (last_frame_data) {
+        if (spinner_->isVisible()) {
+            spinner_->setVisible(false);
+        }
+
         drawFrame(last_frame_data, last_frame_line_size);
     }
 
@@ -66,16 +79,33 @@ UiStateResult UiStateStreaming::update(SUIInput *input) {
 }
 
 void UiStateStreaming::drawFrame(uint8_t **data, int *linesize) {
-  // Update the scene texture with the most recent frame
-  int ret = SDL_UpdateYUVTexture(
-    stream_texture_,
-    NULL,
-    data[0], linesize[0], // Y
-    data[1], linesize[1], // U
-    data[2], linesize[2]  // V
-  );
+    // Update the scene texture with the most recent frame
+    int ret = SDL_UpdateYUVTexture(
+        stream_texture_,
+        NULL,
+        data[0], linesize[0], // Y
+        data[1], linesize[1], // U
+        data[2], linesize[2]  // V
+    );
 
-  if (ret < 0) {
-    fprintf(stderr, "[GUI, streaming] Could not update YUV texture with frame: %s\n", SDL_GetError());
-  }
+    if (ret < 0) {
+        fprintf(stderr, "[GUI, streaming] Could not update YUV texture with frame: %s\n", SDL_GetError());
+    }
+}
+
+void UiStateStreaming::clearFrame(uint8_t y, uint8_t u, uint8_t v) {
+    uint32_t format;
+    int w, h;
+    SDL_QueryTexture(stream_texture_, &format, nullptr, &w, &h);
+
+    uint8_t *data = new uint8_t[w * h * 3];
+    std::fill_n(data        , w*h, y);
+    std::fill_n(data +   w*h, w*h, u);
+    std::fill_n(data + 2*w*h, w*h, v);
+
+    int ret = SDL_UpdateTexture(stream_texture_, nullptr, data, w);
+
+    if (ret < 0) {
+        fprintf(stderr, "[GUI, streaming] Could not update YUV texture with frame: %s\n", SDL_GetError());
+    }
 }

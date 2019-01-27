@@ -10,6 +10,7 @@
 #include "sui-button.h"
 #include "sui-image.h"
 #include "sui-fps-counter.h"
+#include "sui-loading-spinner.h"
 
 class SUI {
 public:

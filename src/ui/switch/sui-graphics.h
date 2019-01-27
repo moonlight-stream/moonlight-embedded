@@ -53,6 +53,9 @@ public:
     void drawTextClipped(TTF_Font *font, std::string text, int x, int y, const SUIRect &clip, uint32_t color, bool align_center, int truncate_width);
     void drawTextClipped(TTF_Font *font, std::string text, const SUIRect &bounds, const SUIRect &clip, uint32_t color, bool align_center);
 
+    void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
+    void drawLineClipped(int x1, int y1, int x2, int y2, const SUIRect &clip, uint32_t color);
+
     SUIRect clipBounds(int x, int y, int width, int height, const SUIRect &clip);
     SUIRect clipBounds(const SUIRect &bounds, const SUIRect &clip);
     SUIRect offsetGlobal(const SUIRect &bounds);

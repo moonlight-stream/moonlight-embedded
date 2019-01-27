@@ -15,8 +15,11 @@ public:
 
 private:
     void drawFrame(uint8_t **data, int *linesize);
+    void clearFrame(uint8_t y = 0, uint8_t u = 0x80, uint8_t v = 0x80);
 
     ApplicationInfo *app_;
-    SUIImage *stream_image_;
     SDL_Texture *stream_texture_;
+    SUIImage *stream_image_;
+
+    SUILoadingSpinner *spinner_;
 };

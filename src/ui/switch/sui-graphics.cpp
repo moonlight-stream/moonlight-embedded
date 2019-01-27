@@ -169,7 +169,25 @@ void SUIGraphics::drawRectangleClipped(const SUIRect &bounds, const SUIRect &cli
         if ((offset_bounds.x + offset_bounds.w) == (in.x + in.w)) {
             vlineColor(ui()->renderer, in.x + in.w, in.y, in.y + in.h, color);
         }
-    }}
+    }
+}
+
+void SUIGraphics::drawLine(int x1, int y1, int x2, int y2, uint32_t color) {
+    drawLineClipped(x1, y1, x2, y2, element()->globalClip(), color);
+}
+
+void SUIGraphics::drawLineClipped(int x1, int y1, int x2, int y2, const SUIRect &clip, uint32_t color) {
+    const SUIRect &offset = element()->globalBounds();
+
+    aalineColor(
+        ui()->renderer, 
+        x1 + offset.x,
+        y1 + offset.y, 
+        x2 + offset.x, 
+        y2 + offset.y, 
+        color
+    );
+}
 
 int SUIGraphics::measureTextAscent(TTF_Font *font) {
     return TTF_FontAscent(font);

@@ -32,6 +32,9 @@ extern "C" {
 }
 
 #include <string>
+#include <vector>
+
+struct ApplicationInfo;
 
 struct ServerError {
     int code;
@@ -57,10 +60,10 @@ public:
 
     promise<bool, ServerError> *connect();
     promise<bool, ServerError> *pair();
-    promise<PAPP_LIST, ServerError> *apps();
+    promise<std::vector<ApplicationInfo>, ServerError> *apps();
 
-    void startStream();
-    void stopStream();
+    promise<bool, ServerError> *startStream(int id);
+    promise<bool, ServerError> *stopStream();
 
     CONNECTION_LISTENER_CALLBACKS getCallbacks();
 
@@ -90,7 +93,11 @@ private:
     promise<bool, ServerError> *pair_promise_;
 
     PAPP_LIST apps_;
-    promise<PAPP_LIST, ServerError> *apps_promise_;
+    promise<std::vector<ApplicationInfo>, ServerError> *apps_promise_;
+
+    int stream_app_id_;
+    promise<bool, ServerError> *start_stream_promise_;
+    promise<bool, ServerError> *stop_stream_promise_;
 
     CONNECTION_LISTENER_CALLBACKS callbacks_;
 };

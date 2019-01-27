@@ -1,4 +1,5 @@
 #include "ui-state-streaming.h"
+#include "../application.h"
 
 extern "C" {
     #include "../video/video.h"
@@ -6,8 +7,9 @@ extern "C" {
 
 #include <libavcodec/avcodec.h>
 
-UiStateStreaming::UiStateStreaming(Application *application)
-    : UiState(application)
+UiStateStreaming::UiStateStreaming(Application *application, ApplicationInfo *app)
+    : UiState(application),
+      app_(app)
 {
     stream_texture_ = SDL_CreateTexture(ui()->renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, ui()->width, ui()->height);
     stream_image_ = new SUIImage("stream-image", stream_texture_);
@@ -24,11 +26,11 @@ UiStateStreaming::~UiStateStreaming() {
 }
 
 void UiStateStreaming::enter(UiState *parent) {
-    // stream_start
+    application()->server()->startStream(app_->id);
 }
 
 void UiStateStreaming::exit() {
-    // stream_stop
+    application()->server()->stopStream();
 }
 
 UiStateResult UiStateStreaming::update(SUIInput *input) {

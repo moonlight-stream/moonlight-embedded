@@ -33,6 +33,8 @@ typedef struct _GAMEPAD_STATE {
   short rightStickX, rightStickY;
   int buttons;
   SDL_JoystickID sdl_id;
+  SDL_Haptic* haptic;
+  int haptic_effect_id;
   short id;
   bool initialized;
 } GAMEPAD_STATE, *PGAMEPAD_STATE;
@@ -43,22 +45,6 @@ static int keyboard_modifiers;
 static int activeGamepadMask = 0;
 
 int sdl_gamepads = 0;
-
-void sdlinput_init(char* mappings) {
-  memset(gamepads, 0, sizeof(gamepads));
-
-  SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-  SDL_GameControllerAddMappingsFromFile(mappings);
-
-  for (int i = 0; i < SDL_NumJoysticks(); ++i) {
-    if (SDL_IsGameController(i)) {
-      sdl_gamepads++;
-      if (!SDL_GameControllerOpen(i)) {
-        fprintf(stderr, "Could not open gamecontroller %i: %s\n", i, SDL_GetError());
-      }
-    }
-  }
-}
 
 static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id) {
   for (int i = 0;i<4;i++) {
@@ -72,6 +58,40 @@ static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id) {
       return &gamepads[i];
   }
   return &gamepads[0];
+}
+
+static void init_gamepad(int joystick_index) {
+  if (SDL_IsGameController(joystick_index)) {
+    sdl_gamepads++;
+    SDL_GameController* controller = SDL_GameControllerOpen(joystick_index);
+    if (!controller) {
+      fprintf(stderr, "Could not open gamecontroller %i: %s\n", joystick_index, SDL_GetError());
+      return;
+    }
+
+    SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
+    SDL_Haptic* haptic = SDL_HapticOpenFromJoystick(joystick);
+    if (haptic && (SDL_HapticQuery(haptic) & SDL_HAPTIC_LEFTRIGHT) == 0) {
+      SDL_HapticClose(haptic);
+      haptic = NULL;
+    }
+
+    SDL_JoystickID sdl_id = SDL_JoystickInstanceID(joystick);
+    PGAMEPAD_STATE state = get_gamepad(joystick_index);
+    state->haptic = haptic;
+    state->haptic_effect_id = -1;
+  }
+}
+
+void sdlinput_init(char* mappings) {
+  memset(gamepads, 0, sizeof(gamepads));
+
+  SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+  SDL_InitSubSystem(SDL_INIT_HAPTIC);
+  SDL_GameControllerAddMappingsFromFile(mappings);
+
+  for (int i = 0; i < SDL_NumJoysticks(); ++i)
+    init_gamepad(i);
 }
 
 int sdlinput_handle_event(SDL_Event* event) {
@@ -249,4 +269,34 @@ int sdlinput_handle_event(SDL_Event* event) {
     break;
   }
   return SDL_NOTHING;
+}
+
+void sdlinput_rumble(unsigned short controller_id, unsigned short low_freq_motor, unsigned short high_freq_motor) {
+  if (controller_id >= 4)
+    return;
+
+  PGAMEPAD_STATE state = &gamepads[controller_id];
+
+  SDL_Haptic* haptic = state->haptic;
+  if (!haptic)
+    return;
+
+  if (state->haptic_effect_id >= 0)
+    SDL_HapticDestroyEffect(haptic, state->haptic_effect_id);
+
+  if (low_freq_motor == 0 && high_freq_motor == 0)
+    return;
+
+  SDL_HapticEffect effect;
+  SDL_memset(&effect, 0, sizeof(effect));
+  effect.type = SDL_HAPTIC_LEFTRIGHT;
+  effect.leftright.length = SDL_HAPTIC_INFINITY;
+
+  // SDL haptics range from 0-32767 but XInput uses 0-65535, so divide by 2 to correct for SDL's scaling
+  effect.leftright.large_magnitude = low_freq_motor / 2;
+  effect.leftright.small_magnitude = high_freq_motor / 2;
+
+  state->haptic_effect_id = SDL_HapticNewEffect(haptic, &effect);
+  if (state->haptic_effect_id >= 0)
+    SDL_HapticRunEffect(haptic, state->haptic_effect_id, 1);
 }

@@ -25,6 +25,7 @@
 
 pthread_t main_thread_id = 0;
 bool connection_debug;
+ConnListenerRumble rumble_handler = NULL;
 
 static void connection_terminated() {
   if (main_thread_id != 0)
@@ -46,6 +47,11 @@ static void connection_log_message(const char* format, ...) {
   va_end(arglist);
 }
 
+static void rumble(unsigned short controllerNumber, unsigned short lowFreqMotor, unsigned short highFreqMotor) {
+  if (rumble_handler)
+    rumble_handler(controllerNumber, lowFreqMotor, highFreqMotor);
+}
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = NULL,
   .stageComplete = NULL,
@@ -55,4 +61,5 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .displayMessage = connection_display_message,
   .displayTransientMessage = connection_display_transient_message,
   .logMessage = connection_log_message,
+  .rumble = rumble,
 };

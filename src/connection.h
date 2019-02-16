@@ -25,3 +25,4 @@
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
 extern pthread_t main_thread_id;
 extern bool connection_debug;
+extern ConnListenerRumble rumble_handler;

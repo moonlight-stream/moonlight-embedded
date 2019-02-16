@@ -324,6 +324,7 @@ int main(int argc, char* argv[]) {
 
       sdl_init(config.stream.width, config.stream.height, config.fullscreen);
       sdlinput_init(config.mapping);
+      rumble_handler = sdlinput_rumble;
     }
     #endif
 

@@ -63,6 +63,7 @@ struct input_device {
   char modifiers;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
   short controllerId;
+  int haptic_effect_id;
   int buttonFlags;
   char leftTrigger, rightTrigger;
   short leftStickX, leftStickY;
@@ -547,6 +548,7 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   }
 
   devices[dev].controllerId = -1;
+  devices[dev].haptic_effect_id = -1;
 
   if (devices[dev].map != NULL) {
     bool valid = evdev_init_parms(&devices[dev], &(devices[dev].xParms), devices[dev].map->abs_leftx);
@@ -703,4 +705,41 @@ void evdev_stop() {
 
 void evdev_init() {
   handler = evdev_handle_event;
+}
+
+static struct input_device* evdev_get_input_device(unsigned short controller_id) {
+  for (int i=0; i<numDevices; i++)
+    if (devices[i].controllerId == controller_id)
+      return &devices[i];
+
+  return NULL;
+}
+
+void evdev_rumble(unsigned short controller_id, unsigned short low_freq_motor, unsigned short high_freq_motor) {
+  struct input_device* device = evdev_get_input_device(controller_id);
+  if (!device)
+    return;
+
+  if (device->haptic_effect_id >= 0) {
+    ioctl(device->fd, EVIOCRMFF, device->haptic_effect_id);
+    device->haptic_effect_id = -1;
+  }
+
+  if (low_freq_motor == 0 && high_freq_motor == 0)
+    return;
+
+  struct ff_effect effect = {0};
+  effect.type = FF_RUMBLE;
+  effect.id = -1;
+  effect.replay.length = USHRT_MAX;
+  effect.u.rumble.strong_magnitude = low_freq_motor;
+  effect.u.rumble.weak_magnitude = high_freq_motor;
+  if (ioctl(device->fd, EVIOCSFF, &effect) == -1)
+    return;
+
+  struct input_event event = {0};
+  event.type = EV_FF;
+  event.code = effect.id;
+  write(device->fd, (const void*) &event, sizeof(event));
+  device->haptic_effect_id = effect.id;
 }

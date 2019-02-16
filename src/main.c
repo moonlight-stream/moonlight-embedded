@@ -311,6 +311,7 @@ int main(int argc, char* argv[]) {
 
       udev_init(!inputAdded, mappings, config.debug_level > 0);
       evdev_init();
+      rumble_handler = evdev_rumble;
       #ifdef HAVE_LIBCEC
       cec_init();
       #endif /* HAVE_LIBCEC */

@@ -19,12 +19,14 @@
 
 #include "../video.h"
 #include "../config.h"
+#include "../debug.h"
 #include "sps.h"
 
 #include <Limelight.h>
 
 #include <stdbool.h>
 #include <psp2/kernel/sysmem.h>
+#include <psp2/kernel/threadmgr.h>
 #include <psp2/display.h>
 #include <psp2/videodec.h>
 #include <stdio.h>
@@ -33,19 +35,25 @@
 
 #include <stdarg.h>
 
+#if 0
+#define printf vita_debug_log
+#define DRAW_FPS 1
+#endif
+
 enum {
-  VITA_VIDEO_INIT_OK                  = 0,
-  VITA_VIDEO_ERROR_NO_MEM             = 0x80010001,
-  VITA_VIDEO_ERROR_INIT_LIB           = 0x80010002,
-  VITA_VIDEO_ERROR_QUERY_DEC_MEMSIZE  = 0x80010003,
-  VITA_VIDEO_ERROR_ALLOC_MEM          = 0x80010004,
-  VITA_VIDEO_ERROR_GET_MEMBASE        = 0x80010005,
-  VITA_VIDEO_ERROR_CREATE_DEC         = 0x80010006,
+  VITA_VIDEO_INIT_OK                    = 0,
+  VITA_VIDEO_ERROR_NO_MEM               = 0x80010001,
+  VITA_VIDEO_ERROR_INIT_LIB             = 0x80010002,
+  VITA_VIDEO_ERROR_QUERY_DEC_MEMSIZE    = 0x80010003,
+  VITA_VIDEO_ERROR_ALLOC_MEM            = 0x80010004,
+  VITA_VIDEO_ERROR_GET_MEMBASE          = 0x80010005,
+  VITA_VIDEO_ERROR_CREATE_DEC           = 0x80010006,
+  VITA_VIDEO_ERROR_CREATE_PACER_THREAD  = 0x80010007,
 };
 
 #define DECODER_BUFFER_SIZE 92*1024
 
-static char* ffmpeg_buffer = NULL;
+static char* decoder_buffer = NULL;
 
 enum {
   SCREEN_WIDTH = 960,
@@ -63,6 +71,7 @@ enum VideoStatus {
   INIT_AVC_LIB,
   INIT_DECODER_MEMBLOCK,
   INIT_AVC_DEC,
+  INIT_FRAME_PACER_THREAD,
 };
 
 int backbuffer;
@@ -72,13 +81,91 @@ enum VideoStatus video_status = NOT_INIT;
 SceAvcdecCtrl *decoder = NULL;
 SceUID displayblock = -1;
 SceUID decoderblock = -1;
+SceUID pacer_thread = -1;
 SceVideodecQueryInitInfoHwAvcdec *init = NULL;
 SceAvcdecQueryDecoderInfo *decoder_info = NULL;
 
+static unsigned numframes;
+static bool active_video_thread = true;
+static bool active_pacer_thread = false;
+
+typedef struct frame_elem frame_elem;
+struct frame_elem {
+  unsigned long long time;
+  uint8_t framebuffer[FRAMEBUFFER_SIZE];
+  frame_elem *next;
+};
+
+uint32_t frame_count = 0;
+uint32_t need_drop = 0;
+uint32_t curr_fps[2] = {0, 0};
+float carry = 0;
+
+static int vita_pacer_thread_main(SceSize args, void *argp) {
+  // 1s
+  int wait = 1000000;
+  //float max_fps = 0;
+  //sceDisplayGetRefreshRate(&max_fps);
+  //if (config.stream.fps == 30) {
+  //  max_fps /= 2;
+  //}
+  int max_fps = config.stream.fps;
+  uint64_t last_vblank_count = sceDisplayGetVcount();
+  uint64_t last_check_time = sceKernelGetSystemTimeWide();
+  //float carry = 0;
+  need_drop = 0;
+  frame_count = 0;
+  while (active_pacer_thread) {
+    uint64_t curr_vblank_count = sceDisplayGetVcount();
+    uint32_t vblank_fps = curr_vblank_count - last_vblank_count;
+    uint32_t curr_frame_count = frame_count;
+    frame_count = 0;
+
+    if (!active_video_thread) {
+    //  carry = 0;
+    } else {
+      if (config.enable_frame_pacer && curr_frame_count > max_fps) {
+        //carry += curr_frame_count - max_fps;
+        //if (carry > 1) {
+        //  need_drop += (int)carry;
+        //  carry -= (int)carry;
+        //}
+        need_drop += curr_frame_count - max_fps;
+      }
+      //vita_debug_log("fps0/fps1/carry/need_drop: %u/%u/%f/%u\n",
+      //               curr_frame_count, vblank_fps, carry, need_drop);
+    }
+
+    curr_fps[0] = curr_frame_count;
+    curr_fps[1] = vblank_fps;
+
+    last_vblank_count = curr_vblank_count;
+    uint64_t curr_check_time = sceKernelGetSystemTimeWide();
+    uint32_t lapse = curr_check_time - last_check_time;
+    last_check_time = curr_check_time;
+    if (lapse > wait && (lapse - wait) < wait) {
+      //vita_debug_log("sleep: %d", wait * 2 - lapse);
+      sceKernelDelayThread(wait * 2 - lapse);
+    } else {
+      sceKernelDelayThread(wait);
+    }
+  }
+  return 0;
+}
+
 static void vita_cleanup() {
+  int ret;
+  if (video_status == INIT_FRAME_PACER_THREAD) {
+    active_pacer_thread = false;
+    // wait 10sec
+    SceUInt timeout = 10000000;
+    sceKernelWaitThreadEnd(pacer_thread, &ret, &timeout);
+    sceKernelDeleteThread(pacer_thread);
+    video_status--;
+  }
   if (video_status == INIT_AVC_DEC) {
-      sceAvcdecDeleteDecoder(decoder);
-      video_status--;
+    sceAvcdecDeleteDecoder(decoder);
+    video_status--;
   }
   if (video_status == INIT_DECODER_MEMBLOCK) {
     if (decoderblock >= 0) {
@@ -106,9 +193,9 @@ static void vita_cleanup() {
   }
 
   if (video_status == INIT_FRAMEBUFFER) {
-    if (ffmpeg_buffer != NULL) {
-      free(ffmpeg_buffer);
-      ffmpeg_buffer = NULL;
+    if (decoder_buffer != NULL) {
+      free(decoder_buffer);
+      decoder_buffer = NULL;
     }
     video_status--;
   }
@@ -179,11 +266,11 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     framebuf.width = SCREEN_WIDTH;
     framebuf.height = SCREEN_HEIGHT;
 
-    ret = sceDisplaySetFrameBuf(&framebuf, 1);
+    ret = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_SETBUF_NEXTFRAME);
     printf("SetFrameBuf: 0x%x\n", ret);
 
-    ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE);
-    if (ffmpeg_buffer == NULL) {
+    decoder_buffer = malloc(DECODER_BUFFER_SIZE);
+    if (decoder_buffer == NULL) {
       printf("not enough memory\n");
       ret = VITA_VIDEO_ERROR_NO_MEM;
       goto cleanup;
@@ -279,15 +366,26 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     video_status++;
   }
 
+  if (video_status == INIT_AVC_DEC) {
+    // INIT_FRAME_PACER_THREAD
+    ret = sceKernelCreateThread("frame_pacer", vita_pacer_thread_main, 0, 0x10000, 0, 0, NULL);
+    if (ret < 0) {
+      printf("sceKernelCreateThread 0x%x\n", ret);
+      ret = VITA_VIDEO_ERROR_CREATE_PACER_THREAD;
+      goto cleanup;
+    }
+    pacer_thread = ret;
+    active_pacer_thread = true;
+    sceKernelStartThread(pacer_thread, 0, NULL);
+    video_status++;
+  }
+
   return VITA_VIDEO_INIT_OK;
 
 cleanup:
   vita_cleanup();
   return ret;
 }
-
-static unsigned numframes;
-static bool active_video_thread = true;
 
 static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   SceAvcdecAu au = {0};
@@ -297,6 +395,8 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   array_picture.numOfElm = 1;
   array_picture.pPicture = &pictures;
 
+  //frame->time = decodeUnit->receiveTimeMs;
+
   picture.size = sizeof(picture);
   picture.frame.pixelType = 0;
   picture.frame.framePitch = LINE_SIZE;
@@ -304,50 +404,65 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   picture.frame.frameHeight = SCREEN_HEIGHT;
   picture.frame.pPicture[0] = framebuffer[backbuffer];
 
-  if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
-    gs_sps_fix(decodeUnit, 0);
-    PLENTRY entry = decodeUnit->bufferList;
-    int length = 0;
-    while (entry != NULL) {
-      memcpy(ffmpeg_buffer+length, entry->data, entry->length);
-      length += entry->length;
-      entry = entry->next;
-    }
+  if (decodeUnit->fullLength >= DECODER_BUFFER_SIZE) {
+    printf("Video decode buffer too small\n");
+    exit(1);
+  }
 
-    au.es.pBuf = ffmpeg_buffer;
-    au.es.size = decodeUnit->fullLength;
-    au.dts.lower = 0xFFFFFFFF;
-    au.dts.upper = 0xFFFFFFFF;
-    au.pts.lower = 0xFFFFFFFF;
-    au.pts.upper = 0xFFFFFFFF;
+  gs_sps_fix(decodeUnit, 0);
+  PLENTRY entry = decodeUnit->bufferList;
+  int length = 0;
+  while (entry != NULL) {
+    memcpy(decoder_buffer+length, entry->data, entry->length);
+    length += entry->length;
+    entry = entry->next;
+  }
 
-    int ret = 0;
-    ret = sceAvcdecDecode(decoder, &au, &array_picture);
-    if (ret < 0)
-      printf("sceAvcdecDecode (len=0x%x): 0x%x numOfOutput %d\n", decodeUnit->fullLength, ret, array_picture.numOfOutput);
-    if (ret < 0) {
-      return DR_NEED_IDR;
-    }
+  au.es.pBuf = decoder_buffer;
+  au.es.size = decodeUnit->fullLength;
+  au.dts.lower = 0xFFFFFFFF;
+  au.dts.upper = 0xFFFFFFFF;
+  au.pts.lower = 0xFFFFFFFF;
+  au.pts.upper = 0xFFFFFFFF;
 
-    if (array_picture.numOfOutput == 1) {
-      if (active_video_thread) {
-        SceDisplayFrameBuf framebuf = { 0 };
-        framebuf.size = sizeof(framebuf);
-        framebuf.base = framebuffer[backbuffer];
-        framebuf.pitch = SCREEN_WIDTH;
-        framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
-        framebuf.width = SCREEN_WIDTH;
-        framebuf.height = SCREEN_HEIGHT;
+  int ret = 0;
+  ret = sceAvcdecDecode(decoder, &au, &array_picture);
+  if (ret < 0) {
+    printf("sceAvcdecDecode (len=0x%x): 0x%x numOfOutput %d\n", decodeUnit->fullLength, ret, array_picture.numOfOutput);
+    return DR_NEED_IDR;
+  }
 
-        int ret = sceDisplaySetFrameBuf(&framebuf, (config.disable_vsync) ? SCE_DISPLAY_SETBUF_IMMEDIATE : SCE_DISPLAY_SETBUF_NEXTFRAME);
-        backbuffer = (backbuffer + 1) % 2;
-        if (ret < 0)
-          printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
+  if (array_picture.numOfOutput != 1) {
+    //printf("numOfOutput %d\n", array_picture.numOfOutput);
+    return DR_OK;
+  }
+
+  if (active_video_thread) {
+    if (need_drop > 0) {
+      vita_debug_log("remain frameskip: %d\n", need_drop);
+      // skip
+      need_drop--;
+    } else {
+      SceDisplayFrameBuf framebuf = { 0 };
+      framebuf.size = sizeof(framebuf);
+
+      framebuf.base = framebuffer[backbuffer];
+      framebuf.pitch = SCREEN_WIDTH;
+      framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
+      framebuf.width = SCREEN_WIDTH;
+      framebuf.height = SCREEN_HEIGHT;
+
+      int ret = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_SETBUF_NEXTFRAME);
+#ifdef DRAW_FPS
+      display_message(20, 40, "fps: %u / %u", curr_fps[0], curr_fps[1]);
+#endif
+      backbuffer = (backbuffer + 1) % 2;
+      if (ret < 0) {
+        printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
+      } else {
+        frame_count++;
       }
     }
-  } else {
-    printf("Video decode buffer too small");
-    exit(1);
   }
 
   // if (numframes++ % 6 == 0)

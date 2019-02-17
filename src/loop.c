@@ -19,35 +19,14 @@
 
 #include "loop.h"
 
-#include "connection.h"
-
-#include <sys/stat.h>
-#include <sys/signalfd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <poll.h>
-#include <signal.h>
 #include <string.h>
 
 static struct pollfd* fds = NULL;
 static FdHandler* fdHandlers = NULL;
 static int numFds = 0;
-
-static int sigFd;
-
-static int loop_sig_handler(int fd) {
-  struct signalfd_siginfo info;
-  read(fd, &info, sizeof(info));
-  switch (info.ssi_signo) {
-    case SIGINT:
-    case SIGTERM:
-    case SIGQUIT:
-    case SIGHUP:
-      return LOOP_RETURN;
-  }
-  return LOOP_OK;
-}
 
 void loop_add_fd(int fd, FdHandler handler, int events) {
   int fdindex = numFds;
@@ -72,15 +51,15 @@ void loop_add_fd(int fd, FdHandler handler, int events) {
 }
 
 void loop_remove_fd(int fd) {
-  numFds--;
   int fdindex;
-  
-  for (int i=0;i<numFds;i++) {
+  numFds--;
+
+  for (int i=0; i<numFds; i++) {
     if (fds[i].fd = fd)
       fdindex = i;
       break;
   }
-  
+
   if (fdindex != numFds && numFds > 0) {
     memcpy(&fds[fdindex], &fds[numFds], sizeof(struct pollfd));
     memcpy(&fdHandlers[fdindex], &fdHandlers[numFds], sizeof(FdHandler*));
@@ -88,26 +67,8 @@ void loop_remove_fd(int fd) {
 }
 
 void loop_main() {
-  main_thread_id = pthread_self();
-  sigset_t sigset;
-  sigemptyset(&sigset);
-  sigaddset(&sigset, SIGHUP);
-  sigaddset(&sigset, SIGTERM);
-  sigaddset(&sigset, SIGINT);
-  sigaddset(&sigset, SIGQUIT);
-  sigprocmask(SIG_BLOCK, &sigset, NULL);
-  sigFd = signalfd(-1, &sigset, 0);
-  loop_add_fd(sigFd, loop_sig_handler, POLLIN | POLLERR | POLLHUP);
-
-//static bool evdev_poll(bool (*handler) (struct input_event*, struct input_device*)) {
-  while (poll(fds, numFds, -1)) {
-    for (int i=0;i<numFds;i++) {
-      if (fds[i].revents > 0) {
-        int ret = fdHandlers[i](fds[i].fd);
-        if (ret == LOOP_RETURN) {
-          return;
-        }
-      }
-    }
-  }
+  while (poll(fds, numFds, -1))
+    for (int i=0; i<numFds; i++)
+      if (fds[i].revents > 0 && fdHandlers[i](fds[i].fd) == LOOP_RETURN)
+        return;
 }

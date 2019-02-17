@@ -42,11 +42,13 @@
 #include <client.h>
 #include <discover.h>
 
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/signalfd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -81,6 +83,33 @@ static int get_app_id(PSERVER_DATA server, const char *name) {
     list = list->next;
   }
   return -1;
+}
+
+static int sig_handler(int fd) {
+  struct signalfd_siginfo info;
+  read(fd, &info, sizeof(info));
+  switch (info.ssi_signo) {
+    case SIGINT:
+    case SIGTERM:
+    case SIGQUIT:
+    case SIGHUP:
+      return LOOP_RETURN;
+  }
+  return LOOP_OK;
+}
+
+static void sig_handler_init() {
+  int sigFd;
+  main_thread_id = pthread_self();
+  sigset_t sigset;
+  sigemptyset(&sigset);
+  sigaddset(&sigset, SIGHUP);
+  sigaddset(&sigset, SIGTERM);
+  sigaddset(&sigset, SIGINT);
+  sigaddset(&sigset, SIGQUIT);
+  sigprocmask(SIG_BLOCK, &sigset, NULL);
+  sigFd = signalfd(-1, &sigset, 0);
+  loop_add_fd(sigFd, sig_handler, POLLIN | POLLERR | POLLHUP);
 }
 
 static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform system) {
@@ -121,6 +150,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     connection_debug = true;
   }
 
+  sig_handler_init();
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 

@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2019 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ void loop_remove_fd(int fd) {
   }
 }
 
-void loop_main() {
+void loop_init() {
   main_thread_id = pthread_self();
   sigset_t sigset;
   sigemptyset(&sigset);
@@ -98,8 +98,9 @@ void loop_main() {
   sigprocmask(SIG_BLOCK, &sigset, NULL);
   sigFd = signalfd(-1, &sigset, 0);
   loop_add_fd(sigFd, loop_sig_handler, POLLIN | POLLERR | POLLHUP);
+}
 
-//static bool evdev_poll(bool (*handler) (struct input_event*, struct input_device*)) {
+void loop_main() {
   while (poll(fds, numFds, -1)) {
     for (int i=0;i<numFds;i++) {
       if (fds[i].revents > 0) {

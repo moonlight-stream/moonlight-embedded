@@ -1,7 +1,7 @@
 /*
  * This file is part of Moonlight Embedded.
  *
- * Copyright (C) 2015 Iwan Timmer
+ * Copyright (C) 2015-2019 Iwan Timmer
  *
  * Moonlight is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,4 +25,5 @@ typedef int(*FdHandler)(int fd);
 void loop_add_fd(int fd, FdHandler handler, int events);
 void loop_remove_fd(int fd);
 
+void loop_init();
 void loop_main();

@@ -55,6 +55,7 @@ struct input_abs_parms {
 
 struct input_device {
   struct libevdev *dev;
+  bool is_keyboard;
   struct mapping* map;
   int key_map[KEY_MAX];
   int abs_map[ABS_MAX];
@@ -527,6 +528,7 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   devices[dev].map = mappings;
   memset(&devices[dev].key_map, -2, sizeof(devices[dev].key_map));
   memset(&devices[dev].abs_map, -2, sizeof(devices[dev].abs_map));
+  devices[dev].is_keyboard = is_keyboard;
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {
@@ -561,7 +563,7 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
       fprintf(stderr, "Mapping for %s (%s) on %s is incorrect\n", name, str_guid, device);
   }
 
-  if (grabbingDevices) {
+  if (grabbingDevices && is_keyboard) {
     if (ioctl(fd, EVIOCGRAB, 1) < 0) {
       fprintf(stderr, "EVIOCGRAB failed with error %d\n", errno);
     }
@@ -688,7 +690,7 @@ void evdev_start() {
   // we're ready to take input events. Ctrl+C works up until
   // this point.
   for (int i = 0; i < numDevices; i++) {
-    if (ioctl(devices[i].fd, EVIOCGRAB, 1) < 0) {
+    if (devices[i].is_keyboard && ioctl(devices[i].fd, EVIOCGRAB, 1) < 0) {
       fprintf(stderr, "EVIOCGRAB failed with error %d\n", errno);
     }
   }

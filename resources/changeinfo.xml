@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
+<changes app_ver="00.05"><![CDATA[
+## 0.5.0<br>
+* Support to discover stream server via mDNS (#143)<br>
+* Implement frame pacer (#147)<br>
+* Update latest enet & moonlight-common-c (904a5d1, 7f63f0d)<br>
+]]></changes>
 <changes app_ver="00.04"><![CDATA[
 ## 0.4.1<br>
 * Update latest moonlight-common-c (2c9d61c)<br>

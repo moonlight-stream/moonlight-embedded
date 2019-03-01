@@ -1,6 +1,7 @@
 ## Unreleased
 * Support to discover stream server via mDNS (#143)
 * Implement frame pacer (#147)
+* Update latest enet & moonlight-common-c (904a5d1, 7f63f0d)
 
 ## 0.4.1
 * Update latest moonlight-common-c (2c9d61c)

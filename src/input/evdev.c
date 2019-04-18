@@ -451,7 +451,7 @@ static int evdev_handle(int fd) {
 }
 
 void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
-  int fd = open(device, O_RDONLY|O_NONBLOCK);
+  int fd = open(device, O_RDWR|O_NONBLOCK);
   if (fd <= 0) {
     fprintf(stderr, "Failed to open device %s\n", device);
     fflush(stderr);
@@ -742,6 +742,7 @@ void evdev_rumble(unsigned short controller_id, unsigned short low_freq_motor, u
   struct input_event event = {0};
   event.type = EV_FF;
   event.code = effect.id;
+  event.value = 1;
   write(device->fd, (const void*) &event, sizeof(event));
   device->haptic_effect_id = effect.id;
 }

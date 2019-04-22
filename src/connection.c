@@ -32,14 +32,6 @@ static void connection_terminated() {
     pthread_kill(main_thread_id, SIGTERM);
 }
 
-static void connection_display_message(const char *msg) {
-  printf("%s\n", msg);
-}
-
-static void connection_display_transient_message(const char *msg) {
-  printf("%s\n", msg);
-}
-
 static void connection_log_message(const char* format, ...) {
   va_list arglist;
   va_start(arglist, format);
@@ -58,8 +50,6 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageFailed = NULL,
   .connectionStarted = NULL,
   .connectionTerminated = connection_terminated,
-  .displayMessage = connection_display_message,
-  .displayTransientMessage = connection_display_transient_message,
   .logMessage = connection_log_message,
   .rumble = rumble,
 };

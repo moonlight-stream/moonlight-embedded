@@ -44,6 +44,17 @@ static void rumble(unsigned short controllerNumber, unsigned short lowFreqMotor,
     rumble_handler(controllerNumber, lowFreqMotor, highFreqMotor);
 }
 
+static void connection_status_update(int status) {
+  switch (status) {
+    case CONN_STATUS_OKAY:
+      printf("Connection is okay\n");
+      break;
+    case CONN_STATUS_POOR:
+      printf("Connection is poor\n");
+      break;
+  }
+}
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = NULL,
   .stageComplete = NULL,
@@ -52,4 +63,5 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .connectionTerminated = connection_terminated,
   .logMessage = connection_log_message,
   .rumble = rumble,
+  .connectionStatusUpdate = connection_status_update
 };

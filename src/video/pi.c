@@ -209,7 +209,6 @@ static void decoder_renderer_cleanup() {
 static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   OMX_BUFFERHEADERTYPE *buf = NULL;
 
-  gs_sps_fix(decodeUnit, GS_SPS_BITSTREAM_FIXUP);
   PLENTRY entry = decodeUnit->bufferList;
   while (entry != NULL) {
     if (buf == NULL) {
@@ -226,8 +225,12 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       }
     }
 
-    memcpy(buf->pBuffer + buf->nFilledLen, entry->data, entry->length);
-    buf->nFilledLen += entry->length;
+    if (entry->bufferType == BUFFER_TYPE_SPS)
+      gs_sps_fix(entry, GS_SPS_BITSTREAM_FIXUP, buf->pBuffer, &buf->nFilledLen);
+    else {
+      memcpy(buf->pBuffer + buf->nFilledLen, entry->data, entry->length);
+      buf->nFilledLen += entry->length;
+    }
 
     if (entry->bufferType != BUFFER_TYPE_PICDATA || entry->next == NULL || entry->next->bufferType != BUFFER_TYPE_PICDATA) {
       if(port_settings_changed == 0 && ((buf->nFilledLen > 0 && ilclient_remove_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1) == 0) || (buf->nFilledLen == 0 && ilclient_wait_for_event(video_decode, OMX_EventPortSettingsChanged, 131, 0, 0, 1, ILCLIENT_EVENT_ERROR | ILCLIENT_PARAMETER_CHANGED, 10000) == 0))) {

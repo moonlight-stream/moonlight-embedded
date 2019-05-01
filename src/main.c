@@ -95,7 +95,7 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   #ifdef HAVE_SDL
   gamepads += sdl_gamepads;
   #endif
-  int gamepad_mask;
+  int gamepad_mask = 0;
   for (int i = 0; i < gamepads && i < 4; i++)
     gamepad_mask = (gamepad_mask << 1) + 1;
 

@@ -40,7 +40,7 @@ void gs_sps_fix(PLENTRY sps, int flags, uint8_t* out_buf, uint32_t* out_offset) 
   // for known resolution combinations. Otherwise leave the profile alone (currently 5.0)
   if (initial_width == 1280 && initial_height == 720)
     h264_stream->sps->level_idc = 32; // Max 5 buffered frames at 1280x720x60
-  else if (initial_width = 1920 && initial_height == 1080)
+  else if (initial_width == 1920 && initial_height == 1080)
     h264_stream->sps->level_idc = 42; // Max 4 buffered frames at 1920x1080x60
 
   // Some decoders requires a reference frame count of 1 to decode successfully.

@@ -78,5 +78,5 @@ void gs_sps_fix(PLENTRY sps, int flags, uint8_t* out_buf, uint32_t* out_offset) 
   memcpy(out_buf+*out_offset, naluHeader, 4);
   *out_offset += 4;
 
-  *out_offset = write_nal_unit(h264_stream, out_buf+*out_offset, 128);
+  *out_offset += write_nal_unit(h264_stream, out_buf+*out_offset, 128);
 }

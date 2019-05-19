@@ -40,6 +40,9 @@
 #define DRAW_FPS 1
 #endif
 
+void display_message(int gX, int gY, char *format, ...);
+void draw_indicators();
+
 enum {
   VITA_VIDEO_INIT_OK                    = 0,
   VITA_VIDEO_ERROR_NO_MEM               = 0x80010001,
@@ -88,6 +91,7 @@ SceAvcdecQueryDecoderInfo *decoder_info = NULL;
 static unsigned numframes;
 static bool active_video_thread = true;
 static bool active_pacer_thread = false;
+static bool active_poor_net_indicator = false;
 
 typedef struct frame_elem frame_elem;
 struct frame_elem {
@@ -459,6 +463,7 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 #ifdef DRAW_FPS
       display_message(20, 40, "fps: %u / %u", curr_fps[0], curr_fps[1]);
 #endif
+      draw_indicators();
       backbuffer = (backbuffer + 1) % 2;
       if (ret < 0) {
         printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
@@ -508,12 +513,27 @@ void display_message(int gX, int gY, char *format, ...) {
   }
 }
 
+void draw_indicators() {
+//  if (active_poor_net_indicator) {
+    // TODO draw image instead text
+    display_message(60, 40, "poor network");
+//  }
+}
+
 void vitavideo_start() {
   active_video_thread = true;
 }
 
 void vitavideo_stop() {
   active_video_thread = false;
+}
+
+void vitavideo_show_poor_net_indicator() {
+  active_poor_net_indicator = true;
+}
+
+void vitavideo_hide_poor_net_indicator() {
+  active_poor_net_indicator = false;
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {

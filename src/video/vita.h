@@ -20,3 +20,5 @@
 
 void vitavideo_start();
 void vitavideo_stop();
+void vitavideo_show_poor_net_indicator();
+void vitavideo_hide_poor_net_indicator();

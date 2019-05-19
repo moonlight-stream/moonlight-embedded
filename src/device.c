@@ -93,7 +93,6 @@ bool update_device(device_info_t *info) {
 }
 
 void load_all_known_devices() {
-  char path[512];
   struct stat st;
   device_info_t info;
 

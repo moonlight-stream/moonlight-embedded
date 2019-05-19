@@ -79,14 +79,6 @@ void connection_connection_terminated() {
   connection_status = LI_DISCONNECTED;
 }
 
-void connection_display_message(const char *msg) {
-  vita_debug_log("display_message: %s\n", msg);
-}
-
-void connection_display_transient_message(const char *msg) {
-  vita_debug_log("display_transient_message: %s\n", msg);
-}
-
 int connection_reset() {
   if (connection_status != LI_DISCONNECTED) {
     vita_debug_log("connection_reset error: %d\n", connection_status);
@@ -157,13 +149,23 @@ int connection_get_status() {
   return connection_status;
 }
 
+void connection_status_update(int status) {
+  switch (status) {
+    case CONN_STATUS_POOR:
+      // TODO: enable the poor network anime
+      break;
+    case CONN_STATUS_OKAY:
+      // TODO: disable the poor network anime
+      break;
+  }
+}
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = connection_stage_starting,
   .stageComplete = connection_stage_complate,
   .stageFailed = connection_stage_failed,
   .connectionStarted = connection_connection_started,
   .connectionTerminated = connection_connection_terminated,
-  .displayMessage = connection_display_message,
-  .displayTransientMessage = connection_display_transient_message,
+  .connectionStatusUpdate = connection_status_update,
   .logMessage = vita_debug_log,
 };

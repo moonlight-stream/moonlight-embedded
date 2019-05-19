@@ -441,7 +441,7 @@ void ui_connect_resume() {
 }
 
 void ui_connect_manual() {
-  device_info_t info;
+  device_info_t info = {0};
   if (ime_dialog_string(info.name, "Enter Name:", "") != 0) {
     return;
   }

@@ -30,7 +30,7 @@ device_info_t* find_device(const char *name) {
 }
 
 static void device_file_path(char *out, const char *dir) {
-  sprintf(out, DATA_DIR "/%s/" DEVICE_FILE, dir);
+  snprintf(out, 512, DATA_DIR "/%s/" DEVICE_FILE, dir);
 }
 
 static int device_ini_handle(void *out, const char *section, const char *name,
@@ -43,6 +43,7 @@ static int device_ini_handle(void *out, const char *section, const char *name,
   } else if (strcmp(name, "external") == 0) {
     strncpy(info->external, value, 255);
   }
+  return 1;
 }
 
 device_info_t* append_device(device_info_t *info) {
@@ -125,14 +126,17 @@ void load_all_known_devices() {
 }
 
 bool load_device_info(device_info_t *info) {
-  char path[512];
+  char path[512] = {0};
   device_file_path(path, info->name);
+  vita_debug_log("%s\n", path);
 
-  return ini_parse(path, device_ini_handle, info) == 0;
+  int ret = ini_parse(path, device_ini_handle, info);
+  vita_debug_log("%d\n", ret);
+  return ret == 0;
 }
 
 void save_device_info(const device_info_t *info) {
-  char path[512];
+  char path[512] = {0};
   device_file_path(path, info->name);
 
   FILE* fd = fopen(path, "w");

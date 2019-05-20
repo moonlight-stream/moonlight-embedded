@@ -409,12 +409,15 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     exit(1);
   }
 
-  gs_sps_fix(decodeUnit, 0);
   PLENTRY entry = decodeUnit->bufferList;
-  int length = 0;
+  uint32_t length = 0;
   while (entry != NULL) {
-    memcpy(decoder_buffer+length, entry->data, entry->length);
-    length += entry->length;
+    if (entry->bufferType == BUFFER_TYPE_SPS) {
+      gs_sps_fix(entry, GS_SPS_BITSTREAM_FIXUP, decoder_buffer, &length);
+    } else {
+      memcpy(decoder_buffer+length, entry->data, entry->length);
+      length += entry->length;
+    }
     entry = entry->next;
   }
 

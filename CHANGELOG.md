@@ -1,4 +1,8 @@
 ## Unreleased
+* Update latest moonlight-common-c (cfadd84)
+* Update latest inih (a2e38bb)
+* Fix invalid variable initializations
+* Apply SPS changes of moonlight-embedded
 
 ## 0.5.0
 * Support to discover stream server via mDNS (#143)

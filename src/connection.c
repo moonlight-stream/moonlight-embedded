@@ -62,6 +62,7 @@ void connection_connection_started() {
   vita_debug_log("connection started\n");
   connection_status = LI_CONNECTED;
   start_output();
+  vitavideo_hide_poor_net_indicator();
 }
 
 void connection_connection_terminated() {
@@ -152,10 +153,10 @@ int connection_get_status() {
 void connection_status_update(int status) {
   switch (status) {
     case CONN_STATUS_POOR:
-      // TODO: enable the poor network anime
+      vitavideo_show_poor_net_indicator();
       break;
     case CONN_STATUS_OKAY:
-      // TODO: disable the poor network anime
+      vitavideo_hide_poor_net_indicator();
       break;
   }
 }

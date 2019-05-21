@@ -6,6 +6,11 @@
 #define WIDTH 960
 #define HEIGHT 544
 
+#define ICON_LEFT_ARROW   "\xef\x95\x8c"
+#define ICON_RIGHT_ARROW  "\xef\x95\x93"
+#define ICON_LEFT_RIGHT_ARROWS ICON_LEFT_ARROW ICON_RIGHT_ARROW
+#define ICON_NETWORK      "\xef\xa6\x8c"
+
 typedef struct menu_entry {
   int id;
   unsigned int color;
@@ -18,7 +23,7 @@ typedef struct menu_geom {
   int x, y, width, height, el, total_y;
 } menu_geom;
 
-vita2d_pgf *gui_font;
+vita2d_font *font;
 
 struct menu_geom make_geom_centered(int w, int h);
 

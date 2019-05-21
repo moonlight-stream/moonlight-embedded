@@ -143,10 +143,10 @@ static int deadzone_settings_menu() {
 
   menu_entry menu[16];
   int idx = 0;
-  menu[idx++] = (menu_entry) { .name = "Top: ", .disabled = false, .id = 0, .suffix = "←→" };
-  menu[idx++] = (menu_entry) { .name = "Left: ", .disabled = false, .id = 1, .suffix = "←→" };
-  menu[idx++] = (menu_entry) { .name = "Bottom: ", .disabled = false, .id = 2, .suffix = "←→" };
-  menu[idx++] = (menu_entry) { .name = "Right: ", .disabled = false, .id = 3, .suffix = "←→" };
+  menu[idx++] = (menu_entry) { .name = "Top: ", .disabled = false, .id = 0, .suffix = ICON_LEFT_RIGHT_ARROWS };
+  menu[idx++] = (menu_entry) { .name = "Left: ", .disabled = false, .id = 1, .suffix = ICON_LEFT_RIGHT_ARROWS };
+  menu[idx++] = (menu_entry) { .name = "Bottom: ", .disabled = false, .id = 2, .suffix = ICON_LEFT_RIGHT_ARROWS };
+  menu[idx++] = (menu_entry) { .name = "Right: ", .disabled = false, .id = 3, .suffix = ICON_LEFT_RIGHT_ARROWS };
 
   menu_geom geom = make_geom_centered(250, 120);
   geom.x = 50;
@@ -647,11 +647,9 @@ int ui_settings_menu() {
     idx++; \
   } while(0)
 
-#define LEFT_RIGHT_ARROWS "\xe2\x86\x90\xe2\x86\x92"
-
   MENU_CATEGORY("Stream");
-  MENU_ENTRY(SETTINGS_RESOLUTION, SETTINGS_VIEW_RESOLUTION, "Resolution", LEFT_RIGHT_ARROWS);
-  MENU_ENTRY(SETTINGS_FPS, SETTINGS_VIEW_FPS, "FPS", LEFT_RIGHT_ARROWS);
+  MENU_ENTRY(SETTINGS_RESOLUTION, SETTINGS_VIEW_RESOLUTION, "Resolution", ICON_LEFT_RIGHT_ARROWS);
+  MENU_ENTRY(SETTINGS_FPS, SETTINGS_VIEW_FPS, "FPS", ICON_LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_BITRATE, SETTINGS_VIEW_BITRATE, "Bitrate", "");
   MENU_ENTRY(SETTINGS_SOPS, SETTINGS_VIEW_SOPS, "Change graphical game settings for performance", "");
   MENU_ENTRY(SETTINGS_ENABLE_FRAME_INVAL, SETTINGS_VIEW_ENABLE_FRAME_INVAL, "Enable reference frame invalidation", "");
@@ -663,7 +661,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_DISABLE_POWERSAVE, SETTINGS_VIEW_DISABLE_POWERSAVE, "Disable power save", "");
 
   MENU_CATEGORY("Input");
-  MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", LEFT_RIGHT_ARROWS);
+  MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", ICON_LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_ENABLE_MAPPING, SETTINGS_VIEW_ENABLE_MAPPING, "Enable mapping file", "");
   MENU_MESSAGE("Located at ux0:data/moonlight/mappings/vita.conf");
   MENU_MESSAGE("Example in github repo.");

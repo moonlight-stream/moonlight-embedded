@@ -161,6 +161,7 @@ add_custom_target(${PROJECT_NAME}.vpk ALL
 			--add ../sce_sys/livearea/contents/bg.png=sce_sys/livearea/contents/bg.png
 			--add ../sce_sys/livearea/contents/startup.png=sce_sys/livearea/contents/startup.png
 			--add ../sce_sys/livearea/contents/template.xml=sce_sys/livearea/contents/template.xml
+			--add ../assets/nerdfont.ttf=assets/nerdfont.ttf
 			${PROJECT_NAME}.vpk
 )
 

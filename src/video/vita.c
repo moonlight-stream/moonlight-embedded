@@ -87,10 +87,16 @@ SceUID pacer_thread = -1;
 SceVideodecQueryInitInfoHwAvcdec *init = NULL;
 SceAvcdecQueryDecoderInfo *decoder_info = NULL;
 
+typedef struct {
+  bool activated;
+  uint8_t alpha;
+  bool plus;
+} indicator_status;
+
 static unsigned numframes;
 static bool active_video_thread = true;
 static bool active_pacer_thread = false;
-static bool active_poor_net_indicator = false;
+static indicator_status poor_net_indicator = {0};
 
 uint32_t frame_count = 0;
 uint32_t need_drop = 0;
@@ -420,9 +426,13 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 }
 
 void draw_indicators() {
-  if (active_poor_net_indicator) {
-    // TODO draw image instead text
-    //display_message(60, 40, "poor network");
+  if (poor_net_indicator.activated) {
+    vita2d_font_draw_text(font, 40, 500, RGBA8(0xFF, 0xFF, 0xFF, poor_net_indicator.alpha), 64, ICON_NETWORK);
+    poor_net_indicator.alpha += (0x4 * (poor_net_indicator.plus ? 1 : -1));
+    if (poor_net_indicator.alpha == 0) {
+      poor_net_indicator.plus = !poor_net_indicator.plus;
+      poor_net_indicator.alpha += (0x4 * (poor_net_indicator.plus ? 1 : -1));
+    }
   }
 }
 
@@ -435,11 +445,12 @@ void vitavideo_stop() {
 }
 
 void vitavideo_show_poor_net_indicator() {
-  active_poor_net_indicator = true;
+  poor_net_indicator.activated = true;
 }
 
 void vitavideo_hide_poor_net_indicator() {
-  active_poor_net_indicator = false;
+  //poor_net_indicator.activated = false;
+  memset(&poor_net_indicator, 0, sizeof(indicator_status));
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {

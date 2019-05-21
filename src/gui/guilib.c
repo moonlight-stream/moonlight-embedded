@@ -42,8 +42,8 @@ void draw_border(menu_geom geom, unsigned int border_color) {
 }
 
 void draw_text_hcentered(int x, int y, unsigned int color, char *text) {
-  int width = vita2d_pgf_text_width(gui_font, 1.f, text);
-  vita2d_pgf_draw_text(gui_font, x - width / 2, y, color, 1.f, text);
+  int width = vita2d_font_text_width(font, 18, text);
+  vita2d_font_draw_text(font, x - width / 2, y, color, 18, text);
 }
 
 static int battery_percent;
@@ -65,7 +65,7 @@ void draw_statusbar(menu_geom geom) {
 
   char dt_text[256];
   sprintf(dt_text, "%02d:%02d", time.hour, time.minute);
-  int dt_width = vita2d_pgf_text_width(gui_font, 1.f, dt_text);
+  int dt_width = vita2d_font_text_width(font, 18, dt_text);
   int battery_width = 30,
       battery_height = 16,
       battery_padding = 2,
@@ -74,7 +74,7 @@ void draw_statusbar(menu_geom geom) {
       battery_charge_width = (float) battery_percent / 100 * battery_width;
   unsigned int battery_color = battery_charging ? 0xff99ffff : (battery_percent < 20 ? 0xff0000ff : 0xff00ff00);
 
-  vita2d_pgf_draw_text(gui_font, geom.x + geom.width - dt_width - battery_width - 5, geom.y - 5, 0xffffffff, 1.f, dt_text);
+  vita2d_font_draw_text(font, geom.x + geom.width - dt_width - battery_width - 5, geom.y - 5, 0xffffffff, 18, dt_text);
 
   vita2d_draw_rectangle(
       geom.x + geom.width - battery_width,
@@ -140,7 +140,7 @@ bool is_rectangle_touched(const SceTouchData *touch, int lx, int ly, int rx, int
 }
 
 void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor, int offset) {
-  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0x10ffffff);
+  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0x18fffff);
 
   long border_color = 0xff006000;
   draw_border(geom, border_color);
@@ -169,7 +169,7 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
       continue;
 
     int text_width, text_height;
-    vita2d_pgf_text_dimensions(gui_font, 1.f, menu[i].name, &text_width, &text_height);
+    vita2d_font_text_dimensions(font, 18, menu[i].name, &text_width, &text_height);
 
     if (menu[i].separator) {
       int border = strlen(menu[i].name) ? 7 : 0;
@@ -184,25 +184,25 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
     }
 
     if (menu[i].name) {
-      vita2d_pgf_draw_text(
-          gui_font,
+      vita2d_font_draw_text(
+          font,
           el_x + 2,
           el_y + text_height,
           color,
-          1.0f,
+          18,
           menu[i].name
           );
     }
 
     int right_x_offset = 20;
     if (menu[i].suffix) {
-      int text_width = vita2d_pgf_text_width(gui_font, 1.f, menu[i].suffix);
-      vita2d_pgf_draw_text(
-          gui_font,
+      int text_width = vita2d_font_text_width(font, 18, menu[i].suffix);
+      vita2d_font_draw_text(
+          font,
           el_x + geom.width - text_width - right_x_offset,
           el_y + text_height,
           color,
-          1.f,
+          18,
           menu[i].suffix
           );
 
@@ -210,13 +210,13 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
     }
 
     if (menu[i].subname) {
-      int text_width = vita2d_pgf_text_width(gui_font, 1.f, menu[i].subname);
-      vita2d_pgf_draw_text(
-          gui_font,
+      int text_width = vita2d_font_text_width(font, 18, menu[i].subname);
+      vita2d_font_draw_text(
+          font,
           el_x + geom.width - text_width - right_x_offset,
           el_y + text_height,
           color,
-          1.f,
+          18,
           menu[i].subname
           );
     }
@@ -224,7 +224,7 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
 }
 
 void draw_alert(char *message, menu_geom geom, char *buttons_captions[], int buttons_count) {
-  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0x10ffffff);
+  vita2d_draw_rectangle(geom.x, geom.y, geom.width, geom.height, 0x18fffff);
 
   long border_color = 0xff006000;
   draw_border(geom, border_color);
@@ -236,9 +236,9 @@ void draw_alert(char *message, menu_geom geom, char *buttons_captions[], int but
     buf[idx] = message[i];
     buf[idx+1] = 0;
 
-    if (message[i] == '\n' || vita2d_pgf_text_width(gui_font, 1.f, buf) > geom.width - x_border*2) {
+    if (message[i] == '\n' || vita2d_font_text_width(font, 18, buf) > geom.width - x_border*2) {
       draw_text_hcentered(geom.x + geom.width / 2, y + geom.y, 0xffffffff, buf);
-      y += vita2d_pgf_text_height(gui_font, 1.f, buf);
+      y += vita2d_font_text_height(font, 18, buf);
       idx = 0;
     } else {
       idx++;
@@ -247,7 +247,7 @@ void draw_alert(char *message, menu_geom geom, char *buttons_captions[], int but
 
   if (strlen(buf)) {
     if (y == top_padding) {
-      int text_height = vita2d_pgf_text_height(gui_font, 1.f, buf);
+      int text_height = vita2d_font_text_height(font, 18, buf);
       y = geom.height / 2 - text_height / 2;
     }
 
@@ -274,8 +274,8 @@ void draw_alert(char *message, menu_geom geom, char *buttons_captions[], int but
     strcat(caption, single_button_caption);
   }
 
-  int caption_width = vita2d_pgf_text_width(gui_font, 1.f, caption);
-  vita2d_pgf_draw_text(gui_font, geom.x + geom.width - caption_width, geom.total_y - 10, 0xffffffff, 1.f, caption);
+  int caption_width = vita2d_font_text_width(font, 18, caption);
+  vita2d_font_draw_text(font, geom.x + geom.width - caption_width, geom.total_y - 10, 0xffffffff, 18, caption);
 }
 
 void ui_start() {
@@ -498,7 +498,7 @@ void drw() {
 void guilib_init(gui_loop_callback global_loop_cb, gui_draw_callback global_draw_cb) {
   vita2d_init();
   vita2d_set_clear_color(0xff000000);
-  gui_font = vita2d_load_default_pgf();
+  font = vita2d_load_font_file("app0:assets/nerdfont.ttf");
 
   gui_global_draw_callback = global_draw_cb;
   gui_global_loop_callback = global_loop_cb;

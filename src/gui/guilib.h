@@ -18,7 +18,7 @@ typedef struct menu_geom {
   int x, y, width, height, el, total_y;
 } menu_geom;
 
-vita2d_pgf *gui_font;
+vita2d_font *font;
 
 struct menu_geom make_geom_centered(int w, int h);
 

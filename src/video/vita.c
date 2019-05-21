@@ -20,6 +20,7 @@
 #include "../video.h"
 #include "../config.h"
 #include "../debug.h"
+#include "../gui/guilib.h"
 #include "sps.h"
 
 #include <Limelight.h>
@@ -29,6 +30,7 @@
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/display.h>
 #include <psp2/videodec.h>
+#include <vita2d.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +42,6 @@
 #define DRAW_FPS 1
 #endif
 
-void display_message(int gX, int gY, char *format, ...);
 void draw_indicators();
 
 enum {
@@ -69,7 +70,6 @@ enum {
 enum VideoStatus {
   NOT_INIT,
   INIT_GS,
-  INIT_DISPLAY_MEMBLOCK,
   INIT_FRAMEBUFFER,
   INIT_AVC_LIB,
   INIT_DECODER_MEMBLOCK,
@@ -77,8 +77,7 @@ enum VideoStatus {
   INIT_FRAME_PACER_THREAD,
 };
 
-int backbuffer;
-void *framebuffer[2];
+vita2d_texture *frame_texture = NULL;
 enum VideoStatus video_status = NOT_INIT;
 
 SceAvcdecCtrl *decoder = NULL;
@@ -92,13 +91,6 @@ static unsigned numframes;
 static bool active_video_thread = true;
 static bool active_pacer_thread = false;
 static bool active_poor_net_indicator = false;
-
-typedef struct frame_elem frame_elem;
-struct frame_elem {
-  unsigned long long time;
-  uint8_t framebuffer[FRAMEBUFFER_SIZE];
-  frame_elem *next;
-};
 
 uint32_t frame_count = 0;
 uint32_t need_drop = 0;
@@ -204,14 +196,6 @@ static void vita_cleanup() {
     video_status--;
   }
 
-  if (video_status == INIT_DISPLAY_MEMBLOCK) {
-    if (displayblock >= 0) {
-      sceKernelFreeMemBlock(displayblock);
-      displayblock = -1;
-    }
-    video_status--;
-  }
-
   if (video_status == INIT_GS) {
     gs_sps_stop();
     video_status--;
@@ -229,55 +213,15 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
   }
 
   if (video_status == INIT_GS) {
-    // INIT_DISPLAY_MEMBLOCK
-    SceKernelAllocMemBlockOpt opt = { 0 };
-    opt.size = sizeof(opt);
-    opt.attr = 0x00000004;
-    opt.alignment = FRAMEBUFFER_ALIGNMENT;
-    displayblock = sceKernelAllocMemBlock(
-      "display",
-      SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW, FRAMEBUFFER_SIZE * 2,
-      &opt
-    );
-    if (displayblock < 0) {
-      printf("not enough memory\n");
-      ret = VITA_VIDEO_ERROR_NO_MEM;
-      goto cleanup;
-    }
-    printf("displayblock: 0x%08x\n", displayblock);
-    video_status++;
-  }
-
-  if (video_status == INIT_DISPLAY_MEMBLOCK) {
     // INIT_FRAMEBUFFER
-    void *base;
-    ret = sceKernelGetMemBlockBase(displayblock, &base);
-    if (ret < 0) {
-      printf("sceKernelGetMemBlockBase: 0x%x\n", ret);
-      ret = VITA_VIDEO_ERROR_GET_MEMBASE;
-      goto cleanup;
-    }
-    printf("base: 0x%08x\n", base);
-    framebuffer[0] = base;
-    framebuffer[1] = (char*)base + FRAMEBUFFER_SIZE;
-    backbuffer = 1;
-
-    SceDisplayFrameBuf framebuf = { 0 };
-    framebuf.size = sizeof(framebuf);
-    framebuf.base = base;
-    framebuf.pitch = SCREEN_WIDTH;
-    framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
-    framebuf.width = SCREEN_WIDTH;
-    framebuf.height = SCREEN_HEIGHT;
-
-    ret = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_SETBUF_NEXTFRAME);
-    printf("SetFrameBuf: 0x%x\n", ret);
-
     decoder_buffer = malloc(DECODER_BUFFER_SIZE);
     if (decoder_buffer == NULL) {
       printf("not enough memory\n");
       ret = VITA_VIDEO_ERROR_NO_MEM;
       goto cleanup;
+    }
+    if (!frame_texture) {
+      frame_texture = vita2d_create_empty_texture_format(SCREEN_WIDTH, SCREEN_HEIGHT, SCE_GXM_TEXTURE_FORMAT_U8U8U8U8_ABGR);
     }
     video_status++;
   }
@@ -406,7 +350,7 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   picture.frame.framePitch = LINE_SIZE;
   picture.frame.frameWidth = SCREEN_WIDTH;
   picture.frame.frameHeight = SCREEN_HEIGHT;
-  picture.frame.pPicture[0] = framebuffer[backbuffer];
+  picture.frame.pPicture[0] = vita2d_texture_get_datap(frame_texture);
 
   if (decodeUnit->fullLength >= DECODER_BUFFER_SIZE) {
     printf("Video decode buffer too small\n");
@@ -450,21 +394,17 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       // skip
       need_drop--;
     } else {
-      SceDisplayFrameBuf framebuf = { 0 };
-      framebuf.size = sizeof(framebuf);
-
-      framebuf.base = framebuffer[backbuffer];
-      framebuf.pitch = SCREEN_WIDTH;
-      framebuf.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
-      framebuf.width = SCREEN_WIDTH;
-      framebuf.height = SCREEN_HEIGHT;
-
-      int ret = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_SETBUF_NEXTFRAME);
+      vita2d_start_drawing();
+      void *tex_buf = vita2d_texture_get_datap(frame_texture);
+      vita2d_draw_texture(frame_texture, 0, 0);
 #ifdef DRAW_FPS
-      display_message(20, 40, "fps: %u / %u", curr_fps[0], curr_fps[1]);
+      vita2d_font_draw_textf(font, 20, 40, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 12, "fps: %u / %u", curr_fps[0], curr_fps[1]);
 #endif
       draw_indicators();
-      backbuffer = (backbuffer + 1) % 2;
+      vita2d_end_drawing();
+      vita2d_wait_rendering_done();
+      vita2d_swap_buffers();
+
       if (ret < 0) {
         printf("Failed to sceDisplaySetFrameBuf: 0x%x\n", ret);
       } else {
@@ -479,45 +419,11 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   return DR_OK;
 }
 
-extern unsigned char msx[];
-void display_message(int gX, int gY, char *format, ...) {
-  char text[0x1000];
-
-  va_list opt;
-  va_start(opt, format);
-  vsnprintf(text, sizeof(text), format, opt);
-  va_end(opt);
-
-  int c, i, j, l;
-  unsigned char *font;
-  unsigned int *vram_ptr;
-  unsigned int *vram;
-
-  int fontSize = 8;
-  float zoom = (float) fontSize / 8;
-  for (c = 0; c < strlen(text); c++) {
-    char ch = text[c];
-    vram = framebuffer[backbuffer] + (gX + gY * 960) * 4;
-
-    for (i = l = 0; i < fontSize; i++, l += fontSize) {
-      font = &msx[ (int)ch * 8] + (int) (i / zoom);
-      vram_ptr  = vram;
-      for (j = 0; j < fontSize; j++) {
-        if ((*font & (128 >> (int) (j/zoom)))) *vram_ptr = 0xffffffff;
-        vram_ptr++;
-      }
-      vram += 960;
-    }
-
-    gX += fontSize;
-  }
-}
-
 void draw_indicators() {
-//  if (active_poor_net_indicator) {
+  if (active_poor_net_indicator) {
     // TODO draw image instead text
-    display_message(60, 40, "poor network");
-//  }
+    //display_message(60, 40, "poor network");
+  }
 }
 
 void vitavideo_start() {

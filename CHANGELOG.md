@@ -3,6 +3,9 @@
 * Update latest inih (a2e38bb)
 * Fix invalid variable initializations
 * Apply SPS changes of moonlight-embedded
+* Use nerdfont instead PSP font (7e2b682)
+* Use vita2d instead direct framebuffer handling (70330e2)
+* Implement poor network indicator (749aaaf)
 
 ## 0.5.0
 * Support to discover stream server via mDNS (#143)

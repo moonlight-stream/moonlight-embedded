@@ -6,6 +6,10 @@
 #define WIDTH 960
 #define HEIGHT 544
 
+#define ICON_LEFT_ARROW   "\xef\x95\x8c"
+#define ICON_RIGHT_ARROW  "\xef\x95\x93"
+#define ICON_LEFT_RIGHT_ARROWS ICON_LEFT_ARROW ICON_RIGHT_ARROW
+
 typedef struct menu_entry {
   int id;
   unsigned int color;

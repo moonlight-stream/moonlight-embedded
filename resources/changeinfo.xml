@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
+<changes app_ver="00.06"><![CDATA[
+## 0.6.0<br>
+* Update latest moonlight-common-c (cfadd84, ffe8c15)<br>
+* Update latest inih (a2e38bb)<br>
+* Fix invalid variable initializations<br>
+* Apply SPS changes of moonlight-embedded<br>
+* Use nerdfont instead VITA system font (7e2b682)<br>
+* Use vita2d instead direct framebuffer handling (70330e2)<br>
+* Implement poor network indicator (749aaaf)<br>
+]]></changes>
 <changes app_ver="00.05"><![CDATA[
 ## 0.5.0<br>
 * Support to discover stream server via mDNS (#143)<br>

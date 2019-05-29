@@ -1,4 +1,6 @@
 ## Unreleased
+
+## 0.6.0
 * Update latest moonlight-common-c (cfadd84, ffe8c15)
 * Update latest inih (a2e38bb)
 * Fix invalid variable initializations

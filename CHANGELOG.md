@@ -1,9 +1,9 @@
 ## Unreleased
-* Update latest moonlight-common-c (cfadd84)
+* Update latest moonlight-common-c (cfadd84, ffe8c15)
 * Update latest inih (a2e38bb)
 * Fix invalid variable initializations
 * Apply SPS changes of moonlight-embedded
-* Use nerdfont instead PSP font (7e2b682)
+* Use nerdfont instead VITA system font (7e2b682)
 * Use vita2d instead direct framebuffer handling (70330e2)
 * Implement poor network indicator (749aaaf)
 

@@ -438,9 +438,11 @@ void draw_indicators() {
 
 void vitavideo_start() {
   active_video_thread = true;
+  vita2d_set_vblank_wait(false);
 }
 
 void vitavideo_stop() {
+  vita2d_set_vblank_wait(true);
   active_video_thread = false;
 }
 

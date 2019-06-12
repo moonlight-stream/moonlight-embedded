@@ -1,4 +1,5 @@
 ## Unreleased
+* Fix the stream delay issue (f791b3d); thanks @AlC4pwn to confirm fixing the bug
 
 ## 0.6.0
 * Update latest moonlight-common-c (cfadd84, ffe8c15)

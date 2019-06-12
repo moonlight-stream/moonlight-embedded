@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
 <changes app_ver="00.06"><![CDATA[
+## 0.6.1<br>
+* Fix the stream delay issue (f791b3d); thanks @AlC4pwn to confirm fixing the bug<br>
+<br>
 ## 0.6.0<br>
 * Update latest moonlight-common-c (cfadd84, ffe8c15)<br>
 * Update latest inih (a2e38bb)<br>

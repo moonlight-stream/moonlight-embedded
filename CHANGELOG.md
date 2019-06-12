@@ -1,4 +1,6 @@
 ## Unreleased
+
+## 0.6.1
 * Fix the stream delay issue (f791b3d); thanks @AlC4pwn to confirm fixing the bug
 
 ## 0.6.0

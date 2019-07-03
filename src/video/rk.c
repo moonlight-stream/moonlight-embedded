@@ -38,7 +38,7 @@
 
 #include <rockchip/rk_mpi.h>
 
-#define READ_BUF_SIZE (SZ_1M)
+#define READ_BUF_SIZE 0x00100000
 #define MAX_FRAMES 16
 #define RK_H264 7
 #define RK_H265 16777220

@@ -147,7 +147,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int years) {
     
     add_ext(x, NID_subject_key_identifier, "hash");
     
-    if (!X509_sign(x, pk, EVP_sha1())) {
+    if (!X509_sign(x, pk, EVP_sha256())) {
         goto err;
     }
     

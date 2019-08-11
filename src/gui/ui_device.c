@@ -61,13 +61,8 @@ static int found_device = 0;
 static char addrbuffer[64];
 static char namebuffer[256];
 
-#define NI_MAXHOST 1025
-#define NI_MAXSERV 32
-#define NI_NUMERICSERV 2
-#define NI_NUMERICHOST 1
-
 void ipv4_address_to_string(const struct sockaddr_in *addr, char *ip, const size_t len) {
-  sceNetInetNtop(AF_INET, &addr->sin_addr.s_addr, ip, len);
+  inet_ntop(AF_INET, &addr->sin_addr.s_addr, ip, len);
 }
 
 // part of publib. BSD license

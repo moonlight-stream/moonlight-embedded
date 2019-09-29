@@ -251,10 +251,6 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
         config->address = value;
       } else if (strcmp(key, "sops") == 0) {
         config->sops = strcmp("true", value) == 0;
-      } else if (strcmp(key, "localaudio") == 0) {
-        config->localaudio = strcmp("true", value) == 0;
-      } else if (strcmp(key, "quitappafter") == 0) {
-        config->quitappafter = strcmp("true", value) == 0;
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
           if (strcmp(long_options[i].name, key) == 0) {

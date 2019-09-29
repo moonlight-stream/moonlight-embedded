@@ -139,7 +139,7 @@ void egl_init(EGLNativeDisplayType native_display, NativeWindowType native_windo
   glGenBuffers(1, &ebo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
-  
+
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex_shader, 1, &vertex_source, NULL);
   glCompileShader(vertex_shader);

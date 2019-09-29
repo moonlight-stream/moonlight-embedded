@@ -57,7 +57,7 @@ static int frame_handle(int pipefd) {
   if (frame) {
     if (ffmpeg_decoder == SOFTWARE)
       egl_draw(frame->data);
-    #ifdef HAVE_VAAPI 
+    #ifdef HAVE_VAAPI
     else if (ffmpeg_decoder == VAAPI)
       vaapi_queue(frame, window, display_width, display_height);
     #endif

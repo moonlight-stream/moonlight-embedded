@@ -46,7 +46,7 @@ static enum AVPixelFormat va_get_format(AVCodecContext* context, const enum AVPi
     fprintf(stderr, "Failed to initialize VAAPI frame context");
     return AV_PIX_FMT_NONE;
   }
-  
+
   context->pix_fmt = AV_PIX_FMT_VAAPI;
   context->hw_device_ctx = device_ref;
   context->hw_frames_ctx = hw_ctx;

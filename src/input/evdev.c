@@ -645,7 +645,7 @@ void evdev_map(char* device) {
   char* buf = str_guid;
   for (int i = 0; i < 16; i++)
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
-  
+
   struct mapping map;
   strncpy(map.name, libevdev_get_name(evdev), sizeof(map.name));
   strncpy(map.guid, str_guid, sizeof(map.guid));

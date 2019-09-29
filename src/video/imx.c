@@ -139,11 +139,11 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
   }
 
   close(fd_fb);
-  
+
   int regfbcount = MIN_FRAME_BUFFER_COUNT + 2;
   int picWidth = ((width + 15) & ~15);
   int picHeight = ((height + 15) & ~15);
-  
+
   char v4l_device[16];
   sprintf(v4l_device, "/dev/video%d", 17);
   fd = open(v4l_device, O_RDWR, 0);
@@ -192,7 +192,7 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
     fprintf(stderr, "Not enough video buffers\n");
     return -2;
   }
-    
+
   for (int i = 0; i < regfbcount; i++) {
     struct v4l2_buffer buffer = {0};
     struct vpu_buf *buf;
@@ -233,7 +233,7 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
       return -2;
     }
   }
-  
+
   vpu_setup(buffers, regfbcount, width, height);
 
   if (pipe(pipefd) == -1 || pipe(clearpipefd) == -1) {

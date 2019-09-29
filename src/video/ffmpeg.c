@@ -170,6 +170,6 @@ int ffmpeg_decode(unsigned char* indata, int inlen) {
     av_strerror(err, errorstring, sizeof(errorstring));
     fprintf(stderr, "Decode failed - %s\n", errorstring);
   }
-  
+
   return err < 0 ? err : 0;
 }

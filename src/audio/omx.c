@@ -180,16 +180,16 @@ static void omx_renderer_cleanup() {
 static void omx_renderer_decode_and_play_sample(char* data, int length) {
   int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
   if (decodeLen > 0) {
-	buf = ilclient_get_input_buffer(component, 100, 1);
+    buf = ilclient_get_input_buffer(component, 100, 1);
     buf->nOffset = 0;
     buf->nFlags = OMX_BUFFERFLAG_TIME_UNKNOWN;
-	int bufLength = decodeLen * sizeof(short) * channelCount;
+    int bufLength = decodeLen * sizeof(short) * channelCount;
     memcpy(buf->pBuffer, pcmBuffer, bufLength);
     buf->nFilledLen = bufLength;
     int r = OMX_EmptyThisBuffer(ilclient_get_handle(component), buf);
     if (r != OMX_ErrorNone) {
-    fprintf(stderr, "Empty buffer error\n");
-    } 
+      fprintf(stderr, "Empty buffer error\n");
+    }
   } else {
     printf("Opus error from decode: %d\n", decodeLen);
   }

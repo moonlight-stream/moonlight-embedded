@@ -64,7 +64,7 @@ static void on_cec_keypress(void* userdata, const cec_keypress* key) {
       value = 0;
       break;
   }
-  
+
   if (value != 0) {
     short code = 0x80 << 8 | value;
     LiSendKeyboardEvent(code, (key->duration > 0)?KEY_ACTION_UP:KEY_ACTION_DOWN, 0);
@@ -80,25 +80,25 @@ void cec_init() {
   snprintf(g_config.strDeviceName, sizeof(g_config.strDeviceName), "Moonlight");
   g_config.callbacks = &g_callbacks;
   g_config.deviceTypes.types[0] = CEC_DEVICE_TYPE_PLAYBACK_DEVICE;
-  
+
   if (libcecc_initialise(&g_config, &g_iface, NULL) != 1) {
     fprintf(stderr, "Failed to initialize libcec interface\n");
     fflush(stderr);
     return;
   }
-  
+
   g_iface.init_video_standalone(g_iface.connection);
-  
+
   cec_adapter devices[10];
   int8_t iDevicesFound = g_iface.find_adapters(g_iface.connection, devices, sizeof(devices) / sizeof(devices), NULL);
-  
+
   if (iDevicesFound <= 0) {
     fprintf(stderr, "No CEC devices found\n");
     fflush(stderr);
     libcecc_destroy(&g_iface);
     return;
   }
-  
+
   strcpy(g_strPort, devices[0].comm);
   if (!g_iface.open(g_iface.connection, g_strPort, 5000)) {
     fprintf(stderr, "Unable to open the device on port %s\n", g_strPort);
@@ -106,6 +106,6 @@ void cec_init() {
     libcecc_destroy(&g_iface);
     return;
   }
-  
+
   g_iface.set_active_source(g_iface.connection, g_config.deviceTypes.types[0]);
 }

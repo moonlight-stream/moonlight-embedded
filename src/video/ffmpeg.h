@@ -1,6 +1,6 @@
 /*
  * This file is part of Moonlight Embedded.
- * 
+ *
  * Based on Moonlight Pc implementation
  *
  * Moonlight is free software; you can redistribute it and/or modify

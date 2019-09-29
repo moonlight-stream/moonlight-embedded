@@ -345,24 +345,24 @@ static bool verifySignature(const char *data, int dataLength, char *signature, i
     BIO* bio = BIO_new(BIO_s_mem());
     BIO_puts(bio, cert);
     x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-    
+
     BIO_free(bio);
-    
+
     if (!x509) {
         return false;
     }
-    
+
     EVP_PKEY* pubKey = X509_get_pubkey(x509);
     EVP_MD_CTX *mdctx = NULL;
     mdctx = EVP_MD_CTX_create();
     EVP_DigestVerifyInit(mdctx, NULL, EVP_sha256(), NULL, pubKey);
     EVP_DigestVerifyUpdate(mdctx, data, dataLength);
     int result = EVP_DigestVerifyFinal(mdctx, signature, signatureLength);
-    
+
     X509_free(x509);
     EVP_PKEY_free(pubKey);
     EVP_MD_CTX_destroy(mdctx);
-    
+
     return result > 0;
 }
 
@@ -618,7 +618,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   cleanup:
   if (ret != GS_OK)
     gs_unpair(server);
-  
+
   if (result != NULL)
     free(result);
 

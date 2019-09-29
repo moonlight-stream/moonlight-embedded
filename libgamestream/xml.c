@@ -132,7 +132,7 @@ static void XMLCALL _xml_write_data(void *userData, const XML_Char *s, int len) 
     search->memory = realloc(search->memory, search->size + len + 1);
     if(search->memory == NULL)
       return;
-  
+
     memcpy(&(search->memory[search->size]), s, len);
     search->size += len;
     search->memory[search->size] = 0;
@@ -162,7 +162,7 @@ int xml_search(char* data, size_t len, char* node, char** result) {
 
   XML_ParserFree(parser);
   *result = search.memory;
-  
+
   return GS_OK;
 }
 

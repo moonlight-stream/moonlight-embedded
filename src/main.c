@@ -211,19 +211,19 @@ int main(int argc, char* argv[]) {
 
   if (config.action == NULL || strcmp("help", config.action) == 0)
     help();
-  
+
   if (config.debug_level > 0)
     printf("Moonlight Embedded %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
-  if (strcmp("map", config.action) == 0) { 
+  if (strcmp("map", config.action) == 0) {
     if (config.inputsCount != 1) {
       printf("You need to specify one input device using -input.\n");
       exit(-1);
     }
- 
+
     evdev_create(config.inputs[0], NULL, config.debug_level > 0);
-    evdev_map(config.inputs[0]); 
-    exit(0); 
+    evdev_map(config.inputs[0]);
+    exit(0);
   }
 
   if (config.address == NULL) {
@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
   }
-  
+
   char host_config_file[128];
   sprintf(host_config_file, "hosts/%s.conf", config.address);
   if (access(host_config_file, R_OK) != -1)

@@ -143,7 +143,7 @@ void vpu_setup(struct vpu_buf* buffers[], int bufferCount, int width, int height
     }
     fb[i].bufMvCol = mvcol_md[i].phy_addr;
   }
-    
+
   bufinfo.avcSliceBufInfo.bufferBase = slice_mem_desc.phy_addr;
   bufinfo.avcSliceBufInfo.bufferSize = phy_slicebuf_size;
 
@@ -237,7 +237,7 @@ bool vpu_decode(PDECODE_UNIT decodeUnit) {
     fprintf(stderr, "Failed to decode frame\n");
     exit(EXIT_FAILURE);
   }
-  
+
   currentFrame = outinfo.indexFrameDisplay;
   return true;
 }
@@ -249,7 +249,7 @@ void vpu_clear(int disp_clr_index) {
 void vpu_cleanup() {
   IOFreePhyMem(&ps_mem_desc);
   IOFreePhyMem(&slice_mem_desc);
-  
+
   IOFreeVirtMem(&mem_desc);
   IOFreePhyMem(&mem_desc);
   vpu_UnInit();

@@ -35,15 +35,15 @@ static size_t _write_curl(void *contents, size_t size, size_t nmemb, void *userp
 {
   size_t realsize = size * nmemb;
   PHTTP_DATA mem = (PHTTP_DATA)userp;
- 
+
   mem->memory = realloc(mem->memory, mem->size + realsize + 1);
   if(mem->memory == NULL)
     return 0;
- 
+
   memcpy(&(mem->memory[mem->size]), contents, realsize);
   mem->size += realsize;
   mem->memory[mem->size] = 0;
- 
+
   return realsize;
 }
 
@@ -89,7 +89,7 @@ int http_request(char* url, PHTTP_DATA data) {
     data->size = 0;
   }
   CURLcode res = curl_easy_perform(curl);
-  
+
   if(res != CURLE_OK) {
     gs_error = curl_easy_strerror(res);
     return GS_FAILED;
@@ -99,7 +99,7 @@ int http_request(char* url, PHTTP_DATA data) {
 
   if (debug)
     printf("Response:\n%s\n\n", data->memory);
-  
+
   return GS_OK;
 }
 

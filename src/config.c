@@ -37,7 +37,7 @@
 
 #define write_config_string(fd, key, value) fprintf(fd, "%s = %s\n", key, value)
 #define write_config_int(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
-#define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
+#define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value ? "true":"false")
 
 bool inputAdded = false;
 
@@ -56,7 +56,7 @@ static struct option long_options[] = {
   {"audio", required_argument, NULL, 'm'},
   {"localaudio", no_argument, NULL, 'n'},
   {"config", required_argument, NULL, 'o'},
-  {"platform", required_argument, 0, 'p'},
+  {"platform", required_argument, NULL, 'p'},
   {"save", required_argument, NULL, 'q'},
   {"keydir", required_argument, NULL, 'r'},
   {"remote", no_argument, NULL, 's'},
@@ -102,7 +102,7 @@ char* get_path(char* name, char* extra_data_dirs) {
   char* end;
   do {
     end = strstr(data_dir, ":");
-    int length = end != NULL?end - data_dir:strlen(data_dir);
+    int length = end != NULL ? end - data_dir:strlen(data_dir);
     memcpy(path, data_dir, length);
     if (path[0] == '/')
       sprintf(path+length, MOONLIGHT_PATH "/%s", name);

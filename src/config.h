@@ -41,6 +41,7 @@ typedef struct _CONFIGURATION {
   bool fullscreen;
   bool unsupported;
   bool quitappafter;
+  bool viewonly;
   char* inputs[MAX_INPUTS];
   int inputsCount;
   enum codecs codec;

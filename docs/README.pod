@@ -149,6 +149,10 @@ Try streaming if GFE version or options are unsupported
 
 Send quit app request to remote after quitting session
 
+=item B<-viewonly>
+
+Disable all input processing (view-only mode)
+
 =item B<-verbose>
 
 Enable verbose output

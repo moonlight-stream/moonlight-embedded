@@ -128,9 +128,11 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
   if (IS_EMBEDDED(system)) {
-    evdev_start();
+    if (!config->viewonly)
+      evdev_start();
     loop_main();
-    evdev_stop();
+    if (!config->viewonly)
+      evdev_stop();
   }
   #ifdef HAVE_SDL
   else if (system == SDL)
@@ -185,6 +187,7 @@ static void help() {
   printf("\t-platform <system>\tSpecify system used for audio, video and input: pi/imx/aml/rk/x11/x11_vdpau/sdl/fake (default auto)\n");
   printf("\t-unsupported\t\tTry streaming if GFE version or options are unsupported\n");
   printf("\t-quitappafter\t\tSend quit app request to remote after quitting session\n");
+  printf("\t-viewonly\t\tDisable all input processing (view-only mode)\n");
   #if defined(HAVE_SDL) || defined(HAVE_X11)
   printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
@@ -288,49 +291,58 @@ int main(int argc, char* argv[]) {
     }
     config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
 
-    if (IS_EMBEDDED(system)) {
-      char* mapping_env = getenv("SDL_GAMECONTROLLERCONFIG");
-      if (config.mapping == NULL && mapping_env == NULL) {
-        fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
-        exit(-1);
-      }
-
-      struct mapping* mappings = NULL;
-      if (config.mapping != NULL)
-        mappings = mapping_load(config.mapping, config.debug_level > 0);
-
-      if (mapping_env != NULL) {
-        struct mapping* map = mapping_parse(mapping_env);
-        map->next = mappings;
-        mappings = map;
-      }
-
-      for (int i=0;i<config.inputsCount;i++) {
-        if (config.debug_level > 0)
-          printf("Add input %s...\n", config.inputs[i]);
-
-        evdev_create(config.inputs[i], mappings, config.debug_level > 0);
-      }
-
-      udev_init(!inputAdded, mappings, config.debug_level > 0);
-      evdev_init();
-      rumble_handler = evdev_rumble;
-      #ifdef HAVE_LIBCEC
-      cec_init();
-      #endif /* HAVE_LIBCEC */
-    }
     #ifdef HAVE_SDL
-    else if (system == SDL) {
-      if (config.inputsCount > 0) {
-        fprintf(stderr, "You can't select input devices as SDL will automatically use all available controllers\n");
-        exit(-1);
-      }
-
+    if (system == SDL)
       sdl_init(config.stream.width, config.stream.height, config.fullscreen);
-      sdlinput_init(config.mapping);
-      rumble_handler = sdlinput_rumble;
-    }
     #endif
+
+    if (config.viewonly) {
+      if (config.debug_level > 0)
+        printf("View-only mode enabled, no input will be sent to the host computer\n");
+    } else {
+      if (IS_EMBEDDED(system)) {
+        char* mapping_env = getenv("SDL_GAMECONTROLLERCONFIG");
+        if (config.mapping == NULL && mapping_env == NULL) {
+          fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
+          exit(-1);
+        }
+
+        struct mapping* mappings = NULL;
+        if (config.mapping != NULL)
+          mappings = mapping_load(config.mapping, config.debug_level > 0);
+
+        if (mapping_env != NULL) {
+          struct mapping* map = mapping_parse(mapping_env);
+          map->next = mappings;
+          mappings = map;
+        }
+
+        for (int i=0;i<config.inputsCount;i++) {
+          if (config.debug_level > 0)
+            printf("Add input %s...\n", config.inputs[i]);
+
+          evdev_create(config.inputs[i], mappings, config.debug_level > 0);
+        }
+
+        udev_init(!inputAdded, mappings, config.debug_level > 0);
+        evdev_init();
+        rumble_handler = evdev_rumble;
+        #ifdef HAVE_LIBCEC
+        cec_init();
+        #endif /* HAVE_LIBCEC */
+      }
+      #ifdef HAVE_SDL
+      else if (system == SDL) {
+        if (config.inputsCount > 0) {
+          fprintf(stderr, "You can't select input devices as SDL will automatically use all available controllers\n");
+          exit(-1);
+        }
+
+        sdlinput_init(config.mapping);
+        rumble_handler = sdlinput_rumble;
+      }
+      #endif
+    }
 
     stream(&server, &config, system);
   } else if (strcmp("pair", config.action) == 0) {

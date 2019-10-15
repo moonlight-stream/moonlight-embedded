@@ -3,6 +3,7 @@ project(moonlight-embedded VERSION 2.4.10 LANGUAGES C)
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 SET(CMAKE_C_STANDARD 99)
 include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/generate_version_header.cmake)
 
 aux_source_directory(./src SRC_LIST)
 list(APPEND SRC_LIST ./src/input/evdev.c ./src/input/mapping.c ./src/input/udev.c)

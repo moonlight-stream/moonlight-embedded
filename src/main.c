@@ -151,7 +151,8 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
 }
 
 static void help() {
-  printf("Moonlight Embedded %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+  printf("Moonlight Embedded %d.%d.%d-%s-%s\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, GIT_BRANCH,GIT_COMMIT_HASH);
+  printf("Built with the following options:(%s)\n", COMPILE_OPTIONS);
   printf("Usage: moonlight [action] (options) [host]\n");
   printf("       moonlight [configfile]\n");
   printf("\n Actions\n\n");

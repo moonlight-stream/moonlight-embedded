@@ -108,7 +108,7 @@ add_executable(${PROJECT_NAME}.elf
 	third_party/enet/packet.c
 	third_party/enet/peer.c
 	third_party/enet/protocol.c
-	third_party/enet/vita.c
+	third_party/enet/unix.c
 
 	third_party/inih/ini.c
 )

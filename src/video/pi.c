@@ -192,7 +192,7 @@ static void decoder_renderer_cleanup() {
   ilclient_flush_tunnels(tunnel, 0);
 
   ilclient_disable_port_buffers(list[0], 130, NULL, NULL, NULL);
-
+  #ifndef SKIP_OMX_CLEANUP
   ilclient_disable_tunnel(tunnel);
   ilclient_teardown_tunnels(tunnel);
 
@@ -200,7 +200,10 @@ static void decoder_renderer_cleanup() {
   ilclient_state_transition(list, OMX_StateLoaded);
 
   ilclient_cleanup_components(list);
-
+  #else
+  //skip cleanup issue #763 (https://github.com/irtimmer/moonlight-embedded/issues/763) 
+  fprintf(stderr, "Skipping OMX Cleanup stages\n");
+  #endif
   OMX_Deinit();
 
   ilclient_destroy(client);

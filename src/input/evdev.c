@@ -229,6 +229,10 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       // Quit the stream if all the required quit keys are down
       if ((dev->modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS &&
           ev->code == QUIT_KEY && ev->value != 0) {
+
+        short code = 0x80 << 8 | keyCodes[ev->code];
+        LiSendKeyboardEvent(code, KEY_ACTION_DOWN, 0);
+        usleep(1000000);
         return false;
       }
 

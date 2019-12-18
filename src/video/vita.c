@@ -245,6 +245,12 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     init->size = sizeof(SceVideodecQueryInitInfoHwAvcdec);
     init->horizontal = width;
     init->vertical = height;
+    // XXX: specialized setup for 960x540
+    // when we pass just 960x540 instead 960x544, sceVideodecInitLibrary
+    // would be failed
+    if (width == 960 && height == 540) {
+      init->vertical = 544;
+    }
     init->numOfRefFrames = 5;
     init->numOfStreams = 1;
 

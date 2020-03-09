@@ -26,24 +26,13 @@ More information about installing and runnning Moonlight Embedded is available o
 
 ## Bugs
 
-Please check the fora, wiki and old bug reports before submitting a new bug report.
+Please check the wiki and old bug reports before submitting a new bug report.
 
 Bugs can be reported to the [issue tracker](https://github.com/irtimmer/moonlight-embedded/issues).
 
 ## See also
 
-[Moonlight-common-c](https://github.com/moonlight-stream/moonlight-common-c) is the shared codebase between
-different C implementations of Moonlight
-
-[Moonlight-common-c](https://github.com/irtimmer/moonlight-common-c) is the fork used by Moonlight Embedded
-
-## Discussion
-
-[Discord](https://discord.gg/6ERtzFY) Moonlight in General with Moonlight Embedded channel  
-[XDA](http://forum.xda-developers.com/showthread.php?t=2505510) Moonlight in General  
-[Raspberry Pi Forum](http://www.raspberrypi.org/forums/viewtopic.php?f=78&t=65878) Moonlight Embedded for Raspberry Pi  
-[SolidRun Community](http://www.solid-run.com/community/viewtopic.php?f=13&t=1489&p=11173) Moonlight Embedded for Cubox-i and Hummingboard  
-[ODROID Forum](http://forum.odroid.com/viewtopic.php?f=91&t=15456) Moonlight Embedded on ODROID  
+[Moonlight-common-c](https://github.com/irtimmer/moonlight-common-c) is a fork of moonlight-common-c used by Moonlight Embedded
 
 ## Contribute
 

@@ -52,6 +52,13 @@ enum platform platform_check(char* name) {
       return PI;
   }
   #endif
+  #ifdef HAVE_MMAL
+  if (std || strcmp(name, "mmal") == 0) {
+    void *handle = dlopen("libmoonlight-mmal.so", RTLD_NOW | RTLD_GLOBAL);
+    if (handle != NULL && dlsym(RTLD_DEFAULT, "bcm_host_init") != NULL)
+      return MMAL;
+  }
+  #endif
   #ifdef HAVE_AML
   if (std || strcmp(name, "aml") == 0) {
     void *handle = dlopen("libmoonlight-aml.so", RTLD_NOW | RTLD_GLOBAL);
@@ -101,7 +108,7 @@ void platform_start(enum platform system) {
     blank_fb("/sys/class/graphics/fb1/blank", true);
     break;
   #endif
-  #ifdef HAVE_PI
+  #if defined(HAVE_PI) | defined(HAVE_MMAL)
   case PI:
     blank_fb("/sys/class/graphics/fb0/blank", true);
     break;
@@ -117,7 +124,7 @@ void platform_stop(enum platform system) {
     blank_fb("/sys/class/graphics/fb1/blank", false);
     break;
   #endif
-  #ifdef HAVE_PI
+  #if defined(HAVE_PI) | defined(HAVE_MMAL)
   case PI:
     blank_fb("/sys/class/graphics/fb0/blank", false);
     break;
@@ -150,6 +157,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   #ifdef HAVE_PI
   case PI:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_pi");
+  #endif
+  #ifdef HAVE_MMAL
+  case MMAL:
+    return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_mmal");
   #endif
   #ifdef HAVE_AML
   case AML:
@@ -199,6 +210,8 @@ char* platform_name(enum platform system) {
   switch(system) {
   case PI:
     return "Raspberry Pi (Broadcom)";
+  case MMAL:
+    return "Raspberry Pi (Broadcom) MMAL";
   case IMX:
     return "i.MX6 (MXC Vivante)";
   case AML:

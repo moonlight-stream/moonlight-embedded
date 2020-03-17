@@ -658,15 +658,21 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 
   PDISPLAY_MODE mode = server->modes;
   bool correct_mode = false;
+  bool supported_resolution = false;
   while (mode != NULL) {
-    if (mode->width == config->width && mode->height == config->height && mode->refresh == config->fps)
-      correct_mode = true;
+    if (mode->width == config->width && mode->height == config->height) {
+      supported_resolution = true;
+      if (mode->refresh == config->fps)
+        correct_mode = true;
+    }
 
     mode = mode->next;
   }
 
   if (!correct_mode && !server->unsupported)
     return GS_NOT_SUPPORTED_MODE;
+  else if (sops && !supported_resolution)
+    return GS_NOT_SUPPORTED_SOPS_RESOLUTION;
 
   if (config->height >= 2160 && !server->supports4K)
     return GS_NOT_SUPPORTED_4K;

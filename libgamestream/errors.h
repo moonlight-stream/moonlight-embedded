@@ -29,5 +29,6 @@
 #define GS_UNSUPPORTED_VERSION -7
 #define GS_NOT_SUPPORTED_MODE -8
 #define GS_ERROR -9
+#define GS_NOT_SUPPORTED_SOPS_RESOLUTION -10
 
 extern const char* gs_error;

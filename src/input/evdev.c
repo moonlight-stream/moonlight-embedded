@@ -57,6 +57,7 @@ struct input_device {
   struct libevdev *dev;
   bool is_keyboard;
   bool is_mouse;
+  bool is_touchscreen;
   struct mapping* map;
   int key_map[KEY_MAX];
   int abs_map[ABS_MAX];
@@ -64,6 +65,7 @@ struct input_device {
   int fd;
   char modifiers;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
+  __s32 touchStartX, touchStartY, touchX, touchY;
   short controllerId;
   int haptic_effect_id;
   int buttonFlags;
@@ -81,6 +83,10 @@ struct input_device {
 static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT_RIGHT}, {HAT_LEFT, 0, HAT_RIGHT}, {HAT_LEFT | HAT_DOWN, HAT_DOWN, HAT_DOWN | HAT_RIGHT}};
 
 #define set_hat(flags, flag, hat, hat_flag) flags = (hat & hat_flag) == hat_flag ? flags | flag : flags & ~flag
+
+#define NO_TOUCH -1
+#define TOUCH_THRESHOLD 10
+#define TOUCH_BUTTON_DELAY 100 * 1000 // microseconds
 
 static struct input_device* devices = NULL;
 static int numDevices = 0;
@@ -244,6 +250,20 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       int index = ev->code > BTN_MISC && ev->code < (BTN_MISC + KEY_MAX) ? dev->key_map[ev->code - BTN_MISC] : -1;
 
       switch (ev->code) {
+      case BTN_TOUCH:
+        if (!ev->value) {
+          int deltaX = dev->touchX - dev->touchStartX;
+          int deltaY = dev->touchY - dev->touchStartY;
+          if (deltaX * deltaX + deltaY * deltaY < TOUCH_THRESHOLD * TOUCH_THRESHOLD) {
+            LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_LEFT);
+            usleep(TOUCH_BUTTON_DELAY);
+            LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+          }
+        }
+        dev->touchStartX = NO_TOUCH;
+        dev->touchStartY = NO_TOUCH;
+        gamepadModified = false;
+        break;
       case BTN_LEFT:
         mouseCode = BUTTON_LEFT;
         break;
@@ -329,7 +349,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     }
     break;
   case EV_ABS:
-    if (dev->map == NULL)
+    if (dev->map == NULL && !dev->is_touchscreen)
       break;
 
     gamepadModified = true;
@@ -358,7 +378,24 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         set_hat(dev->buttonFlags, LEFT_FLAG, hat_state, dev->map->hat_dir_dpleft);
       break;
     default:
-      if (index == dev->map->abs_leftx)
+      if (dev->is_touchscreen) {
+        if (ev->code == ABS_Y) {
+          if (dev->touchStartX == NO_TOUCH) {
+            dev->touchStartX = ev->value;
+            dev->touchX = ev->value;
+          }
+          dev->mouseDeltaX += (ev->value - dev->touchX);
+          dev->touchX = ev->value;
+        } else if (ev->code == ABS_X) {
+          if (dev->touchStartY == NO_TOUCH) {
+            dev->touchStartY = ev->value;
+            dev->touchY = ev->value;
+          }
+          dev->mouseDeltaY += -(ev->value - dev->touchY);
+          dev->touchY = ev->value;
+        }
+        gamepadModified = false;
+      } else if (index == dev->map->abs_leftx)
         dev->leftStickX = evdev_convert_value(ev, dev, &dev->xParms, dev->map->reverse_leftx);
       else if (index == dev->map->abs_lefty)
         dev->leftStickY = evdev_convert_value(ev, dev, &dev->yParms, !dev->map->reverse_lefty);
@@ -504,13 +541,14 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
 
   bool is_keyboard = libevdev_has_event_code(evdev, EV_KEY, KEY_Q);
   bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
+  bool is_touchscreen = libevdev_has_event_code(evdev, EV_KEY, BTN_TOUCH);
 
-  if (mappings == NULL && !(is_keyboard || is_mouse)) {
+  if (mappings == NULL && !(is_keyboard || is_mouse || is_touchscreen)) {
     fprintf(stderr, "No mapping available for %s (%s) on %s\n", name, str_guid, device);
     mappings = default_mapping;
   }
 
-  if (!is_keyboard && !is_mouse)
+  if (!is_keyboard && !is_mouse && !is_touchscreen)
     evdev_gamepads++;
 
   int dev = numDevices;
@@ -535,6 +573,9 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   memset(&devices[dev].abs_map, -2, sizeof(devices[dev].abs_map));
   devices[dev].is_keyboard = is_keyboard;
   devices[dev].is_mouse = is_mouse;
+  devices[dev].is_touchscreen = is_touchscreen;
+  devices[dev].touchStartX = NO_TOUCH;
+  devices[dev].touchStartY = NO_TOUCH;
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {
@@ -569,7 +610,7 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
       fprintf(stderr, "Mapping for %s (%s) on %s is incorrect\n", name, str_guid, device);
   }
 
-  if (grabbingDevices && (is_keyboard || is_mouse)) {
+  if (grabbingDevices && (is_keyboard || is_mouse || is_touchscreen)) {
     if (ioctl(fd, EVIOCGRAB, 1) < 0) {
       fprintf(stderr, "EVIOCGRAB failed with error %d\n", errno);
     }
@@ -696,7 +737,7 @@ void evdev_start() {
   // we're ready to take input events. Ctrl+C works up until
   // this point.
   for (int i = 0; i < numDevices; i++) {
-    if ((devices[i].is_keyboard || devices[i].is_mouse) && ioctl(devices[i].fd, EVIOCGRAB, 1) < 0) {
+    if ((devices[i].is_keyboard || devices[i].is_mouse || devices[i].is_touchscreen) && ioctl(devices[i].fd, EVIOCGRAB, 1) < 0) {
       fprintf(stderr, "EVIOCGRAB failed with error %d\n", errno);
     }
   }

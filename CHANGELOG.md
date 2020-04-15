@@ -1,4 +1,6 @@
 ## Unreleased
+
+## 0.7.0
 * Support 960x540 resolution (#162, fc7e19c)
 * Support GFE 3.20 (97a6a0b)
 

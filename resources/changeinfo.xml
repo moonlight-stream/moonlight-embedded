@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
+<changes app_ver="00.07"><![CDATA[
+## 0.7.0<br>
+* Support 960x540 resolution (#162, fc7e19c)<br>
+* Support GFE 3.20 (97a6a0b)<br>
+]]></changes>
 <changes app_ver="00.06"><![CDATA[
 ## 0.6.1<br>
 * Fix the stream delay issue (f791b3d); thanks @AlC4pwn to confirm fixing the bug<br>

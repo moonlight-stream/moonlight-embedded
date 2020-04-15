@@ -1,4 +1,6 @@
 ## Unreleased
+* Support 960x540 resolution (#162, fc7e19c)
+* Support GFE 3.20 (97a6a0b)
 
 ## 0.6.1
 * Fix the stream delay issue (f791b3d); thanks @AlC4pwn to confirm fixing the bug

@@ -19,5 +19,5 @@
 
 #include "mapping.h"
 
-void udev_init(bool autoload, struct mapping* mappings, bool verbose);
+void udev_init(bool autoload, struct mapping* mappings, bool verbose, int rotate);
 void evdev_destroy();

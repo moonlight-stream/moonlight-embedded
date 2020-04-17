@@ -37,6 +37,7 @@ static struct mapping* defaultMappings;
 static struct udev *udev;
 static struct udev_monitor *udev_mon;
 static int udev_fd;
+static int inputRotate;
 
 static int udev_handle(int fd) {
   struct udev_device *dev = udev_monitor_receive_device(udev_mon);
@@ -46,7 +47,7 @@ static int udev_handle(int fd) {
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
-        evdev_create(devnode, defaultMappings, debug);
+        evdev_create(devnode, defaultMappings, debug, inputRotate);
       }
     }
     udev_device_unref(dev);
@@ -54,7 +55,7 @@ static int udev_handle(int fd) {
   return LOOP_OK;
 }
 
-void udev_init(bool autoload, struct mapping* mappings, bool verbose) {
+void udev_init(bool autoload, struct mapping* mappings, bool verbose, int rotate) {
   udev = udev_new();
   debug = verbose;
   if (!udev) {
@@ -76,7 +77,7 @@ void udev_init(bool autoload, struct mapping* mappings, bool verbose) {
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
-        evdev_create(devnode, mappings, verbose);
+        evdev_create(devnode, mappings, verbose, rotate);
       }
       udev_device_unref(dev);
     }
@@ -89,6 +90,7 @@ void udev_init(bool autoload, struct mapping* mappings, bool verbose) {
   udev_monitor_enable_receiving(udev_mon);
 
   defaultMappings = mappings;
+  inputRotate = rotate;
 
   int udev_fd = udev_monitor_get_fd(udev_mon);
   loop_add_fd(udev_fd, &udev_handle, POLLIN);

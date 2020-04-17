@@ -245,7 +245,7 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
 
-    evdev_create(config.inputs[0], NULL, config.debug_level > 0);
+    evdev_create(config.inputs[0], NULL, config.debug_level > 0, config.rotate);
     evdev_map(config.inputs[0]);
     exit(0);
   }
@@ -342,10 +342,10 @@ int main(int argc, char* argv[]) {
           if (config.debug_level > 0)
             printf("Add input %s...\n", config.inputs[i]);
 
-          evdev_create(config.inputs[i], mappings, config.debug_level > 0);
+          evdev_create(config.inputs[i], mappings, config.debug_level > 0, config.rotate);
         }
 
-        udev_init(!inputAdded, mappings, config.debug_level > 0);
+        udev_init(!inputAdded, mappings, config.debug_level > 0, config.rotate);
         evdev_init();
         rumble_handler = evdev_rumble;
         #ifdef HAVE_LIBCEC

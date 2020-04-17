@@ -21,7 +21,7 @@
 
 extern int evdev_gamepads;
 
-void evdev_create(const char* device, struct mapping* mappings, bool verbose);
+void evdev_create(const char* device, struct mapping* mappings, bool verbose, int rotate);
 void evdev_loop();
 
 void evdev_init();

@@ -156,7 +156,7 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
   MMAL_DISPLAYREGION_T param;
   param.hdr.id = MMAL_PARAMETER_DISPLAYREGION;
   param.hdr.size = sizeof(MMAL_DISPLAYREGION_T);
-  param.set = MMAL_DISPLAY_SET_LAYER | MMAL_DISPLAY_SET_NUM | MMAL_DISPLAY_SET_FULLSCREEN;
+  param.set = MMAL_DISPLAY_SET_LAYER | MMAL_DISPLAY_SET_NUM | MMAL_DISPLAY_SET_FULLSCREEN | MMAL_DISPLAY_SET_TRANSFORM;
   param.layer = 128;
   param.display_num = 0;
   param.fullscreen = true;
@@ -170,6 +170,9 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
     break;
   case DISPLAY_ROTATE_270:
     param.transform = MMAL_DISPLAY_ROT270;
+    break;
+  default:
+    param.transform = MMAL_DISPLAY_ROT0;
     break;
   }
 

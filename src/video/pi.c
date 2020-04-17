@@ -143,10 +143,22 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
   }
 
   OMX_CONFIG_ROTATIONTYPE rotationType;
+  memset(&rotationType, 0, sizeof(OMX_CONFIG_ROTATIONTYPE));
   rotationType.nSize = sizeof(OMX_CONFIG_ROTATIONTYPE);
   rotationType.nVersion.nVersion = OMX_VERSION;
   rotationType.nPortIndex = 90;
-  rotationType.nRotation = 90;
+  int displayRotation = drFlags & DISPLAY_ROTATE_MASK;
+  switch (displayRotation) {
+  case DISPLAY_ROTATE_90:
+    rotationType.nRotation = 90;
+    break;
+  case DISPLAY_ROTATE_180:
+    rotationType.nRotation = 180;
+    break;
+  case DISPLAY_ROTATE_270:
+    rotationType.nRotation = 270;
+    break;
+  }
 
   if(OMX_SetParameter(ILC_GET_HANDLE(video_render), OMX_IndexConfigCommonRotate, &rotationType) != OMX_ErrorNone) {
     fprintf(stderr, "Failed to set video rotation\n");

@@ -67,6 +67,7 @@ static struct option long_options[] = {
   {"unsupported", no_argument, NULL, 'y'},
   {"quitappafter", no_argument, NULL, '1'},
   {"viewonly", no_argument, NULL, '2'},
+  {"rotate", required_argument, NULL, '3'},
   {"verbose", no_argument, NULL, 'z'},
   {"debug", no_argument, NULL, 'Z'},
   {0, 0, 0, 0},
@@ -220,6 +221,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case '2':
     config->viewonly = true;
     break;
+  case '3':
+    config->rotate = atoi(value);
+    break;
   case 'z':
     config->debug_level = 1;
     break;
@@ -295,6 +299,8 @@ void config_save(char* filename, PCONFIGURATION config) {
     write_config_bool(fd, "quitappafter", config->quitappafter);
   if (config->viewonly)
     write_config_bool(fd, "viewonly", config->viewonly);
+  if (config->rotate != 0)
+    write_config_int(fd, "rotate", config->rotate);
 
   if (strcmp(config->app, "Steam") != 0)
     write_config_string(fd, "app", config->app);
@@ -327,6 +333,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported = false;
   config->quitappafter = false;
   config->viewonly = false;
+  config->rotate = 0;
   config->codec = CODEC_UNSPECIFIED;
 
   config->inputsCount = 0;

@@ -39,6 +39,7 @@ typedef struct _CONFIGURATION {
   bool sops;
   bool localaudio;
   bool fullscreen;
+  int rotate;
   bool unsupported;
   bool quitappafter;
   bool viewonly;

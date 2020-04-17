@@ -191,7 +191,7 @@ static void help() {
   printf("\t-4k\t\t\tUse 3840x2160 resolution\n");
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
   printf("\t-height <height>\tVertical resolution (default 720)\n");
-  #if defined(HAVE_PI)
+  #if defined(HAVE_PI) | defined(HAVE_MMAL)
   printf("\t-rotate <height>\tRotate display: 0/90/180/270 (default 0)\n");
   #endif
   printf("\t-fps <fps>\t\tSpecify the fps to use (default -1)\n");

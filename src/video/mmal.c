@@ -158,6 +158,18 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
   param.layer = 128;
   param.display_num = 0;
   param.fullscreen = true;
+  int displayRotation = drFlags & DISPLAY_ROTATE_MASK;
+  switch (displayRotation) {
+  case DISPLAY_ROTATE_90:
+    param.transform = MMAL_DISPLAY_ROT90;
+    break;
+  case DISPLAY_ROTATE_180:
+    param.transform = MMAL_DISPLAY_ROT180;
+    break;
+  case DISPLAY_ROTATE_270:
+    param.transform = MMAL_DISPLAY_ROT270;
+    break;
+  }
 
   if (mmal_port_parameter_set(renderer->input[0], &param.hdr) != MMAL_SUCCESS) {
     fprintf(stderr, "Can't set parameters\n");

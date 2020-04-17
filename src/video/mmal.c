@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Video decode on Raspberry Pi using MMAL
 // Based upon example code from the Raspberry Pi
 
+#include "video.h"
+
 #include <Limelight.h>
 
 #include <sps.h>

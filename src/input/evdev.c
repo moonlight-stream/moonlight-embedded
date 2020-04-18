@@ -66,6 +66,7 @@ struct input_device {
   char modifiers;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
   __s32 touchDownX, touchDownY, touchX, touchY;
+  struct timeval touchDownTime;
   short controllerId;
   int haptic_effect_id;
   int buttonFlags;
@@ -87,6 +88,7 @@ static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT
 #define TOUCH_UP -1
 #define TOUCH_CLICK_RADIUS 10
 #define TOUCH_CLICK_DELAY 100000 // microseconds
+#define TOUCH_RCLICK_TIME 750 // milliseconds
 
 static struct input_device* devices = NULL;
 static int numDevices = 0;
@@ -266,14 +268,20 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         mouseCode = BUTTON_X2;
         break;
       case BTN_TOUCH:
-        if (ev->value != 1) {
+        if (ev->value == 1) {
+          dev->touchDownTime = ev->time;
+        } else {
           if (dev->touchDownX != TOUCH_UP && dev->touchDownY != TOUCH_UP) {
             int deltaX = dev->touchX - dev->touchDownX;
             int deltaY = dev->touchY - dev->touchDownY;
             if (deltaX * deltaX + deltaY * deltaY < TOUCH_CLICK_RADIUS * TOUCH_CLICK_RADIUS) {
-              LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_LEFT);
+              struct timeval elapsedTime;
+              timersub(&ev->time, &dev->touchDownTime, &elapsedTime);
+              int holdTimeMs = elapsedTime.tv_sec * 1000 + elapsedTime.tv_usec / 1000;
+              int button = holdTimeMs >= TOUCH_RCLICK_TIME ? BUTTON_RIGHT : BUTTON_LEFT;
+              LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, button);
               usleep(TOUCH_CLICK_DELAY);
-              LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+              LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, button);
             }
           }
           dev->touchDownX = TOUCH_UP;

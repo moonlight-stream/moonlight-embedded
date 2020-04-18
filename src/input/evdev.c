@@ -65,7 +65,7 @@ struct input_device {
   int fd;
   char modifiers;
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
-  __s32 touchStartX, touchStartY, touchX, touchY;
+  __s32 touchDownX, touchDownY, touchX, touchY;
   short controllerId;
   int haptic_effect_id;
   int buttonFlags;
@@ -84,9 +84,9 @@ static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT
 
 #define set_hat(flags, flag, hat, hat_flag) flags = (hat & hat_flag) == hat_flag ? flags | flag : flags & ~flag
 
-#define NO_TOUCH -1
-#define TOUCH_THRESHOLD 10
-#define TOUCH_BUTTON_DELAY 100 * 1000 // microseconds
+#define TOUCH_UP -1
+#define TOUCH_CLICK_RADIUS 10
+#define TOUCH_CLICK_DELAY 100000 // microseconds
 
 static struct input_device* devices = NULL;
 static int numDevices = 0;
@@ -250,20 +250,6 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       int index = ev->code > BTN_MISC && ev->code < (BTN_MISC + KEY_MAX) ? dev->key_map[ev->code - BTN_MISC] : -1;
 
       switch (ev->code) {
-      case BTN_TOUCH:
-        if (!ev->value) {
-          int deltaX = dev->touchX - dev->touchStartX;
-          int deltaY = dev->touchY - dev->touchStartY;
-          if (deltaX * deltaX + deltaY * deltaY < TOUCH_THRESHOLD * TOUCH_THRESHOLD) {
-            LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_LEFT);
-            usleep(TOUCH_BUTTON_DELAY);
-            LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
-          }
-        }
-        dev->touchStartX = NO_TOUCH;
-        dev->touchStartY = NO_TOUCH;
-        gamepadModified = false;
-        break;
       case BTN_LEFT:
         mouseCode = BUTTON_LEFT;
         break;
@@ -278,6 +264,21 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         break;
       case BTN_EXTRA:
         mouseCode = BUTTON_X2;
+        break;
+      case BTN_TOUCH:
+        if (ev->value != 1) {
+          if (dev->touchDownX != TOUCH_UP && dev->touchDownY != TOUCH_UP) {
+            int deltaX = dev->touchX - dev->touchDownX;
+            int deltaY = dev->touchY - dev->touchDownY;
+            if (deltaX * deltaX + deltaY * deltaY < TOUCH_CLICK_RADIUS * TOUCH_CLICK_RADIUS) {
+              LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_LEFT);
+              usleep(TOUCH_CLICK_DELAY);
+              LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+            }
+          }
+          dev->touchDownX = TOUCH_UP;
+          dev->touchDownY = TOUCH_UP;
+        }
         break;
       default:
         gamepadModified = true;
@@ -349,7 +350,31 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     }
     break;
   case EV_ABS:
-    if (dev->map == NULL && !dev->is_touchscreen)
+    if (dev->is_touchscreen) {
+      switch (ev->code) {
+      case ABS_X:
+        if (dev->touchDownX == TOUCH_UP) {
+          dev->touchDownX = ev->value;
+          dev->touchX = ev->value;
+        } else {
+          dev->mouseDeltaX += (ev->value - dev->touchX);
+          dev->touchX = ev->value;
+        }
+        break;
+      case ABS_Y:
+        if (dev->touchDownY == TOUCH_UP) {
+          dev->touchDownY = ev->value;
+          dev->touchY = ev->value;
+        } else {
+          dev->mouseDeltaY += (ev->value - dev->touchY);
+          dev->touchY = ev->value;
+        }
+        break;
+      }
+      break;
+    }
+
+    if (dev->map == NULL)
       break;
 
     gamepadModified = true;
@@ -378,24 +403,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         set_hat(dev->buttonFlags, LEFT_FLAG, hat_state, dev->map->hat_dir_dpleft);
       break;
     default:
-      if (dev->is_touchscreen) {
-        if (ev->code == ABS_Y) {
-          if (dev->touchStartX == NO_TOUCH) {
-            dev->touchStartX = ev->value;
-            dev->touchX = ev->value;
-          }
-          dev->mouseDeltaX += (ev->value - dev->touchX);
-          dev->touchX = ev->value;
-        } else if (ev->code == ABS_X) {
-          if (dev->touchStartY == NO_TOUCH) {
-            dev->touchStartY = ev->value;
-            dev->touchY = ev->value;
-          }
-          dev->mouseDeltaY += -(ev->value - dev->touchY);
-          dev->touchY = ev->value;
-        }
-        gamepadModified = false;
-      } else if (index == dev->map->abs_leftx)
+      if (index == dev->map->abs_leftx)
         dev->leftStickX = evdev_convert_value(ev, dev, &dev->xParms, dev->map->reverse_leftx);
       else if (index == dev->map->abs_lefty)
         dev->leftStickY = evdev_convert_value(ev, dev, &dev->yParms, !dev->map->reverse_lefty);
@@ -574,8 +582,8 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose) {
   devices[dev].is_keyboard = is_keyboard;
   devices[dev].is_mouse = is_mouse;
   devices[dev].is_touchscreen = is_touchscreen;
-  devices[dev].touchStartX = NO_TOUCH;
-  devices[dev].touchStartY = NO_TOUCH;
+  devices[dev].touchDownX = TOUCH_UP;
+  devices[dev].touchDownY = TOUCH_UP;
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {

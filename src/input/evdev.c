@@ -57,11 +57,8 @@ struct input_device {
   struct libevdev *dev;
   bool is_keyboard;
   bool is_mouse;
-<<<<<<< HEAD
   int rotate;
-=======
   bool is_touchscreen;
->>>>>>> tomblind/touchscreen
   struct mapping* map;
   int key_map[KEY_MAX];
   int abs_map[ABS_MAX];
@@ -606,13 +603,10 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
   memset(&devices[dev].abs_map, -2, sizeof(devices[dev].abs_map));
   devices[dev].is_keyboard = is_keyboard;
   devices[dev].is_mouse = is_mouse;
-<<<<<<< HEAD
   devices[dev].rotate = rotate;
-=======
   devices[dev].is_touchscreen = is_touchscreen;
   devices[dev].touchDownX = TOUCH_UP;
   devices[dev].touchDownY = TOUCH_UP;
->>>>>>> tomblind/touchscreen
 
   int nbuttons = 0;
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {

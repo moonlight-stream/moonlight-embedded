@@ -442,9 +442,9 @@ void display_alert(char *message, char *button_captions[], int buttons_count,
       continue;
     }
 
-    if (input.buttons & SCE_CTRL_CROSS) {
+    if (input.buttons & config.btn_confirm) {
       result = 0;
-    } else if (input.buttons & SCE_CTRL_CIRCLE) {
+    } else if (input.buttons & config.btn_cancel) {
       result = 1;
     } else if (input.buttons & SCE_CTRL_TRIANGLE) {
       result = 2;

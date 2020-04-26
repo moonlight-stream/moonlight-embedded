@@ -260,8 +260,8 @@ void draw_alert(char *message, menu_geom geom, char *buttons_captions[], int but
   char caption[256];
   strcpy(caption, "");
 
-  char *o_layout[4] = {"◯", "x", "△", "□"};
-  char *x_layout[4] = {"x", "◯", "△", "□"};
+  char *o_layout[4] = {"o", "x", "△", "□"};
+  char *x_layout[4] = {"x", "o", "△", "□"};
   char **icons = config.jp_layout ? o_layout : x_layout;
   char *default_captions[4] = {"Ok", "Cancel", "Options", "Delete"};
   for (int i = 0; i < buttons_count; i++) {

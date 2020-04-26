@@ -23,6 +23,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <psp2/ctrl.h> 
+
 #define MAX_INPUTS 6
 
 struct input_config {
@@ -40,6 +42,7 @@ struct special_keys {
 };
 
 typedef struct _CONFIGURATION {
+  // static configuration, value will be saved to config file
   STREAM_CONFIGURATION stream;
   char* app;
   char* action;
@@ -64,6 +67,10 @@ typedef struct _CONFIGURATION {
   int mouse_acceleration;
   bool enable_ref_frame_invalidation;
   FILE *log_file;
+  bool jp_layout;
+  // runtime configuration, value will be recreated at launch
+  SceCtrlButtons btn_confirm;
+  SceCtrlButtons btn_cancel;
 } CONFIGURATION, *PCONFIGURATION;
 
 extern CONFIGURATION config;
@@ -74,3 +81,4 @@ bool inputAdded;
 bool config_file_parse(char* filename, PCONFIGURATION config);
 void config_parse(int argc, char* argv[], PCONFIGURATION config);
 void config_save(const char* filename, PCONFIGURATION config);
+void update_layout();

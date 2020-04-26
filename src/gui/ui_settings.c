@@ -214,7 +214,7 @@ enum {
 static int select_special_key_loop(int id, void *context, const input_data *input) {
   int *code = context;
 
-  if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+  if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
     return 0;
   }
   if (id != SETTINGS_SELECT_SPECIAL_KEY_MANUAL) {
@@ -274,7 +274,7 @@ static int special_keys_loop(int id, void *context, const input_data *input) {
       config.special_keys.size += delta;
       break;
     default:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       select_special_key_menu(&selected_ord);
@@ -381,6 +381,7 @@ enum {
   SETTINGS_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
+  SETTINGS_JP_LAYOUT,
   SETTINGS_ENABLE_FRAME_PACER,
   SETTINGS_ENABLE_MAPPING,
   SETTINGS_BACK_DEADZONE,
@@ -397,6 +398,7 @@ enum {
   SETTINGS_VIEW_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_VIEW_SAVE_DEBUG_LOG,
   SETTINGS_VIEW_DISABLE_POWERSAVE,
+  SETTINGS_VIEW_JP_LAYOUT,
   SETTINGS_VIEW_ENABLE_FRAME_PACER,
   SETTINGS_VIEW_ENABLE_MAPPING,
   SETTINGS_VIEW_BACK_DEADZONE,
@@ -468,7 +470,7 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       break;
     case SETTINGS_BITRATE:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       char value[512];
@@ -484,49 +486,56 @@ static int settings_loop(int id, void *context, const input_data *input) {
       }
       break;
     case SETTINGS_SOPS:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       did_change = 1;
       config.sops = !config.sops;
       break;
     case SETTINGS_ENABLE_FRAME_INVAL:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       did_change = 1;
       config.enable_ref_frame_invalidation = !config.enable_ref_frame_invalidation;
       break;
     case SETTINGS_ENABLE_STREAM_OPTIMIZE:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       did_change = 1;
       config.stream.streamingRemotely = config.stream.streamingRemotely ? 0 : 1;
       break;
     case SETTINGS_SAVE_DEBUG_LOG:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       did_change = 1;
       config.save_debug_log = !config.save_debug_log;
       break;
     case SETTINGS_DISABLE_POWERSAVE:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       did_change = 1;
       config.disable_powersave = !config.disable_powersave;
       break;
+    case SETTINGS_JP_LAYOUT:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.jp_layout = !config.jp_layout;
+      break;
     case SETTINGS_ENABLE_FRAME_PACER:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       did_change = 1;
       config.enable_frame_pacer = !config.enable_frame_pacer;
       break;
     case SETTINGS_ENABLE_MAPPING:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       did_change = 1;
@@ -538,14 +547,14 @@ static int settings_loop(int id, void *context, const input_data *input) {
       }
       break;
     case SETTINGS_BACK_DEADZONE:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       deadzone_settings_menu();
       did_change = 1;
       break;
     case SETTINGS_SPECIAL_KEYS:
-      if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
       special_keys_menu();
@@ -602,6 +611,9 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_DISABLE_POWERSAVE, current);
 
+  sprintf(current, "%s", config.jp_layout ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_JP_LAYOUT, current);
+
   sprintf(current, "%s", config.enable_frame_pacer ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ENABLE_FRAME_PACER, current);
 
@@ -625,6 +637,7 @@ static int settings_loop(int id, void *context, const input_data *input) {
 
 static int settings_back(void *context) {
   ui_settings_save_config();
+  update_layout();
   return 0;
 }
 
@@ -660,6 +673,7 @@ int ui_settings_menu() {
   MENU_CATEGORY("System");
   MENU_ENTRY(SETTINGS_SAVE_DEBUG_LOG, SETTINGS_VIEW_SAVE_DEBUG_LOG, "Enable debug log", "");
   MENU_ENTRY(SETTINGS_DISABLE_POWERSAVE, SETTINGS_VIEW_DISABLE_POWERSAVE, "Disable power save", "");
+  MENU_ENTRY(SETTINGS_JP_LAYOUT, SETTINGS_VIEW_JP_LAYOUT, "Swap X & O for Moonlight", "");
 
   MENU_CATEGORY("Input");
   MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", ICON_LEFT_RIGHT_ARROWS);

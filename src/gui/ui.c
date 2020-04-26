@@ -36,7 +36,7 @@ enum {
 };
 
 int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
-  if ((input->buttons & SCE_CTRL_CROSS) == 0 || (input->buttons & SCE_CTRL_HOLD) != 0) {
+  if ((input->buttons & config.btn_confirm) == 0 || (input->buttons & SCE_CTRL_HOLD) != 0) {
     return 0;
   }
   if (cursor >= MAIN_MENU_CONNECT_PAIRED && cursor < MAIN_MENU_QUIT) {

@@ -100,6 +100,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->enable_frame_pacer = BOOL(value);
     } else if (strcmp(name, "disable_powersave") == 0) {
       config->disable_powersave = BOOL(value);
+    } else if (strcmp(name, "jp_layout") == 0) {
+      config->jp_layout = BOOL(value);
     } else if (strcmp(name, "save_debug_log") == 0) {
       config->save_debug_log = BOOL(value);
     } else if (strcmp(name, "mapping") == 0) {
@@ -151,6 +153,7 @@ void config_save(const char* filename, PCONFIGURATION config) {
 
   write_config_bool(fd, "enable_frame_pacer", config->enable_frame_pacer);
   write_config_bool(fd, "disable_powersave", config->disable_powersave);
+  write_config_bool(fd, "jp_layout", config->jp_layout);
   write_config_bool(fd, "save_debug_log", config->save_debug_log);
 
   write_config_int(fd, "mouse_acceleration", config->mouse_acceleration);
@@ -172,6 +175,17 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_int(fd, "size",    config->special_keys.size);
 
   fclose(fd);
+}
+
+void update_layout() {
+  if (config.jp_layout) {
+    config.btn_confirm = SCE_CTRL_CIRCLE;
+    config.btn_cancel = SCE_CTRL_CROSS;
+  }
+  else {
+    config.btn_confirm = SCE_CTRL_CROSS;
+    config.btn_cancel = SCE_CTRL_CIRCLE;
+  }
 }
 
 void config_parse(int argc, char* argv[], PCONFIGURATION config) {
@@ -198,6 +212,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported_version = false;
   config->save_debug_log = false;
   config->disable_powersave = true;
+  config->jp_layout = false;
   config->enable_frame_pacer = true;
 
   config->special_keys.nw = INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL;
@@ -217,6 +232,8 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   if (config_file) {
     config_file_parse(config_file, config);
   }
+
+  update_layout();
 
   if (config->config_file != NULL)
     config_save(config->config_file, config);

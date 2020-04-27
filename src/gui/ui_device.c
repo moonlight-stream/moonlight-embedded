@@ -189,7 +189,7 @@ int end_search_thread(SceUID thid) {
 }
 
 static int ui_search_device_callback(int id, void *context, const input_data *input) {
-  if ((input->buttons & SCE_CTRL_CROSS) == 0 || (input->buttons & SCE_CTRL_HOLD) != 0) {
+  if ((input->buttons & config.btn_confirm) == 0 || (input->buttons & SCE_CTRL_HOLD) != 0) {
     // if remain slot, reload discovered devices
     if (!DEVICE_ENTRY_IDX[DEVICE_VIEW_ITEM + found_device - 1]) {
       return 2;

@@ -134,7 +134,7 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
     menu[i].disabled = (server.currentGame != 0);
   }
 
-  if ((input->buttons & SCE_CTRL_CROSS) == 0 || input->buttons & SCE_CTRL_HOLD) {
+  if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
     return 0;
   }
 

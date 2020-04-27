@@ -1,5 +1,6 @@
 #include "guilib.h"
 
+#include "../config.h"
 #include "../platform.h"
 
 #include <stdarg.h>
@@ -259,7 +260,9 @@ void draw_alert(char *message, menu_geom geom, char *buttons_captions[], int but
   char caption[256];
   strcpy(caption, "");
 
-  char *icons[4] = {"x", "◯", "△", "□"};
+  char *o_layout[4] = {"o", "x", "△", "□"};
+  char *x_layout[4] = {"x", "o", "△", "□"};
+  char **icons = config.jp_layout ? o_layout : x_layout;
   char *default_captions[4] = {"Ok", "Cancel", "Options", "Delete"};
   for (int i = 0; i < buttons_count; i++) {
     char single_button_caption[64];
@@ -400,7 +403,7 @@ int display_menu(menu_entry menu[], int total_elements, menu_geom *geom_ptr,
       gui_global_loop_callback(menu[real_cursor].id, context, &input);
     }
 
-    if (input.buttons & SCE_CTRL_CIRCLE && (input.buttons & SCE_CTRL_HOLD) == 0) {
+    if (input.buttons & config.btn_cancel && (input.buttons & SCE_CTRL_HOLD) == 0) {
       if (!back_cb || back_cb(context) == 0) {
         exit_code = 1;
         goto error;
@@ -439,9 +442,9 @@ void display_alert(char *message, char *button_captions[], int buttons_count,
       continue;
     }
 
-    if (input.buttons & SCE_CTRL_CROSS) {
+    if (input.buttons & config.btn_confirm) {
       result = 0;
-    } else if (input.buttons & SCE_CTRL_CIRCLE) {
+    } else if (input.buttons & config.btn_cancel) {
       result = 1;
     } else if (input.buttons & SCE_CTRL_TRIANGLE) {
       result = 2;

@@ -382,6 +382,7 @@ enum {
   SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_JP_LAYOUT,
+  SETTINGS_SHOW_FPS,
   SETTINGS_ENABLE_FRAME_PACER,
   SETTINGS_ENABLE_MAPPING,
   SETTINGS_BACK_DEADZONE,
@@ -399,6 +400,7 @@ enum {
   SETTINGS_VIEW_SAVE_DEBUG_LOG,
   SETTINGS_VIEW_DISABLE_POWERSAVE,
   SETTINGS_VIEW_JP_LAYOUT,
+  SETTINGS_VIEW_SHOW_FPS,
   SETTINGS_VIEW_ENABLE_FRAME_PACER,
   SETTINGS_VIEW_ENABLE_MAPPING,
   SETTINGS_VIEW_BACK_DEADZONE,
@@ -527,6 +529,13 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       config.jp_layout = !config.jp_layout;
       break;
+    case SETTINGS_SHOW_FPS:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.show_fps = !config.show_fps;
+      break;
     case SETTINGS_ENABLE_FRAME_PACER:
       if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
@@ -614,6 +623,9 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%s", config.jp_layout ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_JP_LAYOUT, current);
 
+  sprintf(current, "%s", config.show_fps ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_SHOW_FPS, current);
+
   sprintf(current, "%s", config.enable_frame_pacer ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ENABLE_FRAME_PACER, current);
 
@@ -674,6 +686,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_SAVE_DEBUG_LOG, SETTINGS_VIEW_SAVE_DEBUG_LOG, "Enable debug log", "");
   MENU_ENTRY(SETTINGS_DISABLE_POWERSAVE, SETTINGS_VIEW_DISABLE_POWERSAVE, "Disable power save", "");
   MENU_ENTRY(SETTINGS_JP_LAYOUT, SETTINGS_VIEW_JP_LAYOUT, "Swap X & O for Moonlight", "");
+  MENU_ENTRY(SETTINGS_SHOW_FPS, SETTINGS_VIEW_SHOW_FPS, "Display streaming FPS", "");
 
   MENU_CATEGORY("Input");
   MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", ICON_LEFT_RIGHT_ARROWS);

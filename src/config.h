@@ -60,6 +60,8 @@ typedef struct _CONFIGURATION {
   struct touchscreen_deadzone back_deadzone;
   struct special_keys special_keys;
   bool disable_powersave;
+  bool jp_layout;
+  bool show_fps;
   bool enable_frame_pacer;
   bool save_debug_log;
   struct input_config inputs[MAX_INPUTS];
@@ -67,7 +69,6 @@ typedef struct _CONFIGURATION {
   int mouse_acceleration;
   bool enable_ref_frame_invalidation;
   FILE *log_file;
-  bool jp_layout;
   // runtime configuration, value will be recreated at launch
   SceCtrlButtons btn_confirm;
   SceCtrlButtons btn_cancel;

@@ -39,7 +39,6 @@
 
 #if 0
 #define printf vita_debug_log
-#define DRAW_FPS 1
 #endif
 
 void draw_indicators();
@@ -409,9 +408,9 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       vita2d_start_drawing();
       void *tex_buf = vita2d_texture_get_datap(frame_texture);
       vita2d_draw_texture(frame_texture, 0, 0);
-#ifdef DRAW_FPS
-      vita2d_font_draw_textf(font, 20, 40, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 12, "fps: %u / %u", curr_fps[0], curr_fps[1]);
-#endif
+      if (config.show_fps) {
+        vita2d_font_draw_textf(font, 20, 40, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 14, "fps: %u / %u", curr_fps[0], curr_fps[1]);
+      }
       draw_indicators();
       vita2d_end_drawing();
       vita2d_wait_rendering_done();

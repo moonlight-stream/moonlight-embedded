@@ -1,4 +1,7 @@
 ## Unreleased
+* Add new option for swapping O/X buttons (#168)
+* Add new option for drawing FPS value (#167)
+* Fix `RTSP message too long` (#164, fbe3d06)
 
 ## 0.7.0
 * Support 960x540 resolution (#162, fc7e19c)

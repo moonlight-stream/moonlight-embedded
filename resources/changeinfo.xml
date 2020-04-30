@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
+<changes app_ver="00.08"><![CDATA[
+## 0.8.0<br>
+* Add new option for swapping O/X buttons (#168)<br>
+* Add new option for drawing FPS value (#167)<br>
+* Fix `RTSP message too long` (#164, fbe3d06)<br>
+]]></changes>
 <changes app_ver="00.07"><![CDATA[
 ## 0.7.0<br>
 * Support 960x540 resolution (#162, fc7e19c)<br>

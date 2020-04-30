@@ -1,4 +1,6 @@
 ## Unreleased
+
+## 0.8.0
 * Add new option for swapping O/X buttons (#168)
 * Add new option for drawing FPS value (#167)
 * Fix `RTSP message too long` (#164, fbe3d06)

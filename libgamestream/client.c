@@ -688,7 +688,11 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   uuid_unparse(uuid, uuid_str);
   int surround_info = SURROUNDAUDIOINFO_FROM_AUDIO_CONFIGURATION(config->audioConfiguration);
   if (server->currentGame == 0) {
-    int fps = sops && config->fps > 60 ? 60 : config->fps; 
+    // Using an FPS value over 60 causes SOPS to default to 720p60,
+    // so force it to 0 to ensure the correct resolution is set. We
+    // used to use 60 here but that locked the frame rate to 60 FPS
+    // on GFE 3.20.3.
+    int fps = config->fps > 60 ? 0 : config->fps;
     snprintf(url, sizeof(url), "https://%s:47984/launch?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d&remoteControllersBitmap=%d&gcmap=%d", server->serverInfo.address, unique_id, uuid_str, appId, config->width, config->height, fps, sops, rikey_hex, rikeyid, localaudio, surround_info, gamepad_mask, gamepad_mask);
   } else
     snprintf(url, sizeof(url), "https://%s:47984/resume?uniqueid=%s&uuid=%s&rikey=%s&rikeyid=%d&surroundAudioInfo=%d", server->serverInfo.address, unique_id, uuid_str, rikey_hex, rikeyid, surround_info);

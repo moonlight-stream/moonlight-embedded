@@ -36,7 +36,7 @@
 void sdl_init(int width, int height, bool fullscreen);
 void sdl_loop();
 
-SDL_mutex *mutex;
-int sdlCurrentFrame, sdlNextFrame;
+extern SDL_mutex *mutex;
+extern int sdlCurrentFrame, sdlNextFrame;
 
 #endif /* HAVE_SDL */

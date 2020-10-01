@@ -82,7 +82,6 @@ static int mkdirtree(const char* directory) {
 }
 
 static int load_unique_id(const char* keyDirectory) {
-  printf("Loading Client ID: from %s/%s",keyDirectory,UNIQUE_FILE_NAME);
   char uniqueFilePath[PATH_MAX];
   snprintf(uniqueFilePath, PATH_MAX, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
 

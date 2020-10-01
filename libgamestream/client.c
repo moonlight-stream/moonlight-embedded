@@ -82,27 +82,25 @@ static int mkdirtree(const char* directory) {
 }
 
 static int load_unique_id(const char* keyDirectory) {
+  printf("Loading Client ID: from %s/%s",keyDirectory,UNIQUE_FILE_NAME);
   char uniqueFilePath[PATH_MAX];
   snprintf(uniqueFilePath, PATH_MAX, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
 
   FILE *fd = fopen(uniqueFilePath, "r");
   if (fd == NULL) {
-    unsigned char unique_data[UNIQUEID_BYTES];
-    RAND_bytes(unique_data, UNIQUEID_BYTES);
-    for (int i = 0; i < UNIQUEID_BYTES; i++) {
-      sprintf(unique_id + (i * 2), "%02x", unique_data[i]);
-    }
-    fd = fopen(uniqueFilePath, "w");
+    snprintf(unique_id,UNIQUEID_CHARS+1,"0123456789ABCDEF");
+	
+	fd = fopen(uniqueFilePath, "w");
     if (fd == NULL)
       return GS_FAILED;
-
+  
     fwrite(unique_id, UNIQUEID_CHARS, 1, fd);
   } else {
     fread(unique_id, UNIQUEID_CHARS, 1, fd);
   }
   fclose(fd);
   unique_id[UNIQUEID_CHARS] = 0;
-
+  
   return GS_OK;
 }
 

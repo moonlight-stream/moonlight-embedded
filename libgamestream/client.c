@@ -30,6 +30,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include <uuid/uuid.h>
 #include <openssl/sha.h>
 #include <openssl/aes.h>

@@ -7,7 +7,7 @@ your powerful Windows desktop to your (embedded) Linux system, like Raspberry Pi
 
 ## Documentation
 
-More information about installing and runnning Moonlight Embedded is available on the [wiki](https://github.com/irtimmer/moonlight-embedded/wiki).
+More information about installing and runnning Moonlight Embedded is available on the [wiki](https://github.com/moonlight-stream/moonlight-embedded/wiki).
 
 ## Requirements
 
@@ -28,7 +28,7 @@ More information about installing and runnning Moonlight Embedded is available o
 
 Please check the wiki and old bug reports before submitting a new bug report.
 
-Bugs can be reported to the [issue tracker](https://github.com/irtimmer/moonlight-embedded/issues).
+Bugs can be reported to the [issue tracker](https://github.com/moonlight-stream/moonlight-embedded/issues).
 
 ## See also
 

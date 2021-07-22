@@ -1,7 +1,7 @@
 # Contribution Guide
 
 ## Got a Question or Problem?
-Please take a look at the [wiki](https://github.com/irtimmer/moonlight-embedded/wiki) for answers to your questions about using Moonlight Embedded.
+Please take a look at the [wiki](https://github.com/moonlight-stream/moonlight-embedded/wiki) for answers to your questions about using Moonlight Embedded.
 
 If you still have questions about Moonlight Embedded, please use one of the different forums discussing Moonlight Embedded.
 

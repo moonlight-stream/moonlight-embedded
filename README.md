@@ -32,7 +32,7 @@ Bugs can be reported to the [issue tracker](https://github.com/irtimmer/moonligh
 
 ## See also
 
-[Moonlight-common-c](https://github.com/irtimmer/moonlight-common-c) is a fork of moonlight-common-c used by Moonlight Embedded
+[Moonlight-common-c](https://github.com/moonlight-stream/moonlight-common-c) is the shared codebase between different Moonlight implementations
 
 ## Contribute
 

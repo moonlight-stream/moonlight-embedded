@@ -48,14 +48,16 @@ void gs_sps_fix(PLENTRY sps, int flags, uint8_t* out_buf, uint32_t* out_offset) 
 
   // GFE 2.5.11 changed the SPS to add additional extensions
   // Some devices don't like these so we remove them here.
-  h264_stream->sps->vui.video_signal_type_present_flag = 0;
-  h264_stream->sps->vui.chroma_loc_info_present_flag = 0;
+  if (flags & GS_SPS_REMOVE_VST_FIXUP)
+    h264_stream->sps->vui.video_signal_type_present_flag = 0;
+  if (flags & GS_SPS_REMOVE_CLI_FIXUP)
+    h264_stream->sps->vui.chroma_loc_info_present_flag = 0;
 
   if ((flags & GS_SPS_BITSTREAM_FIXUP) == GS_SPS_BITSTREAM_FIXUP) {
     // The SPS that comes in the current H264 bytestream doesn't set the bitstream_restriction_flag
-    // or the max_dec_frame_buffering which increases decoding latency on some devices
+    // or the max_dec_frame_buffering which increases decoding latency on some devices.
     // log2_max_mv_length_horizontal and log2_max_mv_length_vertical are set to more
-    // conservite values by GFE 25.11. We'll let those values stand.
+    // conservative values by GFE 2.5.11. We'll let those values stand.
     if (!h264_stream->sps->vui.bitstream_restriction_flag) {
       h264_stream->sps->vui.bitstream_restriction_flag = 1;
       h264_stream->sps->vui.motion_vectors_over_pic_boundaries_flag = 1;
@@ -72,8 +74,7 @@ void gs_sps_fix(PLENTRY sps, int flags, uint8_t* out_buf, uint32_t* out_offset) 
     // than what GFE sends in 2.5.11, but it doesn't seem to cause picture problems.
     h264_stream->sps->vui.max_bytes_per_pic_denom = 2;
     h264_stream->sps->vui.max_bits_per_mb_denom = 1;
-  } else // Devices that didn't/couldn't get bitstream restrictions before GFE 2.5.11 will continue to not receive them now
-    h264_stream->sps->vui.bitstream_restriction_flag = 0;
+  }
 
   memcpy(out_buf+*out_offset, naluHeader, 4);
   *out_offset += 4;

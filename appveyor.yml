@@ -7,19 +7,24 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       PACKAGES: libssl-dev libopus-dev libasound2-dev libudev-dev libavahi-client-dev libcurl4-openssl-dev libevdev-dev libexpat1-dev libpulse-dev uuid-dev cmake gcc g++ libavcodec-dev libavutil-dev libsdl2-dev libva-dev libvdpau-dev libcec-dev libp8-platform-dev
       BUILD_TARGET: ubuntu
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      PACKAGES: qemu binfmt-support qemu-user-static
+      BUILD_TARGET: raspbian
 
 install:
   - 'sudo apt update'
   - 'sudo apt install -y $PACKAGES'
+  - '[ "$BUILD_TARGET" != raspbian ] || docker run --rm --privileged multiarch/qemu-user-static --reset -p yes'
 
 before_build:
   - 'git submodule update --init --recursive'
 
 build_script:
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_INSTALL_PREFIX=/tmp ..
-  - make -j$(nproc)
-  - make install
+  - 'if [[ "$BUILD_TARGET" = ubuntu ]]; then mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=/tmp .. && make -j$(nproc) && make install; fi'
+  - 'if [[ "$BUILD_TARGET" = raspbian ]]; then git clone --recursive https://github.com/cgutman/moonlight-embedded-packaging.git && cd moonlight-embedded-packaging && sh -c "./build-rpi.sh $APPVEYOR_REPO_COMMIT"; fi'
+
+after_build:
+  - sh: '[ "$BUILD_TARGET" != raspbian ] || appveyor PushArtifact out_*/moonlight-embedded_*.deb'
+  - sh: '[ "$BUILD_TARGET" != raspbian ] || appveyor PushArtifact out_*/moonlight-embedded-dbgsym_*.deb'
 
 deploy: off

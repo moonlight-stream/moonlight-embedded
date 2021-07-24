@@ -1,0 +1,25 @@
+version: 0.0.0.{build}
+
+clone_depth: 1
+
+environment:
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      PACKAGES: libssl-dev libopus-dev libasound2-dev libudev-dev libavahi-client-dev libcurl4-openssl-dev libevdev-dev libexpat1-dev libpulse-dev uuid-dev cmake gcc g++ libavcodec-dev libavutil-dev libsdl2-dev libva-dev libvdpau-dev libcec-dev libp8-platform-dev
+      BUILD_TARGET: ubuntu
+
+install:
+  - 'sudo apt update'
+  - 'sudo apt install -y $PACKAGES'
+
+before_build:
+  - 'git submodule update --init --recursive'
+
+build_script:
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX=/tmp ..
+  - make -j$(nproc)
+  - make install
+
+deploy: off

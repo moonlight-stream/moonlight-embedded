@@ -1,5 +1,7 @@
 # Moonlight Embedded
 
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/uaph3i3lfu7gl7m7/branch/master?svg=true)](https://ci.appveyor.com/project/cgutman/moonlight-embedded/branch/master)
+
 Moonlight Embedded is an open source implementation of NVIDIA's GameStream, as used by the NVIDIA Shield, but built for Linux.
 
 Moonlight Embedded allows you to stream your full collection of games from

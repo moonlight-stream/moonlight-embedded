@@ -34,7 +34,7 @@ static int channelCount;
 bool audio_pulse_init(char* audio_device) {
   pa_sample_spec spec = {
     .format = PA_SAMPLE_S16LE,
-    .rate = 44000,
+    .rate = 48000,
     .channels = 2
   };
 

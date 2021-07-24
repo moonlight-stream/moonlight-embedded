@@ -64,7 +64,7 @@ static struct option long_options[] = {
   {"surround", no_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"codec", required_argument, NULL, 'x'},
-  {"unsupported", no_argument, NULL, 'y'},
+  {"nounsupported", no_argument, NULL, 'y'},
   {"quitappafter", no_argument, NULL, '1'},
   {"viewonly", no_argument, NULL, '2'},
   {"rotate", required_argument, NULL, '3'},
@@ -213,7 +213,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       config->codec = CODEC_HEVC;
     break;
   case 'y':
-    config->unsupported = true;
+    config->unsupported = false;
     break;
   case '1':
     config->quitappafter = true;
@@ -330,7 +330,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->sops = true;
   config->localaudio = false;
   config->fullscreen = true;
-  config->unsupported = false;
+  config->unsupported = true;
   config->quitappafter = false;
   config->viewonly = false;
   config->rotate = 0;

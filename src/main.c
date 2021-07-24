@@ -104,9 +104,9 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     if (ret == GS_NOT_SUPPORTED_4K)
       fprintf(stderr, "Server doesn't support 4K\n");
     else if (ret == GS_NOT_SUPPORTED_MODE)
-      fprintf(stderr, "Server doesn't support %dx%d (%d fps) or try --unsupported option\n", config->stream.width, config->stream.height, config->stream.fps);
+      fprintf(stderr, "Server doesn't support %dx%d (%d fps) or remove --nounsupported option\n", config->stream.width, config->stream.height, config->stream.fps);
     else if (ret == GS_NOT_SUPPORTED_SOPS_RESOLUTION)
-      fprintf(stderr, "SOPS isn't supported for the resolution %dx%d, use supported resolution or add --nosops option\n", config->stream.width, config->stream.height);
+      fprintf(stderr, "Optimal Playable Settings isn't supported for the resolution %dx%d, use supported resolution or add --nosops option\n", config->stream.width, config->stream.height);
     else if (ret == GS_ERROR)
       fprintf(stderr, "Gamestream error: %s\n", gs_error);
     else
@@ -206,7 +206,7 @@ static void help() {
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");
   printf("\t-mapping <file>\t\tUse <file> as gamepad mappings configuration file\n");
   printf("\t-platform <system>\tSpecify system used for audio, video and input: pi/imx/aml/rk/x11/x11_vdpau/sdl/fake (default auto)\n");
-  printf("\t-unsupported\t\tTry streaming if GFE version or options are unsupported\n");
+  printf("\t-nounsupported\t\tDon't stream if resolution is not officially supported by the server\n");
   printf("\t-quitappafter\t\tSend quit app request to remote after quitting session\n");
   printf("\t-viewonly\t\tDisable all input processing (view-only mode)\n");
   #if defined(HAVE_SDL) || defined(HAVE_X11)

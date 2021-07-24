@@ -141,9 +141,9 @@ By default the gamecontrollerdb.txt provided by Moonlight Embedded is used.
 Select platform for audio and video output and input.
 <PLATFORM> can be pi, imx, aml, x11, x11_vdpau, sdl or fake.
 
-=item B<-unsupported>
+=item B<-nounsupported>
 
-Try streaming if GFE version or options are unsupported
+Don't stream if resolution is not officially supported by the server
 
 =item B<-quitappafter>
 

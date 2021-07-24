@@ -61,7 +61,7 @@ static struct option long_options[] = {
   {"keydir", required_argument, NULL, 'r'},
   {"remote", no_argument, NULL, 's'},
   {"windowed", no_argument, NULL, 't'},
-  {"surround", no_argument, NULL, 'u'},
+  {"surround", required_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
   {"codec", required_argument, NULL, 'x'},
   {"nounsupported", no_argument, NULL, 'y'},
@@ -199,7 +199,10 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->fullscreen = false;
     break;
   case 'u':
-    config->stream.audioConfiguration = AUDIO_CONFIGURATION_51_SURROUND;
+    if (strcasecmp(value, "5.1") == 0)
+      config->stream.audioConfiguration = AUDIO_CONFIGURATION_51_SURROUND;
+    else if (strcasecmp(value, "7.1") == 0)
+      config->stream.audioConfiguration = AUDIO_CONFIGURATION_71_SURROUND;
     break;
   case 'v':
     config->stream.fps = atoi(value);
@@ -352,7 +355,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stuv:w:xy", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stu:v:w:xy", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

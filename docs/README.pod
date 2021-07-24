@@ -121,9 +121,9 @@ Stop GFE from changing the graphical settings of the requested game or applicati
 
 Play the audio on the host computer instead of this device.
 
-=item B<-surround>
+=item B<-surround> [I<5.1/7.1>]
 
-Enable 5.1 surround sound instead of stereo.
+Enable surround sound instead of stereo.
 
 =item B<-keydir> [I<DIRECTORY>]
 

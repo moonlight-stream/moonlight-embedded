@@ -677,7 +677,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   srand(time(NULL));
   char url[4096];
   u_int32_t rikeyid = 0;
-  memset(&rikeyid, config->remoteInputAesIv, 4);
+  memcpy(&rikeyid, config->remoteInputAesIv, 4);
   rikeyid = htonl(rikeyid);
   char rikey_hex[33];
   bytes_to_hex(config->remoteInputAesKey, rikey_hex, 16);

@@ -53,18 +53,20 @@ static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
 
   channelCount = opusConfig->channelCount;
 
-  /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR
-   * ALSA expects the order: FL-FR-RL-RR-C-LFE
+  /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR-SL-SR
+   * ALSA expects the order: FL-FR-RL-RR-C-LFE-SL-SR
    * We need copy the mapping locally and swap the channels around.
    */
   alsaMapping[0] = opusConfig->mapping[0];
   alsaMapping[1] = opusConfig->mapping[1];
-  if (opusConfig->channelCount == 6) {
+  if (opusConfig->channelCount >= 6) {
     alsaMapping[2] = opusConfig->mapping[4];
     alsaMapping[3] = opusConfig->mapping[5];
     alsaMapping[4] = opusConfig->mapping[2];
     alsaMapping[5] = opusConfig->mapping[3];
   }
+  alsaMapping[6] = opusConfig->mapping[6];
+  alsaMapping[7] = opusConfig->mapping[7];
 
   decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 

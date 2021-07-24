@@ -93,8 +93,8 @@ For other configurations, 5 Mbps is used by default.
 
 Change the network packetsize to I<PACKETSIZE> bytes.
 The packetsize should the smaller than the MTU of the network.
-This value must be a multiply of 16.
-By default a safe value of 1024 is used.
+This value must be a multiple of 16.
+By default, 1392 is used on LAN and 1024 on WAN.
 
 =item B<-codec> [I<CODEC>]
 
@@ -103,9 +103,9 @@ Can be 'auto', 'h264', 'h265' or 'hevc'.
 Not all video decoders do support H.265/HEVC.
 Will still use H.264 if server doesn't support HEVC.
 
-=item B<-remote>
+=item B<-remote> [I<yes/no/auto>]
 
-Enable the optimizations for remote connections in GFE.
+Enable optimizations for LAN or WAN streaming.
 
 =item B<-app> [I<APP>]
 

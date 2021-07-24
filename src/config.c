@@ -59,7 +59,7 @@ static struct option long_options[] = {
   {"platform", required_argument, NULL, 'p'},
   {"save", required_argument, NULL, 'q'},
   {"keydir", required_argument, NULL, 'r'},
-  {"remote", no_argument, NULL, 's'},
+  {"remote", required_argument, NULL, 's'},
   {"windowed", no_argument, NULL, 't'},
   {"surround", required_argument, NULL, 'u'},
   {"fps", required_argument, NULL, 'v'},
@@ -193,8 +193,14 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     strcpy(config->key_dir, value);
     break;
   case 's':
-    config->stream.streamingRemotely = 1;
+    if (strcasecmp(value, "auto") == 0)
+      config->stream.streamingRemotely = STREAM_CFG_AUTO;
+    else if (strcasecmp(value, "true") == 0 || strcasecmp(value, "yes") == 0)
+      config->stream.streamingRemotely = STREAM_CFG_REMOTE;
+    else if (strcasecmp(value, "false") == 0 || strcasecmp(value, "no") == 0)
+      config->stream.streamingRemotely = STREAM_CFG_LOCAL;
     break;
+
   case 't':
     config->fullscreen = false;
     break;
@@ -212,7 +218,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       config->codec = CODEC_UNSPECIFIED;
     else if (strcasecmp(value, "h264") == 0)
       config->codec = CODEC_H264;
-    if (strcasecmp(value, "h265") == 0 || strcasecmp(value, "hevc") == 0)
+    else if (strcasecmp(value, "h265") == 0 || strcasecmp(value, "hevc") == 0)
       config->codec = CODEC_HEVC;
     break;
   case 'y':
@@ -318,8 +324,8 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.height = 720;
   config->stream.fps = 60;
   config->stream.bitrate = -1;
-  config->stream.packetSize = 1024;
-  config->stream.streamingRemotely = 0;
+  config->stream.packetSize = 1392;
+  config->stream.streamingRemotely = STREAM_CFG_AUTO;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportsHevc = false;
 
@@ -355,7 +361,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:stu:v:w:xy", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

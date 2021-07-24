@@ -293,15 +293,7 @@ static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *sl
   if (ctx == NULL)
     return GS_FAILED;
 
-  const EVP_MD *md = EVP_get_digestbyname("SHA256");
-  if (md == NULL)
-    goto cleanup;
-
-  int rc = EVP_DigestInit_ex(ctx, md, NULL);
-  if (rc != 1)
-    goto cleanup;
-
-  rc = EVP_DigestSignInit(ctx, NULL, md, NULL, pkey);
+  int rc = EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey);
   if (rc != 1)
     goto cleanup;
 

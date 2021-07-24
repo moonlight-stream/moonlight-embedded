@@ -316,7 +316,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
 
   config->stream.width = 1280;
   config->stream.height = 720;
-  config->stream.fps = -1;
+  config->stream.fps = 60;
   config->stream.bitrate = -1;
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
@@ -373,9 +373,6 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
     else
       sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, pw->pw_dir);
   }
-
-  if (config->stream.fps == -1)
-    config->stream.fps = config->stream.height >= 1080 ? 30 : 60;
 
   if (config->stream.bitrate == -1) {
     if (config->stream.height >= 1080 && config->stream.fps >= 60)

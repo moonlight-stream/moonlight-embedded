@@ -79,16 +79,15 @@ Change the vertical resolution to I<HEIGHT>
 =item B<-fps> [I<FPS>]
 
 Change the number of frame per second to I<FPS>.
-Defaults to 60fps for 720p and 30fps for 1080p and higher.
-Only 30 and 60 fps are currently supported by Gamestream.
+Defaults to 60 FPS.
 
 =item B<-bitrate> [I<BITRATE>]
 
 Change bitrate to I<BITRATE> Kbps.
-By default the bitrate depends on the selected resolution and fps.
-For resolution 1080p and 60 fps and higher 20 Mbps is used.
-For resolution 1080p or 60 fps and higher 10 Mbps is used
-For other configurations 5 Mbps is used by default.
+By default the bitrate depends on the selected resolution and FPS.
+For resolution 1080p and 60 FPS and higher, 20 Mbps is used.
+For resolution 1080p or 60 FPS and higher, 10 Mbps is used
+For other configurations, 5 Mbps is used by default.
 
 =item B<-packetsize> [I<PACKETSIZE>]
 

@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+#include "util.h"
 
 #include "input/evdev.h"
 #include "audio/audio.h"
@@ -328,6 +329,20 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.streamingRemotely = STREAM_CFG_AUTO;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportsHevc = false;
+  config->stream.encryptionFlags = ENCFLG_AUDIO;
+
+#ifdef __arm__
+  char cpuinfo[4096] = {};
+  if (read_file("/proc/cpuinfo", cpuinfo, sizeof(cpuinfo)) > 0) {
+    // If this is a ARMv6 CPU (like the Pi 1), we'll assume it's not
+    // powerful enough to handle audio encryption. The Pi 1 could
+    // barely handle Opus decoding alone.
+    if (strstr(cpuinfo, "ARMv6")) {
+      config->stream.encryptionFlags = ENCFLG_NONE;
+      printf("Disabling audio encryption on low performance CPU\n");
+    }
+  }
+#endif
 
   config->debug_level = 0;
   config->platform = "auto";

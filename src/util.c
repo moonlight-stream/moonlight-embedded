@@ -38,3 +38,15 @@ int blank_fb(char *path, bool clear) {
   } else
     return -1;
 }
+
+int read_file(char *path, char* output, int output_len) {
+  int fd = open(path, O_RDONLY);
+
+  if(fd >= 0) {
+    output_len = read(fd, output, output_len);
+    close(fd);
+    return output_len;
+  } else
+    return -1;
+}
+

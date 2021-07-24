@@ -20,3 +20,4 @@
 #include <stdbool.h>
 
 int blank_fb(char *path, bool clear);
+int read_file(char *path, char *output, int output_len);

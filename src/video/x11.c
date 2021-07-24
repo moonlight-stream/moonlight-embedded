@@ -199,5 +199,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vaapi = {
   .setup = x11_setup_vaapi,
   .cleanup = x11_cleanup,
   .submitDecodeUnit = x11_submit_decode_unit,
-  .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC | CAPABILITY_REFERENCE_FRAME_INVALIDATION_HEVC | CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT,
 };

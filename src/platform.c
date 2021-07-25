@@ -176,6 +176,8 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
 
 AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system, char* audio_device) {
   switch (system) {
+  case FAKE:
+      return NULL;
   #ifdef HAVE_SDL
   case SDL:
     return &audio_callbacks_sdl;
@@ -184,9 +186,8 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system, char* audio_d
   case PI:
     if (audio_device == NULL || strcmp(audio_device, "local") == 0 || strcmp(audio_device, "hdmi") == 0)
       return (PAUDIO_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "audio_callbacks_omx");
+    // fall-through
   #endif
-  case FAKE:
-      return NULL;
   default:
     #ifdef HAVE_PULSE
     if (audio_pulse_init(audio_device))

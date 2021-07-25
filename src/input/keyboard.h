@@ -47,7 +47,7 @@ static const short keyCodes[] = {
   0xDB, //VK_BRACELEFT
   0xDD, //VK_BRACERIGHT
   0x0D, //VK_ENTER
-  0x11, //VK_CONTROL Left control
+  0xA2, //VK_CONTROL Left control
   0x41, //VK_A
   0x53, //VK_S
   0x44, //VK_D
@@ -60,7 +60,7 @@ static const short keyCodes[] = {
   0xBA, //VK_SEMICOLON
   0xDE, //VK_APOSTROPHE
   0xC0, //VK_GRAVE
-  0x10, //VK_SHIFT Left shift
+  0xA0, //VK_SHIFT Left shift
   0xDC, //VK_BACK_SLASH
   0x5A, //VK_Z
   0x58, //VK_X
@@ -72,9 +72,9 @@ static const short keyCodes[] = {
   0xBC, //VK_COMMA
   0xBE, //VK_DOT
   0xBF, //VK_SLASH
-  0x10, //VK_SHIFT Right shift
+  0xA1, //VK_SHIFT Right shift
   0x6A, //VK_KPASTERISK
-  0x12, //VK_ALT Left alt
+  0xA4, //VK_ALT Left alt
   0x20, //VK_SPACE
   0x14, //VK_CAPS_LOCK
   0x70, //VK_F1
@@ -115,10 +115,10 @@ static const short keyCodes[] = {
   0, //VK_MUHENKAN
   0, //VK_KPJPCOMMA
   0x0D, //VK_KPENTER
-  0x11, //VK_CONTROL Right ctrl
+  0xA3, //VK_CONTROL Right ctrl
   0x6F, //VK_KPSLASH
   0x2C, //VK_SYSRQ
-  0x12, //VK_ALT Right alt
+  0xA5, //VK_ALT Right alt
   0, //KeyEvent.VK_LINEFEED
   0x24, //VK_HOME
   0x26, //VK_UP
@@ -128,7 +128,7 @@ static const short keyCodes[] = {
   0x23, //VK_END
   0x28, //VK_DOWN
   0x22, //VK_PAGE_DOWN
-  0x9B, //VK_INSERT
+  0x2D, //VK_INSERT
   0x2E, //VK_DELETE
   0, //VK_MACRO
   0, //VK_MUTE
@@ -139,4 +139,11 @@ static const short keyCodes[] = {
   0, //VK_KPPLUSMINUS
   0x13, //VK_PAUSE
   0, //VK_SCALE AL Compiz Scale (Expose)
+  0, //KEY_KPCOMMA
+  0, //KEY_HANGEUL
+  0, //KEY_HANJA
+  0, //KEY_YEN
+  0x5B, //KEY_LEFTMETA
+  0x5C, //KEY_RIGHTMETA
+  0, //KEY_COMPOSE
 };

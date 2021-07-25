@@ -104,6 +104,8 @@ static bool* currentReverse;
 
 static bool grabbingDevices;
 
+static bool waitingToExitOnModifiersUp = false;
+
 int evdev_gamepads = 0;
 
 #define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
@@ -263,15 +265,13 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
           dev->modifiers &= ~modifier;
       }
 
-      // Quit the stream if all the required quit keys are down
+      // After the quit key combo is pressed, quit once all keys are raised
       if ((dev->modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS &&
           ev->code == QUIT_KEY && ev->value != 0) {
-
-        short code = 0x80 << 8 | keyCodes[ev->code];
-        LiSendKeyboardEvent(code, KEY_ACTION_DOWN, 0);
-        usleep(1000000);
+        waitingToExitOnModifiersUp = true;
+        return true;
+      } else if (waitingToExitOnModifiersUp && dev->modifiers == 0)
         return false;
-      }
 
       short code = 0x80 << 8 | keyCodes[ev->code];
       LiSendKeyboardEvent(code, ev->value?KEY_ACTION_DOWN:KEY_ACTION_UP, dev->modifiers);
@@ -495,8 +495,10 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     }
   }
 
-  if (gamepadModified && (dev->buttonFlags & QUIT_BUTTONS) == QUIT_BUTTONS)
+  if (gamepadModified && (dev->buttonFlags & QUIT_BUTTONS) == QUIT_BUTTONS) {
+    LiSendMultiControllerEvent(dev->controllerId, 1, 0, 0, 0, 0, 0, 0, 0);
     return false;
+  }
 
   dev->gamepadModified |= gamepadModified;
   return true;

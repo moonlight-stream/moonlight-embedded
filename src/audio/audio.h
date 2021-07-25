@@ -21,7 +21,6 @@
 
 #include <Limelight.h>
 
-#define FRAME_SIZE 240
 #define FRAME_BUFFER 12
 
 #ifdef HAVE_ALSA

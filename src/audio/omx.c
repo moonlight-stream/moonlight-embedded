@@ -29,8 +29,9 @@ static OpusMSDecoder* decoder;
 ILCLIENT_T* handle;
 COMPONENT_T* component;
 static OMX_BUFFERHEADERTYPE *buf;
-static short pcmBuffer[FRAME_SIZE * AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
+static short* pcmBuffer;
 static int channelCount;
+static int samplesPerFrame;
 
 static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc, error;
@@ -39,6 +40,11 @@ static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURA
   char* componentName = "audio_render";
 
   channelCount = opusConfig->channelCount;
+  samplesPerFrame = opusConfig->samplesPerFrame;
+  pcmBuffer = malloc(sizeof(short) * channelCount * samplesPerFrame);
+  if (pcmBuffer == NULL)
+    return -1;
+
   /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR-SL-SR
    * OMX expects the order: FL-FR-LFE-C-RL-RR-SL-SR
    * We need copy the mapping locally and swap the channels around.
@@ -155,8 +161,10 @@ static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURA
 }
 
 static void omx_renderer_cleanup() {
-  if (decoder != NULL)
+  if (decoder != NULL) {
     opus_multistream_decoder_destroy(decoder);
+    decoder = NULL;
+  }
   if (handle != NULL) {
     if((buf = ilclient_get_input_buffer(component, 100, 1)) == NULL){
       fprintf(stderr, "Can't get audio buffer\n");
@@ -174,11 +182,16 @@ static void omx_renderer_cleanup() {
     ilclient_disable_port_buffers(component, 100, NULL, NULL, NULL);
     ilclient_change_component_state(component, OMX_StateIdle);
     ilclient_change_component_state(component, OMX_StateLoaded);
+    handle = NULL;
+  }
+  if (pcmBuffer != NULL) {
+    free(pcmBuffer);
+    pcmBuffer = NULL;
   }
 }
 
 static void omx_renderer_decode_and_play_sample(char* data, int length) {
-  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
+  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, samplesPerFrame, 0);
   if (decodeLen > 0) {
     buf = ilclient_get_input_buffer(component, 100, 1);
     buf->nOffset = 0;
@@ -199,5 +212,5 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_omx = {
   .init = omx_renderer_init,
   .cleanup = omx_renderer_cleanup,
   .decodeAndPlaySample = omx_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_SUPPORTS_ARBITRARY_AUDIO_DURATION,
 };

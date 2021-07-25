@@ -26,7 +26,8 @@
 #include <opus_multistream.h>
 
 static OpusMSDecoder* decoder;
-static short pcmBuffer[FRAME_SIZE * AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
+static short* pcmBuffer;
+static int samplesPerFrame;
 static SDL_AudioDeviceID dev;
 static int channelCount;
 
@@ -35,6 +36,10 @@ static int sdl_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURA
   decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, opusConfig->mapping, &rc);
 
   channelCount = opusConfig->channelCount;
+  samplesPerFrame = opusConfig->samplesPerFrame;
+  pcmBuffer = malloc(sizeof(short) * channelCount * samplesPerFrame);
+  if (pcmBuffer == NULL)
+    return -1;
 
   SDL_InitSubSystem(SDL_INIT_AUDIO);
 
@@ -45,13 +50,11 @@ static int sdl_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURA
   want.channels = opusConfig->channelCount;
   want.samples = 4096;
 
-  dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+  dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
   if (dev == 0) {
     printf("Failed to open audio: %s\n", SDL_GetError());
     return -1;
   } else {
-    if (have.format != want.format)  // we let this one thing change.
-      printf("We didn't get requested audio format.\n");
     SDL_PauseAudioDevice(dev, 0);  // start audio playing.
   }
 
@@ -59,14 +62,24 @@ static int sdl_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURA
 }
 
 static void sdl_renderer_cleanup() {
-  if (decoder != NULL)
+  if (decoder != NULL) {
     opus_multistream_decoder_destroy(decoder);
+    decoder = NULL;
+  }
 
-  SDL_CloseAudioDevice(dev);
+  if (pcmBuffer != NULL) {
+    free(pcmBuffer);
+    pcmBuffer = NULL;
+  }
+
+  if (dev != 0) {
+    SDL_CloseAudioDevice(dev);
+    dev = 0;
+  }
 }
 
 static void sdl_renderer_decode_and_play_sample(char* data, int length) {
-  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
+  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, samplesPerFrame, 0);
   if (decodeLen > 0) {
     SDL_QueueAudio(dev, pcmBuffer, decodeLen * channelCount * sizeof(short));
   } else {
@@ -78,5 +91,5 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_sdl = {
   .init = sdl_renderer_init,
   .cleanup = sdl_renderer_cleanup,
   .decodeAndPlaySample = sdl_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_SUPPORTS_ARBITRARY_AUDIO_DURATION,
 };

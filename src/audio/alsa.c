@@ -29,7 +29,8 @@
 
 static snd_pcm_t *handle;
 static OpusMSDecoder* decoder;
-static short pcmBuffer[FRAME_SIZE * AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
+static short* pcmBuffer;
+static int samplesPerFrame;
 
 static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc;
@@ -47,11 +48,16 @@ static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
     alsaMapping[5] = opusConfig->mapping[3];
   }
 
+  samplesPerFrame = opusConfig->samplesPerFrame;
+  pcmBuffer = malloc(sizeof(short) * opusConfig->channelCount * samplesPerFrame);
+  if (pcmBuffer == NULL)
+    return -1;
+
   decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 
   snd_pcm_hw_params_t *hw_params;
   snd_pcm_sw_params_t *sw_params;
-  snd_pcm_uframes_t period_size = FRAME_SIZE * FRAME_BUFFER;
+  snd_pcm_uframes_t period_size = samplesPerFrame * FRAME_BUFFER;
   snd_pcm_uframes_t buffer_size = 2 * period_size;
   unsigned int sampleRate = opusConfig->sampleRate;
 
@@ -88,17 +94,25 @@ static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
 }
 
 static void alsa_renderer_cleanup() {
-  if (decoder != NULL)
+  if (decoder != NULL) {
     opus_multistream_decoder_destroy(decoder);
+    decoder = NULL;
+  }
 
   if (handle != NULL) {
     snd_pcm_drain(handle);
     snd_pcm_close(handle);
+    handle = NULL;
+  }
+
+  if (pcmBuffer != NULL) {
+    free(pcmBuffer);
+    pcmBuffer = NULL;
   }
 }
 
 static void alsa_renderer_decode_and_play_sample(char* data, int length) {
-  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
+  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, samplesPerFrame, 0);
   if (decodeLen > 0) {
     int rc = snd_pcm_writei(handle, pcmBuffer, decodeLen);
     if (rc == -EPIPE)
@@ -117,5 +131,5 @@ AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa = {
   .init = alsa_renderer_init,
   .cleanup = alsa_renderer_cleanup,
   .decodeAndPlaySample = alsa_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_SUPPORTS_ARBITRARY_AUDIO_DURATION,
 };

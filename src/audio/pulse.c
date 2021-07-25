@@ -29,7 +29,8 @@
 
 static OpusMSDecoder* decoder;
 static pa_simple *dev = NULL;
-static short pcmBuffer[FRAME_SIZE * AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
+static short* pcmBuffer;
+static int samplesPerFrame;
 static int channelCount;
 
 bool audio_pulse_init(char* audio_device) {
@@ -53,6 +54,10 @@ static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
   unsigned char alsaMapping[AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
 
   channelCount = opusConfig->channelCount;
+  samplesPerFrame = opusConfig->samplesPerFrame;
+  pcmBuffer = malloc(sizeof(short) * channelCount * samplesPerFrame);
+  if (pcmBuffer == NULL)
+    return -1;
 
   /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR-SL-SR
    * ALSA expects the order: FL-FR-RL-RR-C-LFE-SL-SR
@@ -86,7 +91,7 @@ static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
 }
 
 static void pulse_renderer_decode_and_play_sample(char* data, int length) {
-  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, FRAME_SIZE, 0);
+  int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, samplesPerFrame, 0);
   if (decodeLen > 0) {
     int error;
     int rc = pa_simple_write(dev, pcmBuffer, decodeLen * sizeof(short) * channelCount, &error);
@@ -99,12 +104,23 @@ static void pulse_renderer_decode_and_play_sample(char* data, int length) {
 }
 
 static void pulse_renderer_cleanup() {
-  pa_simple_free(dev);
+  if (decoder != NULL) {
+    opus_multistream_decoder_destroy(decoder);
+    decoder = NULL;
+  }
+  if (dev != NULL) {
+    pa_simple_free(dev);
+    dev = NULL;
+  }
+  if (pcmBuffer != NULL) {
+    free(pcmBuffer);
+    pcmBuffer = NULL;
+  }
 }
 
 AUDIO_RENDERER_CALLBACKS audio_callbacks_pulse = {
   .init = pulse_renderer_init,
   .cleanup = pulse_renderer_cleanup,
   .decodeAndPlaySample = pulse_renderer_decode_and_play_sample,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_SUPPORTS_ARBITRARY_AUDIO_DURATION,
 };

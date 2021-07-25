@@ -706,6 +706,14 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
     goto cleanup;
   }
 
+  free(result);
+  result = NULL;
+
+  if (xml_search(data->memory, data->size, "sessionUrl0", &result) == GS_OK) {
+    server->serverInfo.rtspSessionUrl = result;
+    result = NULL;
+  }
+
   cleanup:
   if (result != NULL)
     free(result);

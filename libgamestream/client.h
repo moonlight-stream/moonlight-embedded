@@ -29,7 +29,6 @@
 #define MAX_SUPPORTED_GFE_VERSION 7
 
 typedef struct _SERVER_DATA {
-  const char* address;
   char* gpuType;
   bool paired;
   bool supports4K;

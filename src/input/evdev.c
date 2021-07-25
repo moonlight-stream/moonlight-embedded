@@ -142,13 +142,13 @@ static bool evdev_init_parms(struct input_device *dev, struct input_abs_parms *p
 static void evdev_remove(int devindex) {
   numDevices--;
 
+  printf("Input device removed: %s (player %d)\n", libevdev_get_name(devices[devindex].dev), devices[devindex].controllerId);
+
   if (devices[devindex].controllerId >= 0)
     assignedControllerIds &= ~(1 << devices[devindex].controllerId);
 
   if (devindex != numDevices && numDevices > 0)
     memcpy(&devices[devindex], &devices[numDevices], sizeof(struct input_device));
-
-  fprintf(stderr, "Removed input device\n");
 }
 
 static short evdev_convert_value(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, bool reverse) {
@@ -226,6 +226,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
           if ((assignedControllerIds & (1 << i)) == 0) {
             assignedControllerIds |= (1 << i);
             dev->controllerId = i;
+            printf("Assigned %s as player %d\n", libevdev_get_name(dev->dev), i+1);
             break;
           }
         }
@@ -496,7 +497,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
   }
 
   if (gamepadModified && (dev->buttonFlags & QUIT_BUTTONS) == QUIT_BUTTONS) {
-    LiSendMultiControllerEvent(dev->controllerId, 1, 0, 0, 0, 0, 0, 0, 0);
+    LiSendMultiControllerEvent(dev->controllerId, assignedControllerIds, 0, 0, 0, 0, 0, 0, 0);
     return false;
   }
 
@@ -628,7 +629,15 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
   bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
   bool is_touchscreen = libevdev_has_event_code(evdev, EV_KEY, BTN_TOUCH);
 
-  // The gamepad classification logic comes from SDL
+  // This classification logic comes from SDL
+  bool is_accelerometer =
+    ((libevdev_has_event_code(evdev, EV_ABS, ABS_X) &&
+      libevdev_has_event_code(evdev, EV_ABS, ABS_Y) &&
+      libevdev_has_event_code(evdev, EV_ABS, ABS_Z)) ||
+     (libevdev_has_event_code(evdev, EV_ABS, ABS_RX) &&
+      libevdev_has_event_code(evdev, EV_ABS, ABS_RY) &&
+      libevdev_has_event_code(evdev, EV_ABS, ABS_RZ))) &&
+    !libevdev_has_event_type(evdev, EV_KEY);
   bool is_gamepad =
     libevdev_has_event_code(evdev, EV_ABS, ABS_X) &&
     libevdev_has_event_code(evdev, EV_ABS, ABS_Y) &&
@@ -651,6 +660,12 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
 
   if (is_gamepad)
     evdev_gamepads++;
+
+  if (is_accelerometer) {
+    libevdev_free(evdev);
+    close(fd);
+    return;
+  }
 
   int dev = numDevices;
   numDevices++;

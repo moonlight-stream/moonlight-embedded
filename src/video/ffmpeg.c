@@ -80,20 +80,22 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
     return -1;
   }
 
-  if (perf_lvl & DISABLE_LOOP_FILTER)
-    // Skip the loop filter for performance reasons
-    decoder_ctx->skip_loop_filter = AVDISCARD_ALL;
+  // Use low delay decoding
+  decoder_ctx->flags |= AV_CODEC_FLAG_LOW_DELAY;
 
-  if (perf_lvl & LOW_LATENCY_DECODE)
-    // Use low delay single threaded encoding
-    decoder_ctx->flags |= AV_CODEC_FLAG_LOW_DELAY;
+  // Allow display of corrupt frames and frames missing references
+  decoder_ctx->flags |= AV_CODEC_FLAG_OUTPUT_CORRUPT;
+  decoder_ctx->flags2 |= AV_CODEC_FLAG2_SHOW_ALL;
 
-  if (perf_lvl & SLICE_THREADING)
+  // Report decoding errors to allow us to request a key frame
+  decoder_ctx->err_recognition = AV_EF_EXPLODE;
+
+  if (perf_lvl & SLICE_THREADING) {
     decoder_ctx->thread_type = FF_THREAD_SLICE;
-  else
-    decoder_ctx->thread_type = FF_THREAD_FRAME;
-
-  decoder_ctx->thread_count = thread_count;
+    decoder_ctx->thread_count = thread_count;
+  } else {
+    decoder_ctx->thread_count = 1;
+  }
 
   decoder_ctx->width = width;
   decoder_ctx->height = height;

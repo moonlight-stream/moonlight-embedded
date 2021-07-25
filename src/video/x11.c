@@ -40,6 +40,7 @@
 #define DECODER_BUFFER_SIZE 92*1024
 #define X11_VDPAU_ACCELERATION ENABLE_HARDWARE_ACCELERATION_1
 #define X11_VAAPI_ACCELERATION ENABLE_HARDWARE_ACCELERATION_2
+#define SLICES_PER_FRAME 4
 
 static char* ffmpeg_buffer = NULL;
 
@@ -124,13 +125,15 @@ int x11_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   }
   XFlush(display);
 
-  int avc_flags = SLICE_THREADING;
+  int avc_flags;
   if (drFlags & X11_VDPAU_ACCELERATION)
-    avc_flags |= VDPAU_ACCELERATION;
+    avc_flags = VDPAU_ACCELERATION;
   else if (drFlags & X11_VAAPI_ACCELERATION)
-    avc_flags |= VAAPI_ACCELERATION;
+    avc_flags = VAAPI_ACCELERATION;
+  else
+    avc_flags = SLICE_THREADING;
 
-  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, 2) < 0) {
+  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2, SLICES_PER_FRAME) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     return -1;
   }
@@ -185,7 +188,7 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_x11 = {
   .setup = x11_setup,
   .cleanup = x11_cleanup,
   .submitDecodeUnit = x11_submit_decode_unit,
-  .capabilities = CAPABILITY_SLICES_PER_FRAME(4) | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC | CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_SLICES_PER_FRAME(SLICES_PER_FRAME) | CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC | CAPABILITY_DIRECT_SUBMIT,
 };
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau = {

@@ -21,18 +21,8 @@
 
 #include <libavcodec/avcodec.h>
 
-// Disables the deblocking filter at the cost of image quality
-#define DISABLE_LOOP_FILTER 0x1
-// Uses the low latency decode flag (disables multithreading)
-#define LOW_LATENCY_DECODE 0x2
-// Threads process each slice, rather than each frame
+// Enable multi-threaded decoding
 #define SLICE_THREADING 0x4
-// Uses nonstandard speedup tricks
-#define FAST_DECODE 0x8
-// Uses bilinear filtering instead of bicubic
-#define BILINEAR_FILTERING 0x10
-// Uses a faster bilinear filtering with lower image quality
-#define FAST_BILINEAR_FILTERING 0x20
 // Uses hardware acceleration
 #define VDPAU_ACCELERATION 0x40
 #define VAAPI_ACCELERATION 0x80

@@ -32,7 +32,7 @@
 #include <stdbool.h>
 
 // General decoder and renderer state
-static AVPacket pkt;
+static AVPacket* pkt;
 static AVCodec* decoder;
 static AVCodecContext* decoder_ctx;
 static AVFrame** dec_frames;
@@ -53,7 +53,11 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
   avcodec_register_all();
 #endif
 
-  av_init_packet(&pkt);
+  pkt = av_packet_alloc();
+  if (pkt == NULL) {
+    printf("Couldn't allocate packet\n");
+    return -1;
+  }
 
   ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
   switch (videoFormat) {
@@ -127,6 +131,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 // This function must be called after
 // decoding is finished
 void ffmpeg_destroy(void) {
+  av_packet_free(&pkt);
   if (decoder_ctx) {
     avcodec_close(decoder_ctx);
     av_free(decoder_ctx);
@@ -161,10 +166,10 @@ AVFrame* ffmpeg_get_frame(bool native_frame) {
 int ffmpeg_decode(unsigned char* indata, int inlen) {
   int err;
 
-  pkt.data = indata;
-  pkt.size = inlen;
+  pkt->data = indata;
+  pkt->size = inlen;
 
-  err = avcodec_send_packet(decoder_ctx, &pkt);
+  err = avcodec_send_packet(decoder_ctx, pkt);
   if (err < 0) {
     char errorstring[512];
     av_strerror(err, errorstring, sizeof(errorstring));

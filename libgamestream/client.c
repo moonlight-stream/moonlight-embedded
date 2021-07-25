@@ -655,8 +655,6 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 
   if (!correct_mode && !server->unsupported)
     return GS_NOT_SUPPORTED_MODE;
-  else if (sops && !supported_resolution)
-    return GS_NOT_SUPPORTED_SOPS_RESOLUTION;
 
   if (config->height >= 2160 && !server->supports4K)
     return GS_NOT_SUPPORTED_4K;

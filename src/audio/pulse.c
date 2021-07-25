@@ -41,7 +41,7 @@ bool audio_pulse_init(char* audio_device) {
   };
 
   int error;
-  dev = pa_simple_new(audio_device, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
+  dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, audio_device, "Streaming", &spec, NULL, NULL, &error);
 
   if (dev)
     pa_simple_free(dev);
@@ -80,7 +80,7 @@ static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
   };
 
   char* audio_device = (char*) context;
-  dev = pa_simple_new(audio_device, "Moonlight Embedded", PA_STREAM_PLAYBACK, NULL, "Streaming", &spec, NULL, NULL, &error);
+  dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, audio_device, "Streaming", &spec, NULL, NULL, &error);
 
   if (!dev) {
     printf("Pulseaudio error: %s\n", pa_strerror(error));

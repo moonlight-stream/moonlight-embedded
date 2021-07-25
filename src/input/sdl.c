@@ -160,6 +160,10 @@ int sdlinput_handle_event(SDL_Event* event) {
     case SDLK_LCTRL:
       modifier = MODIFIER_CTRL;
       break;
+    case SDLK_RGUI:
+    case SDLK_LGUI:
+      modifier = MODIFIER_META;
+      break;
     }
 
     if (modifier != 0) {

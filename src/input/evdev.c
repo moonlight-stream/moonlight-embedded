@@ -240,6 +240,10 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       case KEY_RIGHTCTRL:
         modifier = MODIFIER_CTRL;
         break;
+      case KEY_LEFTMETA:
+      case KEY_RIGHTMETA:
+        modifier = MODIFIER_META;
+        break;
       }
       if (modifier != 0) {
         if (ev->value)

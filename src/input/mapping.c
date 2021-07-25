@@ -43,11 +43,17 @@ struct mapping* mapping_parse(char* mapping) {
 
   char* option;
   while ((option = strtok_r(NULL, ",", &strpoint)) != NULL) {
-    char *key = NULL, *value = NULL;
+    char *key = NULL, *orig_value = NULL;
     int ret;
-    if ((ret = sscanf(option, "%m[^:]:%ms", &key, &value)) == 2) {
+    if ((ret = sscanf(option, "%m[^:]:%ms", &key, &orig_value)) == 2) {
       int int_value, direction_value;
+      char *value = orig_value;
       char flag = 0;
+      char half_axis = 0;
+      if (value[0] == '-' || value[0] == '+') {
+        half_axis = value[0];
+        value++;
+      }
       if (strcmp("platform", key) == 0)
         strncpy(map->platform, value, sizeof(map->platform));
       else if (sscanf(value, "b%d", &int_value) == 1) {
@@ -98,10 +104,13 @@ struct mapping* mapping_parse(char* mapping) {
         } else if (strcmp("righty", key) == 0) {
           map->abs_righty = int_value;
           map->reverse_righty = flag == '~';
-        } else if (strcmp("lefttrigger", key) == 0)
+        } else if (strcmp("lefttrigger", key) == 0) {
           map->abs_lefttrigger = int_value;
-        else if (strcmp("righttrigger", key) == 0)
+          map->halfaxis_lefttrigger = half_axis;
+        } else if (strcmp("righttrigger", key) == 0) {
           map->abs_righttrigger = int_value;
+          map->halfaxis_righttrigger = half_axis;
+        }
       } else if (sscanf(value, "h%d.%d", &int_value, &direction_value) == 2) {
         if (strcmp("dpright", key) == 0) {
           map->hat_dpright = int_value;
@@ -124,8 +133,8 @@ struct mapping* mapping_parse(char* mapping) {
     if (key != NULL)
       free(key);
 
-    if (value != NULL)
-      free(value);
+    if (orig_value != NULL)
+      free(orig_value);
   }
   map->guid[32] = '\0';
   map->name[256] = '\0';

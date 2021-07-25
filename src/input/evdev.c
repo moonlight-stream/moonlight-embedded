@@ -166,18 +166,28 @@ static short evdev_convert_value(struct input_event *ev, struct input_device *de
     return (long long)(ev->value - (ev->value>parms->avg?parms->flat*2:0) - parms->min) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) + SHRT_MIN;
 }
 
-static char evdev_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms) {
+static char evdev_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, char halfaxis) {
   if (parms->max == 0 && parms->min == 0) {
     fprintf(stderr, "Axis not found: %d\n", ev->code);
     return 0;
   }
 
-  if (abs(ev->value-parms->min)<parms->flat)
-    return 0;
-  else if (ev->value>parms->max)
-    return UCHAR_MAX;
-  else
-    return (ev->value - parms->flat - parms->min) * UCHAR_MAX / (parms->diff - parms->flat);
+  if (halfaxis == 0) {
+    if (abs(ev->value-parms->min)<parms->flat)
+      return 0;
+    else if (ev->value>parms->max)
+      return UCHAR_MAX;
+    else
+      return (ev->value - parms->flat - parms->min) * UCHAR_MAX / (parms->diff - parms->flat);
+  } else {
+    short val = evdev_convert_value(ev, dev, parms, false);
+    if (halfaxis == '-' && val < 0)
+      return -(int)val * UCHAR_MAX / (SHRT_MAX-SHRT_MIN);
+    else if (halfaxis == '+' && val > 0)
+      return (int)val * UCHAR_MAX / (SHRT_MAX-SHRT_MIN);
+    else
+      return 0;
+  }
 }
 
 static bool evdev_handle_event(struct input_event *ev, struct input_device *dev) {
@@ -437,12 +447,17 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         dev->rightStickX = evdev_convert_value(ev, dev, &dev->rxParms, dev->map->reverse_rightx);
       else if (index == dev->map->abs_righty)
         dev->rightStickY = evdev_convert_value(ev, dev, &dev->ryParms, !dev->map->reverse_righty);
-      else if (index == dev->map->abs_lefttrigger)
-        dev->leftTrigger = evdev_convert_value_byte(ev, dev, &dev->zParms);
-      else if (index == dev->map->abs_righttrigger)
-        dev->rightTrigger = evdev_convert_value_byte(ev, dev, &dev->rzParms);
       else
         gamepadModified = false;
+
+      if (index == dev->map->abs_lefttrigger) {
+        dev->leftTrigger = evdev_convert_value_byte(ev, dev, &dev->zParms, dev->map->halfaxis_lefttrigger);
+        gamepadModified = true;
+      }
+      if (index == dev->map->abs_righttrigger) {
+        dev->rightTrigger = evdev_convert_value_byte(ev, dev, &dev->rzParms, dev->map->halfaxis_righttrigger);
+        gamepadModified = true;
+      }
     }
   }
 

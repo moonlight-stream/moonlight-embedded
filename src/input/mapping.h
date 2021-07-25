@@ -28,6 +28,7 @@ struct mapping {
 
   bool reverse_leftx, reverse_lefty;
   bool reverse_rightx, reverse_righty;
+  bool halfaxis_lefttrigger, halfaxis_righttrigger;
 
   short abs_leftx, abs_lefty;
   short abs_rightx, abs_righty;

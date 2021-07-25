@@ -26,7 +26,7 @@
 #include <opus_multistream.h>
 
 static OpusMSDecoder* decoder;
-static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
+static short pcmBuffer[FRAME_SIZE * AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
 static SDL_AudioDeviceID dev;
 static int channelCount;
 

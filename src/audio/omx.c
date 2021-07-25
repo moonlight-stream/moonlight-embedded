@@ -29,18 +29,18 @@ static OpusMSDecoder* decoder;
 ILCLIENT_T* handle;
 COMPONENT_T* component;
 static OMX_BUFFERHEADERTYPE *buf;
-static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
+static short pcmBuffer[FRAME_SIZE * AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
 static int channelCount;
 
 static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc, error;
   OMX_ERRORTYPE err;
-  unsigned char omxMapping[MAX_CHANNEL_COUNT];
+  unsigned char omxMapping[AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
   char* componentName = "audio_render";
 
   channelCount = opusConfig->channelCount;
-  /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR
-   * OMX expects the order: FL-FR-LFE-C-RL-RR
+  /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR-SL-SR
+   * OMX expects the order: FL-FR-LFE-C-RL-RR-SL-SR
    * We need copy the mapping locally and swap the channels around.
    */
   memcpy(omxMapping, opusConfig->mapping, sizeof(omxMapping));

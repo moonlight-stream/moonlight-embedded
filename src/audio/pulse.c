@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <opus_multistream.h>
 #include <pulse/simple.h>
@@ -28,7 +29,7 @@
 
 static OpusMSDecoder* decoder;
 static pa_simple *dev = NULL;
-static short pcmBuffer[FRAME_SIZE * MAX_CHANNEL_COUNT];
+static short pcmBuffer[FRAME_SIZE * AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
 static int channelCount;
 
 bool audio_pulse_init(char* audio_device) {
@@ -49,7 +50,7 @@ bool audio_pulse_init(char* audio_device) {
 
 static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc, error;
-  unsigned char alsaMapping[MAX_CHANNEL_COUNT];
+  unsigned char alsaMapping[AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
 
   channelCount = opusConfig->channelCount;
 
@@ -57,16 +58,13 @@ static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
    * ALSA expects the order: FL-FR-RL-RR-C-LFE-SL-SR
    * We need copy the mapping locally and swap the channels around.
    */
-  alsaMapping[0] = opusConfig->mapping[0];
-  alsaMapping[1] = opusConfig->mapping[1];
+  memcpy(alsaMapping, opusConfig->mapping, sizeof(alsaMapping));
   if (opusConfig->channelCount >= 6) {
     alsaMapping[2] = opusConfig->mapping[4];
     alsaMapping[3] = opusConfig->mapping[5];
     alsaMapping[4] = opusConfig->mapping[2];
     alsaMapping[5] = opusConfig->mapping[3];
   }
-  alsaMapping[6] = opusConfig->mapping[6];
-  alsaMapping[7] = opusConfig->mapping[7];
 
   decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 

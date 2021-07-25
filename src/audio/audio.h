@@ -21,7 +21,6 @@
 
 #include <Limelight.h>
 
-#define MAX_CHANNEL_COUNT 8
 #define FRAME_SIZE 240
 #define FRAME_BUFFER 12
 

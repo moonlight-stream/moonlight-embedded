@@ -79,8 +79,11 @@ static int pulse_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGU
     .channels = opusConfig->channelCount
   };
 
+  pa_channel_map map;
+  pa_channel_map_init_auto(&map, opusConfig->channelCount, PA_CHANNEL_MAP_ALSA);
+
   char* audio_device = (char*) context;
-  dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, audio_device, "Streaming", &spec, NULL, NULL, &error);
+  dev = pa_simple_new(NULL, "Moonlight Embedded", PA_STREAM_PLAYBACK, audio_device, "Streaming", &spec, &map, NULL, &error);
 
   if (!dev) {
     printf("Pulseaudio error: %s\n", pa_strerror(error));

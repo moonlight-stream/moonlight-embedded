@@ -292,7 +292,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (config.debug_level > 0)
-    printf("NVIDIA %s, GFE %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
+    printf("GPU: %s, GFE: %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);

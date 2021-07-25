@@ -76,6 +76,7 @@ struct input_device {
   short rightStickX, rightStickY;
   bool gamepadModified;
   struct input_abs_parms xParms, yParms, rxParms, ryParms, zParms, rzParms;
+  struct input_abs_parms leftParms, rightParms, upParms, downParms;
 };
 
 #define HAT_UP 1
@@ -458,6 +459,39 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         dev->rightTrigger = evdev_convert_value_byte(ev, dev, &dev->rzParms, dev->map->halfaxis_righttrigger);
         gamepadModified = true;
       }
+
+      if (index == dev->map->abs_dpright) {
+        if (evdev_convert_value_byte(ev, dev, &dev->rightParms, dev->map->halfaxis_dpright) > 127)
+          dev->buttonFlags |= RIGHT_FLAG;
+        else
+          dev->buttonFlags &= ~RIGHT_FLAG;
+
+        gamepadModified = true;
+      }
+      if (index == dev->map->abs_dpleft) {
+        if (evdev_convert_value_byte(ev, dev, &dev->leftParms, dev->map->halfaxis_dpleft) > 127)
+          dev->buttonFlags |= LEFT_FLAG;
+        else
+          dev->buttonFlags &= ~LEFT_FLAG;
+
+        gamepadModified = true;
+      }
+      if (index == dev->map->abs_dpup) {
+        if (evdev_convert_value_byte(ev, dev, &dev->upParms, dev->map->halfaxis_dpup) > 127)
+          dev->buttonFlags |= UP_FLAG;
+        else
+          dev->buttonFlags &= ~UP_FLAG;
+
+        gamepadModified = true;
+      }
+      if (index == dev->map->abs_dpdown) {
+        if (evdev_convert_value_byte(ev, dev, &dev->downParms, dev->map->halfaxis_dpdown) > 127)
+          dev->buttonFlags |= DOWN_FLAG;
+        else
+          dev->buttonFlags &= ~DOWN_FLAG;
+
+        gamepadModified = true;
+      }
     }
   }
 
@@ -656,6 +690,10 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
     valid &= evdev_init_parms(&devices[dev], &(devices[dev].rxParms), devices[dev].map->abs_rightx);
     valid &= evdev_init_parms(&devices[dev], &(devices[dev].ryParms), devices[dev].map->abs_righty);
     valid &= evdev_init_parms(&devices[dev], &(devices[dev].rzParms), devices[dev].map->abs_righttrigger);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].leftParms), devices[dev].map->abs_dpleft);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].rightParms), devices[dev].map->abs_dpright);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].upParms), devices[dev].map->abs_dpup);
+    valid &= evdev_init_parms(&devices[dev], &(devices[dev].downParms), devices[dev].map->abs_dpdown);
     if (!valid)
       fprintf(stderr, "Mapping for %s (%s) on %s is incorrect\n", name, str_guid, device);
   }

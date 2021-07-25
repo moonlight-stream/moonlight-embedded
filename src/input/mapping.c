@@ -110,6 +110,18 @@ struct mapping* mapping_parse(char* mapping) {
         } else if (strcmp("righttrigger", key) == 0) {
           map->abs_righttrigger = int_value;
           map->halfaxis_righttrigger = half_axis;
+        } else if (strcmp("dpright", key) == 0) {
+          map->abs_dpright = int_value;
+          map->halfaxis_dpright = half_axis;
+        } else if (strcmp("dpleft", key) == 0) {
+          map->abs_dpleft = int_value;
+          map->halfaxis_dpleft = half_axis;
+        } else if (strcmp("dpup", key) == 0) {
+          map->abs_dpup = int_value;
+          map->halfaxis_dpup = half_axis;
+        } else if (strcmp("dpdown", key) == 0) {
+          map->abs_dpdown = int_value;
+          map->halfaxis_dpdown = half_axis;
         }
       } else if (sscanf(value, "h%d.%d", &int_value, &direction_value) == 2) {
         if (strcmp("dpright", key) == 0) {

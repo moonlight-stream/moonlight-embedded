@@ -29,6 +29,8 @@ struct mapping {
   bool reverse_leftx, reverse_lefty;
   bool reverse_rightx, reverse_righty;
   bool halfaxis_lefttrigger, halfaxis_righttrigger;
+  bool halfaxis_dpright, halfaxis_dpleft;
+  bool halfaxis_dpup, halfaxis_dpdown;
 
   short abs_leftx, abs_lefty;
   short abs_rightx, abs_righty;
@@ -36,6 +38,7 @@ struct mapping {
   short hat_dpright, hat_dpleft, hat_dpup, hat_dpdown;
   short hat_dir_dpright, hat_dir_dpleft, hat_dir_dpup, hat_dir_dpdown;
   short btn_dpup, btn_dpdown, btn_dpleft, btn_dpright;
+  short abs_dpright, abs_dpleft, abs_dpup, abs_dpdown;
 
   short btn_a, btn_x, btn_y, btn_b;
   short btn_back, btn_start, btn_guide;

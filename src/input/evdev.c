@@ -628,12 +628,28 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
   bool is_mouse = libevdev_has_event_type(evdev, EV_REL) || libevdev_has_event_code(evdev, EV_KEY, BTN_LEFT);
   bool is_touchscreen = libevdev_has_event_code(evdev, EV_KEY, BTN_TOUCH);
 
-  if (mappings == NULL && !(is_keyboard || is_mouse || is_touchscreen)) {
+  // The gamepad classification logic comes from SDL
+  bool is_gamepad =
+    libevdev_has_event_code(evdev, EV_ABS, ABS_X) &&
+    libevdev_has_event_code(evdev, EV_ABS, ABS_Y) &&
+    (libevdev_has_event_code(evdev, EV_KEY, BTN_TRIGGER) ||
+     libevdev_has_event_code(evdev, EV_KEY, BTN_A) ||
+     libevdev_has_event_code(evdev, EV_KEY, BTN_1) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_RX) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_RY) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_RZ) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_THROTTLE) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_RUDDER) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_WHEEL) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_GAS) ||
+     libevdev_has_event_code(evdev, EV_ABS, ABS_BRAKE));
+
+  if (mappings == NULL && is_gamepad) {
     fprintf(stderr, "No mapping available for %s (%s) on %s\n", name, str_guid, device);
     mappings = default_mapping;
   }
 
-  if (!is_keyboard && !is_mouse && !is_touchscreen)
+  if (is_gamepad)
     evdev_gamepads++;
 
   int dev = numDevices;

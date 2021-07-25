@@ -142,10 +142,12 @@ static bool evdev_init_parms(struct input_device *dev, struct input_abs_parms *p
 static void evdev_remove(int devindex) {
   numDevices--;
 
-  printf("Input device removed: %s (player %d)\n", libevdev_get_name(devices[devindex].dev), devices[devindex].controllerId);
+  printf("Input device removed: %s (player %d)\n", libevdev_get_name(devices[devindex].dev), devices[devindex].controllerId + 1);
 
-  if (devices[devindex].controllerId >= 0)
+  if (devices[devindex].controllerId >= 0) {
     assignedControllerIds &= ~(1 << devices[devindex].controllerId);
+    LiSendMultiControllerEvent(devices[devindex].controllerId, assignedControllerIds, 0, 0, 0, 0, 0, 0, 0);
+  }
 
   if (devindex != numDevices && numDevices > 0)
     memcpy(&devices[devindex], &devices[numDevices], sizeof(struct input_device));

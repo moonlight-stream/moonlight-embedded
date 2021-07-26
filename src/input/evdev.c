@@ -655,18 +655,23 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
      libevdev_has_event_code(evdev, EV_ABS, ABS_GAS) ||
      libevdev_has_event_code(evdev, EV_ABS, ABS_BRAKE));
 
-  if (mappings == NULL && is_gamepad) {
-    fprintf(stderr, "No mapping available for %s (%s) on %s\n", name, str_guid, device);
-    mappings = default_mapping;
-  }
-
-  if (is_gamepad)
-    evdev_gamepads++;
-
   if (is_accelerometer) {
     libevdev_free(evdev);
     close(fd);
     return;
+  }
+
+  if (is_gamepad) {
+    evdev_gamepads++;
+
+    if (mappings == NULL) {
+      fprintf(stderr, "No mapping available for %s (%s) on %s\n", name, str_guid, device);
+      mappings = default_mapping;
+    }
+  } else {
+    if (verbose)
+      printf("Not mapping %s as a gamepad\n", name);
+    mappings = NULL;
   }
 
   int dev = numDevices;

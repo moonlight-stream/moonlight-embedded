@@ -656,6 +656,8 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
      libevdev_has_event_code(evdev, EV_ABS, ABS_BRAKE));
 
   if (is_accelerometer) {
+    if (verbose)
+      printf("Ignoring accelerometer: %s\n", name);
     libevdev_free(evdev);
     close(fd);
     return;

@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <endian.h>
+#include <math.h>
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define int16_to_le(val) val
@@ -68,6 +69,7 @@ struct input_device {
   __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
   __s32 touchDownX, touchDownY, touchX, touchY;
   struct timeval touchDownTime;
+  struct timeval btnDownTime;
   short controllerId;
   int haptic_effect_id;
   int buttonFlags;
@@ -75,6 +77,8 @@ struct input_device {
   short leftStickX, leftStickY;
   short rightStickX, rightStickY;
   bool gamepadModified;
+  bool mouseEmulation;
+  pthread_t meThread;
   struct input_abs_parms xParms, yParms, rxParms, ryParms, zParms, rzParms;
   struct input_abs_parms leftParms, rightParms, upParms, downParms;
 };
@@ -91,6 +95,15 @@ static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT
 #define TOUCH_CLICK_RADIUS 10
 #define TOUCH_CLICK_DELAY 100000 // microseconds
 #define TOUCH_RCLICK_TIME 750 // milliseconds
+
+// How long the Start button must be pressed to toggle mouse emulation
+#define MOUSE_EMULATION_LONG_PRESS_TIME 750
+// How long between polling the gamepad to send virtual mouse input
+#define MOUSE_EMULATION_POLLING_INTERVAL 50000
+// Determines how fast the mouse will move each interval
+#define MOUSE_EMULATION_MOTION_MULTIPLIER 3
+// Determines the maximum motion amount before allowing movement
+#define MOUSE_EMULATION_DEADZONE 2
 
 static struct input_device* devices = NULL;
 static int numDevices = 0;
@@ -148,6 +161,10 @@ static void evdev_remove(int devindex) {
     assignedControllerIds &= ~(1 << devices[devindex].controllerId);
     LiSendMultiControllerEvent(devices[devindex].controllerId, assignedControllerIds, 0, 0, 0, 0, 0, 0, 0);
   }
+  if (devices[devindex].mouseEmulation) {
+    devices[devindex].mouseEmulation = false;
+    pthread_join(devices[devindex].meThread, NULL);
+  }
 
   if (devindex != numDevices && numDevices > 0)
     memcpy(&devices[devindex], &devices[numDevices], sizeof(struct input_device));
@@ -195,6 +212,41 @@ static char evdev_convert_value_byte(struct input_event *ev, struct input_device
   }
 }
 
+void *HandleMouseEmulation(void* param)
+{
+  struct input_device* dev = (struct input_device*) param;
+
+  while (dev->mouseEmulation) {
+    usleep(MOUSE_EMULATION_POLLING_INTERVAL);
+
+    short rawX;
+    short rawY;
+
+    // Determine which analog stick is currently receiving the strongest input
+    if ((uint32_t)abs(dev->leftStickX) + abs(dev->leftStickY) > (uint32_t)abs(dev->rightStickX) + abs(dev->rightStickY)) {
+      rawX = dev->leftStickX;
+      rawY = dev->leftStickY;
+    } else {
+      rawX = dev->rightStickX;
+      rawY = dev->rightStickY;
+    }
+
+    float deltaX;
+    float deltaY;
+
+    // Produce a base vector for mouse movement with increased speed as we deviate further from center
+    deltaX = pow((float)rawX / 32767.0f * MOUSE_EMULATION_MOTION_MULTIPLIER, 3);
+    deltaY = pow((float)rawY / 32767.0f * MOUSE_EMULATION_MOTION_MULTIPLIER, 3);
+
+    // Enforce deadzones
+    deltaX = abs(deltaX) > MOUSE_EMULATION_DEADZONE ? deltaX - MOUSE_EMULATION_DEADZONE : 0;
+    deltaY = abs(deltaY) > MOUSE_EMULATION_DEADZONE ? deltaY - MOUSE_EMULATION_DEADZONE : 0;
+
+    if (deltaX != 0 || deltaY != 0)
+      LiSendMouseMoveEvent(deltaX, -deltaY);
+  }
+}
+
 static bool evdev_handle_event(struct input_event *ev, struct input_device *dev) {
   bool gamepadModified = false;
 
@@ -236,7 +288,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         if (dev->controllerId < 0)
           dev->controllerId = 0;
       }
-      LiSendMultiControllerEvent(dev->controllerId, assignedControllerIds, dev->buttonFlags, dev->leftTrigger, dev->rightTrigger, dev->leftStickX, dev->leftStickY, dev->rightStickX, dev->rightStickY);
+      // Send event only if mouse emulation is disabled.
+      if (dev->mouseEmulation == false)
+        LiSendMultiControllerEvent(dev->controllerId, assignedControllerIds, dev->buttonFlags, dev->leftTrigger, dev->rightTrigger, dev->leftStickX, dev->leftStickY, dev->rightStickX, dev->rightStickY);
       dev->gamepadModified = false;
     }
     break;
@@ -360,10 +414,50 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         LiSendMouseButtonEvent(ev->value?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, mouseCode);
         gamepadModified = false;
       } else if (gamepadCode != 0) {
-        if (ev->value)
+        if (ev->value) {
           dev->buttonFlags |= gamepadCode;
-        else
+          dev->btnDownTime = ev->time;
+        } else
           dev->buttonFlags &= ~gamepadCode;
+
+        if (gamepadCode == PLAY_FLAG && ev->value == 0) {
+          struct timeval elapsedTime;
+          timersub(&ev->time, &dev->btnDownTime, &elapsedTime);
+          int holdTimeMs = elapsedTime.tv_sec * 1000 + elapsedTime.tv_usec / 1000;
+          if (holdTimeMs >= MOUSE_EMULATION_LONG_PRESS_TIME) {
+            if (dev->mouseEmulation) {
+              dev->mouseEmulation = false;
+              pthread_join(dev->meThread, NULL);
+              dev->meThread = 0;
+              printf("Mouse emulation disabled for controller %d.\n", dev->controllerId);
+            } else {
+              dev->mouseEmulation = true;
+              pthread_create(&dev->meThread, NULL, HandleMouseEmulation, dev);
+              printf("Mouse emulation enabled for controller %d.\n", dev->controllerId);
+            }
+            // clear gamepad state.
+            LiSendMultiControllerEvent(dev->controllerId, assignedControllerIds, 0, 0, 0, 0, 0, 0, 0);
+          }
+        } else if (dev->mouseEmulation) {
+          char action = ev->value ? BUTTON_ACTION_PRESS : BUTTON_ACTION_RELEASE;
+          switch (gamepadCode) {
+            case A_FLAG:
+              LiSendMouseButtonEvent(action, BUTTON_LEFT);
+              break;
+            case B_FLAG:
+              LiSendMouseButtonEvent(action, BUTTON_RIGHT);
+              break;
+            case X_FLAG:
+              LiSendMouseButtonEvent(action, BUTTON_MIDDLE);
+              break;
+            case LB_FLAG:
+              LiSendMouseButtonEvent(action, BUTTON_X1);
+              break;
+            case RB_FLAG:
+              LiSendMouseButtonEvent(action, BUTTON_X2);
+              break;
+          }
+        }
       } else if (dev->map != NULL && index == dev->map->btn_lefttrigger)
         dev->leftTrigger = ev->value ? UCHAR_MAX : 0;
       else if (dev->map != NULL && index == dev->map->btn_righttrigger)

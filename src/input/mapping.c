@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <string.h>
 
 struct mapping* mapping_parse(char* mapping) {
@@ -31,7 +32,7 @@ struct mapping* mapping_parse(char* mapping) {
   if (guid == NULL || name == NULL)
     return NULL;
 
-  struct mapping* map = malloc(sizeof(struct mapping));
+  struct mapping* map = calloc(sizeof(struct mapping), 1);
   if (map == NULL) {
     fprintf(stderr, "Not enough memory");
     exit(EXIT_FAILURE);
@@ -39,7 +40,9 @@ struct mapping* mapping_parse(char* mapping) {
 
   strncpy(map->guid, guid, sizeof(map->guid));
   strncpy(map->name, name, sizeof(map->name));
-  memset(&map->abs_leftx, -1, sizeof(short) * 31);
+
+  /* Initialize all mapping indices to -1 to ensure they won't match anything */
+  memset(&map->abs_leftx, -1, offsetof(struct mapping, next) - offsetof(struct mapping, abs_leftx));
 
   char* option;
   while ((option = strtok_r(NULL, ",", &strpoint)) != NULL) {

@@ -32,6 +32,7 @@ struct mapping {
   bool halfaxis_dpright, halfaxis_dpleft;
   bool halfaxis_dpup, halfaxis_dpdown;
 
+  /* abs_leftx must be the first member of the list of mapping indices! */
   short abs_leftx, abs_lefty;
   short abs_rightx, abs_righty;
 
@@ -48,6 +49,7 @@ struct mapping {
   short abs_lefttrigger, abs_righttrigger;
   short btn_lefttrigger, btn_righttrigger;
 
+  /* next must be the last member after the list of mapping indices! */
   struct mapping* next;
 };
 

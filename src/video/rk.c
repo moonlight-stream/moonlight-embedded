@@ -43,6 +43,10 @@
 #define RK_H264 7
 #define RK_H265 16777220
 
+#ifndef DRM_FORMAT_NV12_10
+#define DRM_FORMAT_NV12_10 fourcc_code('N', 'A', '1', '2')
+#endif
+
 void *pkt_buf = NULL;
 int fd;
 int fb_id;

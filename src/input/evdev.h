@@ -24,7 +24,7 @@ extern int evdev_gamepads;
 void evdev_create(const char* device, struct mapping* mappings, bool verbose, int rotate);
 void evdev_loop();
 
-void evdev_init();
+void evdev_init(bool mouse_emulation_enabled);
 void evdev_start();
 void evdev_stop();
 void evdev_map(char* device);

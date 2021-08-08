@@ -71,6 +71,7 @@ static struct option long_options[] = {
   {"rotate", required_argument, NULL, '3'},
   {"verbose", no_argument, NULL, 'z'},
   {"debug", no_argument, NULL, 'Z'},
+  {"nomouseemulation", no_argument, NULL, '4'},
   {0, 0, 0, 0},
 };
 
@@ -240,6 +241,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'Z':
     config->debug_level = 2;
     break;
+  case '4':
+    config->mouse_emulation = false;
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -357,6 +361,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->unsupported = true;
   config->quitappafter = false;
   config->viewonly = false;
+  config->mouse_emulation = true;
   config->rotate = 0;
   config->codec = CODEC_UNSPECIFIED;
 
@@ -376,7 +381,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy4", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

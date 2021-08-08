@@ -116,6 +116,7 @@ static short* currentAbs;
 static bool* currentReverse;
 
 static bool grabbingDevices;
+static bool mouseEmulationEnabled;
 
 static bool waitingToExitOnModifiersUp = false;
 
@@ -422,7 +423,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         } else
           dev->buttonFlags &= ~gamepadCode;
 
-        if (gamepadCode == PLAY_FLAG && ev->value == 0) {
+        if (mouseEmulationEnabled && gamepadCode == PLAY_FLAG && ev->value == 0) {
           struct timeval elapsedTime;
           timersub(&ev->time, &dev->btnDownTime, &elapsedTime);
           int holdTimeMs = elapsedTime.tv_sec * 1000 + elapsedTime.tv_usec / 1000;
@@ -982,8 +983,9 @@ void evdev_stop() {
   evdev_drain();
 }
 
-void evdev_init() {
+void evdev_init(bool mouse_emulation_enabled) {
   handler = evdev_handle_event;
+  mouseEmulationEnabled = mouse_emulation_enabled;
 }
 
 static struct input_device* evdev_get_input_device(unsigned short controller_id) {

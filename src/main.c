@@ -209,6 +209,7 @@ static void help() {
   printf("\t-nounsupported\t\tDon't stream if resolution is not officially supported by the server\n");
   printf("\t-quitappafter\t\tSend quit app request to remote after quitting session\n");
   printf("\t-viewonly\t\tDisable all input processing (view-only mode)\n");
+  printf("\t-nomouseemulation\t\tDisable gamepad mouse emulation support (long pressing Start button)\n");
   #if defined(HAVE_SDL) || defined(HAVE_X11)
   printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
@@ -346,7 +347,7 @@ int main(int argc, char* argv[]) {
         }
 
         udev_init(!inputAdded, mappings, config.debug_level > 0, config.rotate);
-        evdev_init();
+        evdev_init(config.mouse_emulation);
         rumble_handler = evdev_rumble;
         #ifdef HAVE_LIBCEC
         cec_init();

@@ -43,6 +43,7 @@ typedef struct _CONFIGURATION {
   bool unsupported;
   bool quitappafter;
   bool viewonly;
+  bool mouse_emulation;
   char* inputs[MAX_INPUTS];
   int inputsCount;
   enum codecs codec;

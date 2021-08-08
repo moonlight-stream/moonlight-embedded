@@ -152,6 +152,10 @@ Send quit app request to remote after quitting session
 
 Disable all input processing (view-only mode)
 
+=item B<-nomouseemulation>
+
+Disable gamepad mouse emulation (activated by long pressing Start button)
+
 =item B<-verbose>
 
 Enable verbose output

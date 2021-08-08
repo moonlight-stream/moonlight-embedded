@@ -333,7 +333,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
 
 #ifdef __arm__
   char cpuinfo[4096] = {};
-  if (read_file("/proc/cpuinfo", cpuinfo, sizeof(cpuinfo)) > 0) {
+  if (read_file("/proc/cpuinfo", cpuinfo, sizeof(cpuinfo) - 1) > 0) {
     // If this is a ARMv6 CPU (like the Pi 1), we'll assume it's not
     // powerful enough to handle audio encryption. The Pi 1 could
     // barely handle Opus decoding alone.

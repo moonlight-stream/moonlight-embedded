@@ -61,8 +61,8 @@ struct input_device {
   bool is_touchscreen;
   int rotate;
   struct mapping* map;
-  int key_map[KEY_MAX];
-  int abs_map[ABS_MAX];
+  int key_map[KEY_CNT];
+  int abs_map[ABS_CNT];
   int hats_state[3][2];
   int fd;
   char modifiers;
@@ -295,6 +295,8 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     }
     break;
   case EV_KEY:
+    if (ev->code > KEY_MAX)
+      return true;
     if (ev->code < sizeof(keyCodes)/sizeof(keyCodes[0])) {
       char modifier = 0;
       switch (ev->code) {
@@ -335,7 +337,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     } else {
       int mouseCode = 0;
       short gamepadCode = 0;
-      int index = ev->code > BTN_MISC && ev->code < (BTN_MISC + KEY_MAX) ? dev->key_map[ev->code - BTN_MISC] : -1;
+      int index = dev->key_map[ev->code];
 
       switch (ev->code) {
       case BTN_LEFT:
@@ -484,6 +486,8 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     }
     break;
   case EV_ABS:
+    if (ev->code > ABS_MAX)
+      return true;
     if (dev->is_touchscreen) {
       switch (ev->code) {
       case ABS_X:
@@ -605,7 +609,7 @@ static bool evdev_handle_mapping_event(struct input_event *ev, struct input_devi
   int index, hat_index;
   switch (ev->type) {
   case EV_KEY:
-    index = ev->code > BTN_MISC && ev->code < (BTN_MISC + KEY_MAX) ? dev->key_map[ev->code - BTN_MISC] : -1;
+    index = dev->key_map[ev->code];
     if (currentKey != NULL) {
       if (ev->value)
         *currentKey = index;
@@ -788,6 +792,7 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
   devices[dev].fd = fd;
   devices[dev].dev = evdev;
   devices[dev].map = mappings;
+  /* Set unused evdev indices to -2 to avoid aliasing with the default -1 in our mappings */
   memset(&devices[dev].key_map, -2, sizeof(devices[dev].key_map));
   memset(&devices[dev].abs_map, -2, sizeof(devices[dev].abs_map));
   devices[dev].is_keyboard = is_keyboard;
@@ -798,13 +803,14 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
   devices[dev].touchDownY = TOUCH_UP;
 
   int nbuttons = 0;
+  /* Count joystick buttons first like SDL does */
   for (int i = BTN_JOYSTICK; i < KEY_MAX; ++i) {
     if (libevdev_has_event_code(devices[dev].dev, EV_KEY, i))
-      devices[dev].key_map[i - BTN_MISC] = nbuttons++;
+      devices[dev].key_map[i] = nbuttons++;
   }
-  for (int i = BTN_MISC; i < BTN_JOYSTICK; ++i) {
+  for (int i = 0; i < BTN_JOYSTICK; ++i) {
     if (libevdev_has_event_code(devices[dev].dev, EV_KEY, i))
-      devices[dev].key_map[i - BTN_MISC] = nbuttons++;
+      devices[dev].key_map[i] = nbuttons++;
   }
 
   int naxes = 0;

@@ -376,7 +376,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         break;
       default:
         gamepadModified = true;
-        if (dev->map == NULL)
+        if (dev->map == NULL || index == -1)
           break;
         else if (index == dev->map->btn_a)
           gamepadCode = A_FLAG;
@@ -458,9 +458,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
               break;
           }
         }
-      } else if (dev->map != NULL && index == dev->map->btn_lefttrigger)
+      } else if (dev->map != NULL && index != -1 && index == dev->map->btn_lefttrigger)
         dev->leftTrigger = ev->value ? UCHAR_MAX : 0;
-      else if (dev->map != NULL && index == dev->map->btn_righttrigger)
+      else if (dev->map != NULL && index != -1 && index == dev->map->btn_righttrigger)
         dev->rightTrigger = ev->value ? UCHAR_MAX : 0;
       else {
         if (dev->map != NULL)

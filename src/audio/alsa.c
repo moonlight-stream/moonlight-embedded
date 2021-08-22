@@ -36,24 +36,10 @@ static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
   int rc;
   unsigned char alsaMapping[AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
 
-  /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR-SL-SR
-   * ALSA expects the order: FL-FR-RL-RR-C-LFE-SL-SR
-   * We need copy the mapping locally and swap the channels around.
-   */
-  memcpy(alsaMapping, opusConfig->mapping, sizeof(alsaMapping));
-  if (opusConfig->channelCount >= 6) {
-    alsaMapping[2] = opusConfig->mapping[4];
-    alsaMapping[3] = opusConfig->mapping[5];
-    alsaMapping[4] = opusConfig->mapping[2];
-    alsaMapping[5] = opusConfig->mapping[3];
-  }
-
   samplesPerFrame = opusConfig->samplesPerFrame;
   pcmBuffer = malloc(sizeof(short) * opusConfig->channelCount * samplesPerFrame);
   if (pcmBuffer == NULL)
     return -1;
-
-  decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 
   snd_pcm_hw_params_t *hw_params;
   snd_pcm_sw_params_t *sw_params;
@@ -87,6 +73,81 @@ static int alsa_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
   CHECK_RETURN(snd_pcm_sw_params_set_start_threshold(handle, sw_params, 1));
   CHECK_RETURN(snd_pcm_sw_params(handle, sw_params));
   snd_pcm_sw_params_free(sw_params);
+
+  /* Determine the ideal mapping for a given channel count */
+  snd_pcm_chmap_t* chmap;
+  switch (opusConfig->channelCount)
+  {
+    case 2:
+      chmap = snd_pcm_chmap_parse_string("FL FR");
+      break;
+    case 6:
+      chmap = snd_pcm_chmap_parse_string("FL FR RL RR FC LFE");
+      break;
+    case 8:
+      chmap = snd_pcm_chmap_parse_string("FL FR RL RR FC LFE SL SR");
+      break;
+    default:
+      fprintf(stderr, "Unsupported channel count: %d\n", opusConfig->channelCount);
+      return -1;
+  }
+
+  /* If we have a channel map, try to apply it */
+  if (snd_pcm_set_chmap(handle, chmap) != 0) {
+    snd_pcm_chmap_t* native_chmap = snd_pcm_get_chmap(handle);
+    if (native_chmap != NULL) {
+      /* We couldn't apply our channel map, so we'll match the current map */
+      free(chmap);
+      chmap = native_chmap;
+    }
+    else {
+      /* We couldn't even get the native layout. We'll just hope for the best */
+      fprintf(stderr, "Failed to get ALSA channel map. Surround audio channels may be incorrect!\n");
+    }
+  }
+
+  char chmap_str[512];
+  snd_pcm_chmap_print(chmap, sizeof(chmap_str), chmap_str);
+  printf("ALSA channel map: %s\n", chmap_str);
+
+  /* The supplied mapping array has order: FL-FR-C-LFE-RL-RR-SL-SR
+   * We need copy the mapping locally and swap the channels around.
+   */
+  memcpy(alsaMapping, opusConfig->mapping, sizeof(alsaMapping));
+  for (int i = 0; i < chmap->channels && i < AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT; i++) {
+    switch (chmap->pos[i]) {
+      case SND_CHMAP_FL:
+        alsaMapping[i] = opusConfig->mapping[0];
+        break;
+      case SND_CHMAP_FR:
+        alsaMapping[i] = opusConfig->mapping[1];
+        break;
+      case SND_CHMAP_FC:
+        alsaMapping[i] = opusConfig->mapping[2];
+        break;
+      case SND_CHMAP_LFE:
+        alsaMapping[i] = opusConfig->mapping[3];
+        break;
+      case SND_CHMAP_RL:
+        alsaMapping[i] = opusConfig->mapping[4];
+        break;
+      case SND_CHMAP_RR:
+        alsaMapping[i] = opusConfig->mapping[5];
+        break;
+      case SND_CHMAP_SL:
+        alsaMapping[i] = opusConfig->mapping[opusConfig->channelCount >= 8 ? 6 : 4];
+        break;
+      case SND_CHMAP_SR:
+        alsaMapping[i] = opusConfig->mapping[opusConfig->channelCount >= 8 ? 7 : 5];
+        break;
+      default:
+        alsaMapping[i] = 0xFF; /* Silence */
+        break;
+    }
+  }
+  free(chmap);
+
+  decoder = opus_multistream_decoder_create(opusConfig->sampleRate, opusConfig->channelCount, opusConfig->streams, opusConfig->coupledStreams, alsaMapping, &rc);
 
   CHECK_RETURN(snd_pcm_prepare(handle));
 

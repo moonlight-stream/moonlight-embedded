@@ -28,7 +28,7 @@
 #define FULLSCREEN_KEY SDLK_f
 
 typedef struct _GAMEPAD_STATE {
-  char leftTrigger, rightTrigger;
+  unsigned char leftTrigger, rightTrigger;
   short leftStickX, leftStickY;
   short rightStickX, rightStickY;
   int buttons;

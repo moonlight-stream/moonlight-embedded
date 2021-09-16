@@ -73,7 +73,7 @@ struct input_device {
   short controllerId;
   int haptic_effect_id;
   int buttonFlags;
-  char leftTrigger, rightTrigger;
+  unsigned char leftTrigger, rightTrigger;
   short leftStickX, leftStickY;
   short rightStickX, rightStickY;
   bool gamepadModified;
@@ -189,7 +189,7 @@ static short evdev_convert_value(struct input_event *ev, struct input_device *de
     return (long long)(ev->value - (ev->value>parms->avg?parms->flat*2:0) - parms->min) * (SHRT_MAX-SHRT_MIN) / (parms->max-parms->min-parms->flat*2) + SHRT_MIN;
 }
 
-static char evdev_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, char halfaxis) {
+static unsigned char evdev_convert_value_byte(struct input_event *ev, struct input_device *dev, struct input_abs_parms *parms, char halfaxis) {
   if (parms->max == 0 && parms->min == 0) {
     fprintf(stderr, "Axis not found: %d\n", ev->code);
     return 0;

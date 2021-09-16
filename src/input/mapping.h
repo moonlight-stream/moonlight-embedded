@@ -28,9 +28,9 @@ struct mapping {
 
   bool reverse_leftx, reverse_lefty;
   bool reverse_rightx, reverse_righty;
-  bool halfaxis_lefttrigger, halfaxis_righttrigger;
-  bool halfaxis_dpright, halfaxis_dpleft;
-  bool halfaxis_dpup, halfaxis_dpdown;
+  char halfaxis_lefttrigger, halfaxis_righttrigger;
+  char halfaxis_dpright, halfaxis_dpleft;
+  char halfaxis_dpup, halfaxis_dpdown;
 
   /* abs_leftx must be the first member of the list of mapping indices! */
   short abs_leftx, abs_lefty;

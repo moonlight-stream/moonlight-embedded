@@ -59,8 +59,7 @@ static int x11_handle_motion_notify() {
     XPending(display) &&
     XCheckMaskEvent(display, PointerMotionMask, &event);
     ++i
-  ) {}
-  if (i > 0) {
+  ) {
     motion_x = event.xmotion.x - last_x;
     motion_y = event.xmotion.y - last_y;
     if (abs(motion_x) > 0 || abs(motion_y) > 0) {
@@ -70,7 +69,9 @@ static int x11_handle_motion_notify() {
       last_x = event.xmotion.x;
       last_y = event.xmotion.y;
     } 
-  } else if (grabbed) {
+  }
+
+  if (i == 0 && grabbed) {
     XWarpPointer(display, None, window, 0, 0, 0, 0, 640, 360);
     last_x = 640;
     last_y = 360;

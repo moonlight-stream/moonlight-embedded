@@ -36,7 +36,7 @@
 
 static Display *display;
 static Window window;
-static Event event;
+static XEvent event;
 
 static Atom wm_deletemessage;
 
@@ -74,8 +74,6 @@ static int x11_handle_motion_notify() {
     last_y = grabbed ? 360 : event.xmotion.y;
   }
 }
-
-static int x11_prepare
 
 static int x11_handler(int fd) {
   int button = 0;

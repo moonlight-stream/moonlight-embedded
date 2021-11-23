@@ -55,7 +55,7 @@ static int x11_handle_motion_notify() {
   int i;
   for (
     i = 0;
-    i <= 20 &&
+    i < 100 &&
     XPending(display) &&
     XCheckMaskEvent(display, PointerMotionMask, &event);
     ++i
@@ -64,15 +64,18 @@ static int x11_handle_motion_notify() {
     motion_x = event.xmotion.x - last_x;
     motion_y = event.xmotion.y - last_y;
     if (abs(motion_x) > 0 || abs(motion_y) > 0) {
-    if (last_x >= 0 && last_y >= 0)
-       LiSendMouseMoveEvent(motion_x, motion_y);
+      if (last_x >= 0 && last_y >= 0)
+        LiSendMouseMoveEvent(motion_x, motion_y);
 
-    if (grabbed)
-      XWarpPointer(display, None, window, 0, 0, 0, 0, 640, 360);
-    }
-    last_x = grabbed ? 640 : event.xmotion.x;
-    last_y = grabbed ? 360 : event.xmotion.y;
+      last_x = event.xmotion.x;
+      last_y = event.xmotion.y;
+    } 
+  } else if (grabbed) {
+    XWarpPointer(display, None, window, 0, 0, 0, 0, 640, 360);
+    last_x = 640;
+    last_y = 360;
   }
+  return i;
 }
 
 static int x11_handler(int fd) {
@@ -80,7 +83,7 @@ static int x11_handler(int fd) {
 
   while (XPending(display)) {
     XPeekEvent(display, &event);
-    x11_handle_motion_notify();
+    while (x11_handle_motion_notify() > 0) {}
     if (XCheckMaskEvent(display, ~PointerMotionMask, &event)) {
       switch (event.type) {
       case KeyPress:

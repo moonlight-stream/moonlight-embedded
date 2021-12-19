@@ -21,7 +21,7 @@ before_build:
 
 build_script:
   - 'if [[ "$BUILD_TARGET" = ubuntu ]]; then mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=/tmp .. && make -j$(nproc) && make install; fi'
-  - 'if [[ "$BUILD_TARGET" = raspbian ]]; then git clone --recursive https://github.com/cgutman/moonlight-embedded-packaging.git && cd moonlight-embedded-packaging && sh -c "./build-rpi.sh $APPVEYOR_REPO_COMMIT"; fi'
+  - 'if [[ "$BUILD_TARGET" = raspbian ]]; then git clone --recursive https://github.com/cgutman/moonlight-embedded-packaging.git && cd moonlight-embedded-packaging && sh -c "./build-rpi-buster.sh $APPVEYOR_REPO_COMMIT"; fi'
 
 after_build:
   - sh: '[ "$BUILD_TARGET" != raspbian ] || appveyor PushArtifact out_*/moonlight-embedded_*.deb'

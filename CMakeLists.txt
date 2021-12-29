@@ -119,7 +119,7 @@ if(MMAL_FOUND)
   list(APPEND MOONLIGHT_OPTIONS MMAL)
   add_library(moonlight-mmal SHARED ./src/video/mmal.c)
   target_include_directories(moonlight-mmal PRIVATE ${MMAL_INCLUDE_DIRS} ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR})
-  target_link_libraries(moonlight-mmal gamestream ${MMAL_LIBRARIES})
+  target_link_libraries(moonlight-mmal gamestream ${MMAL_LINK_LIBRARIES})
   install(TARGETS moonlight-mmal DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 

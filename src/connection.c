@@ -23,6 +23,10 @@
 #include <stdarg.h>
 #include <signal.h>
 
+#ifdef HAVE_SDL
+#include <SDL.h>
+#endif
+
 pthread_t main_thread_id = 0;
 bool connection_debug;
 ConnListenerRumble rumble_handler = NULL;
@@ -30,6 +34,7 @@ ConnListenerRumble rumble_handler = NULL;
 static void connection_terminated(int errorCode) {
   switch (errorCode) {
   case ML_ERROR_GRACEFUL_TERMINATION:
+    printf("Connection has been terminated gracefully.\n");
     break;
   case ML_ERROR_NO_VIDEO_TRAFFIC:
     printf("No video received from host. Check the host PC's firewall and port forwarding rules.\n");
@@ -47,6 +52,12 @@ static void connection_terminated(int errorCode) {
     printf("Connection terminated with error: %d\n", errorCode);
     break;
   }
+
+  #ifdef HAVE_SDL
+      SDL_Event event;
+      event.type = SDL_QUIT;
+      SDL_PushEvent(&event);
+  #endif
 
   if (main_thread_id != 0)
     pthread_kill(main_thread_id, SIGTERM);

@@ -26,6 +26,7 @@
 #define QUIT_KEY SDLK_q
 #define QUIT_BUTTONS (PLAY_FLAG|BACK_FLAG|LB_FLAG|RB_FLAG)
 #define FULLSCREEN_KEY SDLK_f
+#define UNGRAB_KEY SDLK_z
 
 typedef struct _GAMEPAD_STATE {
   unsigned char leftTrigger, rightTrigger;
@@ -236,7 +237,7 @@ int sdlinput_handle_event(SDL_Event* event) {
       return SDL_QUIT_APPLICATION;
     else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == FULLSCREEN_KEY && event->type==SDL_KEYUP)
       return SDL_TOGGLE_FULLSCREEN;
-    else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS)
+    else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == UNGRAB_KEY && event->type==SDL_KEYUP)
       return SDL_MOUSE_UNGRAB;
 
     LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, keyboard_modifiers);

@@ -156,7 +156,11 @@ int sdlinput_handle_event(SDL_Event* event) {
     LiSendMouseMoveEvent(event->motion.xrel, event->motion.yrel);
     break;
   case SDL_MOUSEWHEEL:
+#if SDL_VERSION_ATLEAST(2, 0, 18)
+    LiSendHighResScrollEvent((short)(event->wheel.preciseY * 120)); // WHEEL_DELTA
+#else
     LiSendScrollEvent(event->wheel.y);
+#endif
     break;
   case SDL_MOUSEBUTTONUP:
   case SDL_MOUSEBUTTONDOWN:

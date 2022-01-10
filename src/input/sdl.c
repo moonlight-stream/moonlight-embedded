@@ -149,12 +149,18 @@ void sdlinput_init(char* mappings) {
   }
 }
 
-int sdlinput_handle_event(SDL_Event* event) {
+int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
   int button = 0;
   PGAMEPAD_STATE gamepad;
   switch (event->type) {
   case SDL_MOUSEMOTION:
-    LiSendMouseMoveEvent(event->motion.xrel, event->motion.yrel);
+    if (SDL_GetRelativeMouseMode())
+      LiSendMouseMoveEvent(event->motion.xrel, event->motion.yrel);
+    else {
+      int w, h;
+      SDL_GetWindowSize(window, &w, &h);
+      LiSendMousePositionEvent(event->motion.x, event->motion.y, w, h);
+    }
     break;
   case SDL_MOUSEWHEEL:
 #if SDL_VERSION_ATLEAST(2, 0, 18)
@@ -186,7 +192,7 @@ int sdlinput_handle_event(SDL_Event* event) {
     if (button != 0)
       LiSendMouseButtonEvent(event->type==SDL_MOUSEBUTTONDOWN?BUTTON_ACTION_PRESS:BUTTON_ACTION_RELEASE, button);
 
-    return SDL_MOUSE_GRAB;
+    return 0;
   case SDL_KEYDOWN:
   case SDL_KEYUP:
     button = event->key.keysym.sym;
@@ -232,15 +238,15 @@ int sdlinput_handle_event(SDL_Event* event) {
         keyboard_modifiers &= ~modifier;
     }
 
+    LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, keyboard_modifiers);
+
     // Quit the stream if all the required quit keys are down
     if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == QUIT_KEY && event->type==SDL_KEYUP)
       return SDL_QUIT_APPLICATION;
     else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == FULLSCREEN_KEY && event->type==SDL_KEYUP)
       return SDL_TOGGLE_FULLSCREEN;
     else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == UNGRAB_KEY && event->type==SDL_KEYUP)
-      return SDL_MOUSE_UNGRAB;
-
-    LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, keyboard_modifiers);
+      return SDL_GetRelativeMouseMode() ? SDL_MOUSE_UNGRAB : SDL_MOUSE_GRAB;
     break;
   case SDL_CONTROLLERAXISMOTION:
     gamepad = get_gamepad(event->caxis.which, false);

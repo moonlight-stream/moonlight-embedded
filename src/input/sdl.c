@@ -34,8 +34,10 @@ typedef struct _GAMEPAD_STATE {
   int buttons;
   SDL_JoystickID sdl_id;
   SDL_GameController* controller;
+#if !SDL_VERSION_ATLEAST(2, 0, 9)
   SDL_Haptic* haptic;
   int haptic_effect_id;
+#endif
   short id;
   bool initialized;
 } GAMEPAD_STATE, *PGAMEPAD_STATE;
@@ -90,16 +92,17 @@ static void add_gamepad(int joystick_index) {
     return;
   }
 
-  SDL_Haptic* haptic = SDL_HapticOpenFromJoystick(joystick);
-  if (haptic && (SDL_HapticQuery(haptic) & SDL_HAPTIC_LEFTRIGHT) == 0) {
-    SDL_HapticClose(haptic);
-    haptic = NULL;
-  }
-
   PGAMEPAD_STATE state = get_gamepad(joystick_id, true);
   state->controller = controller;
-  state->haptic = haptic;
+
+#if !SDL_VERSION_ATLEAST(2, 0, 9)
+  state->haptic = SDL_HapticOpenFromJoystick(joystick);
+  if (haptic && (SDL_HapticQuery(state->haptic) & SDL_HAPTIC_LEFTRIGHT) == 0) {
+    SDL_HapticClose(state->haptic);
+    state->haptic = NULL;
+  }
   state->haptic_effect_id = -1;
+#endif
 
   sdl_gamepads++;
 }
@@ -107,6 +110,7 @@ static void add_gamepad(int joystick_index) {
 static void remove_gamepad(SDL_JoystickID sdl_id) {
   for (int i = 0;i<4;i++) {
     if (gamepads[i].initialized && gamepads[i].sdl_id == sdl_id) {
+#if !SDL_VERSION_ATLEAST(2, 0, 9)
       if (gamepads[i].haptic_effect_id >= 0) {
         SDL_HapticDestroyEffect(gamepads[i].haptic, gamepads[i].haptic_effect_id);
       }
@@ -114,6 +118,7 @@ static void remove_gamepad(SDL_JoystickID sdl_id) {
       if (gamepads[i].haptic) {
         SDL_HapticClose(gamepads[i].haptic);
       }
+#endif
 
       SDL_GameControllerClose(gamepads[i].controller);
 
@@ -340,6 +345,12 @@ void sdlinput_rumble(unsigned short controller_id, unsigned short low_freq_motor
 
   PGAMEPAD_STATE state = &gamepads[controller_id];
 
+  if (!state->initialized)
+    return;
+
+#if SDL_VERSION_ATLEAST(2, 0, 9)
+  SDL_GameControllerRumble(state->controller, low_freq_motor, high_freq_motor, 30000);
+#else
   SDL_Haptic* haptic = state->haptic;
   if (!haptic)
     return;
@@ -362,4 +373,5 @@ void sdlinput_rumble(unsigned short controller_id, unsigned short low_freq_motor
   state->haptic_effect_id = SDL_HapticNewEffect(haptic, &effect);
   if (state->haptic_effect_id >= 0)
     SDL_HapticRunEffect(haptic, state->haptic_effect_id, 1);
+#endif
 }

@@ -119,6 +119,8 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     drFlags |= DISPLAY_FULLSCREEN;
 
   switch (config->rotate) {
+  case 0:
+    break;
   case 90:
     drFlags |= DISPLAY_ROTATE_90;
     break;
@@ -128,6 +130,8 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   case 270:
     drFlags |= DISPLAY_ROTATE_270;
     break;
+  default:
+    printf("Ignoring invalid rotation value: %d\n", config->rotate);
   }
 
   if (config->debug_level > 0) {
@@ -192,7 +196,7 @@ static void help() {
   printf("\t-width <width>\t\tHorizontal resolution (default 1280)\n");
   printf("\t-height <height>\tVertical resolution (default 720)\n");
   #if defined(HAVE_PI) | defined(HAVE_MMAL)
-  printf("\t-rotate <height>\tRotate display: 0/90/180/270 (default 0)\n");
+  printf("\t-rotate <angle>\tRotate display: 0/90/180/270 (default 0)\n");
   #endif
   printf("\t-fps <fps>\t\tSpecify the fps to use (default 60)\n");
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");

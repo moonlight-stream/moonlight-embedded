@@ -495,13 +495,20 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
 
-  char challenge_response_data_enc[48];
-  char challenge_response_data[48];
+  char challenge_response_data_enc[64];
+  char challenge_response_data[64];
+
+  if (strlen(result) / 2 > 64) {
+    gs_error = "Server challenge response too big";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
   for (int count = 0; count < strlen(result); count += 2) {
     sscanf(&result[count], "%2hhx", &challenge_response_data_enc[count / 2]);
   }
 
-  decrypt(challenge_response_data_enc, 48, aes_key, challenge_response_data);
+  decrypt(challenge_response_data_enc, 64, aes_key, challenge_response_data);
 
   char client_secret_data[16];
   RAND_bytes(client_secret_data, 16);

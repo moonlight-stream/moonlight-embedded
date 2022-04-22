@@ -53,6 +53,13 @@ static EVP_PKEY *privateKey;
 
 const char* gs_error;
 
+#define LEN_AS_HEX_STR(x) ((x) * 2 + 1)
+#define SIZEOF_AS_HEX_STR(x) LEN_AS_HEX_STR(sizeof(x))
+
+#define SIGNATURE_LEN 256
+
+#define UUID_STRLEN 37
+
 static int mkdirtree(const char* directory) {
   char buffer[PATH_MAX];
   char* p = buffer;
@@ -162,7 +169,7 @@ static int load_cert(const char* keyDirectory) {
 static int load_server_status(PSERVER_DATA server) {
 
   uuid_t uuid;
-  char uuid_str[37];
+  char uuid_str[UUID_STRLEN];
 
   int ret;
   char url[4096];
@@ -378,7 +385,7 @@ int gs_unpair(PSERVER_DATA server) {
   int ret = GS_OK;
   char url[4096];
   uuid_t uuid;
-  char uuid_str[37];
+  char uuid_str[UUID_STRLEN];
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
@@ -397,7 +404,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   char* result = NULL;
   char url[4096];
   uuid_t uuid;
-  char uuid_str[37];
+  char uuid_str[UUID_STRLEN];
 
   if (server->paired) {
     gs_error = "Already paired";
@@ -410,9 +417,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   }
 
   unsigned char salt_data[16];
-  char salt_hex[33];
-  RAND_bytes(salt_data, 16);
-  bytes_to_hex(salt_data, salt_hex, 16);
+  char salt_hex[SIZEOF_AS_HEX_STR(salt_data)];
+  RAND_bytes(salt_data, sizeof(salt_data));
+  bytes_to_hex(salt_data, salt_hex, sizeof(salt_data));
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
@@ -439,35 +446,36 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if ((ret = xml_search(data->memory, data->size, "plaincert", &result)) != GS_OK)
     goto cleanup;
 
-  if (strlen(result)/2 > 8191) {
+  char plaincert[8192];
+
+  if (strlen(result)/2 > sizeof(plaincert) - 1) {
     gs_error = "Server certificate too big";
     ret = GS_FAILED;
     goto cleanup;
   }
 
-  char plaincert[8192];
   for (int count = 0; count < strlen(result); count += 2) {
     sscanf(&result[count], "%2hhx", &plaincert[count / 2]);
   }
   plaincert[strlen(result)/2] = '\0';
 
-  unsigned char salt_pin[20];
-  unsigned char aes_key[32];
-  memcpy(salt_pin, salt_data, 16);
-  memcpy(salt_pin+16, pin, 4);
+  unsigned char salt_pin[sizeof(salt_data) + 4];
+  unsigned char aes_key[32]; // Must fit SHA256
+  memcpy(salt_pin, salt_data, sizeof(salt_data));
+  memcpy(salt_pin+sizeof(salt_data), pin, 4);
 
   int hash_length = server->serverMajorVersion >= 7 ? 32 : 20;
   if (server->serverMajorVersion >= 7)
-    SHA256(salt_pin, 20, aes_key);
+    SHA256(salt_pin, sizeof(salt_pin), aes_key);
   else
-    SHA1(salt_pin, 20, aes_key);
+    SHA1(salt_pin, sizeof(salt_pin), aes_key);
 
   unsigned char challenge_data[16];
-  unsigned char challenge_enc[16];
-  char challenge_hex[33];
-  RAND_bytes(challenge_data, 16);
-  encrypt(challenge_data, 16, aes_key, challenge_enc);
-  bytes_to_hex(challenge_enc, challenge_hex, 16);
+  unsigned char challenge_enc[sizeof(challenge_data)];
+  char challenge_hex[SIZEOF_AS_HEX_STR(challenge_enc)];
+  RAND_bytes(challenge_data, sizeof(challenge_data));
+  encrypt(challenge_data, sizeof(challenge_data), aes_key, challenge_enc);
+  bytes_to_hex(challenge_enc, challenge_hex, sizeof(challenge_enc));
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
@@ -496,9 +504,9 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   }
 
   char challenge_response_data_enc[64];
-  char challenge_response_data[64];
+  char challenge_response_data[sizeof(challenge_response_data_enc)];
 
-  if (strlen(result) / 2 > 64) {
+  if (strlen(result) / 2 > sizeof(challenge_response_data_enc)) {
     gs_error = "Server challenge response too big";
     ret = GS_FAILED;
     goto cleanup;
@@ -508,28 +516,28 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     sscanf(&result[count], "%2hhx", &challenge_response_data_enc[count / 2]);
   }
 
-  decrypt(challenge_response_data_enc, 64, aes_key, challenge_response_data);
+  decrypt(challenge_response_data_enc, sizeof(challenge_response_data_enc), aes_key, challenge_response_data);
 
   char client_secret_data[16];
-  RAND_bytes(client_secret_data, 16);
+  RAND_bytes(client_secret_data, sizeof(client_secret_data));
 
   const ASN1_BIT_STRING *asnSignature;
   X509_get0_signature(&asnSignature, NULL, cert);
 
-  char challenge_response[16 + 256 + 16];
+  char challenge_response[16 + SIGNATURE_LEN + sizeof(client_secret_data)];
   char challenge_response_hash[32];
-  char challenge_response_hash_enc[32];
-  char challenge_response_hex[65];
+  char challenge_response_hash_enc[sizeof(challenge_response_hash)];
+  char challenge_response_hex[SIZEOF_AS_HEX_STR(challenge_response_hash_enc)];
   memcpy(challenge_response, challenge_response_data + hash_length, 16);
-  memcpy(challenge_response + 16, asnSignature->data, 256);
-  memcpy(challenge_response + 16 + 256, client_secret_data, 16);
+  memcpy(challenge_response + 16, asnSignature->data, asnSignature->length);
+  memcpy(challenge_response + 16 + asnSignature->length, client_secret_data, sizeof(client_secret_data));
   if (server->serverMajorVersion >= 7)
-    SHA256(challenge_response, 16 + 256 + 16, challenge_response_hash);
+    SHA256(challenge_response, 16 + asnSignature->length + sizeof(client_secret_data), challenge_response_hash);
   else
-    SHA1(challenge_response, 16 + 256 + 16, challenge_response_hash);
+    SHA1(challenge_response, 16 + asnSignature->length + sizeof(client_secret_data), challenge_response_hash);
 
-  encrypt(challenge_response_hash, 32, aes_key, challenge_response_hash_enc);
-  bytes_to_hex(challenge_response_hash_enc, challenge_response_hex, 32);
+  encrypt(challenge_response_hash, sizeof(challenge_response_hash), aes_key, challenge_response_hash_enc);
+  bytes_to_hex(challenge_response_hash_enc, challenge_response_hex, sizeof(challenge_response_hash_enc));
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
@@ -557,12 +565,19 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
 
-  char pairing_secret[16 + 256];
+  char pairing_secret[16 + SIGNATURE_LEN];
+
+  if (strlen(result) / 2 > sizeof(pairing_secret)) {
+    gs_error = "Pairing secret too big";
+    ret = GS_FAILED;
+    goto cleanup;
+  }
+
   for (int count = 0; count < strlen(result); count += 2) {
     sscanf(&result[count], "%2hhx", &pairing_secret[count / 2]);
   }
 
-  if (!verifySignature(pairing_secret, 16, pairing_secret+16, 256, plaincert)) {
+  if (!verifySignature(pairing_secret, 16, pairing_secret+16, SIGNATURE_LEN, plaincert)) {
     gs_error = "MITM attack detected";
     ret = GS_FAILED;
     goto cleanup;
@@ -570,17 +585,17 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   unsigned char *signature = NULL;
   size_t s_len;
-  if (sign_it(client_secret_data, 16, &signature, &s_len, privateKey) != GS_OK) {
+  if (sign_it(client_secret_data, sizeof(client_secret_data), &signature, &s_len, privateKey) != GS_OK) {
       gs_error = "Failed to sign data";
       ret = GS_FAILED;
       goto cleanup;
   }
 
-  char client_pairing_secret[16 + 256];
-  char client_pairing_secret_hex[(16 + 256) * 2 + 1];
-  memcpy(client_pairing_secret, client_secret_data, 16);
-  memcpy(client_pairing_secret + 16, signature, 256);
-  bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, 16 + 256);
+  char client_pairing_secret[sizeof(client_secret_data) + SIGNATURE_LEN];
+  char client_pairing_secret_hex[SIZEOF_AS_HEX_STR(client_pairing_secret)];
+  memcpy(client_pairing_secret, client_secret_data, sizeof(client_secret_data));
+  memcpy(client_pairing_secret + sizeof(client_secret_data), signature, SIGNATURE_LEN);
+  bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, sizeof(client_secret_data) + SIGNATURE_LEN);
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
@@ -638,7 +653,7 @@ int gs_applist(PSERVER_DATA server, PAPP_LIST *list) {
   int ret = GS_OK;
   char url[4096];
   uuid_t uuid;
-  char uuid_str[37];
+  char uuid_str[UUID_STRLEN];
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
@@ -661,7 +676,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   int ret = GS_OK;
   uuid_t uuid;
   char* result = NULL;
-  char uuid_str[37];
+  char uuid_str[UUID_STRLEN];
 
   PDISPLAY_MODE mode = server->modes;
   bool correct_mode = false;
@@ -682,18 +697,16 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (config->height >= 2160 && !server->supports4K)
     return GS_NOT_SUPPORTED_4K;
 
-  RAND_bytes(config->remoteInputAesKey, 16);
-  memset(config->remoteInputAesIv, 0, 16);
-  // GFE somehow doesn't like this totally legit random number, so we have to generate one
-  RAND_bytes(config->remoteInputAesIv, 4);
+  RAND_bytes(config->remoteInputAesKey, sizeof(config->remoteInputAesKey));
+  memset(config->remoteInputAesIv, 0, sizeof(config->remoteInputAesIv));
 
-  srand(time(NULL));
   char url[4096];
   u_int32_t rikeyid = 0;
-  memcpy(&rikeyid, config->remoteInputAesIv, 4);
+  RAND_bytes(config->remoteInputAesIv, sizeof(rikeyid));
+  memcpy(&rikeyid, config->remoteInputAesIv, sizeof(rikeyid));
   rikeyid = htonl(rikeyid);
-  char rikey_hex[33];
-  bytes_to_hex(config->remoteInputAesKey, rikey_hex, 16);
+  char rikey_hex[SIZEOF_AS_HEX_STR(config->remoteInputAesKey)];
+  bytes_to_hex(config->remoteInputAesKey, rikey_hex, sizeof(config->remoteInputAesKey));
 
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
@@ -747,7 +760,7 @@ int gs_quit_app(PSERVER_DATA server) {
   int ret = GS_OK;
   char url[4096];
   uuid_t uuid;
-  char uuid_str[37];
+  char uuid_str[UUID_STRLEN];
   char* result = NULL;
   PHTTP_DATA data = http_create_data();
   if (data == NULL)

@@ -350,6 +350,30 @@ static bool verifySignature(const char *data, int dataLength, char *signature, i
     return result > 0;
 }
 
+static void encrypt(const unsigned char *plaintext, int plaintextLen, const unsigned char *key, unsigned char *ciphertext) {
+  EVP_CIPHER_CTX* cipher = EVP_CIPHER_CTX_new();
+
+  EVP_EncryptInit(cipher, EVP_aes_128_ecb(), key, NULL);
+  EVP_CIPHER_CTX_set_padding(cipher, 0);
+
+  int ciphertextLen = 0;
+  EVP_EncryptUpdate(cipher, ciphertext, &ciphertextLen, plaintext, plaintextLen);
+
+  EVP_CIPHER_CTX_free(cipher);
+}
+
+static void decrypt(const unsigned char *ciphertext, int ciphertextLen, const unsigned char *key, unsigned char *plaintext) {
+  EVP_CIPHER_CTX* cipher = EVP_CIPHER_CTX_new();
+
+  EVP_DecryptInit(cipher, EVP_aes_128_ecb(), key, NULL);
+  EVP_CIPHER_CTX_set_padding(cipher, 0);
+
+  int plaintextLen = 0;
+  EVP_DecryptUpdate(cipher, plaintext, &plaintextLen, ciphertext, ciphertextLen);
+
+  EVP_CIPHER_CTX_free(cipher);
+}
+
 int gs_unpair(PSERVER_DATA server) {
   int ret = GS_OK;
   char url[4096];
@@ -428,25 +452,21 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   plaincert[strlen(result)/2] = '\0';
 
   unsigned char salt_pin[20];
-  unsigned char aes_key_hash[32];
-  AES_KEY enc_key, dec_key;
+  unsigned char aes_key[32];
   memcpy(salt_pin, salt_data, 16);
   memcpy(salt_pin+16, pin, 4);
 
   int hash_length = server->serverMajorVersion >= 7 ? 32 : 20;
   if (server->serverMajorVersion >= 7)
-    SHA256(salt_pin, 20, aes_key_hash);
+    SHA256(salt_pin, 20, aes_key);
   else
-    SHA1(salt_pin, 20, aes_key_hash);
-
-  AES_set_encrypt_key((unsigned char *)aes_key_hash, 128, &enc_key);
-  AES_set_decrypt_key((unsigned char *)aes_key_hash, 128, &dec_key);
+    SHA1(salt_pin, 20, aes_key);
 
   unsigned char challenge_data[16];
   unsigned char challenge_enc[16];
   char challenge_hex[33];
   RAND_bytes(challenge_data, 16);
-  AES_encrypt(challenge_data, challenge_enc, &enc_key);
+  encrypt(challenge_data, 16, aes_key, challenge_enc);
   bytes_to_hex(challenge_enc, challenge_hex, 16);
 
   uuid_generate_random(uuid);
@@ -481,9 +501,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     sscanf(&result[count], "%2hhx", &challenge_response_data_enc[count / 2]);
   }
 
-  for (int i = 0; i < 48; i += 16) {
-    AES_decrypt(&challenge_response_data_enc[i], &challenge_response_data[i], &dec_key);
-  }
+  decrypt(challenge_response_data_enc, 48, aes_key, challenge_response_data);
 
   char client_secret_data[16];
   RAND_bytes(client_secret_data, 16);
@@ -503,9 +521,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   else
     SHA1(challenge_response, 16 + 256 + 16, challenge_response_hash);
 
-  for (int i = 0; i < 32; i += 16) {
-    AES_encrypt(&challenge_response_hash[i], &challenge_response_hash_enc[i], &enc_key);
-  }
+  encrypt(challenge_response_hash, 32, aes_key, challenge_response_hash_enc);
   bytes_to_hex(challenge_response_hash_enc, challenge_response_hex, 32);
 
   uuid_generate_random(uuid);

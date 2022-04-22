@@ -33,7 +33,7 @@
 
 // General decoder and renderer state
 static AVPacket* pkt;
-static AVCodec* decoder;
+static const AVCodec* decoder;
 static AVCodecContext* decoder_ctx;
 static AVFrame** dec_frames;
 

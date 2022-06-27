@@ -30,7 +30,7 @@ typedef struct _CONFIGURATION {
   int debug_level;
   char* app;
   char* action;
-  char* address;  
+  char* address;
   char* mapping;
   char* platform;
   char* audio_device;

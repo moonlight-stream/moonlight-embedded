@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#define DECODER_BUFFER_SIZE 92*1024
+#define DECODER_BUFFER_SIZE 256*1024
 #define SLICES_PER_FRAME 4
 
 static char* ffmpeg_buffer;

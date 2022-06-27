@@ -30,7 +30,7 @@ typedef struct _CONFIGURATION {
   int debug_level;
   char* app;
   char* action;
-  char* address;
+  char* address;  
   char* mapping;
   char* platform;
   char* audio_device;
@@ -47,6 +47,7 @@ typedef struct _CONFIGURATION {
   char* inputs[MAX_INPUTS];
   int inputsCount;
   enum codecs codec;
+  int pin;  
 } CONFIGURATION, *PCONFIGURATION;
 
 extern bool inputAdded;

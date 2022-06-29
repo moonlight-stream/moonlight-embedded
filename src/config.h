@@ -47,6 +47,7 @@ typedef struct _CONFIGURATION {
   char* inputs[MAX_INPUTS];
   int inputsCount;
   enum codecs codec;
+  int pin;  
 } CONFIGURATION, *PCONFIGURATION;
 
 extern bool inputAdded;

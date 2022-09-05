@@ -31,9 +31,9 @@ void gs_sps_init(int width, int height) {
 }
 
 void gs_sps_fix(PLENTRY sps, int flags, uint8_t* out_buf, uint32_t* out_offset) {
-  const char naluHeader[] = {0x00, 0x00, 0x00, 0x01};
+  int start_len = sps->data[2] == 0x01 ? 3 : 4;
 
-  read_nal_unit(h264_stream, sps->data+4, sps->length-4);
+  read_nal_unit(h264_stream, sps->data+start_len, sps->length-start_len);
 
   // Some decoders rely on H264 level to decide how many buffers are needed
   // Since we only need one frame buffered, we'll set level as low as we can
@@ -76,8 +76,8 @@ void gs_sps_fix(PLENTRY sps, int flags, uint8_t* out_buf, uint32_t* out_offset) 
     h264_stream->sps->vui.max_bits_per_mb_denom = 1;
   }
 
-  memcpy(out_buf+*out_offset, naluHeader, 4);
-  *out_offset += 4;
+  memcpy(out_buf+*out_offset, sps->data, start_len);
+  *out_offset += start_len;
 
   *out_offset += write_nal_unit(h264_stream, out_buf+*out_offset, 128);
 }

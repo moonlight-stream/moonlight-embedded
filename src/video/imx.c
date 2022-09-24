@@ -42,7 +42,7 @@
 #include <linux/v4l2-controls.h>
 #include <linux/videodev2.h>
 
-#define MIN_FRAME_BUFFER_COUNT 18;
+#define MIN_FRAME_BUFFER_COUNT 18
 
 #define THRESHOLD 2
 

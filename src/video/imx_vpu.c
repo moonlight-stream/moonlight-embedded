@@ -210,7 +210,7 @@ bool vpu_decode(PDECODE_UNIT decodeUnit) {
   while (vpu_IsBusy()) {
     if (loop_id > 50) {
       vpu_SWReset(handle, 0);
-      fprintf(stderr, "VPU is too long busy\n");
+      fprintf(stderr, "VPU busy timeout expired\n");
       exit(EXIT_FAILURE);
     }
     vpu_WaitForInt(100);

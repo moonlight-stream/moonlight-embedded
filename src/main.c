@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) {
     config_file_parse(host_config_file, &config);
 
   SERVER_DATA server;
-  printf("Connect to %s...\n", config.address);
+  printf("Connecting to %s...\n", config.address);
 
   int ret;
   if ((ret = gs_init(&server, config.address, config.key_dir, config.debug_level, config.unsupported)) == GS_OUT_OF_MEMORY) {
@@ -345,7 +345,7 @@ int main(int argc, char* argv[]) {
 
         for (int i=0;i<config.inputsCount;i++) {
           if (config.debug_level > 0)
-            printf("Add input %s...\n", config.inputs[i]);
+            printf("Adding input device %s...\n", config.inputs[i]);
 
           evdev_create(config.inputs[i], mappings, config.debug_level > 0, config.rotate);
         }

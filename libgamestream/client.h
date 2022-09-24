@@ -38,6 +38,8 @@ typedef struct _SERVER_DATA {
   char* gsVersion;
   PDISPLAY_MODE modes;
   SERVER_INFORMATION serverInfo;
+  unsigned short httpPort;
+  unsigned short httpsPort;
 } SERVER_DATA, *PSERVER_DATA;
 
 int gs_init(PSERVER_DATA server, char* address, const char *keyDirectory, int logLevel, bool unsupported);

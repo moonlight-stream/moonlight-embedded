@@ -21,4 +21,4 @@
 
 #define MAX_ADDRESS_SIZE 40
 
-void gs_discover_server(char* dest);
+void gs_discover_server(char* dest, unsigned short* port);

@@ -33,6 +33,11 @@
 
 static AvahiSimplePoll *simple_poll = NULL;
 
+struct cb_ctx {
+  char* address;
+  unsigned short* port;
+};
+
 static void client_callback(AvahiClient *c, AvahiClientState state, void *userdata) {
   if (state == AVAHI_CLIENT_FAILURE) {
     gs_error = "Server connection failure";
@@ -43,12 +48,14 @@ static void client_callback(AvahiClient *c, AvahiClientState state, void *userda
 static void resolve_callback(AvahiServiceResolver *r, AvahiIfIndex interface, AvahiProtocol protocol, AvahiResolverEvent event, const char *name, const char *type, const char *domain, const char *host_name, const AvahiAddress *address, uint16_t port, AvahiStringList *txt, AvahiLookupResultFlags flags, void *userdata) {
   if (event == AVAHI_RESOLVER_FOUND) {
     if (userdata != NULL) {
-      avahi_address_snprint(userdata, AVAHI_ADDRESS_STR_MAX, address);
+      struct cb_ctx* ctx = userdata;
+      avahi_address_snprint(ctx->address, AVAHI_ADDRESS_STR_MAX, address);
+      *ctx->port = port;
       avahi_simple_poll_quit(simple_poll);
     } else {
       char strAddress[AVAHI_ADDRESS_STR_MAX];
       avahi_address_snprint(strAddress, sizeof(strAddress), address);
-      printf(" %s (%s)\n", host_name, strAddress);
+      printf(" %s (%s:%u)\n", host_name, strAddress, port);
     }
   }
 
@@ -73,7 +80,7 @@ static void browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, Avah
   }
 }
 
-void gs_discover_server(char* dest) {
+void gs_discover_server(char* dest, unsigned short* port) {
   AvahiClient *client = NULL;
   AvahiServiceBrowser *sb = NULL;
 
@@ -89,7 +96,10 @@ void gs_discover_server(char* dest) {
     goto cleanup;
   }
 
-  if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, "_nvstream._tcp", NULL, 0, browse_callback, dest))) {
+  struct cb_ctx ctx;
+  ctx.address = dest;
+  ctx.port = port;
+  if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, "_nvstream._tcp", NULL, 0, browse_callback, &ctx))) {
     gs_error = "Failed to create service browser";
     goto cleanup;
   }

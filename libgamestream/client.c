@@ -166,109 +166,128 @@ static int load_cert(const char* keyDirectory) {
   return GS_OK;
 }
 
-static int load_server_status(PSERVER_DATA server) {
-
+static int load_serverinfo(PSERVER_DATA server, bool https) {
   uuid_t uuid;
   char uuid_str[UUID_STRLEN];
-
-  int ret;
   char url[4096];
+  int ret = GS_INVALID;
+  char *pairedText = NULL;
+  char *currentGameText = NULL;
+  char *stateText = NULL;
+  char *serverCodecModeSupportText = NULL;
+  char *httpsPortText = NULL;
+
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, uuid_str);
+
+  snprintf(url, sizeof(url), "%s://%s:%d/serverinfo?uniqueid=%s&uuid=%s",
+    https ? "https" : "http", server->serverInfo.address, https ? server->httpsPort : server->httpPort, unique_id, uuid_str);
+
+  PHTTP_DATA data = http_create_data();
+  if (data == NULL) {
+    ret = GS_OUT_OF_MEMORY;
+    goto cleanup;
+  }
+  if (http_request(url, data) != GS_OK) {
+    ret = GS_IO_ERROR;
+    goto cleanup;
+  }
+
+  if (xml_status(data->memory, data->size) == GS_ERROR) {
+    ret = GS_ERROR;
+    goto cleanup;
+  }
+
+  if (xml_search(data->memory, data->size, "currentgame", &currentGameText) != GS_OK) {
+    goto cleanup;
+  }
+
+  if (xml_search(data->memory, data->size, "PairStatus", &pairedText) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "appversion", (char**) &server->serverInfo.serverInfoAppVersion) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "GsVersion", &server->gsVersion) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)
+    goto cleanup;
+
+  if (xml_search(data->memory, data->size, "HttpsPort", &httpsPortText) != GS_OK)
+    goto cleanup;
+
+  if (xml_modelist(data->memory, data->size, &server->modes) != GS_OK)
+    goto cleanup;
+
+  // These fields are present on all version of GFE that this client supports
+  if (!strlen(currentGameText) || !strlen(pairedText) || !strlen(server->serverInfo.serverInfoAppVersion) || !strlen(stateText))
+    goto cleanup;
+
+  server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
+  server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
+  server->supports4K = serverCodecModeSupportText != NULL;
+  server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
+
+  server->httpsPort = atoi(httpsPortText);
+  if (!server->httpsPort)
+    server->httpsPort = 47984;
+
+  if (strstr(stateText, "_SERVER_BUSY") == NULL) {
+    // After GFE 2.8, current game remains set even after streaming
+    // has ended. We emulate the old behavior by forcing it to zero
+    // if streaming is not active.
+    server->currentGame = 0;
+  }
+  ret = GS_OK;
+
+  cleanup:
+  if (data != NULL)
+    http_free_data(data);
+
+  if (pairedText != NULL)
+    free(pairedText);
+
+  if (currentGameText != NULL)
+    free(currentGameText);
+
+  if (serverCodecModeSupportText != NULL)
+    free(serverCodecModeSupportText);
+
+  if (httpsPortText != NULL)
+    free(httpsPortText);
+
+  return ret;
+}
+
+static int load_server_status(PSERVER_DATA server) {
+  int ret;
   int i;
 
-  i = 0;
-  do {
-    char *pairedText = NULL;
-    char *currentGameText = NULL;
-    char *stateText = NULL;
-    char *serverCodecModeSupportText = NULL;
+  /* Fetch the HTTPS port if we don't have one yet */
+  if (!server->httpsPort) {
+    ret = load_serverinfo(server, false);
+    if (ret != GS_OK)
+      return ret;
+  }
 
-    ret = GS_INVALID;
-
-    uuid_generate_random(uuid);
-    uuid_unparse(uuid, uuid_str);
-
-    // Modern GFE versions don't allow serverinfo to be fetched over HTTPS if the client
-    // is not already paired. Since we can't pair without knowing the server version, we
-    // make another request over HTTP if the HTTPS request fails. We can't just use HTTP
-    // for everything because it doesn't accurately tell us if we're paired.
-    snprintf(url, sizeof(url), "%s://%s:%d/serverinfo?uniqueid=%s&uuid=%s",
-      i == 0 ? "https" : "http", server->serverInfo.address, i == 0 ? server->httpsPort : server->httpPort, unique_id, uuid_str);
-
-    PHTTP_DATA data = http_create_data();
-    if (data == NULL) {
-      ret = GS_OUT_OF_MEMORY;
-      goto cleanup;
-    }
-    if (http_request(url, data) != GS_OK) {
-      ret = GS_IO_ERROR;
-      goto cleanup;
-    }
-
-    if (xml_status(data->memory, data->size) == GS_ERROR) {
-      ret = GS_ERROR;
-      goto cleanup;
-    }
-
-    if (xml_search(data->memory, data->size, "currentgame", &currentGameText) != GS_OK) {
-      goto cleanup;
-    }
-
-    if (xml_search(data->memory, data->size, "PairStatus", &pairedText) != GS_OK)
-      goto cleanup;
-
-    if (xml_search(data->memory, data->size, "appversion", (char**) &server->serverInfo.serverInfoAppVersion) != GS_OK)
-      goto cleanup;
-
-    if (xml_search(data->memory, data->size, "state", &stateText) != GS_OK)
-      goto cleanup;
-
-    if (xml_search(data->memory, data->size, "ServerCodecModeSupport", &serverCodecModeSupportText) != GS_OK)
-      goto cleanup;
-
-    if (xml_search(data->memory, data->size, "gputype", &server->gpuType) != GS_OK)
-      goto cleanup;
-
-    if (xml_search(data->memory, data->size, "GsVersion", &server->gsVersion) != GS_OK)
-      goto cleanup;
-
-    if (xml_search(data->memory, data->size, "GfeVersion", (char**) &server->serverInfo.serverInfoGfeVersion) != GS_OK)
-      goto cleanup;
-
-    if (xml_modelist(data->memory, data->size, &server->modes) != GS_OK)
-      goto cleanup;
-
-    // These fields are present on all version of GFE that this client supports
-    if (!strlen(currentGameText) || !strlen(pairedText) || !strlen(server->serverInfo.serverInfoAppVersion) || !strlen(stateText))
-      goto cleanup;
-
-    server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
-    server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
-    server->supports4K = serverCodecModeSupportText != NULL;
-    server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
-
-    if (strstr(stateText, "_SERVER_BUSY") == NULL) {
-      // After GFE 2.8, current game remains set even after streaming
-      // has ended. We emulate the old behavior by forcing it to zero
-      // if streaming is not active.
-      server->currentGame = 0;
-    }
-    ret = GS_OK;
-
-    cleanup:
-    if (data != NULL)
-      http_free_data(data);
-
-    if (pairedText != NULL)
-      free(pairedText);
-
-    if (currentGameText != NULL)
-      free(currentGameText);
-
-    if (serverCodecModeSupportText != NULL)
-      free(serverCodecModeSupportText);
-
-    i++;
-  } while (ret != GS_OK && i < 2);
+  // Modern GFE versions don't allow serverinfo to be fetched over HTTPS if the client
+  // is not already paired. Since we can't pair without knowing the server version, we
+  // make another request over HTTP if the HTTPS request fails. We can't just use HTTP
+  // for everything because it doesn't accurately tell us if we're paired.
+  ret = GS_INVALID;
+  for (i = 0; i < 2 && ret != GS_OK; i++) {
+    ret = load_serverinfo(server, i == 0);
+  }
 
   if (ret == GS_OK && !server->unsupported) {
     if (server->serverMajorVersion > MAX_SUPPORTED_GFE_VERSION) {
@@ -790,7 +809,9 @@ int gs_quit_app(PSERVER_DATA server) {
   return ret;
 }
 
-int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int log_level, bool unsupported) {
+int gs_init(PSERVER_DATA server, char *address, unsigned short httpPort, const char *keyDirectory, int log_level, bool unsupported) {
+  char* portSeparator;
+
   mkdirtree(keyDirectory);
   if (load_unique_id(keyDirectory) != GS_OK)
     return GS_FAILED;
@@ -803,7 +824,7 @@ int gs_init(PSERVER_DATA server, char *address, const char *keyDirectory, int lo
   LiInitializeServerInformation(&server->serverInfo);
   server->serverInfo.address = address;
   server->unsupported = unsupported;
-  server->httpPort = 47989;
-  server->httpsPort = 47984;
+  server->httpPort = httpPort ? httpPort : 47989;
+  server->httpsPort = 0; /* Populated by load_server_status() */
   return load_server_status(server);
 }

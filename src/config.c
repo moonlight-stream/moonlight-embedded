@@ -73,6 +73,7 @@ static struct option long_options[] = {
   {"debug", no_argument, NULL, 'Z'},
   {"nomouseemulation", no_argument, NULL, '4'},
   {"pin", required_argument, NULL, '5'},
+  {"port", required_argument, NULL, '6'},
   {0, 0, 0, 0},
 };
 
@@ -248,6 +249,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case '5':
     config->pin = atoi(value);
     break;
+  case '6':
+    config->port = atoi(value);
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -369,6 +373,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->rotate = 0;
   config->codec = CODEC_UNSPECIFIED;
   config->pin = 0;
+  config->port = 47989;
 
   config->inputsCount = 0;
   config->mapping = get_path("gamecontrollerdb.txt", getenv("XDG_DATA_DIRS"));
@@ -386,7 +391,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

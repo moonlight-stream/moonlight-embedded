@@ -115,14 +115,17 @@ static void alsa_renderer_decode_and_play_sample(char* data, int length) {
   int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, samplesPerFrame, 0);
   if (decodeLen > 0) {
     int rc = snd_pcm_writei(handle, pcmBuffer, decodeLen);
-    if (rc == -EPIPE)
-      snd_pcm_recover(handle, rc, 1);
+    if (rc < 0) {
+      rc = snd_pcm_recover(handle, rc, 0);
+      if (rc == 0)
+        rc = snd_pcm_writei(handle, pcmBuffer, decodeLen);
+    }
 
     if (rc<0)
       printf("Alsa error from writei: %d\n", rc);
     else if (decodeLen != rc)
       printf("Alsa shortm write, write %d frames\n", rc);
-  } else {
+  } else if (decodeLen < 0) {
     printf("Opus error from decode: %d\n", decodeLen);
   }
 }

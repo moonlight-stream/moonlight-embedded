@@ -21,8 +21,6 @@
 
 #include <Limelight.h>
 
-#define FRAME_BUFFER 12
-
 #ifdef HAVE_ALSA
 extern AUDIO_RENDERER_CALLBACKS audio_callbacks_alsa;
 #endif

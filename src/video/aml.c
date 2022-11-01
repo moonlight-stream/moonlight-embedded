@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <codec.h>
+#include <errno.h>
 
 #define SYNC_OUTSIDE 0x02
 #define UCODE_IP_ONLY_PARAM 0x08

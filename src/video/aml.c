@@ -92,25 +92,35 @@ void aml_cleanup() {
 }
 
 int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  int result = DR_OK;
   PLENTRY entry = decodeUnit->bufferList;
   while (entry != NULL) {
-    int api = codec_write(&codecParam, entry->data, entry->length);
-    if (api != entry->length) {
-      fprintf(stderr, "codec_write error: %x\n", api);
-      codec_reset(&codecParam);
-      result = DR_NEED_IDR;
-      break;
+    char* data = entry->data;
+    int length = entry->length;
+
+    while (length > 0) {
+      int written = codec_write(&codecParam, data, length);
+      if (written > 0) {
+        data += written;
+        length -= written;
+      } else if (errno == EAGAIN) {
+        usleep(500);
+      } else {
+        fprintf(stderr, "codec_write() failed: %d\n", errno);
+        codec_reset(&codecParam);
+        return DR_NEED_IDR;
+      }
     }
 
     entry = entry->next;
   }
-  return result;
+  return DR_OK;
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_aml = {
   .setup = aml_setup,
   .cleanup = aml_cleanup,
   .submitDecodeUnit = aml_submit_decode_unit,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_SLICES_PER_FRAME(8),
+
+  // We may delay in aml_submit_decode_unit() for a while, so we can't set CAPABILITY_DIRECT_SUBMIT
+  .capabilities = CAPABILITY_REFERENCE_FRAME_INVALIDATION_HEVC,
 };

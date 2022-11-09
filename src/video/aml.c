@@ -24,17 +24,49 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <codec.h>
 #include <errno.h>
+#include <pthread.h>
+
+#include <linux/videodev2.h>
+
+#include "../util.h"
 
 #define SYNC_OUTSIDE 0x02
 #define UCODE_IP_ONLY_PARAM 0x08
 
 static codec_para_t codecParam = { 0 };
+static pthread_t displayThread;
+static int videoFd = -1;
+static volatile bool done = false;
+
+void* aml_display_thread(void* unused) {
+  while (!done) {
+    struct v4l2_buffer vbuf = { 0 };
+    vbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+    if (ioctl(videoFd, VIDIOC_DQBUF, &vbuf) < 0) {
+      if (errno == EAGAIN) {
+        usleep(500);
+        continue;
+      }
+      fprintf(stderr, "VIDIOC_DQBUF failed: %d\n", errno);
+      break;
+    }
+
+    if (ioctl(videoFd, VIDIOC_QBUF, &vbuf) < 0) {
+      fprintf(stderr, "VIDIOC_QBUF failed: %d\n", errno);
+      break;
+    }
+  }
+  printf("Display thread terminated\n");
+  return NULL;
+}
 
 int aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   codecParam.stream_type = STREAM_TYPE_ES_VIDEO;
@@ -82,10 +114,36 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     return -2;
   }
 
+  char vfm_map[2048] = {};
+  char* eol;
+  if (read_file("/sys/class/vfm/map", vfm_map, sizeof(vfm_map) - 1) > 0 && (eol = strchr(vfm_map, '\n'))) {
+    *eol = 0;
+
+    // If amlvideo is in the pipeline, we must spawn a display thread
+    printf("VFM map: %s\n", vfm_map);
+    if (strstr(vfm_map, "amlvideo")) {
+      printf("Using display thread for amlvideo pipeline\n");
+
+      videoFd = open("/dev/video10", O_RDONLY | O_NONBLOCK);
+      if (videoFd < 0) {
+        fprintf(stderr, "Failed to open video device: %d\n", errno);
+        return -3;
+      }
+
+      pthread_create(&displayThread, NULL, aml_display_thread, NULL);
+    }
+  }
+
   return 0;
 }
 
 void aml_cleanup() {
+  if (videoFd >= 0) {
+    done = true;
+    pthread_join(displayThread, NULL);
+    close(videoFd);
+  }
+
   codec_close(&codecParam);
 }
 

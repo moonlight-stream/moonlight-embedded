@@ -202,6 +202,7 @@ static void help() {
   printf("\t-bitrate <bitrate>\tSpecify the bitrate in Kbps\n");
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
   printf("\t-codec <codec>\t\tSelect used codec: auto/h264/h265 (default auto)\n");
+  printf("\t-hdr\t\tEnable HDR streaming (experimental, requires host and device support)\n");
   printf("\t-remote <yes/no/auto>\t\t\tEnable optimizations for WAN streaming (default auto)\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
@@ -316,6 +317,10 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
     config.stream.supportsHevc = config.codec != CODEC_H264 && (config.codec == CODEC_HEVC || platform_supports_hevc(system));
+    if (config.stream.enableHdr && !config.stream.supportsHevc) {
+      fprintf(stderr, "HDR streaming requires HEVC codec\n");
+      exit(-1);
+    }
 
     #ifdef HAVE_SDL
     if (system == SDL)

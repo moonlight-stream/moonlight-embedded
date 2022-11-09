@@ -42,31 +42,28 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   codecParam.noblock = 0;
   codecParam.am_sysinfo.param = 0;
 
-  switch (videoFormat) {
-    case VIDEO_FORMAT_H264:
-      if (width > 1920 || height > 1080) {
-        codecParam.video_type = VFORMAT_H264_4K2K;
-        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264_4K2K;
-      } else {
-        codecParam.video_type = VFORMAT_H264;
-        codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264;
+  if (videoFormat & VIDEO_FORMAT_MASK_H264) {
+    if (width > 1920 || height > 1080) {
+      codecParam.video_type = VFORMAT_H264_4K2K;
+      codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264_4K2K;
+    } else {
+      codecParam.video_type = VFORMAT_H264;
+      codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_H264;
 
-        // Workaround for decoding special case of C1, 1080p, H264
-        int major, minor;
-        struct utsname name;
-        uname(&name);
-        int ret = sscanf(name.release, "%d.%d", &major, &minor);
-        if (!(major > 3 || (major == 3 && minor >= 14)) && width == 1920 && height == 1080)
-            codecParam.am_sysinfo.param = (void*) UCODE_IP_ONLY_PARAM;
-      }
-      break;
-    case VIDEO_FORMAT_H265:
-      codecParam.video_type = VFORMAT_HEVC;
-      codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;
-      break;
-    default:
-      printf("Video format not supported\n");
-      return -1;
+      // Workaround for decoding special case of C1, 1080p, H264
+      int major, minor;
+      struct utsname name;
+      uname(&name);
+      int ret = sscanf(name.release, "%d.%d", &major, &minor);
+      if (!(major > 3 || (major == 3 && minor >= 14)) && width == 1920 && height == 1080)
+          codecParam.am_sysinfo.param = (void*) UCODE_IP_ONLY_PARAM;
+    }
+  } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
+    codecParam.video_type = VFORMAT_HEVC;
+    codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;
+  } else {
+    printf("Video format not supported\n");
+    return -1;
   }
 
   codecParam.am_sysinfo.width = width;

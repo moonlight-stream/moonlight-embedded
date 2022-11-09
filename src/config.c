@@ -74,6 +74,7 @@ static struct option long_options[] = {
   {"nomouseemulation", no_argument, NULL, '4'},
   {"pin", required_argument, NULL, '5'},
   {"port", required_argument, NULL, '6'},
+  {"hdr", no_argument, NULL, '7'},
   {0, 0, 0, 0},
 };
 
@@ -251,6 +252,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case '6':
     config->port = atoi(value);
+    break;
+  case '7':
+    config->stream.enableHdr = true;
     break;
   case 1:
     if (config->action == NULL)

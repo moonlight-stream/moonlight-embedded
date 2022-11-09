@@ -254,18 +254,15 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   int ret;
   int i;
   int j;
-  int format = 0;
+  int format;
 
-  switch (videoFormat) {
-    case VIDEO_FORMAT_H264:
-      format = RK_H264;
-      break;
-    case VIDEO_FORMAT_H265:
-      format = RK_H265;
-      break;
-    default:
-      fprintf(stderr, "Video format not supported\n");
-      return -1;
+  if (videoFormat & VIDEO_FORMAT_MASK_H264) {
+    format = RK_H264;
+  } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
+    format = RK_H265;
+  } else {
+    fprintf(stderr, "Video format not supported\n");
+    return -1;
   }
 
   MppCodingType mpp_type = (MppCodingType)format;
@@ -328,7 +325,7 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
       continue;
     }
     for (j = 0; j < ovr->count_formats; j++) {
-      if (ovr->formats[j] ==  DRM_FORMAT_NV12) {
+      if (ovr->formats[j] == ((videoFormat & VIDEO_FORMAT_MASK_10BIT) ? DRM_FORMAT_NV12_10 : DRM_FORMAT_NV12)) {
         break;
       }
     }

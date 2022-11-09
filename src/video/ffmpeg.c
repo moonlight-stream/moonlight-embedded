@@ -60,13 +60,13 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
   }
 
   ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
-  switch (videoFormat) {
-    case VIDEO_FORMAT_H264:
-      decoder = avcodec_find_decoder_by_name("h264");
-      break;
-    case VIDEO_FORMAT_H265:
-      decoder = avcodec_find_decoder_by_name("hevc");
-      break;
+  if (videoFormat & VIDEO_FORMAT_MASK_H264) {
+    decoder = avcodec_find_decoder_by_name("h264");
+  } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
+    decoder = avcodec_find_decoder_by_name("hevc");
+  } else {
+    printf("Video format not supported\n");
+    return -1;
   }
 
   if (decoder == NULL) {

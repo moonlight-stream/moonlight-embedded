@@ -82,7 +82,7 @@ static void sdl_renderer_decode_and_play_sample(char* data, int length) {
   int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, samplesPerFrame, 0);
   if (decodeLen > 0) {
     SDL_QueueAudio(dev, pcmBuffer, decodeLen * channelCount * sizeof(short));
-  } else {
+  } else if (decodeLen < 0) {
     printf("Opus error from decode: %d\n", decodeLen);
   }
 }

@@ -101,7 +101,7 @@ static void pulse_renderer_decode_and_play_sample(char* data, int length) {
 
     if (rc<0)
       printf("Pulseaudio error: %s\n", pa_strerror(error));
-  } else {
+  } else if (decodeLen < 0) {
     printf("Opus error from decode: %d\n", decodeLen);
   }
 }

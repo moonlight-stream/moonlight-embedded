@@ -203,7 +203,7 @@ static void omx_renderer_decode_and_play_sample(char* data, int length) {
     if (r != OMX_ErrorNone) {
       fprintf(stderr, "Empty buffer error\n");
     }
-  } else {
+  } else if (decodeLen < 0) {
     printf("Opus error from decode: %d\n", decodeLen);
   }
 }

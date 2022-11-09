@@ -25,13 +25,13 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int blank_fb(char *path, bool clear) {
+int write_bool(char *path, bool val) {
   int fd = open(path, O_RDWR);
 
   if(fd >= 0) {
-    int ret = write(fd, clear ? "1" : "0", 1);
+    int ret = write(fd, val ? "1" : "0", 1);
     if (ret < 0)
-      fprintf(stderr, "Failed to clear framebuffer %s: %d\n", path, ret);
+      fprintf(stderr, "Failed to write %d to %s: %d\n", val ? 1 : 0, path, ret);
 
     close(fd);
     return 0;

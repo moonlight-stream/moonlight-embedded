@@ -104,13 +104,13 @@ void platform_start(enum platform system) {
   switch (system) {
   #ifdef HAVE_AML
   case AML:
-    blank_fb("/sys/class/graphics/fb0/blank", true);
-    blank_fb("/sys/class/graphics/fb1/blank", true);
+    write_bool("/sys/class/graphics/fb0/blank", true);
+    write_bool("/sys/class/graphics/fb1/blank", true);
     break;
   #endif
   #if defined(HAVE_PI) | defined(HAVE_MMAL)
   case PI:
-    blank_fb("/sys/class/graphics/fb0/blank", true);
+    write_bool("/sys/class/graphics/fb0/blank", true);
     break;
   #endif
   }
@@ -120,13 +120,13 @@ void platform_stop(enum platform system) {
   switch (system) {
   #ifdef HAVE_AML
   case AML:
-    blank_fb("/sys/class/graphics/fb0/blank", false);
-    blank_fb("/sys/class/graphics/fb1/blank", false);
+    write_bool("/sys/class/graphics/fb0/blank", false);
+    write_bool("/sys/class/graphics/fb1/blank", false);
     break;
   #endif
   #if defined(HAVE_PI) | defined(HAVE_MMAL)
   case PI:
-    blank_fb("/sys/class/graphics/fb0/blank", false);
+    write_bool("/sys/class/graphics/fb0/blank", false);
     break;
   #endif
   }

@@ -345,6 +345,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.streamingRemotely = STREAM_CFG_AUTO;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportsHevc = false;
+  config->stream.enableHdr = false;
   config->stream.encryptionFlags = ENCFLG_AUDIO;
 
 #ifdef __arm__
@@ -395,7 +396,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:7", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

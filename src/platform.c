@@ -106,6 +106,7 @@ void platform_start(enum platform system) {
   case AML:
     write_bool("/sys/class/graphics/fb0/blank", true);
     write_bool("/sys/class/graphics/fb1/blank", true);
+    write_bool("/sys/class/video/disable_video", false);
     break;
   #endif
   #if defined(HAVE_PI) | defined(HAVE_MMAL)

@@ -39,11 +39,15 @@
 
 #define SYNC_OUTSIDE 0x02
 #define UCODE_IP_ONLY_PARAM 0x08
+#define DECODER_BUFFER_SIZE 512*1024
+#define MAX_WRITE_ATTEMPTS 3
+#define EAGAIN_SLEEP_TIME 15 * 1000
 
 static codec_para_t codecParam = { 0 };
 static pthread_t displayThread;
 static int videoFd = -1;
 static volatile bool done = false;
+static char* frame_buffer;
 
 void* aml_display_thread(void* unused) {
   while (!done) {
@@ -69,10 +73,17 @@ void* aml_display_thread(void* unused) {
 }
 
 int aml_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  codecParam.stream_type = STREAM_TYPE_ES_VIDEO;
-  codecParam.has_video = 1;
-  codecParam.noblock = 0;
-  codecParam.am_sysinfo.param = 0;
+
+  codecParam.handle             = -1;
+  codecParam.cntl_handle        = -1;
+  codecParam.audio_utils_handle = -1;
+  codecParam.sub_handle         = -1;
+  codecParam.has_video          = 1;
+  codecParam.noblock            = 0;
+  codecParam.stream_type        = STREAM_TYPE_ES_VIDEO;
+  codecParam.dec_mode           = STREAM_TYPE_FRAME;
+  codecParam.video_path         = FRAME_BASE_PATH_AMLVIDEO_AMVIDEO;
+  codecParam.am_sysinfo.param   = 0;
 
   if (videoFormat & VIDEO_FORMAT_MASK_H264) {
     if (width > 1920 || height > 1080) {
@@ -134,6 +145,13 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
     }
   }
 
+  frame_buffer = malloc(DECODER_BUFFER_SIZE);
+  if (frame_buffer == NULL) {
+    fprintf(stderr, "Not enough memory to initialize frame buffer\n");
+    return -2;
+  }
+
+
   return 0;
 }
 
@@ -145,31 +163,43 @@ void aml_cleanup() {
   }
 
   codec_close(&codecParam);
+  free(frame_buffer);
 }
 
 int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  PLENTRY entry = decodeUnit->bufferList;
-  while (entry != NULL) {
-    char* data = entry->data;
-    int length = entry->length;
 
-    while (length > 0) {
-      int written = codec_write(&codecParam, data, length);
-      if (written > 0) {
-        data += written;
-        length -= written;
-      } else if (errno == EAGAIN) {
-        usleep(500);
-      } else {
-        fprintf(stderr, "codec_write() failed: %d\n", errno);
+  if (decodeUnit->fullLength > DECODER_BUFFER_SIZE) {
+    fprintf(stderr, "Video decode buffer too small, %i > %i\n", decodeUnit->fullLength, DECODER_BUFFER_SIZE);
+    return DR_OK;
+  }
+
+  int result = DR_OK, length = 0, errCounter = 0, api;
+  PLENTRY entry = decodeUnit->bufferList;
+  do {
+    memcpy(frame_buffer+length, entry->data, entry->length);
+    length += entry->length;
+    entry = entry->next;
+  } while (entry != NULL);
+
+  codec_checkin_pts(&codecParam, decodeUnit->presentationTimeMs);
+  do {
+    api = codec_write(&codecParam, frame_buffer, length);
+    if (api < 0) {
+      if (errno != EAGAIN) {
+        fprintf(stderr, "codec_write error: %x %d\n", api, errno);
         codec_reset(&codecParam);
-        return DR_NEED_IDR;
+        result = DR_NEED_IDR;
+      } else {
+        fprintf(stderr, "EAGAIN triggered, trying again...\n");
+        usleep(EAGAIN_SLEEP_TIME);
+        ++errCounter;
+        continue;
       }
     }
-
-    entry = entry->next;
-  }
-  return DR_OK;
+    break;
+  } while (errCounter < MAX_WRITE_ATTEMPTS);
+ 
+  return result;
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_aml = {

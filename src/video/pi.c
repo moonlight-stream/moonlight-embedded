@@ -41,8 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ilclient.h>
 #include <bcm_host.h>
 
-#define MAX_DECODE_UNIT_SIZE 262144
-
 static TUNNEL_T tunnel[2];
 static COMPONENT_T *list[3];
 static ILCLIENT_T *client;
@@ -179,7 +177,7 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
   }
 
   // Increase the buffer size to fit the largest possible frame
-  port.nBufferSize = MAX_DECODE_UNIT_SIZE;
+  port.nBufferSize = INITIAL_DECODER_BUFFER_SIZE;
 
   if(OMX_SetParameter(ILC_GET_HANDLE(video_decode), OMX_IndexParamPortDefinition, &port) == OMX_ErrorNone &&
      ilclient_enable_port_buffers(video_decode, 130, NULL, NULL, NULL) == 0) {

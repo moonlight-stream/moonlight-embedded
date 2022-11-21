@@ -26,6 +26,7 @@
 
 #include "../input/x11.h"
 #include "../loop.h"
+#include "../util.h"
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -37,12 +38,12 @@
 #include <fcntl.h>
 #include <poll.h>
 
-#define DECODER_BUFFER_SIZE 256*1024
 #define X11_VDPAU_ACCELERATION ENABLE_HARDWARE_ACCELERATION_1
 #define X11_VAAPI_ACCELERATION ENABLE_HARDWARE_ACCELERATION_2
 #define SLICES_PER_FRAME 4
 
-static char* ffmpeg_buffer = NULL;
+static void* ffmpeg_buffer = NULL;
+static size_t ffmpeg_buffer_size = 0;
 
 static Display *display = NULL;
 static Window window;
@@ -82,11 +83,7 @@ int x11_init(bool vdpau, bool vaapi) {
 }
 
 int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
-  if (ffmpeg_buffer == NULL) {
-    fprintf(stderr, "Not enough memory\n");
-    return -1;
-  }
+  ensure_buf_size(&ffmpeg_buffer, &ffmpeg_buffer_size, INITIAL_DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
 
   if (!display) {
     fprintf(stderr, "Error: failed to open X display.\n");
@@ -167,19 +164,22 @@ void x11_cleanup() {
 }
 
 int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
-    PLENTRY entry = decodeUnit->bufferList;
-    int length = 0;
-    while (entry != NULL) {
-      memcpy(ffmpeg_buffer+length, entry->data, entry->length);
-      length += entry->length;
-      entry = entry->next;
-    }
-    ffmpeg_decode(ffmpeg_buffer, length);
-    AVFrame* frame = ffmpeg_get_frame(true);
-    if (frame != NULL)
-      write(pipefd[1], &frame, sizeof(void*));
+  PLENTRY entry = decodeUnit->bufferList;
+  int length = 0;
+
+  ensure_buf_size(&ffmpeg_buffer, &ffmpeg_buffer_size, decodeUnit->fullLength + AV_INPUT_BUFFER_PADDING_SIZE);
+
+  while (entry != NULL) {
+    memcpy(ffmpeg_buffer+length, entry->data, entry->length);
+    length += entry->length;
+    entry = entry->next;
   }
+
+  ffmpeg_decode(ffmpeg_buffer, length);
+
+  AVFrame* frame = ffmpeg_get_frame(true);
+  if (frame != NULL)
+    write(pipefd[1], &frame, sizeof(void*));
 
   return DR_OK;
 }

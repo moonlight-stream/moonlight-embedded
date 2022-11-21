@@ -33,6 +33,8 @@
 #define INIT_VDPAU 2
 #define INIT_VAAPI 3
 
+#define INITIAL_DECODER_BUFFER_SIZE (256*1024)
+
 #ifdef HAVE_X11
 int x11_init(bool vdpau, bool vaapi);
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11;

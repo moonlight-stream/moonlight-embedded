@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int write_bool(char *path, bool val) {
   int fd = open(path, O_RDWR);
@@ -50,3 +51,16 @@ int read_file(char *path, char* output, int output_len) {
     return -1;
 }
 
+bool ensure_buf_size(void **buf, size_t *buf_size, size_t required_size) {
+  if (*buf_size >= required_size)
+    return false;
+
+  *buf_size = required_size;
+  *buf = realloc(*buf, *buf_size);
+  if (!*buf) {
+    fprintf(stderr, "Failed to allocate %zu bytes\n", *buf_size);
+    abort();
+  }
+
+  return true;
+}

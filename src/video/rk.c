@@ -18,7 +18,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Limelight.h>
+#include "video.h"
+#include "../util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +39,6 @@
 
 #include <rockchip/rk_mpi.h>
 
-#define READ_BUF_SIZE 0x00100000
 #define MAX_FRAMES 16
 #define RK_H264 7
 #define RK_H265 16777220
@@ -48,6 +48,7 @@
 #endif
 
 void *pkt_buf = NULL;
+size_t pkt_buf_size = 0;
 int fd;
 int fb_id;
 uint32_t plane_id, crtc_id;
@@ -362,9 +363,9 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
 
   // MPI SETUP
 
-  pkt_buf = malloc(READ_BUF_SIZE);
+  pkt_buf = ensure_buf_size(&pkt_buf, &pkt_buf_size, INITIAL_DECODER_BUFFER_SIZE);
   assert(pkt_buf);
-  ret = mpp_packet_init(&mpi_packet, pkt_buf, READ_BUF_SIZE);
+  ret = mpp_packet_init(&mpi_packet, pkt_buf, pkt_buf_size);
   assert(!ret);
 
   ret = mpp_create(&mpi_ctx, &mpi_api);
@@ -455,24 +456,25 @@ void rk_cleanup() {
 int rk_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
   int result = DR_OK;
+  PLENTRY entry = decodeUnit->bufferList;
+  int length = 0;
 
-  if (decodeUnit->fullLength < READ_BUF_SIZE) {
-    PLENTRY entry = decodeUnit->bufferList;
-    int length = 0;
-    while (entry != NULL) {
-      memcpy(pkt_buf+length, entry->data, entry->length);
-      length += entry->length;
-      entry = entry->next;
-    }
-    if (length) {
-      mpp_packet_set_pos(mpi_packet, pkt_buf);
-      mpp_packet_set_length(mpi_packet, length);
-
-      while (MPP_OK != mpi_api->decode_put_packet(mpi_ctx, mpi_packet))
-        ;
-
-    }
+  if (ensure_buf_size(&pkt_buf, &pkt_buf_size, decodeUnit->fullLength)) {
+    // Buffer was reallocated, so update the mpp_packet accordingly
+    mpp_packet_set_data(mpi_packet, pkt_buf);
+    mpp_packet_set_size(mpi_packet, pkt_buf_size);
   }
+
+  while (entry != NULL) {
+    memcpy(pkt_buf+length, entry->data, entry->length);
+    length += entry->length;
+    entry = entry->next;
+  }
+
+  mpp_packet_set_pos(mpi_packet, pkt_buf);
+  mpp_packet_set_length(mpi_packet, length);
+
+  while (MPP_OK != mpi_api->decode_put_packet(mpi_ctx, mpi_packet));
 
   return result;
 }

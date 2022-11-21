@@ -21,6 +21,7 @@
 #include "ffmpeg.h"
 
 #include "../sdl.h"
+#include "../util.h"
 
 #include <SDL.h>
 #include <SDL_thread.h>
@@ -28,10 +29,10 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#define DECODER_BUFFER_SIZE 256*1024
 #define SLICES_PER_FRAME 4
 
-static char* ffmpeg_buffer;
+static void* ffmpeg_buffer;
+static size_t ffmpeg_buffer_size;
 
 static int sdl_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   if (ffmpeg_init(videoFormat, width, height, SLICE_THREADING, SDL_BUFFER_FRAMES, SLICES_PER_FRAME) < 0) {
@@ -39,12 +40,7 @@ static int sdl_setup(int videoFormat, int width, int height, int redrawRate, voi
     return -1;
   }
 
-  ffmpeg_buffer = malloc(DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
-  if (ffmpeg_buffer == NULL) {
-    fprintf(stderr, "Not enough memory\n");
-    ffmpeg_destroy();
-    return -1;
-  }
+  ensure_buf_size(&ffmpeg_buffer, &ffmpeg_buffer_size, INITIAL_DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
 
   return 0;
 }
@@ -54,36 +50,31 @@ static void sdl_cleanup() {
 }
 
 static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
-  if (decodeUnit->fullLength < DECODER_BUFFER_SIZE) {
-    PLENTRY entry = decodeUnit->bufferList;
-    int length = 0;
-    while (entry != NULL) {
-      memcpy(ffmpeg_buffer+length, entry->data, entry->length);
-      length += entry->length;
-      entry = entry->next;
-    }
-    ffmpeg_decode(ffmpeg_buffer, length);
+  PLENTRY entry = decodeUnit->bufferList;
+  int length = 0;
 
-    if (SDL_LockMutex(mutex) == 0) {
-      AVFrame* frame = ffmpeg_get_frame(false);
-      if (frame != NULL) {
-        sdlNextFrame++;
+  ensure_buf_size(&ffmpeg_buffer, &ffmpeg_buffer_size, decodeUnit->fullLength + AV_INPUT_BUFFER_PADDING_SIZE);
 
-        SDL_Event event;
-        event.type = SDL_USEREVENT;
-        event.user.code = SDL_CODE_FRAME;
-        event.user.data1 = &frame->data;
-        event.user.data2 = &frame->linesize;
-        SDL_PushEvent(&event);
-      }
-
-      SDL_UnlockMutex(mutex);
-    } else
-      fprintf(stderr, "Couldn't lock mutex\n");
-  } else {
-    fprintf(stderr, "Video decode buffer too small");
-    exit(1);
+  while (entry != NULL) {
+    memcpy(ffmpeg_buffer+length, entry->data, entry->length);
+    length += entry->length;
+    entry = entry->next;
   }
+  ffmpeg_decode(ffmpeg_buffer, length);
+
+  SDL_LockMutex(mutex);
+  AVFrame* frame = ffmpeg_get_frame(false);
+  if (frame != NULL) {
+    sdlNextFrame++;
+
+    SDL_Event event;
+    event.type = SDL_USEREVENT;
+    event.user.code = SDL_CODE_FRAME;
+    event.user.data1 = &frame->data;
+    event.user.data2 = &frame->linesize;
+    SDL_PushEvent(&event);
+  }
+  SDL_UnlockMutex(mutex);
 
   return DR_OK;
 }

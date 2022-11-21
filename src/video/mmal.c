@@ -48,8 +48,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <interface/mmal/vc/mmal_vc_api.h>
 #include <interface/vcos/vcos.h>
 
-#define MAX_DECODE_UNIT_SIZE 262144
-
 #define ALIGN(x, a) (((x)+(a)-1)&~((a)-1))
 
 static VCOS_SEMAPHORE_T semaphore;
@@ -116,7 +114,7 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
   }
 
   decoder->input[0]->buffer_num = 5;
-  decoder->input[0]->buffer_size = MAX_DECODE_UNIT_SIZE;
+  decoder->input[0]->buffer_size = INITIAL_DECODER_BUFFER_SIZE;
   pool_in = mmal_port_pool_create(decoder->input[0], decoder->input[0]->buffer_num, decoder->output[0]->buffer_size);
 
   MMAL_ES_FORMAT_T *format_out = decoder->output[0]->format;

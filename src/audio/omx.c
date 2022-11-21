@@ -34,7 +34,7 @@ static int channelCount;
 static int samplesPerFrame;
 
 static int omx_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
-  int rc, error;
+  int rc;
   OMX_ERRORTYPE err;
   unsigned char omxMapping[AUDIO_CONFIGURATION_MAX_CHANNEL_COUNT];
   char* componentName = "audio_render";

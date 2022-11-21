@@ -94,16 +94,16 @@ static int load_unique_id(const char* keyDirectory) {
   snprintf(uniqueFilePath, PATH_MAX, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
 
   FILE *fd = fopen(uniqueFilePath, "r");
-  if (fd == NULL) {
+  if (fd == NULL || fread(unique_id, UNIQUEID_CHARS, 1, fd) != UNIQUEID_CHARS) {
     snprintf(unique_id,UNIQUEID_CHARS+1,"0123456789ABCDEF");
 
+    if (fd)
+      fclose(fd);
     fd = fopen(uniqueFilePath, "w");
     if (fd == NULL)
       return GS_FAILED;
 
     fwrite(unique_id, UNIQUEID_CHARS, 1, fd);
-  } else {
-    fread(unique_id, UNIQUEID_CHARS, 1, fd);
   }
   fclose(fd);
   unique_id[UNIQUEID_CHARS] = 0;

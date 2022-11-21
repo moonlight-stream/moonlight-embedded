@@ -38,7 +38,8 @@ static int sigFd;
 
 static int loop_sig_handler(int fd) {
   struct signalfd_siginfo info;
-  read(fd, &info, sizeof(info));
+  if (read(fd, &info, sizeof(info)) != sizeof(info))
+    return LOOP_RETURN;
   switch (info.ssi_signo) {
     case SIGINT:
     case SIGTERM:
@@ -75,7 +76,7 @@ void loop_remove_fd(int fd) {
   numFds--;
   int fdindex;
 
-  for (int i=0;i<numFds;i++) {
+  for (int i=0;i<=numFds;i++) {
     if (fds[i].fd == fd) {
       fdindex = i;
       break;

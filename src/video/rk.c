@@ -363,8 +363,7 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
 
   // MPI SETUP
 
-  pkt_buf = ensure_buf_size(&pkt_buf, &pkt_buf_size, INITIAL_DECODER_BUFFER_SIZE);
-  assert(pkt_buf);
+  ensure_buf_size(&pkt_buf, &pkt_buf_size, INITIAL_DECODER_BUFFER_SIZE);
   ret = mpp_packet_init(&mpi_packet, pkt_buf, pkt_buf_size);
   assert(!ret);
 

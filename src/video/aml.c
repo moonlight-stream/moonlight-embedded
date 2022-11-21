@@ -87,7 +87,7 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
       struct utsname name;
       uname(&name);
       int ret = sscanf(name.release, "%d.%d", &major, &minor);
-      if (!(major > 3 || (major == 3 && minor >= 14)) && width == 1920 && height == 1080)
+      if (ret == 2 && !(major > 3 || (major == 3 && minor >= 14)) && width == 1920 && height == 1080)
           codecParam.am_sysinfo.param = (void*) UCODE_IP_ONLY_PARAM;
     }
   } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {

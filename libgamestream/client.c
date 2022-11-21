@@ -421,7 +421,7 @@ int gs_unpair(PSERVER_DATA server) {
 int gs_pair(PSERVER_DATA server, char* pin) {
   int ret = GS_OK;
   char* result = NULL;
-  char url[4096];
+  char url[5120];
   uuid_t uuid;
   char uuid_str[UUID_STRLEN];
 
@@ -701,10 +701,8 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 
   PDISPLAY_MODE mode = server->modes;
   bool correct_mode = false;
-  bool supported_resolution = false;
   while (mode != NULL) {
     if (mode->width == config->width && mode->height == config->height) {
-      supported_resolution = true;
       if (mode->refresh == config->fps)
         correct_mode = true;
     }

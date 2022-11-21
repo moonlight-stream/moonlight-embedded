@@ -26,9 +26,6 @@
 
 static CURL *curl;
 
-static const char *pCertFile = "./client.pem";
-static const char *pKeyFile = "./key.pem";
-
 static bool debug;
 
 static size_t _write_curl(void *contents, size_t size, size_t nmemb, void *userp)

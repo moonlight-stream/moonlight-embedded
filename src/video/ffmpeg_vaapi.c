@@ -65,6 +65,7 @@ int vaapi_init_lib() {
 int vaapi_init(AVCodecContext* decoder_ctx) {
   decoder_ctx->get_format = va_get_format;
   decoder_ctx->get_buffer2 = va_get_buffer;
+  return 0;
 }
 
 void vaapi_queue(AVFrame* dec_frame, Window win, int width, int height) {

@@ -82,6 +82,7 @@ void sdl_loop() {
     case SDL_TOGGLE_FULLSCREEN:
       fullscreen_flags ^= SDL_WINDOW_FULLSCREEN;
       SDL_SetWindowFullscreen(window, fullscreen_flags);
+      break;
     case SDL_MOUSE_GRAB:
       SDL_ShowCursor(SDL_ENABLE);
       SDL_SetRelativeMouseMode(SDL_TRUE);

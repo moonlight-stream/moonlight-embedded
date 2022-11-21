@@ -25,8 +25,6 @@
 
 #define STATUS_OK 200
 
-static XML_Parser parser;
-
 struct xml_query {
   char *memory;
   size_t size;

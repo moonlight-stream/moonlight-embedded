@@ -143,7 +143,6 @@ void egl_init(EGLNativeDisplayType native_display, NativeWindowType native_windo
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex_shader, 1, &vertex_source, NULL);
   glCompileShader(vertex_shader);
-  GLint maxLength = 0;
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment_shader, 1, &fragment_source, NULL);

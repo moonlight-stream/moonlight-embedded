@@ -240,12 +240,14 @@ void *HandleMouseEmulation(void* param)
     deltaY = pow((float)rawY / 32767.0f * MOUSE_EMULATION_MOTION_MULTIPLIER, 3);
 
     // Enforce deadzones
-    deltaX = abs(deltaX) > MOUSE_EMULATION_DEADZONE ? deltaX - MOUSE_EMULATION_DEADZONE : 0;
-    deltaY = abs(deltaY) > MOUSE_EMULATION_DEADZONE ? deltaY - MOUSE_EMULATION_DEADZONE : 0;
+    deltaX = fabs(deltaX) > MOUSE_EMULATION_DEADZONE ? deltaX - MOUSE_EMULATION_DEADZONE : 0;
+    deltaY = fabs(deltaY) > MOUSE_EMULATION_DEADZONE ? deltaY - MOUSE_EMULATION_DEADZONE : 0;
 
     if (deltaX != 0 || deltaY != 0)
       LiSendMouseMoveEvent(deltaX, -deltaY);
   }
+
+  return NULL;
 }
 
 static bool evdev_handle_event(struct input_event *ev, struct input_device *dev) {
@@ -923,7 +925,7 @@ void evdev_map(char* device) {
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
 
   struct mapping map;
-  strncpy(map.name, libevdev_get_name(evdev), sizeof(map.name));
+  strncpy(map.name, name, sizeof(map.name));
   strncpy(map.guid, str_guid, sizeof(map.guid));
 
   libevdev_free(evdev);

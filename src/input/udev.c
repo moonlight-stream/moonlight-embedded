@@ -36,7 +36,6 @@ static struct mapping* defaultMappings;
 
 static struct udev *udev;
 static struct udev_monitor *udev_mon;
-static int udev_fd;
 static int inputRotate;
 
 static int udev_handle(int fd) {

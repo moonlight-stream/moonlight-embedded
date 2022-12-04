@@ -40,7 +40,7 @@
 
 #define SYNC_OUTSIDE 0x02
 #define UCODE_IP_ONLY_PARAM 0x08
-#define MAX_WRITE_ATTEMPTS 3
+#define MAX_WRITE_ATTEMPTS 5
 #define EAGAIN_SLEEP_TIME 2 * 1000
 
 static codec_para_t codecParam = { 0 };
@@ -82,9 +82,15 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   codecParam.has_video          = 1;
   codecParam.noblock            = 0;
   codecParam.stream_type        = STREAM_TYPE_ES_VIDEO;
-  codecParam.dec_mode           = STREAM_TYPE_FRAME;
-  codecParam.video_path         = FRAME_BASE_PATH_AMLVIDEO_AMVIDEO;
   codecParam.am_sysinfo.param   = 0;
+
+#ifdef STREAM_TYPE_FRAME
+  codecParam.dec_mode           = STREAM_TYPE_FRAME;
+#endif
+
+#ifdef FRAME_BASE_PATH_AMLVIDEO_AMVIDEO
+  codecParam.video_path         = FRAME_BASE_PATH_AMLVIDEO_AMVIDEO;
+#endif
 
   if (videoFormat & VIDEO_FORMAT_MASK_H264) {
     if (width > 1920 || height > 1080) {
@@ -166,7 +172,7 @@ int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
   ensure_buf_size(&pkt_buf, &pkt_buf_size, decodeUnit->fullLength);
 
-  int result = DR_OK, written = 0, length = 0, errCounter = 0;
+  int written = 0, length = 0, errCounter = 0, api;
   PLENTRY entry = decodeUnit->bufferList;
   do {
     memcpy(pkt_buf+length, entry->data, entry->length);
@@ -175,27 +181,27 @@ int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   } while (entry != NULL);
 
   codec_checkin_pts(&codecParam, decodeUnit->presentationTimeMs);
-  do {
-    written = codec_write(&codecParam, pkt_buf+written, length);
-    if (written < 0) {
-      written = 0;
+  while (length > 0) {
+    api = codec_write(&codecParam, pkt_buf+written, length);
+    if (api < 0) {
       if (errno != EAGAIN) {
-        fprintf(stderr, "codec_write error: %x %d\n", errno, written);
+        fprintf(stderr, "codec_write() error: %x %d\n", errno, api);
         codec_reset(&codecParam);
-        result = DR_NEED_IDR;
+        break;
       } else {
+        if (++errCounter == MAX_WRITE_ATTEMPTS) {
+          fprintf(stderr, "codec_write() timeout\n");
+          break;
+        }
         usleep(EAGAIN_SLEEP_TIME);
-        ++errCounter;
-        continue;
       }
     } else {
-      length -= written;
-      continue;
+      written += api;
+      length -= api;
     }
-    break;
-  } while (errCounter < MAX_WRITE_ATTEMPTS);
- 
-  return result;
+  }
+
+  return length ? DR_NEED_IDR : DR_OK;
 }
 
 DECODER_RENDERER_CALLBACKS decoder_callbacks_aml = {

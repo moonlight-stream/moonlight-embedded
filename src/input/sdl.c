@@ -164,8 +164,10 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
     break;
   case SDL_MOUSEWHEEL:
 #if SDL_VERSION_ATLEAST(2, 0, 18)
+    LiSendHighResHScrollEvent((short)(event->wheel.preciseX * 120)); // WHEEL_DELTA
     LiSendHighResScrollEvent((short)(event->wheel.preciseY * 120)); // WHEEL_DELTA
 #else
+    LiSendHScrollEvent(event->wheel.x);
     LiSendScrollEvent(event->wheel.y);
 #endif
     break;

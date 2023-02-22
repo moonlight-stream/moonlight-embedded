@@ -66,7 +66,7 @@ struct input_device {
   int hats_state[3][2];
   int fd;
   char modifiers;
-  __s32 mouseDeltaX, mouseDeltaY, mouseScroll;
+  __s32 mouseDeltaX, mouseDeltaY, mouseVScroll, mouseHScroll;
   __s32 touchDownX, touchDownY, touchX, touchY;
   struct timeval touchDownTime;
   struct timeval btnDownTime;
@@ -273,9 +273,13 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       dev->mouseDeltaX = 0;
       dev->mouseDeltaY = 0;
     }
-    if (dev->mouseScroll != 0) {
-      LiSendScrollEvent(dev->mouseScroll);
-      dev->mouseScroll = 0;
+    if (dev->mouseVScroll != 0) {
+      LiSendScrollEvent(dev->mouseVScroll);
+      dev->mouseVScroll = 0;
+    }
+    if (dev->mouseHScroll != 0) {
+      LiSendHScrollEvent(dev->mouseHScroll);
+      dev->mouseHScroll = 0;
     }
     if (dev->gamepadModified) {
       if (dev->controllerId < 0) {
@@ -483,8 +487,11 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       case REL_Y:
         dev->mouseDeltaY = ev->value;
         break;
+      case REL_HWHEEL:
+        dev->mouseHScroll = ev->value;
+        break;
       case REL_WHEEL:
-        dev->mouseScroll = ev->value;
+        dev->mouseVScroll = ev->value;
         break;
     }
     break;

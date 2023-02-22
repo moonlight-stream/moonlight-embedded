@@ -237,6 +237,7 @@ static int load_serverinfo(PSERVER_DATA server, bool https) {
   server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
   server->supports4K = serverCodecModeSupportText != NULL;
   server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
+  server->isNvidiaSoftware = strstr(stateText, "MJOLNIR") != NULL;
 
   server->httpsPort = atoi(httpsPortText);
   if (!server->httpsPort)
@@ -731,21 +732,18 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
 
+  // Using an FPS value over 60 causes SOPS to default to 720p60,
+  // so force it to 0 to ensure the correct resolution is set. We
+  // used to use 60 here but that locked the frame rate to 60 FPS
+  // on GFE 3.20.3.
+  int fps = (server->isNvidiaSoftware && config->fps > 60) ? 0 : config->fps;
+
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
   int surround_info = SURROUNDAUDIOINFO_FROM_AUDIO_CONFIGURATION(config->audioConfiguration);
-  if (server->currentGame == 0) {
-    // Using an FPS value over 60 causes SOPS to default to 720p60,
-    // so force it to 0 to ensure the correct resolution is set. We
-    // used to use 60 here but that locked the frame rate to 60 FPS
-    // on GFE 3.20.3.
-    int fps = config->fps > 60 ? 0 : config->fps;
-    snprintf(url, sizeof(url), "https://%s:%u/launch?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d&remoteControllersBitmap=%d&gcmap=%d%s",
-             server->serverInfo.address, server->httpsPort, unique_id, uuid_str, appId, config->width, config->height, fps, sops, rikey_hex, rikeyid, localaudio, surround_info, gamepad_mask, gamepad_mask,
-             config->enableHdr ? "&hdrMode=1&clientHdrCapVersion=0&clientHdrCapSupportedFlagsInUint32=0&clientHdrCapMetaDataId=NV_STATIC_METADATA_TYPE_1&clientHdrCapDisplayData=0x0x0x0x0x0x0x0x0x0x0" : "");
-  } else
-    snprintf(url, sizeof(url), "https://%s:%u/resume?uniqueid=%s&uuid=%s&rikey=%s&rikeyid=%d&surroundAudioInfo=%d", server->serverInfo.address, server->httpsPort, unique_id, uuid_str, rikey_hex, rikeyid, surround_info);
-
+  snprintf(url, sizeof(url), "https://%s:%u/%s?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d&remoteControllersBitmap=%d&gcmap=%d%s",
+           server->serverInfo.address, server->httpsPort, server->currentGame ? "resume" : "launch", unique_id, uuid_str, appId, config->width, config->height, fps, sops, rikey_hex, rikeyid, localaudio, surround_info, gamepad_mask, gamepad_mask,
+           config->enableHdr ? "&hdrMode=1&clientHdrCapVersion=0&clientHdrCapSupportedFlagsInUint32=0&clientHdrCapMetaDataId=NV_STATIC_METADATA_TYPE_1&clientHdrCapDisplayData=0x0x0x0x0x0x0x0x0x0x0" : "");
   if ((ret = http_request(url, data)) == GS_OK)
     server->currentGame = appId;
   else
@@ -753,7 +751,8 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
 
   if ((ret = xml_status(data->memory, data->size) != GS_OK))
     goto cleanup;
-  else if ((ret = xml_search(data->memory, data->size, "gamesession", &result)) != GS_OK)
+  else if ((ret = xml_search(data->memory, data->size, "gamesession", &result)) != GS_OK &&
+           (ret = xml_search(data->memory, data->size, "resume", &result)) != GS_OK)
     goto cleanup;
 
   if (!strcmp(result, "0")) {

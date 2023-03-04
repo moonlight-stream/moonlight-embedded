@@ -2,9 +2,9 @@
 
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/uaph3i3lfu7gl7m7/branch/master?svg=true)](https://ci.appveyor.com/project/cgutman/moonlight-embedded/branch/master)
 
-[Moonlight for iOS/tvOS](https://moonlight-stream.org) is an open source client for [Sunshine](https://github.com/LizardByte/Sunshine) and NVIDIA GameStream.
+Moonlight Embedded is an open source client for [Sunshine](https://github.com/LizardByte/Sunshine) and NVIDIA GameStream for embedded Linux systems, like Raspberry Pi, CuBox-i and ODROID. Moonlight allows you to stream your full collection of games and applications from your PC to other devices to play them remotely.
 
-Moonlight Embedded allows you to stream your full collection of games from your powerful gaming PC to your (embedded) Linux system, like Raspberry Pi, CuBox-i and ODROID.
+Moonlight also has [PC](https://github.com/moonlight-stream/moonlight-qt), [Android](https://github.com/moonlight-stream/moonlight-android), and [iOS](https://github.com/moonlight-stream/moonlight-ios) clients.
 
 ## Documentation
 

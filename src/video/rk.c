@@ -43,8 +43,9 @@
 #define RK_H264 7
 #define RK_H265 16777220
 
-#ifndef DRM_FORMAT_NV12_10
-#define DRM_FORMAT_NV12_10 fourcc_code('N', 'A', '1', '2')
+// HACK: Kernels prior to 5.10 use NA12 instead of NV15
+#ifndef DRM_FORMAT_NV15 // fourcc_code('N', 'V', '1', '5')
+#define DRM_FORMAT_NV15 fourcc_code('N', 'A', '1', '2')
 #endif
 
 void *pkt_buf = NULL;
@@ -202,7 +203,7 @@ void *frame_thread(void *param) {
           handles[1] = frame_to_drm[i].handle;
           offsets[1] = hor_stride * ver_stride;
           pitches[1] = hor_stride;
-          ret = drmModeAddFB2(fd, frm_width, frm_height, fmt == MPP_FMT_YUV420SP ? DRM_FORMAT_NV12:DRM_FORMAT_NV12_10, handles, pitches, offsets, &frame_to_drm[i].fb_id, 0);
+          ret = drmModeAddFB2(fd, frm_width, frm_height, fmt == MPP_FMT_YUV420SP ? DRM_FORMAT_NV12:DRM_FORMAT_NV15, handles, pitches, offsets, &frame_to_drm[i].fb_id, 0);
           assert(!ret);
         }
         // register external frame group
@@ -326,7 +327,7 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
       continue;
     }
     for (j = 0; j < ovr->count_formats; j++) {
-      if (ovr->formats[j] == ((videoFormat & VIDEO_FORMAT_MASK_10BIT) ? DRM_FORMAT_NV12_10 : DRM_FORMAT_NV12)) {
+      if (ovr->formats[j] == ((videoFormat & VIDEO_FORMAT_MASK_10BIT) ? DRM_FORMAT_NV15 : DRM_FORMAT_NV12)) {
         break;
       }
     }

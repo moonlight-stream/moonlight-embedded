@@ -345,7 +345,8 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
         if (!prop) {
           continue;
         }
-        if (!strcmp(prop->name, "type") && props->prop_values[j] == DRM_PLANE_TYPE_OVERLAY) {
+        if (!strcmp(prop->name, "type") && (props->prop_values[j] == DRM_PLANE_TYPE_OVERLAY ||
+                                            props->prop_values[j] == DRM_PLANE_TYPE_PRIMARY)) {
           plane_id = ovr->plane_id;
         }
         drmModeFreeProperty(prop);

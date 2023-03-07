@@ -73,6 +73,10 @@ enum platform platform_check(char* name) {
       return RK;
   }
   #endif
+  #ifdef HAVE_SDL
+  if (std || strcmp(name, "sdl") == 0)
+    return SDL;
+  #endif
   #ifdef HAVE_X11
   bool x11 = strcmp(name, "x11") == 0;
   bool vdpau = strcmp(name, "x11_vdpau") == 0;
@@ -90,10 +94,6 @@ enum platform platform_check(char* name) {
     return X11;
   }
   #endif
-  #ifdef HAVE_SDL
-  if (std || strcmp(name, "sdl") == 0)
-    return SDL;
-  #endif
   if (strcmp(name, "fake") == 0)
     return FAKE;
 
@@ -109,7 +109,7 @@ void platform_start(enum platform system) {
     write_bool("/sys/class/video/disable_video", false);
     break;
   #endif
-  #if defined(HAVE_PI) | defined(HAVE_MMAL)
+  #if defined(HAVE_PI) || defined(HAVE_MMAL)
   case PI:
     write_bool("/sys/class/graphics/fb0/blank", true);
     break;
@@ -125,7 +125,7 @@ void platform_stop(enum platform system) {
     write_bool("/sys/class/graphics/fb1/blank", false);
     break;
   #endif
-  #if defined(HAVE_PI) | defined(HAVE_MMAL)
+  #if defined(HAVE_PI) || defined(HAVE_MMAL)
   case PI:
     write_bool("/sys/class/graphics/fb0/blank", false);
     break;
@@ -205,6 +205,10 @@ bool platform_supports_hevc(enum platform system) {
   switch (system) {
   case AML:
   case RK:
+  case X11:
+  case X11_VAAPI:
+  case X11_VDPAU:
+  case SDL:
     return true;
   }
   return false;

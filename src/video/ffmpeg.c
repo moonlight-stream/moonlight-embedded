@@ -86,6 +86,8 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
     return -1;
   }
 
+  printf("Using FFmpeg decoder: %s\n", decoder->name);
+
   decoder_ctx = avcodec_alloc_context3(decoder);
   if (decoder_ctx == NULL) {
     printf("Couldn't allocate context");

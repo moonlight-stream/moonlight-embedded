@@ -61,9 +61,21 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 
   ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
   if (videoFormat & VIDEO_FORMAT_MASK_H264) {
-    decoder = avcodec_find_decoder_by_name("h264");
+    if (ffmpeg_decoder == SOFTWARE) {
+      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_nvv4l2"); // Tegra
+      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_nvmpi"); // Tegra
+      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_omx"); // VisionFive
+      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_v4l2m2m"); // Stateful V4L2
+    }
+    if (!decoder) decoder = avcodec_find_decoder_by_name("h264"); // Software and hwaccel
   } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
-    decoder = avcodec_find_decoder_by_name("hevc");
+    if (ffmpeg_decoder == SOFTWARE) {
+      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_nvv4l2"); // Tegra
+      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_nvmpi"); // Tegra
+      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_omx"); // VisionFive
+      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_v4l2m2m"); // Stateful V4L2
+    }
+    if (!decoder) decoder = avcodec_find_decoder_by_name("hevc"); // Software and hwaccel
   } else {
     printf("Video format not supported\n");
     return -1;

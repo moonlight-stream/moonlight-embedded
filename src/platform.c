@@ -210,10 +210,8 @@ bool platform_supports_hevc(enum platform system) {
   switch (system) {
   case AML:
   case RK:
-  case X11:
   case X11_VAAPI:
   case X11_VDPAU:
-  case SDL:
     return true;
   }
   return false;

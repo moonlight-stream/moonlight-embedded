@@ -53,7 +53,7 @@ void *pkt_buf = NULL;
 size_t pkt_buf_size = 0;
 int fd;
 int fb_id;
-uint32_t plane_id, crtc_id, conn_id;
+uint32_t plane_id, crtc_id, conn_id, hdr_metadata_blob_id;
 int frm_eos;
 int crtc_width;
 int crtc_height;
@@ -122,8 +122,6 @@ void *display_thread(void *param) {
     _fb_id = fb_id;
 
     fb_id = 0;
-    ret = pthread_mutex_unlock(&mutex);
-    assert(!ret);
 
     uint32_t v4l2_colorspace;
     switch (last_colorspace) {
@@ -143,6 +141,10 @@ void *display_thread(void *param) {
     set_atomic_property(drm_request, plane_id, plane_props, "COLOR_SPACE", v4l2_colorspace);
     set_atomic_property(drm_request, plane_id, plane_props, "EOTF", last_hdr_state ? 2 : 0); // PQ or SDR
     set_atomic_property(drm_request, plane_id, plane_props, "FB_ID", _fb_id);
+    set_atomic_property(drm_request, conn_id, conn_props, "HDR_OUTPUT_METADATA", hdr_metadata_blob_id);
+
+    ret = pthread_mutex_unlock(&mutex);
+    assert(!ret);
 
     // show DRM FB in overlay plane (auto vsynced/atomic !)
     ret = drmModeAtomicCommit(fd, drm_request, 0, NULL);
@@ -259,6 +261,9 @@ void *frame_thread(void *param) {
         set_atomic_property(drm_request, plane_id, plane_props, "CRTC_W", fb_width);
         set_atomic_property(drm_request, plane_id, plane_props, "CRTC_H", fb_height);
         set_atomic_property(drm_request, plane_id, plane_props, "ZPOS", 0);
+
+        // Set atomic properties on the connector
+        set_atomic_property(drm_request, conn_id, conn_props, "allm_enable", 1); // HDMI ALLM (Game Mode)
       } else {
         // regular frame received
 
@@ -520,6 +525,17 @@ void rk_cleanup() {
   mpp_destroy(mpi_ctx);
   free(pkt_buf);
 
+  // Undo the connector-wide changes we performed
+  drmModeAtomicSetCursor(drm_request, 0);
+  set_atomic_property(drm_request, conn_id, conn_props, "HDR_OUTPUT_METADATA", 0);
+  set_atomic_property(drm_request, conn_id, conn_props, "allm_enable", 0);
+  drmModeAtomicCommit(fd, drm_request, 0, NULL);
+
+  if (hdr_metadata_blob_id) {
+    drmModeDestroyPropertyBlob(fd, hdr_metadata_blob_id);
+    hdr_metadata_blob_id = 0;
+  }
+
   drmModeAtomicFree(drm_request);
   drmModeFreePlane(ovr);
   drmModeFreePlaneResources(plane_resources);
@@ -552,8 +568,50 @@ int rk_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   mpp_packet_set_pos(mpi_packet, pkt_buf);
   mpp_packet_set_length(mpi_packet, length);
 
+  pthread_mutex_lock(&mutex);
+
+  if (last_hdr_state != decodeUnit->hdrActive) {
+    if (hdr_metadata_blob_id) {
+      drmModeDestroyPropertyBlob(fd, hdr_metadata_blob_id);
+      hdr_metadata_blob_id = 0;
+    }
+
+    if (decodeUnit->hdrActive) {
+      struct hdr_output_metadata outputMetadata;
+      SS_HDR_METADATA sunshineHdrMetadata;
+      int err;
+
+      // Sunshine will have HDR metadata but GFE will not
+      if (!LiGetHdrMetadata(&sunshineHdrMetadata)) {
+        memset(&sunshineHdrMetadata, 0, sizeof(sunshineHdrMetadata));
+      }
+
+      outputMetadata.metadata_type = 0; // HDMI_STATIC_METADATA_TYPE1
+      outputMetadata.hdmi_metadata_type1.eotf = 2; // SMPTE ST 2084
+      outputMetadata.hdmi_metadata_type1.metadata_type = 0; // Static Metadata Type 1
+      for (int i = 0; i < 3; i++) {
+        outputMetadata.hdmi_metadata_type1.display_primaries[i].x = sunshineHdrMetadata.displayPrimaries[i].x;
+        outputMetadata.hdmi_metadata_type1.display_primaries[i].y = sunshineHdrMetadata.displayPrimaries[i].y;
+      }
+      outputMetadata.hdmi_metadata_type1.white_point.x = sunshineHdrMetadata.whitePoint.x;
+      outputMetadata.hdmi_metadata_type1.white_point.y = sunshineHdrMetadata.whitePoint.y;
+      outputMetadata.hdmi_metadata_type1.max_display_mastering_luminance = sunshineHdrMetadata.maxDisplayLuminance;
+      outputMetadata.hdmi_metadata_type1.min_display_mastering_luminance = sunshineHdrMetadata.minDisplayLuminance;
+      outputMetadata.hdmi_metadata_type1.max_cll = sunshineHdrMetadata.maxContentLightLevel;
+      outputMetadata.hdmi_metadata_type1.max_fall = sunshineHdrMetadata.maxFrameAverageLightLevel;
+
+      err = drmModeCreatePropertyBlob(fd, &outputMetadata, sizeof(outputMetadata), &hdr_metadata_blob_id);
+      if (err < 0) {
+        hdr_metadata_blob_id = 0;
+        fprintf(stderr, "Failed to create HDR metadata blob: %d\n", errno);
+      }
+    }
+  }
+
   last_colorspace = decodeUnit->colorspace;
   last_hdr_state = decodeUnit->hdrActive;
+
+  pthread_mutex_unlock(&mutex);
 
   while (MPP_OK != mpi_api->decode_put_packet(mpi_ctx, mpi_packet));
 

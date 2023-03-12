@@ -188,7 +188,11 @@ void *display_thread(void *param) {
     // Note: DRM_MODE_ATOMIC_ALLOW_MODESET is used because a modeset may be required to switch
     // between HDR and SDR mode.
     ret = drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_NONBLOCK | DRM_MODE_ATOMIC_ALLOW_MODESET, NULL);
-    assert(!ret || errno == EBUSY);
+    if (ret && errno != EBUSY) {
+      // We can sometimes hit this path for EINVAL when going from HDR->SDR but it
+      // seems transient, so don't assert if it occurs.
+      fprintf(stderr, "Commit failed: %d\n", errno);
+    }
   }
 
   return NULL;

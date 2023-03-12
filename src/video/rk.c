@@ -183,8 +183,11 @@ void *display_thread(void *param) {
     ret = pthread_mutex_unlock(&mutex);
     assert(!ret);
 
-    // show DRM FB in overlay plane (auto vsynced/atomic !)
-    ret = drmModeAtomicCommit(fd, drm_request, 0, NULL);
+    // Commit the updates to the display hardware
+    //
+    // Note: DRM_MODE_ATOMIC_ALLOW_MODESET is used because a modeset may be required to switch
+    // between HDR and SDR mode.
+    ret = drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_NONBLOCK | DRM_MODE_ATOMIC_ALLOW_MODESET, NULL);
     assert(!ret);
   }
 
@@ -574,7 +577,7 @@ void rk_cleanup() {
   drmModeAtomicSetCursor(drm_request, 0);
   set_atomic_property(drm_request, conn_id, conn_props, "HDR_OUTPUT_METADATA", 0);
   set_atomic_property(drm_request, conn_id, conn_props, "allm_enable", 0);
-  drmModeAtomicCommit(fd, drm_request, 0, NULL);
+  drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_ALLOW_MODESET, NULL);
 
   if (hdr_metadata_blob_id) {
     drmModeDestroyPropertyBlob(fd, hdr_metadata_blob_id);

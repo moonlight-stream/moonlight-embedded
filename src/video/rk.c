@@ -44,9 +44,14 @@
 #define RK_H264 7
 #define RK_H265 16777220
 
-// HACK: Kernels prior to 5.10 use NA12 instead of NV15
-#ifndef DRM_FORMAT_NV15 // fourcc_code('N', 'V', '1', '5')
-#define DRM_FORMAT_NV15 fourcc_code('N', 'A', '1', '2')
+// Vendor-defined 10-bit format code used prior to 5.10
+#ifndef DRM_FORMAT_NA12
+#define DRM_FORMAT_NA12 fourcc_code('N', 'A', '1', '2')
+#endif
+
+// Upstreamed 10-bit format code used on 5.10+ kernels
+#ifndef DRM_FORMAT_NV15
+#define DRM_FORMAT_NV15 fourcc_code('N', 'V', '1', '5')
 #endif
 
 // HDR structs copied from linux include/linux/hdmi.h for older libdrm versions
@@ -85,7 +90,7 @@ void *pkt_buf = NULL;
 size_t pkt_buf_size = 0;
 int fd;
 int fb_id;
-uint32_t plane_id, crtc_id, conn_id, hdr_metadata_blob_id;
+uint32_t plane_id, crtc_id, conn_id, hdr_metadata_blob_id, pixel_format;
 int frm_eos;
 int crtc_width;
 int crtc_height;
@@ -275,7 +280,7 @@ void *frame_thread(void *param) {
           handles[1] = frame_to_drm[i].handle;
           offsets[1] = hor_stride * ver_stride;
           pitches[1] = hor_stride;
-          ret = drmModeAddFB2(fd, frm_width, frm_height, fmt == MPP_FMT_YUV420SP ? DRM_FORMAT_NV12:DRM_FORMAT_NV15, handles, pitches, offsets, &frame_to_drm[i].fb_id, 0);
+          ret = drmModeAddFB2(fd, frm_width, frm_height, pixel_format, handles, pitches, offsets, &frame_to_drm[i].fb_id, 0);
           assert(!ret);
         }
         // register external frame group
@@ -432,11 +437,19 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
       continue;
     }
     for (j = 0; j < ovr->count_formats; j++) {
-      if (ovr->formats[j] == ((videoFormat & VIDEO_FORMAT_MASK_10BIT) ? DRM_FORMAT_NV15 : DRM_FORMAT_NV12)) {
+      if (videoFormat & VIDEO_FORMAT_MASK_10BIT) {
+        // 10-bit formats use NA12 (vendor-defined) or NV15 (upstreamed in 5.10+)
+        if (ovr->formats[j] == DRM_FORMAT_NA12 || ovr->formats[j] == DRM_FORMAT_NV15) {
+          break;
+        }
+      } else if (ovr->formats[j] == DRM_FORMAT_NV12) {
+        // 8-bit formats always use NV12
         break;
       }
     }
-    if (j == ovr->count_formats) {
+    if (j < ovr->count_formats) {
+      pixel_format = ovr->formats[j];
+    } else {
       continue;
     }
     if ((ovr->possible_crtcs & crtc_bit) && !ovr->crtc_id) {

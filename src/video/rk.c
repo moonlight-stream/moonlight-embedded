@@ -112,6 +112,8 @@ drmModeRes *resources = NULL;
 drmModePlaneRes *plane_resources = NULL;
 drmModeCrtcPtr crtc = {0};
 
+drmModePropertyPtr hdr_metadata_prop = NULL;
+
 drmModeAtomicReqPtr drm_request = NULL;
 drmModePropertyPtr plane_props[32];
 drmModePropertyPtr conn_props[32];
@@ -159,6 +161,8 @@ void *display_thread(void *param) {
     _fb_id = fb_id;
 
     fb_id = 0;
+    ret = pthread_mutex_unlock(&mutex);
+    assert(!ret);
 
     uint32_t v4l2_colorspace;
     switch (last_colorspace) {
@@ -178,21 +182,9 @@ void *display_thread(void *param) {
     set_atomic_property(drm_request, plane_id, plane_props, "COLOR_SPACE", v4l2_colorspace);
     set_atomic_property(drm_request, plane_id, plane_props, "EOTF", last_hdr_state ? 2 : 0); // PQ or SDR
     set_atomic_property(drm_request, plane_id, plane_props, "FB_ID", _fb_id);
-    set_atomic_property(drm_request, conn_id, conn_props, "HDR_OUTPUT_METADATA", hdr_metadata_blob_id);
 
-    ret = pthread_mutex_unlock(&mutex);
-    assert(!ret);
-
-    // Commit the updates to the display hardware
-    //
-    // Note: DRM_MODE_ATOMIC_ALLOW_MODESET is used because a modeset may be required to switch
-    // between HDR and SDR mode.
-    ret = drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_NONBLOCK | DRM_MODE_ATOMIC_ALLOW_MODESET, NULL);
-    if (ret && errno != EBUSY) {
-      // We can sometimes hit this path for EINVAL when going from HDR->SDR but it
-      // seems transient, so don't assert if it occurs.
-      fprintf(stderr, "Commit failed: %d\n", errno);
-    }
+    ret = drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_NONBLOCK, NULL);
+    assert(!ret || errno == EBUSY);
   }
 
   return NULL;
@@ -397,6 +389,9 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
       drmModePropertyPtr prop = drmModeGetProperty(fd, props->props[j]);
       if (!prop) {
         continue;
+      }
+      if (!strcmp(prop->name, "HDR_OUTPUT_METADATA")) {
+        hdr_metadata_prop = prop;
       }
       conn_props[j] = prop;
     }
@@ -620,50 +615,58 @@ int rk_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   mpp_packet_set_pos(mpi_packet, pkt_buf);
   mpp_packet_set_length(mpi_packet, length);
 
-  pthread_mutex_lock(&mutex);
-
   if (last_hdr_state != decodeUnit->hdrActive) {
-    if (hdr_metadata_blob_id) {
-      drmModeDestroyPropertyBlob(fd, hdr_metadata_blob_id);
-      hdr_metadata_blob_id = 0;
-    }
-
-    if (decodeUnit->hdrActive) {
-      struct rk_hdr_output_metadata outputMetadata;
-      SS_HDR_METADATA sunshineHdrMetadata;
+    if (hdr_metadata_prop != NULL) {
       int err;
 
-      // Sunshine will have HDR metadata but GFE will not
-      if (!LiGetHdrMetadata(&sunshineHdrMetadata)) {
-        memset(&sunshineHdrMetadata, 0, sizeof(sunshineHdrMetadata));
-      }
-
-      outputMetadata.metadata_type = 0; // HDMI_STATIC_METADATA_TYPE1
-      outputMetadata.hdmi_metadata_type1.eotf = 2; // SMPTE ST 2084
-      outputMetadata.hdmi_metadata_type1.metadata_type = 0; // Static Metadata Type 1
-      for (int i = 0; i < 3; i++) {
-        outputMetadata.hdmi_metadata_type1.display_primaries[i].x = sunshineHdrMetadata.displayPrimaries[i].x;
-        outputMetadata.hdmi_metadata_type1.display_primaries[i].y = sunshineHdrMetadata.displayPrimaries[i].y;
-      }
-      outputMetadata.hdmi_metadata_type1.white_point.x = sunshineHdrMetadata.whitePoint.x;
-      outputMetadata.hdmi_metadata_type1.white_point.y = sunshineHdrMetadata.whitePoint.y;
-      outputMetadata.hdmi_metadata_type1.max_display_mastering_luminance = sunshineHdrMetadata.maxDisplayLuminance;
-      outputMetadata.hdmi_metadata_type1.min_display_mastering_luminance = sunshineHdrMetadata.minDisplayLuminance;
-      outputMetadata.hdmi_metadata_type1.max_cll = sunshineHdrMetadata.maxContentLightLevel;
-      outputMetadata.hdmi_metadata_type1.max_fall = sunshineHdrMetadata.maxFrameAverageLightLevel;
-
-      err = drmModeCreatePropertyBlob(fd, &outputMetadata, sizeof(outputMetadata), &hdr_metadata_blob_id);
-      if (err < 0) {
+      if (hdr_metadata_blob_id) {
+        drmModeDestroyPropertyBlob(fd, hdr_metadata_blob_id);
         hdr_metadata_blob_id = 0;
-        fprintf(stderr, "Failed to create HDR metadata blob: %d\n", errno);
       }
+
+      if (decodeUnit->hdrActive) {
+        struct rk_hdr_output_metadata outputMetadata;
+        SS_HDR_METADATA sunshineHdrMetadata;
+
+        // Sunshine will have HDR metadata but GFE will not
+        if (!LiGetHdrMetadata(&sunshineHdrMetadata)) {
+          memset(&sunshineHdrMetadata, 0, sizeof(sunshineHdrMetadata));
+        }
+
+        outputMetadata.metadata_type = 0; // HDMI_STATIC_METADATA_TYPE1
+        outputMetadata.hdmi_metadata_type1.eotf = 2; // SMPTE ST 2084
+        outputMetadata.hdmi_metadata_type1.metadata_type = 0; // Static Metadata Type 1
+        for (int i = 0; i < 3; i++) {
+          outputMetadata.hdmi_metadata_type1.display_primaries[i].x = sunshineHdrMetadata.displayPrimaries[i].x;
+          outputMetadata.hdmi_metadata_type1.display_primaries[i].y = sunshineHdrMetadata.displayPrimaries[i].y;
+        }
+        outputMetadata.hdmi_metadata_type1.white_point.x = sunshineHdrMetadata.whitePoint.x;
+        outputMetadata.hdmi_metadata_type1.white_point.y = sunshineHdrMetadata.whitePoint.y;
+        outputMetadata.hdmi_metadata_type1.max_display_mastering_luminance = sunshineHdrMetadata.maxDisplayLuminance;
+        outputMetadata.hdmi_metadata_type1.min_display_mastering_luminance = sunshineHdrMetadata.minDisplayLuminance;
+        outputMetadata.hdmi_metadata_type1.max_cll = sunshineHdrMetadata.maxContentLightLevel;
+        outputMetadata.hdmi_metadata_type1.max_fall = sunshineHdrMetadata.maxFrameAverageLightLevel;
+
+        err = drmModeCreatePropertyBlob(fd, &outputMetadata, sizeof(outputMetadata), &hdr_metadata_blob_id);
+        if (err < 0) {
+          hdr_metadata_blob_id = 0;
+          fprintf(stderr, "Failed to create HDR metadata blob: %d\n", errno);
+        }
+      }
+
+      err = drmModeObjectSetProperty(fd, conn_id, DRM_MODE_OBJECT_CONNECTOR, hdr_metadata_prop->prop_id, hdr_metadata_blob_id);
+      if (err < 0) {
+        fprintf(stderr, "Failed to set HDR metadata: %d\n", errno);
+      } else {
+        printf("Set display HDR mode: %s\n", decodeUnit->hdrActive ? "active" : "inactive");
+      }
+    } else {
+      fprintf(stderr, "HDR_OUTPUT_METADATA property is not supported by your display/kernel. Do you have an HDR display connected?\n");
     }
   }
 
   last_colorspace = decodeUnit->colorspace;
   last_hdr_state = decodeUnit->hdrActive;
-
-  pthread_mutex_unlock(&mutex);
 
   while (MPP_OK != mpi_api->decode_put_packet(mpi_ctx, mpi_packet));
 

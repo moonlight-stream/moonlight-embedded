@@ -49,6 +49,38 @@
 #define DRM_FORMAT_NV15 fourcc_code('N', 'A', '1', '2')
 #endif
 
+// HDR structs copied from linux include/linux/hdmi.h for older libdrm versions
+struct rk_hdr_metadata_infoframe
+{
+    uint8_t eotf;
+    uint8_t metadata_type;
+
+    struct
+    {
+        uint16_t x, y;
+    } display_primaries[3];
+
+    struct
+    {
+        uint16_t x, y;
+    } white_point;
+
+    uint16_t max_display_mastering_luminance;
+    uint16_t min_display_mastering_luminance;
+
+    uint16_t max_cll;
+    uint16_t max_fall;
+};
+
+struct rk_hdr_output_metadata
+{
+    uint32_t metadata_type;
+
+    union {
+        struct rk_hdr_metadata_infoframe hdmi_metadata_type1;
+    };
+};
+
 void *pkt_buf = NULL;
 size_t pkt_buf_size = 0;
 int fd;
@@ -577,7 +609,7 @@ int rk_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     }
 
     if (decodeUnit->hdrActive) {
-      struct hdr_output_metadata outputMetadata;
+      struct rk_hdr_output_metadata outputMetadata;
       SS_HDR_METADATA sunshineHdrMetadata;
       int err;
 

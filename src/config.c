@@ -416,11 +416,24 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   }
 
   if (config->stream.bitrate == -1) {
-    if (config->stream.height >= 1080 && config->stream.fps >= 60)
-      config->stream.bitrate = 20000;
-    else if (config->stream.height >= 1080 || config->stream.fps >= 60)
-      config->stream.bitrate = 10000;
-    else
-      config->stream.bitrate = 5000;
+    // This table prefers 16:10 resolutions because they are
+    // only slightly more pixels than the 16:9 equivalents, so
+    // we don't want to bump those 16:10 resolutions up to the
+    // next 16:9 slot.
+
+    if (config->stream.width * config->stream.height <= 640 * 360) {
+      config->stream.bitrate = (int)(1000 * (config->stream.fps / 30.0));
+    } else if (config->stream.width * config->stream.height <= 854 * 480) {
+      config->stream.bitrate = (int)(1500 * (config->stream.fps / 30.0));
+    } else if (config->stream.width * config->stream.height <= 1366 * 768) {
+      // This covers 1280x720 and 1280x800 too
+      config->stream.bitrate = (int)(5000 * (config->stream.fps / 30.0));
+    } else if (config->stream.width * config->stream.height <= 1920 * 1200) {
+      config->stream.bitrate = (int)(10000 * (config->stream.fps / 30.0));
+    } else if (config->stream.width * config->stream.height <= 2560 * 1600) {
+      config->stream.bitrate = (int)(20000 * (config->stream.fps / 30.0));
+    } else /* if (config->stream.width * config->stream.height <= 3840 * 2160) */ {
+      config->stream.bitrate = (int)(40000 * (config->stream.fps / 30.0));
+    }
   }
 }

@@ -36,6 +36,7 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 #include <libdrm/drm_fourcc.h>
+#include <linux/videodev2.h>
 
 #include <rockchip/rk_mpi.h>
 
@@ -52,13 +53,16 @@ void *pkt_buf = NULL;
 size_t pkt_buf_size = 0;
 int fd;
 int fb_id;
-uint32_t plane_id, crtc_id;
+uint32_t plane_id, crtc_id, conn_id;
 int frm_eos;
 int crtc_width;
 int crtc_height;
 RK_U32 frm_width;
 RK_U32 frm_height;
 int fb_x, fb_y, fb_width, fb_height;
+
+uint8_t last_colorspace = 0xFF;
+bool last_hdr_state = false;
 
 pthread_t tid_frame, tid_display;
 pthread_mutex_t mutex;
@@ -71,6 +75,10 @@ drmModeRes *resources = NULL;
 drmModePlaneRes *plane_resources = NULL;
 drmModeCrtcPtr crtc = {0};
 
+drmModeAtomicReqPtr drm_request = NULL;
+drmModePropertyPtr plane_props[32];
+drmModePropertyPtr conn_props[32];
+
 MppCtx mpi_ctx;
 MppApi *mpi_api;
 MppPacket mpi_packet;
@@ -81,6 +89,17 @@ struct {
   int fb_id;
   uint32_t handle;
 } frame_to_drm[MAX_FRAMES];
+
+int set_atomic_property(drmModeAtomicReq *request, uint32_t id, drmModePropertyPtr *props, char *name, uint64_t value) {
+   while (*props) {
+       if (!strcasecmp(name, (*props)->name)) {
+           return drmModeAtomicAddProperty(request, id, (*props)->prop_id, value);
+       }
+       props++;
+   }
+
+   return -EINVAL;
+}
 
 void *display_thread(void *param) {
 
@@ -106,12 +125,31 @@ void *display_thread(void *param) {
     ret = pthread_mutex_unlock(&mutex);
     assert(!ret);
 
+    uint32_t v4l2_colorspace;
+    switch (last_colorspace) {
+    default:
+      fprintf(stderr, "Unknown frame colorspace: %d\n", last_colorspace);
+      /* fall-through */
+    case COLORSPACE_REC_601:
+      v4l2_colorspace = V4L2_COLORSPACE_SMPTE170M;
+      break;
+    case COLORSPACE_REC_709:
+      v4l2_colorspace = V4L2_COLORSPACE_REC709;
+      break;
+    case COLORSPACE_REC_2020:
+      v4l2_colorspace = V4L2_COLORSPACE_BT2020;
+      break;
+    }
+    set_atomic_property(drm_request, plane_id, plane_props, "COLOR_SPACE", v4l2_colorspace);
+    set_atomic_property(drm_request, plane_id, plane_props, "EOTF", last_hdr_state ? 2 : 0); // PQ or SDR
+    set_atomic_property(drm_request, plane_id, plane_props, "FB_ID", _fb_id);
+
     // show DRM FB in overlay plane (auto vsynced/atomic !)
-    ret = drmModeSetPlane(fd, plane_id, crtc_id, _fb_id, 0,
-            fb_x, fb_y, fb_width, fb_height,
-            0, 0, frm_width << 16, frm_height << 16);
+    ret = drmModeAtomicCommit(fd, drm_request, 0, NULL);
     assert(!ret);
   }
+
+  return NULL;
 }
 
 void *frame_thread(void *param) {
@@ -210,6 +248,17 @@ void *frame_thread(void *param) {
         ret = mpi_api->control(mpi_ctx, MPP_DEC_SET_EXT_BUF_GROUP, mpi_frm_grp);
         ret = mpi_api->control(mpi_ctx, MPP_DEC_SET_INFO_CHANGE_READY, NULL);
 
+        // Set atomic properties for the plane prior to the first commit
+        set_atomic_property(drm_request, plane_id, plane_props, "CRTC_ID", crtc_id);
+        set_atomic_property(drm_request, plane_id, plane_props, "SRC_X", 0 << 16);
+        set_atomic_property(drm_request, plane_id, plane_props, "SRC_Y", 0 << 16);
+        set_atomic_property(drm_request, plane_id, plane_props, "SRC_W", frm_width << 16);
+        set_atomic_property(drm_request, plane_id, plane_props, "SRC_H", frm_height << 16);
+        set_atomic_property(drm_request, plane_id, plane_props, "CRTC_X", fb_x);
+        set_atomic_property(drm_request, plane_id, plane_props, "CRTC_Y", fb_y);
+        set_atomic_property(drm_request, plane_id, plane_props, "CRTC_W", fb_width);
+        set_atomic_property(drm_request, plane_id, plane_props, "CRTC_H", fb_height);
+        set_atomic_property(drm_request, plane_id, plane_props, "ZPOS", 0);
       } else {
         // regular frame received
 
@@ -290,6 +339,21 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   }
   assert(i < resources->count_connectors);
 
+  conn_id = connector->connector_id;
+
+  {
+    drmModeObjectPropertiesPtr props = drmModeObjectGetProperties(fd, conn_id, DRM_MODE_OBJECT_CONNECTOR);
+    assert(props->count_props < sizeof(conn_props) / sizeof(conn_props[0]));
+    for (j = 0; j < props->count_props; j++) {
+      drmModePropertyPtr prop = drmModeGetProperty(fd, props->props[j]);
+      if (!prop) {
+        continue;
+      }
+      conn_props[j] = prop;
+    }
+    drmModeFreeObjectProperties(props);
+  }
+
   for (i = 0; i < resources->count_encoders; ++i) {
     encoder = drmModeGetEncoder(fd, resources->encoders[i]);
     if (!encoder) {
@@ -317,6 +381,10 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
 
   ret = drmSetClientCap(fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1);
   assert(!ret);
+  ret = drmSetClientCap(fd, DRM_CLIENT_CAP_ATOMIC, 1);
+  assert(!ret);
+  drm_request = drmModeAtomicAlloc();
+  assert(drm_request);
   plane_resources = drmModeGetPlaneResources(fd);
   assert(plane_resources);
 
@@ -340,20 +408,27 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
         continue;
       }
 
-      for (j = 0; j < props->count_props && !plane_id; j++) {
+      assert(props->count_props < sizeof(plane_props) / sizeof(plane_props[0]));
+      for (j = 0; j < props->count_props; j++) {
         drmModePropertyPtr prop = drmModeGetProperty(fd, props->props[j]);
         if (!prop) {
           continue;
         }
+        plane_props[j] = prop;
         if (!strcmp(prop->name, "type") && (props->prop_values[j] == DRM_PLANE_TYPE_OVERLAY ||
                                             props->prop_values[j] == DRM_PLANE_TYPE_PRIMARY)) {
           plane_id = ovr->plane_id;
         }
-        drmModeFreeProperty(prop);
       }
-      drmModeFreeObjectProperties(props);
       if (plane_id) {
-          break;
+        drmModeFreeObjectProperties(props);
+        break;
+      } else {
+        for (j = 0; j < props->count_props; j++) {
+          drmModeFreeProperty(plane_props[j]);
+          plane_props[j] = NULL;
+        }
+        drmModeFreeObjectProperties(props);
       }
     }
     drmModeFreePlane(ovr);
@@ -445,12 +520,14 @@ void rk_cleanup() {
   mpp_destroy(mpi_ctx);
   free(pkt_buf);
 
+  drmModeAtomicFree(drm_request);
   drmModeFreePlane(ovr);
   drmModeFreePlaneResources(plane_resources);
   drmModeFreeEncoder(encoder);
   drmModeFreeConnector(connector);
   drmModeFreeCrtc(crtc);
   drmModeFreeResources(resources);
+
   close(fd);
 }
 
@@ -474,6 +551,9 @@ int rk_submit_decode_unit(PDECODE_UNIT decodeUnit) {
 
   mpp_packet_set_pos(mpi_packet, pkt_buf);
   mpp_packet_set_length(mpi_packet, length);
+
+  last_colorspace = decodeUnit->colorspace;
+  last_hdr_state = decodeUnit->hdrActive;
 
   while (MPP_OK != mpi_api->decode_put_packet(mpi_ctx, mpi_packet));
 

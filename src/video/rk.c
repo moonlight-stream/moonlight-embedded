@@ -245,15 +245,15 @@ void *frame_thread(void *param) {
 
           // new DRM buffer
           struct drm_mode_create_dumb dmcd = {0};
-          dmcd.bpp = fmt == MPP_FMT_YUV420SP ? 8:10;
+          dmcd.bpp = 8; // hor_stride is already adjusted for 10 vs 8 bit
           dmcd.width = hor_stride;
           dmcd.height = ver_stride * 2; // documentation say not v*2/3 but v*2 (additional info included)
           do {
             ret = ioctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &dmcd);
           } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
           assert(!ret);
-          assert(dmcd.pitch == (fmt == MPP_FMT_YUV420SP?hor_stride:hor_stride * 10 / 8));
-          assert(dmcd.size == (fmt == MPP_FMT_YUV420SP?hor_stride:hor_stride * 10 / 8) * ver_stride * 2);
+          assert(dmcd.pitch == dmcd.width);
+          assert(dmcd.size == dmcd.pitch * dmcd.height);
           frame_to_drm[i].handle = dmcd.handle;
 
           // commit DRM buffer to frame group
@@ -276,10 +276,10 @@ void *frame_thread(void *param) {
           uint32_t handles[4] = {0}, pitches[4] = {0}, offsets[4] = {0};
           handles[0] = frame_to_drm[i].handle;
           offsets[0] = 0;
-          pitches[0] = hor_stride;
+          pitches[0] = dmcd.pitch;
           handles[1] = frame_to_drm[i].handle;
-          offsets[1] = hor_stride * ver_stride;
-          pitches[1] = hor_stride;
+          offsets[1] = pitches[0] * ver_stride;
+          pitches[1] = dmcd.pitch;
           ret = drmModeAddFB2(fd, frm_width, frm_height, pixel_format, handles, pitches, offsets, &frame_to_drm[i].fb_id, 0);
           assert(!ret);
         }

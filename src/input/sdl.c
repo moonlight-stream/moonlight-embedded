@@ -43,7 +43,10 @@ typedef struct _GAMEPAD_STATE {
   bool initialized;
 } GAMEPAD_STATE, *PGAMEPAD_STATE;
 
-static GAMEPAD_STATE gamepads[4];
+// Limited by number of bits in activeGamepadMask
+#define MAX_GAMEPADS 16
+
+static GAMEPAD_STATE gamepads[MAX_GAMEPADS];
 
 static int keyboard_modifiers;
 static int activeGamepadMask = 0;
@@ -52,7 +55,7 @@ int sdl_gamepads = 0;
 
 static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id, bool add) {
   // See if a gamepad already exists
-  for (int i = 0;i<4;i++) {
+  for (int i = 0;i<MAX_GAMEPADS;i++) {
     if (gamepads[i].initialized && gamepads[i].sdl_id == sdl_id)
         return &gamepads[i];
   }
@@ -60,7 +63,7 @@ static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id, bool add) {
   if (!add)
     return NULL;
 
-  for (int i = 0;i<4;i++) {
+  for (int i = 0;i<MAX_GAMEPADS;i++) {
     if (!gamepads[i].initialized) {
       gamepads[i].sdl_id = sdl_id;
       gamepads[i].id = i;
@@ -109,7 +112,7 @@ static void add_gamepad(int joystick_index) {
 }
 
 static void remove_gamepad(SDL_JoystickID sdl_id) {
-  for (int i = 0;i<4;i++) {
+  for (int i = 0;i<MAX_GAMEPADS;i++) {
     if (gamepads[i].initialized && gamepads[i].sdl_id == sdl_id) {
 #if !SDL_VERSION_ATLEAST(2, 0, 9)
       if (gamepads[i].haptic_effect_id >= 0) {
@@ -353,7 +356,7 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
 }
 
 void sdlinput_rumble(unsigned short controller_id, unsigned short low_freq_motor, unsigned short high_freq_motor) {
-  if (controller_id >= 4)
+  if (controller_id >= MAX_GAMEPADS)
     return;
 
   PGAMEPAD_STATE state = &gamepads[controller_id];

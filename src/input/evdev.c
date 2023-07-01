@@ -105,6 +105,9 @@ static const int hat_constants[3][3] = {{HAT_UP | HAT_LEFT, HAT_UP, HAT_UP | HAT
 // Determines the maximum motion amount before allowing movement
 #define MOUSE_EMULATION_DEADZONE 2
 
+// Limited by number of bits in activeGamepadMask
+#define MAX_GAMEPADS 16
+
 static struct input_device* devices = NULL;
 static int numDevices = 0;
 static int assignedControllerIds = 0;
@@ -283,7 +286,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
     }
     if (dev->gamepadModified) {
       if (dev->controllerId < 0) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < MAX_GAMEPADS; i++) {
           if ((assignedControllerIds & (1 << i)) == 0) {
             assignedControllerIds |= (1 << i);
             dev->controllerId = i;

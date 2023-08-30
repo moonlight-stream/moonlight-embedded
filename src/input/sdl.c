@@ -327,6 +327,30 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
     else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == UNGRAB_KEY && event->type==SDL_KEYUP)
       return SDL_GetRelativeMouseMode() ? SDL_MOUSE_UNGRAB : SDL_MOUSE_GRAB;
     break;
+  case SDL_FINGERDOWN:
+  case SDL_FINGERMOTION:
+  case SDL_FINGERUP:
+    switch (event->type) {
+    case SDL_FINGERDOWN:
+        touchEventType = LI_TOUCH_EVENT_DOWN;
+        break;
+    case SDL_FINGERMOTION:
+        touchEventType = LI_TOUCH_EVENT_MOVE;
+        break;
+    case SDL_FINGERUP:
+        touchEventType = LI_TOUCH_EVENT_UP;
+        break;
+    default:
+        return SDL_NOTHING;
+    }
+
+    // These are already window-relative normalized coordinates, so we just need to clamp them
+    event->tfinger.x = SDL_max(SDL_min(1.0f, event->tfinger.x), 0.0f);
+    event->tfinger.y = SDL_max(SDL_min(1.0f, event->tfinger.y), 0.0f);
+
+    LiSendTouchEvent(touchEventType, event->tfinger.fingerId, event->tfinger.x, event->tfinger.y,
+                     event->tfinger.pressure, 0.0f, 0.0f, LI_ROT_UNKNOWN);
+    break;
   case SDL_CONTROLLERAXISMOTION:
     gamepad = get_gamepad(event->caxis.which, false);
     if (!gamepad)

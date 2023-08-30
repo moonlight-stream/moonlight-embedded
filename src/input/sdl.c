@@ -379,6 +379,7 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
   case SDL_CONTROLLERDEVICEREMOVED:
     remove_gamepad(event->cdevice.which);
     break;
+#if SDL_VERSION_ATLEAST(2, 0, 14)
   case SDL_CONTROLLERSENSORUPDATE:
     gamepad = get_gamepad(event->csensor.which, false);
     if (!gamepad)
@@ -418,6 +419,7 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
     LiSendControllerTouchEvent(gamepad->id, touchEventType, event->ctouchpad.finger,
                                event->ctouchpad.x, event->ctouchpad.y, event->ctouchpad.pressure);
     break;
+#endif
   }
 
   return SDL_NOTHING;

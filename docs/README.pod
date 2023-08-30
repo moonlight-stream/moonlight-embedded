@@ -99,9 +99,9 @@ By default, 1392 is used on LAN and 1024 on WAN.
 =item B<-codec> [I<CODEC>]
 
 Select codec to use.
-Can be 'auto', 'h264', 'h265' or 'hevc'.
-Not all video decoders do support H.265/HEVC.
-Will still use H.264 if server doesn't support HEVC.
+Can be 'auto', 'h264', 'h265', 'hevc', or 'av1'.
+Not all video decoders support H.265/HEVC or AV1.
+Will still use H.264 if server doesn't support HEVC or AV1.
 
 =item B<-remote> [I<yes/no/auto>]
 

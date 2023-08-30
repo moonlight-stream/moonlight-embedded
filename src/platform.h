@@ -27,11 +27,12 @@
 #define IS_EMBEDDED(SYSTEM) SYSTEM != SDL
 
 enum platform { NONE, SDL, X11, X11_VDPAU, X11_VAAPI, PI, MMAL, IMX, AML, RK, FAKE };
+enum codecs { CODEC_UNSPECIFIED, CODEC_H264, CODEC_HEVC, CODEC_AV1 };
 
 enum platform platform_check(char*);
 PDECODER_RENDERER_CALLBACKS platform_get_video(enum platform system);
 PAUDIO_RENDERER_CALLBACKS platform_get_audio(enum platform system, char* audio_device);
-bool platform_supports_hevc(enum platform system);
+bool platform_prefers_codec(enum platform system, enum codecs codec);
 char* platform_name(enum platform system);
 
 void platform_start(enum platform system);

@@ -206,13 +206,22 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system, char* audio_d
   return NULL;
 }
 
-bool platform_supports_hevc(enum platform system) {
-  switch (system) {
-  case AML:
-  case RK:
-  case X11_VAAPI:
-  case X11_VDPAU:
+bool platform_prefers_codec(enum platform system, enum codecs codec) {
+  switch (codec) {
+  case CODEC_H264:
+    // H.264 is always supported
     return true;
+  case CODEC_HEVC:
+    switch (system) {
+    case AML:
+    case RK:
+    case X11_VAAPI:
+    case X11_VDPAU:
+      return true;
+    }
+    return false;
+  case CODEC_AV1:
+    return false;
   }
   return false;
 }

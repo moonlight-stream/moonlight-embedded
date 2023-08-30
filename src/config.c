@@ -17,6 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "platform.h"
 #include "config.h"
 #include "util.h"
 
@@ -225,6 +226,8 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       config->codec = CODEC_H264;
     else if (strcasecmp(value, "h265") == 0 || strcasecmp(value, "hevc") == 0)
       config->codec = CODEC_HEVC;
+    else if (strcasecmp(value, "av1") == 0)
+      config->codec = CODEC_AV1;
     break;
   case 'y':
     config->unsupported = false;
@@ -254,7 +257,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->port = atoi(value);
     break;
   case '7':
-    config->stream.enableHdr = true;
+    config->hdr = true;
     break;
   case 1:
     if (config->action == NULL)
@@ -344,8 +347,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.packetSize = 1392;
   config->stream.streamingRemotely = STREAM_CFG_AUTO;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
-  config->stream.supportsHevc = false;
-  config->stream.enableHdr = false;
+  config->stream.supportedVideoFormats = SCM_H264;
   config->stream.encryptionFlags = ENCFLG_AUDIO;
 
 #ifdef __arm__
@@ -377,6 +379,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->mouse_emulation = true;
   config->rotate = 0;
   config->codec = CODEC_UNSPECIFIED;
+  config->hdr = false;
   config->pin = 0;
   config->port = 47989;
 

@@ -31,7 +31,6 @@
 typedef struct _SERVER_DATA {
   char* gpuType;
   bool paired;
-  bool supports4K;
   bool unsupported;
   bool isNvidiaSoftware;
   int currentGame;

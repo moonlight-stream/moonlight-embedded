@@ -235,7 +235,7 @@ static int load_serverinfo(PSERVER_DATA server, bool https) {
 
   server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
-  server->supports4K = serverCodecModeSupportText != NULL;
+  server->serverInfo.serverCodecModeSupport = serverCodecModeSupportText == NULL ? SCM_H264 : atoi(serverCodecModeSupportText);
   server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
   server->isNvidiaSoftware = strstr(stateText, "MJOLNIR") != NULL;
 
@@ -714,9 +714,6 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (!correct_mode && !server->unsupported)
     return GS_NOT_SUPPORTED_MODE;
 
-  if (config->height >= 2160 && !server->supports4K)
-    return GS_NOT_SUPPORTED_4K;
-
   RAND_bytes(config->remoteInputAesKey, sizeof(config->remoteInputAesKey));
   memset(config->remoteInputAesIv, 0, sizeof(config->remoteInputAesIv));
 
@@ -743,7 +740,7 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   int surround_info = SURROUNDAUDIOINFO_FROM_AUDIO_CONFIGURATION(config->audioConfiguration);
   snprintf(url, sizeof(url), "https://%s:%u/%s?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d&remoteControllersBitmap=%d&gcmap=%d%s",
            server->serverInfo.address, server->httpsPort, server->currentGame ? "resume" : "launch", unique_id, uuid_str, appId, config->width, config->height, fps, sops, rikey_hex, rikeyid, localaudio, surround_info, gamepad_mask, gamepad_mask,
-           config->enableHdr ? "&hdrMode=1&clientHdrCapVersion=0&clientHdrCapSupportedFlagsInUint32=0&clientHdrCapMetaDataId=NV_STATIC_METADATA_TYPE_1&clientHdrCapDisplayData=0x0x0x0x0x0x0x0x0x0x0" : "");
+           (config->supportedVideoFormats & VIDEO_FORMAT_MASK_10BIT) ? "&hdrMode=1&clientHdrCapVersion=0&clientHdrCapSupportedFlagsInUint32=0&clientHdrCapMetaDataId=NV_STATIC_METADATA_TYPE_1&clientHdrCapDisplayData=0x0x0x0x0x0x0x0x0x0x0" : "");
   if ((ret = http_request(url, data)) == GS_OK)
     server->currentGame = appId;
   else

@@ -26,3 +26,6 @@ extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
 extern pthread_t main_thread_id;
 extern bool connection_debug;
 extern ConnListenerRumble rumble_handler;
+extern ConnListenerRumbleTriggers rumble_triggers_handler;
+extern ConnListenerSetMotionEventState set_motion_event_state_handler;
+extern ConnListenerSetControllerLED set_controller_led_handler;

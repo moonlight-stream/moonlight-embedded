@@ -30,6 +30,9 @@
 pthread_t main_thread_id = 0;
 bool connection_debug;
 ConnListenerRumble rumble_handler = NULL;
+ConnListenerRumbleTriggers rumble_triggers_handler = NULL;
+ConnListenerSetMotionEventState set_motion_event_state_handler = NULL;
+ConnListenerSetControllerLED set_controller_led_handler = NULL;
 
 static void connection_terminated(int errorCode) {
   switch (errorCode) {
@@ -75,6 +78,21 @@ static void rumble(unsigned short controllerNumber, unsigned short lowFreqMotor,
     rumble_handler(controllerNumber, lowFreqMotor, highFreqMotor);
 }
 
+static void rumble_triggers(unsigned short controllerNumber, unsigned short leftTrigger, unsigned short rightTrigger) {
+  if (rumble_handler)
+    rumble_triggers_handler(controllerNumber, leftTrigger, rightTrigger);
+}
+
+static void set_motion_event_state(unsigned short controllerNumber, unsigned char motionType, unsigned short reportRateHz) {
+  if (set_motion_event_state_handler)
+    set_motion_event_state_handler(controllerNumber, motionType, reportRateHz);
+}
+
+static void set_controller_led(unsigned short controllerNumber, unsigned char r, unsigned char g, unsigned char b) {
+  if (set_controller_led_handler)
+    set_controller_led_handler(controllerNumber, r, g, b);
+}
+
 static void connection_status_update(int status) {
   switch (status) {
     case CONN_STATUS_OKAY:
@@ -94,5 +112,9 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .connectionTerminated = connection_terminated,
   .logMessage = connection_log_message,
   .rumble = rumble,
-  .connectionStatusUpdate = connection_status_update
+  .connectionStatusUpdate = connection_status_update,
+  .setHdrMode = NULL,
+  .rumbleTriggers = rumble_triggers,
+  .setMotionEventState = set_motion_event_state,
+  .setControllerLED = set_controller_led,
 };

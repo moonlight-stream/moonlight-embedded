@@ -383,6 +383,9 @@ int main(int argc, char* argv[]) {
 
         sdlinput_init(config.mapping);
         rumble_handler = sdlinput_rumble;
+        rumble_triggers_handler = sdlinput_rumble_triggers;
+        set_motion_event_state_handler = sdlinput_set_motion_event_state;
+        set_controller_led_handler = sdlinput_set_controller_led;
       }
       #endif
     }

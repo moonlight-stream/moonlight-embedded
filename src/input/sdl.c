@@ -154,6 +154,7 @@ void sdlinput_init(char* mappings) {
 
 int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
   int button = 0;
+  unsigned char touchEventType;
   PGAMEPAD_STATE gamepad;
   switch (event->type) {
   case SDL_MOUSEMOTION:
@@ -369,7 +370,47 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
   case SDL_CONTROLLERDEVICEREMOVED:
     remove_gamepad(event->cdevice.which);
     break;
+  case SDL_CONTROLLERSENSORUPDATE:
+    gamepad = get_gamepad(event->csensor.which, false);
+    if (!gamepad)
+      return SDL_NOTHING;
+    switch (event->csensor.sensor) {
+    case SDL_SENSOR_ACCEL:
+      LiSendControllerMotionEvent(gamepad->id, LI_MOTION_TYPE_ACCEL, event->csensor.data[0], event->csensor.data[1], event->csensor.data[2]);
+      break;
+    case SDL_SENSOR_GYRO:
+      // Convert rad/s to deg/s
+      LiSendControllerMotionEvent(gamepad->id, LI_MOTION_TYPE_GYRO,
+                                  event->csensor.data[0] * 57.2957795f,
+                                  event->csensor.data[1] * 57.2957795f,
+                                  event->csensor.data[2] * 57.2957795f);
+      break;
+    }
+    break;
+  case SDL_CONTROLLERTOUCHPADDOWN:
+  case SDL_CONTROLLERTOUCHPADUP:
+  case SDL_CONTROLLERTOUCHPADMOTION:
+    gamepad = get_gamepad(event->ctouchpad.which, false);
+    if (!gamepad)
+      return SDL_NOTHING;
+    switch (event->type) {
+    case SDL_CONTROLLERTOUCHPADDOWN:
+      touchEventType = LI_TOUCH_EVENT_DOWN;
+      break;
+    case SDL_CONTROLLERTOUCHPADUP:
+      touchEventType = LI_TOUCH_EVENT_UP;
+      break;
+    case SDL_CONTROLLERTOUCHPADMOTION:
+      touchEventType = LI_TOUCH_EVENT_MOVE;
+      break;
+    default:
+      return SDL_NOTHING;
+    }
+    LiSendControllerTouchEvent(gamepad->id, touchEventType, event->ctouchpad.finger,
+                               event->ctouchpad.x, event->ctouchpad.y, event->ctouchpad.pressure);
+    break;
   }
+
   return SDL_NOTHING;
 }
 
@@ -407,5 +448,45 @@ void sdlinput_rumble(unsigned short controller_id, unsigned short low_freq_motor
   state->haptic_effect_id = SDL_HapticNewEffect(haptic, &effect);
   if (state->haptic_effect_id >= 0)
     SDL_HapticRunEffect(haptic, state->haptic_effect_id, 1);
+#endif
+}
+
+void sdlinput_rumble_triggers(unsigned short controller_id, unsigned short left_trigger, unsigned short right_trigger) {
+  PGAMEPAD_STATE state = &gamepads[controller_id];
+
+  if (!state->initialized)
+    return;
+
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+  SDL_GameControllerRumbleTriggers(state->controller, left_trigger, right_trigger, 30000);
+#endif
+}
+
+void sdlinput_set_motion_event_state(unsigned short controller_id, unsigned char motion_type, unsigned short report_rate_hz) {
+  PGAMEPAD_STATE state = &gamepads[controller_id];
+
+  if (!state->initialized)
+    return;
+
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+  switch (motion_type) {
+  case LI_MOTION_TYPE_ACCEL:
+    SDL_GameControllerSetSensorEnabled(state->controller, SDL_SENSOR_ACCEL, report_rate_hz ? SDL_TRUE : SDL_FALSE);
+    break;
+  case LI_MOTION_TYPE_GYRO:
+    SDL_GameControllerSetSensorEnabled(state->controller, SDL_SENSOR_GYRO, report_rate_hz ? SDL_TRUE : SDL_FALSE);
+    break;
+  }
+#endif
+}
+
+void sdlinput_set_controller_led(unsigned short controller_id, unsigned char r, unsigned char g, unsigned char b) {
+  PGAMEPAD_STATE state = &gamepads[controller_id];
+
+  if (!state->initialized)
+    return;
+
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+  SDL_GameControllerSetLED(state->controller, r, g, b);
 #endif
 }

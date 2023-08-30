@@ -45,6 +45,9 @@ struct mapping {
   short btn_back, btn_start, btn_guide;
   short btn_leftstick, btn_rightstick;
   short btn_leftshoulder, btn_rightshoulder;
+  short btn_misc1;
+  short btn_paddle1, btn_paddle2, btn_paddle3, btn_paddle4;
+  short btn_touchpad;
 
   short abs_lefttrigger, abs_righttrigger;
   short btn_lefttrigger, btn_righttrigger;

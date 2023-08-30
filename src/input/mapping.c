@@ -94,6 +94,18 @@ struct mapping* mapping_parse(char* mapping) {
           map->btn_lefttrigger = int_value;
         else if (strcmp("righttrigger", key) == 0)
           map->btn_righttrigger = int_value;
+        else if (strcmp("misc1", key) == 0)
+          map->btn_misc1 = int_value;
+        else if (strcmp("paddle1", key) == 0)
+          map->btn_paddle1 = int_value;
+        else if (strcmp("paddle2", key) == 0)
+          map->btn_paddle2 = int_value;
+        else if (strcmp("paddle3", key) == 0)
+          map->btn_paddle3 = int_value;
+        else if (strcmp("paddle4", key) == 0)
+          map->btn_paddle4 = int_value;
+        else if (strcmp("touchpad", key) == 0)
+          map->btn_touchpad = int_value;
       } else if (sscanf(value, "a%d%c", &int_value, &flag) >= 1) {
         if (strcmp("leftx", key) == 0) {
           map->abs_leftx = int_value;
@@ -213,5 +225,11 @@ void mapping_print(struct mapping* map) {
   print_abs("righttrigger", map->abs_righttrigger);
   print_btn("lefttrigger", map->btn_lefttrigger);
   print_btn("righttrigger", map->btn_righttrigger);
+  print_btn("misc1", map->btn_misc1);
+  print_btn("paddle1", map->btn_paddle1);
+  print_btn("paddle2", map->btn_paddle2);
+  print_btn("paddle3", map->btn_paddle3);
+  print_btn("paddle4", map->btn_paddle4);
+  print_btn("touchpad", map->btn_touchpad);
   printf("platform:Linux\n");
 }

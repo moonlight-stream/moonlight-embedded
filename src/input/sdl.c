@@ -332,6 +332,24 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
     case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
       button = RB_FLAG;
       break;
+    case SDL_CONTROLLER_BUTTON_MISC1:
+      button = MISC_FLAG;
+      break;
+    case SDL_CONTROLLER_BUTTON_PADDLE1:
+      button = PADDLE1_FLAG;
+      break;
+    case SDL_CONTROLLER_BUTTON_PADDLE2:
+      button = PADDLE2_FLAG;
+      break;
+    case SDL_CONTROLLER_BUTTON_PADDLE3:
+      button = PADDLE3_FLAG;
+      break;
+    case SDL_CONTROLLER_BUTTON_PADDLE4:
+      button = PADDLE4_FLAG;
+      break;
+    case SDL_CONTROLLER_BUTTON_TOUCHPAD:
+      button = TOUCHPAD_FLAG;
+      break;
     default:
       return SDL_NOTHING;
     }

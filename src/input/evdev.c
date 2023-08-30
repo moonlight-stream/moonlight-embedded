@@ -346,7 +346,7 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       LiSendKeyboardEvent(code, ev->value?KEY_ACTION_DOWN:KEY_ACTION_UP, dev->modifiers);
     } else {
       int mouseCode = 0;
-      short gamepadCode = 0;
+      int gamepadCode = 0;
       int index = dev->key_map[ev->code];
 
       switch (ev->code) {
@@ -420,6 +420,18 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
           gamepadCode = BACK_FLAG;
         else if (index == dev->map->btn_guide)
           gamepadCode = SPECIAL_FLAG;
+        else if (index == dev->map->btn_misc1)
+          gamepadCode = MISC_FLAG;
+        else if (index == dev->map->btn_paddle1)
+          gamepadCode = PADDLE1_FLAG;
+        else if (index == dev->map->btn_paddle2)
+          gamepadCode = PADDLE2_FLAG;
+        else if (index == dev->map->btn_paddle3)
+          gamepadCode = PADDLE3_FLAG;
+        else if (index == dev->map->btn_paddle4)
+          gamepadCode = PADDLE4_FLAG;
+        else if (index == dev->map->btn_touchpad)
+          gamepadCode = TOUCHPAD_FLAG;
       }
 
       if (mouseCode != 0) {

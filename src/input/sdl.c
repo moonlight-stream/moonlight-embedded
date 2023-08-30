@@ -28,6 +28,17 @@
 #define FULLSCREEN_KEY SDLK_f
 #define UNGRAB_KEY SDLK_z
 
+static const int SDL_TO_LI_BUTTON_MAP[] = {
+  A_FLAG, B_FLAG, X_FLAG, Y_FLAG,
+  BACK_FLAG, SPECIAL_FLAG, PLAY_FLAG,
+  LS_CLK_FLAG, RS_CLK_FLAG,
+  LB_FLAG, RB_FLAG,
+  UP_FLAG, DOWN_FLAG, LEFT_FLAG, RIGHT_FLAG,
+  MISC_FLAG,
+  PADDLE1_FLAG, PADDLE2_FLAG, PADDLE3_FLAG, PADDLE4_FLAG,
+  TOUCHPAD_FLAG,
+};
+
 typedef struct _GAMEPAD_STATE {
   unsigned char leftTrigger, rightTrigger;
   short leftStickX, leftStickY;
@@ -53,11 +64,63 @@ static int activeGamepadMask = 0;
 
 int sdl_gamepads = 0;
 
+static void send_controller_arrival(PGAMEPAD_STATE state) {
+#if SDL_VERSION_ATLEAST(2, 0, 18)
+  unsigned int supportedButtonFlags = 0;
+  unsigned short capabilities = 0;
+  unsigned char type = LI_CTYPE_UNKNOWN;
+
+  for (int i = 0; i < SDL_arraysize(SDL_TO_LI_BUTTON_MAP); i++) {
+    if (SDL_GameControllerHasButton(state->controller, (SDL_GameControllerButton)i)) {
+        supportedButtonFlags |= SDL_TO_LI_BUTTON_MAP[i];
+    }
+  }
+
+  if (SDL_GameControllerGetBindForAxis(state->controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT).bindType == SDL_CONTROLLER_BINDTYPE_AXIS ||
+      SDL_GameControllerGetBindForAxis(state->controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT).bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
+    capabilities |= LI_CCAP_ANALOG_TRIGGERS;
+  if (SDL_GameControllerHasRumble(state->controller))
+    capabilities |= LI_CCAP_RUMBLE;
+  if (SDL_GameControllerHasRumbleTriggers(state->controller))
+    capabilities |= LI_CCAP_TRIGGER_RUMBLE;
+  if (SDL_GameControllerGetNumTouchpads(state->controller) > 0)
+    capabilities |= LI_CCAP_TOUCHPAD;
+  if (SDL_GameControllerHasSensor(state->controller, SDL_SENSOR_ACCEL))
+    capabilities |= LI_CCAP_ACCEL;
+  if (SDL_GameControllerHasSensor(state->controller, SDL_SENSOR_GYRO))
+    capabilities |= LI_CCAP_GYRO;
+  if (SDL_GameControllerHasLED(state->controller))
+    capabilities |= LI_CCAP_RGB_LED;
+
+  switch (SDL_GameControllerGetType(state->controller)) {
+  case SDL_CONTROLLER_TYPE_XBOX360:
+  case SDL_CONTROLLER_TYPE_XBOXONE:
+    type = LI_CTYPE_XBOX;
+    break;
+  case SDL_CONTROLLER_TYPE_PS3:
+  case SDL_CONTROLLER_TYPE_PS4:
+  case SDL_CONTROLLER_TYPE_PS5:
+    type = LI_CTYPE_PS;
+    break;
+  case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO:
+#if SDL_VERSION_ATLEAST(2, 24, 0)
+  case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
+  case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT:
+  case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_PAIR:
+#endif
+    type = LI_CTYPE_NINTENDO;
+    break;
+  }
+
+  LiSendControllerArrivalEvent(state->id, activeGamepadMask, type, supportedButtonFlags, capabilities);
+#endif
+}
+
 static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id, bool add) {
   // See if a gamepad already exists
   for (int i = 0;i<MAX_GAMEPADS;i++) {
     if (gamepads[i].initialized && gamepads[i].sdl_id == sdl_id)
-        return &gamepads[i];
+      return &gamepads[i];
   }
 
   if (!add)
@@ -69,9 +132,7 @@ static PGAMEPAD_STATE get_gamepad(SDL_JoystickID sdl_id, bool add) {
       gamepads[i].id = i;
       gamepads[i].initialized = true;
 
-      // This will cause connection of the virtual controller on the host PC
       activeGamepadMask |= (1 << i);
-      LiSendMultiControllerEvent(i, activeGamepadMask, 0, 0, 0, 0, 0, 0, 0);
 
       return &gamepads[i];
     }
@@ -90,13 +151,20 @@ static void add_gamepad(int joystick_index) {
   SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
   SDL_JoystickID joystick_id = SDL_JoystickInstanceID(joystick);
 
-  if (get_gamepad(joystick_id, false)) {
-    // Already added
+  // Check if we have already set up a state for this gamepad
+  PGAMEPAD_STATE state = get_gamepad(joystick_id, false);
+  if (state) {
+    // This was probably a gamepad added during initialization, so we've already
+    // got state set up. However, we still need to inform the host about it, since
+    // we couldn't do that during initialization (since we weren't connected yet).
+    send_controller_arrival(state);
+
     SDL_GameControllerClose(controller);
     return;
   }
 
-  PGAMEPAD_STATE state = get_gamepad(joystick_id, true);
+  // Create a new gamepad state
+  state = get_gamepad(joystick_id, true);
   state->controller = controller;
 
 #if !SDL_VERSION_ATLEAST(2, 0, 9)
@@ -107,6 +175,9 @@ static void add_gamepad(int joystick_index) {
   }
   state->haptic_effect_id = -1;
 #endif
+
+  // Send the controller arrival event to the host
+  send_controller_arrival(state);
 
   sdl_gamepads++;
 }
@@ -141,7 +212,9 @@ void sdlinput_init(char* mappings) {
   memset(gamepads, 0, sizeof(gamepads));
 
   SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+#if !SDL_VERSION_ATLEAST(2, 0, 9)
   SDL_InitSubSystem(SDL_INIT_HAPTIC);
+#endif
   SDL_GameControllerAddMappingsFromFile(mappings);
 
   // Add game controllers here to ensure an accurate count
@@ -287,77 +360,13 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
     gamepad = get_gamepad(event->cbutton.which, false);
     if (!gamepad)
       return SDL_NOTHING;
-    switch (event->cbutton.button) {
-    case SDL_CONTROLLER_BUTTON_A:
-      button = A_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_B:
-      button = B_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_Y:
-      button = Y_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_X:
-      button = X_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_DPAD_UP:
-      button = UP_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-      button = DOWN_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-      button = RIGHT_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-      button = LEFT_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_BACK:
-      button = BACK_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_START:
-      button = PLAY_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_GUIDE:
-      button = SPECIAL_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_LEFTSTICK:
-      button = LS_CLK_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
-      button = RS_CLK_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
-      button = LB_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
-      button = RB_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_MISC1:
-      button = MISC_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_PADDLE1:
-      button = PADDLE1_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_PADDLE2:
-      button = PADDLE2_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_PADDLE3:
-      button = PADDLE3_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_PADDLE4:
-      button = PADDLE4_FLAG;
-      break;
-    case SDL_CONTROLLER_BUTTON_TOUCHPAD:
-      button = TOUCHPAD_FLAG;
-      break;
-    default:
+    if (event->cbutton.button >= SDL_arraysize(SDL_TO_LI_BUTTON_MAP))
       return SDL_NOTHING;
-    }
+
     if (event->type == SDL_CONTROLLERBUTTONDOWN)
-      gamepad->buttons |= button;
+      gamepad->buttons |= SDL_TO_LI_BUTTON_MAP[event->cbutton.button];
     else
-      gamepad->buttons &= ~button;
+      gamepad->buttons &= ~SDL_TO_LI_BUTTON_MAP[event->cbutton.button];
 
     if ((gamepad->buttons & QUIT_BUTTONS) == QUIT_BUTTONS)
       return SDL_QUIT_APPLICATION;

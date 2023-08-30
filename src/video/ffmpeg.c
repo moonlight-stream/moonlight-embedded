@@ -60,25 +60,71 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
   }
 
   ffmpeg_decoder = perf_lvl & VAAPI_ACCELERATION ? VAAPI : SOFTWARE;
-  if (videoFormat & VIDEO_FORMAT_MASK_H264) {
-    if (ffmpeg_decoder == SOFTWARE) {
-      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_nvv4l2"); // Tegra
-      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_nvmpi"); // Tegra
-      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_omx"); // VisionFive
-      if (!decoder) decoder = avcodec_find_decoder_by_name("h264_v4l2m2m"); // Stateful V4L2
+
+  for (int try = 0; try < 6; try++) {
+    if (videoFormat & VIDEO_FORMAT_MASK_H264) {
+      if (ffmpeg_decoder == SOFTWARE) {
+        if (try == 0) decoder = avcodec_find_decoder_by_name("h264_nvv4l2"); // Tegra
+        if (try == 1) decoder = avcodec_find_decoder_by_name("h264_nvmpi"); // Tegra
+        if (try == 2) decoder = avcodec_find_decoder_by_name("h264_omx"); // VisionFive
+        if (try == 3) decoder = avcodec_find_decoder_by_name("h264_v4l2m2m"); // Stateful V4L2
+      }
+      if (try == 4) decoder = avcodec_find_decoder_by_name("h264"); // Software and hwaccel
+    } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
+      if (ffmpeg_decoder == SOFTWARE) {
+        if (try == 0) decoder = avcodec_find_decoder_by_name("hevc_nvv4l2"); // Tegra
+        if (try == 1) decoder = avcodec_find_decoder_by_name("hevc_nvmpi"); // Tegra
+        if (try == 2) decoder = avcodec_find_decoder_by_name("hevc_omx"); // VisionFive
+        if (try == 3) decoder = avcodec_find_decoder_by_name("hevc_v4l2m2m"); // Stateful V4L2
+      }
+      if (try == 4) decoder = avcodec_find_decoder_by_name("hevc"); // Software and hwaccel
+    } else if (videoFormat & VIDEO_FORMAT_MASK_AV1) {
+      if (ffmpeg_decoder == SOFTWARE) {
+        if (try == 0) decoder = avcodec_find_decoder_by_name("libdav1d");
+      }
+      if (try == 1) decoder = avcodec_find_decoder_by_name("av1"); // Hwaccel
+    } else {
+      printf("Video format not supported\n");
+      return -1;
     }
-    if (!decoder) decoder = avcodec_find_decoder_by_name("h264"); // Software and hwaccel
-  } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
-    if (ffmpeg_decoder == SOFTWARE) {
-      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_nvv4l2"); // Tegra
-      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_nvmpi"); // Tegra
-      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_omx"); // VisionFive
-      if (!decoder) decoder = avcodec_find_decoder_by_name("hevc_v4l2m2m"); // Stateful V4L2
+
+    // Skip this decoder if it isn't compiled into FFmpeg
+    if (!decoder) {
+      continue;
     }
-    if (!decoder) decoder = avcodec_find_decoder_by_name("hevc"); // Software and hwaccel
-  } else {
-    printf("Video format not supported\n");
-    return -1;
+
+    decoder_ctx = avcodec_alloc_context3(decoder);
+    if (decoder_ctx == NULL) {
+      printf("Couldn't allocate context\n");
+      return -1;
+    }
+
+    // Use low delay decoding
+    decoder_ctx->flags |= AV_CODEC_FLAG_LOW_DELAY;
+
+    // Allow display of corrupt frames and frames missing references
+    decoder_ctx->flags |= AV_CODEC_FLAG_OUTPUT_CORRUPT;
+    decoder_ctx->flags2 |= AV_CODEC_FLAG2_SHOW_ALL;
+
+    // Report decoding errors to allow us to request a key frame
+    decoder_ctx->err_recognition = AV_EF_EXPLODE;
+
+    if (perf_lvl & SLICE_THREADING) {
+      decoder_ctx->thread_type = FF_THREAD_SLICE;
+      decoder_ctx->thread_count = thread_count;
+    } else {
+      decoder_ctx->thread_count = 1;
+    }
+
+    decoder_ctx->width = width;
+    decoder_ctx->height = height;
+    decoder_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
+
+    int err = avcodec_open2(decoder_ctx, decoder, NULL);
+    if (err < 0) {
+      printf("Couldn't open codec: %s\n", decoder->name);
+      continue;
+    }
   }
 
   if (decoder == NULL) {
@@ -87,39 +133,6 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
   }
 
   printf("Using FFmpeg decoder: %s\n", decoder->name);
-
-  decoder_ctx = avcodec_alloc_context3(decoder);
-  if (decoder_ctx == NULL) {
-    printf("Couldn't allocate context");
-    return -1;
-  }
-
-  // Use low delay decoding
-  decoder_ctx->flags |= AV_CODEC_FLAG_LOW_DELAY;
-
-  // Allow display of corrupt frames and frames missing references
-  decoder_ctx->flags |= AV_CODEC_FLAG_OUTPUT_CORRUPT;
-  decoder_ctx->flags2 |= AV_CODEC_FLAG2_SHOW_ALL;
-
-  // Report decoding errors to allow us to request a key frame
-  decoder_ctx->err_recognition = AV_EF_EXPLODE;
-
-  if (perf_lvl & SLICE_THREADING) {
-    decoder_ctx->thread_type = FF_THREAD_SLICE;
-    decoder_ctx->thread_count = thread_count;
-  } else {
-    decoder_ctx->thread_count = 1;
-  }
-
-  decoder_ctx->width = width;
-  decoder_ctx->height = height;
-  decoder_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
-
-  int err = avcodec_open2(decoder_ctx, decoder, NULL);
-  if (err < 0) {
-    printf("Couldn't open codec");
-    return err;
-  }
 
   dec_frames_cnt = buffer_count;
   dec_frames = malloc(buffer_count * sizeof(AVFrame*));

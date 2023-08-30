@@ -318,12 +318,12 @@ int main(int argc, char* argv[]) {
     }
 
     config.stream.supportedVideoFormats = SCM_H264;
-    if (config.codec == CODEC_HEVC || (config.codec == CODEC_UNSPECIFIED && platform_prefers_codec(system, config.codec))) {
+    if (config.codec == CODEC_HEVC || (config.codec == CODEC_UNSPECIFIED && platform_prefers_codec(system, CODEC_HEVC))) {
       config.stream.supportedVideoFormats |= SCM_HEVC;
       if (config.hdr)
         config.stream.supportedVideoFormats |= SCM_HEVC_MAIN10;
     }
-    if (config.codec == CODEC_AV1 || (config.codec == CODEC_UNSPECIFIED && platform_prefers_codec(system, config.codec))) {
+    if (config.codec == CODEC_AV1 || (config.codec == CODEC_UNSPECIFIED && platform_prefers_codec(system, CODEC_AV1))) {
       config.stream.supportedVideoFormats |= SCM_AV1_MAIN8;
       if (config.hdr)
         config.stream.supportedVideoFormats |= SCM_AV1_MAIN10;

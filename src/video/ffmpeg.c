@@ -123,6 +123,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
     int err = avcodec_open2(decoder_ctx, decoder, NULL);
     if (err < 0) {
       printf("Couldn't open codec: %s\n", decoder->name);
+      avcodec_free_context(&decoder_ctx);
       continue;
     }
   }
@@ -162,9 +163,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 void ffmpeg_destroy(void) {
   av_packet_free(&pkt);
   if (decoder_ctx) {
-    avcodec_close(decoder_ctx);
-    av_free(decoder_ctx);
-    decoder_ctx = NULL;
+    avcodec_free_context(&decoder_ctx);
   }
   if (dec_frames) {
     for (int i = 0; i < dec_frames_cnt; i++) {

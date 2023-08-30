@@ -253,6 +253,62 @@ void *HandleMouseEmulation(void* param)
   return NULL;
 }
 
+#define SET_BTN_FLAG(x, y) supportedButtonFlags |= (x >= 0) ? y : 0
+
+static void send_controller_arrival(struct input_device *dev) {
+  unsigned char type = LI_CTYPE_UNKNOWN;
+  unsigned int supportedButtonFlags = 0;
+  unsigned short capabilities = 0;
+
+  switch (libevdev_get_id_vendor(dev->dev)) {
+  case 0x045e: // Microsoft
+    type = LI_CTYPE_XBOX;
+    break;
+  case 0x054c: // Sony
+    type = LI_CTYPE_PS;
+    break;
+  case 0x057e: // Nintendo
+    type = LI_CTYPE_NINTENDO;
+    break;
+  }
+
+  const char* name = libevdev_get_name(dev->dev);
+  if (name && type == LI_CTYPE_UNKNOWN) {
+
+    // Try to guess based on the name
+    if (strstr(name, "Xbox") || strstr(name, "X-Box") || strstr(name, "XBox") || strstr(name, "XBOX")) {
+      type = LI_CTYPE_XBOX;
+    }
+  }
+
+  SET_BTN_FLAG(dev->map->btn_a, A_FLAG);
+  SET_BTN_FLAG(dev->map->btn_b, B_FLAG);
+  SET_BTN_FLAG(dev->map->btn_x, X_FLAG);
+  SET_BTN_FLAG(dev->map->btn_y, Y_FLAG);
+  SET_BTN_FLAG(dev->map->btn_back, BACK_FLAG);
+  SET_BTN_FLAG(dev->map->btn_start, PLAY_FLAG);
+  SET_BTN_FLAG(dev->map->btn_guide, SPECIAL_FLAG);
+  SET_BTN_FLAG(dev->map->btn_leftstick, LS_CLK_FLAG);
+  SET_BTN_FLAG(dev->map->btn_rightstick, RS_CLK_FLAG);
+  SET_BTN_FLAG(dev->map->btn_leftshoulder, LB_FLAG);
+  SET_BTN_FLAG(dev->map->btn_rightshoulder, RB_FLAG);
+  SET_BTN_FLAG(dev->map->btn_misc1, MISC_FLAG);
+  SET_BTN_FLAG(dev->map->btn_paddle1, PADDLE1_FLAG);
+  SET_BTN_FLAG(dev->map->btn_paddle2, PADDLE2_FLAG);
+  SET_BTN_FLAG(dev->map->btn_paddle3, PADDLE3_FLAG);
+  SET_BTN_FLAG(dev->map->btn_paddle4, PADDLE4_FLAG);
+  SET_BTN_FLAG(dev->map->btn_touchpad, TOUCHPAD_FLAG);
+
+  if (dev->map->abs_lefttrigger >= 0 && dev->map->abs_righttrigger >= 0)
+    capabilities |= LI_CCAP_ANALOG_TRIGGERS;
+
+  // TODO: Probe for this properly
+  capabilities |= LI_CCAP_RUMBLE;
+
+  LiSendControllerArrivalEvent(dev->controllerId, assignedControllerIds, type,
+                               supportedButtonFlags, capabilities);
+}
+
 static bool evdev_handle_event(struct input_event *ev, struct input_device *dev) {
   bool gamepadModified = false;
 
@@ -297,6 +353,9 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         //Use id 0 when too many gamepads are connected
         if (dev->controllerId < 0)
           dev->controllerId = 0;
+
+        // Send controller arrival event to the host
+        send_controller_arrival(dev);
       }
       // Send event only if mouse emulation is disabled.
       if (dev->mouseEmulation == false)

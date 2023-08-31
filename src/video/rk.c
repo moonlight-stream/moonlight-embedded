@@ -41,8 +41,9 @@
 #include <rockchip/rk_mpi.h>
 
 #define MAX_FRAMES 16
-#define RK_H264 7
-#define RK_H265 16777220
+#define RK_H264 0x7
+#define RK_H265 0x1000004
+#define RK_AV1  0x1000008
 
 // Vendor-defined 10-bit format code used prior to 5.10
 #ifndef DRM_FORMAT_NA12
@@ -352,6 +353,8 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
     format = RK_H264;
   } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
     format = RK_H265;
+  } else if (videoFormat & VIDEO_FORMAT_MASK_AV1) {
+    format = RK_AV1;
   } else {
     fprintf(stderr, "Video format not supported\n");
     return -1;

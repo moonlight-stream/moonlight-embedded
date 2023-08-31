@@ -55,6 +55,14 @@
 #define DRM_FORMAT_NV15 fourcc_code('N', 'V', '1', '5')
 #endif
 
+// Values for "Colorspace" connector property
+#ifndef DRM_MODE_COLORIMETRY_DEFAULT
+#define DRM_MODE_COLORIMETRY_DEFAULT     0
+#endif
+#ifndef DRM_MODE_COLORIMETRY_BT2020_RGB
+#define DRM_MODE_COLORIMETRY_BT2020_RGB  9
+#endif
+
 // HDR structs copied from linux include/linux/hdmi.h for older libdrm versions
 struct rk_hdr_metadata_infoframe
 {
@@ -301,6 +309,7 @@ void *frame_thread(void *param) {
 
         // Set atomic properties on the connector
         set_atomic_property(drm_request, conn_id, conn_props, "allm_enable", 1); // HDMI ALLM (Game Mode)
+        set_atomic_property(drm_request, conn_id, conn_props, "Colorspace", last_hdr_state ? DRM_MODE_COLORIMETRY_BT2020_RGB : DRM_MODE_COLORIMETRY_DEFAULT);
       } else {
         // regular frame received
 
@@ -591,6 +600,7 @@ void rk_cleanup() {
   drmModeAtomicSetCursor(drm_request, 0);
   set_atomic_property(drm_request, conn_id, conn_props, "HDR_OUTPUT_METADATA", 0);
   set_atomic_property(drm_request, conn_id, conn_props, "allm_enable", 0);
+  set_atomic_property(drm_request, conn_id, conn_props, "Colorspace", DRM_MODE_COLORIMETRY_DEFAULT);
   drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_ALLOW_MODESET, NULL);
 
   if (hdr_metadata_blob_id) {

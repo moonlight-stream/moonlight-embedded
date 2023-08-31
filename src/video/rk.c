@@ -362,10 +362,16 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
 
   MppCodingType mpp_type = (MppCodingType)format;
   ret = mpp_check_support_format(MPP_CTX_DEC, mpp_type);
-  assert(!ret);
+  if (ret) {
+    fprintf(stderr, "Selected video format is not supported\n");
+    return -1;
+  }
 
   fd = open("/dev/dri/card0", O_RDWR | O_CLOEXEC);
-  assert(fd >= 0);
+  if (fd >= 0) {
+    fprintf(stderr, "Unable to open card0: %d\n", errno);
+    return -1;
+  }
 
   resources = drmModeGetResources(fd);
   assert(resources);
@@ -500,7 +506,10 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   assert(!ret);
 
   ret = mpp_create(&mpi_ctx, &mpi_api);
-  assert(!ret);
+  if (ret) {
+    fprintf(stderr, "mpp_create() failed: %d\n", ret);
+    return -1;
+  }
 
   // decoder split mode (multi-data-input) need to be set before init
   int param = 1;
@@ -508,7 +517,10 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   assert(!ret);
 
   ret = mpp_init(mpi_ctx, MPP_CTX_DEC, mpp_type);
-  assert(!ret);
+  if (ret) {
+    fprintf(stderr, "mpp_init() failed: %d\n", ret);
+    return -1;
+  }
 
   // set blocked read on Frame Thread
   param = MPP_POLL_BLOCK;

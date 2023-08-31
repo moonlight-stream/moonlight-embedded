@@ -368,7 +368,7 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   }
 
   fd = open("/dev/dri/card0", O_RDWR | O_CLOEXEC);
-  if (fd >= 0) {
+  if (fd < 0) {
     fprintf(stderr, "Unable to open card0: %d\n", errno);
     return -1;
   }

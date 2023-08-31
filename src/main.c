@@ -297,8 +297,10 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
-  if (config.debug_level > 0)
+  if (config.debug_level > 0) {
     printf("GPU: %s, GFE: %s (%s, %s)\n", server.gpuType, server.serverInfo.serverInfoGfeVersion, server.gsVersion, server.serverInfo.serverInfoAppVersion);
+    printf("Server codec flags: 0x%x\n", server.serverInfo.serverCodecModeSupport);
+  }
 
   if (strcmp("list", config.action) == 0) {
     pair_check(&server);
@@ -317,16 +319,16 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
 
-    config.stream.supportedVideoFormats = SCM_H264;
+    config.stream.supportedVideoFormats = VIDEO_FORMAT_H264;
     if (config.codec == CODEC_HEVC || (config.codec == CODEC_UNSPECIFIED && platform_prefers_codec(system, CODEC_HEVC))) {
-      config.stream.supportedVideoFormats |= SCM_HEVC;
+      config.stream.supportedVideoFormats |= VIDEO_FORMAT_H265;
       if (config.hdr)
-        config.stream.supportedVideoFormats |= SCM_HEVC_MAIN10;
+        config.stream.supportedVideoFormats |= VIDEO_FORMAT_H265_MAIN10;
     }
     if (config.codec == CODEC_AV1 || (config.codec == CODEC_UNSPECIFIED && platform_prefers_codec(system, CODEC_AV1))) {
-      config.stream.supportedVideoFormats |= SCM_AV1_MAIN8;
+      config.stream.supportedVideoFormats |= VIDEO_FORMAT_AV1_MAIN8;
       if (config.hdr)
-        config.stream.supportedVideoFormats |= SCM_AV1_MAIN10;
+        config.stream.supportedVideoFormats |= VIDEO_FORMAT_AV1_MAIN10;
     }
 
     if (config.hdr && !(config.stream.supportedVideoFormats & VIDEO_FORMAT_MASK_10BIT)) {

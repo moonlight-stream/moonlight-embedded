@@ -192,7 +192,8 @@ void *display_thread(void *param) {
     set_atomic_property(drm_request, plane_id, plane_props, "EOTF", last_hdr_state ? 2 : 0); // PQ or SDR
     set_atomic_property(drm_request, plane_id, plane_props, "FB_ID", _fb_id);
 
-    ret = drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_NONBLOCK, NULL);
+    // We may need to modeset to apply colorspace changes when toggling HDR
+    ret = drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_NONBLOCK | DRM_MODE_ATOMIC_ALLOW_MODESET, NULL);
     assert(!ret || errno == EBUSY);
   }
 

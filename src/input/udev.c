@@ -91,10 +91,11 @@ void udev_init(bool autoload, struct mapping* mappings, bool verbose, int rotate
   defaultMappings = mappings;
   inputRotate = rotate;
 
-  int udev_fd = udev_monitor_get_fd(udev_mon);
-  loop_add_fd(udev_fd, &udev_handle, POLLIN);
+  loop_add_fd(udev_monitor_get_fd(udev_mon), &udev_handle, POLLIN);
 }
 
-void evdev_destroy() {
+void udev_destroy() {
+  loop_remove_fd(udev_monitor_get_fd(udev_mon));
+  udev_monitor_unref(udev_mon);
   udev_unref(udev);
 }

@@ -111,6 +111,11 @@ int aml_setup(int videoFormat, int width, int height, int redrawRate, void* cont
   } else if (videoFormat & VIDEO_FORMAT_MASK_H265) {
     codecParam.video_type = VFORMAT_HEVC;
     codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_HEVC;
+#ifdef CODEC_TAG_AV1
+  } else if (videoFormat & VIDEO_FORMAT_MASK_AV1) {
+    codecParam.video_type = VFORMAT_AV1;
+    codecParam.am_sysinfo.format = VIDEO_DEC_FORMAT_AV1;
+#endif
   } else {
     printf("Video format not supported\n");
     return -1;

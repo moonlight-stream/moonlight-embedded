@@ -170,6 +170,10 @@ static void evdev_remove(int devindex) {
     pthread_join(devices[devindex].meThread, NULL);
   }
 
+  libevdev_free(devices[devindex].dev);
+  loop_remove_fd(devices[devindex].fd);
+  close(devices[devindex].fd);
+
   if (devindex != numDevices && numDevices > 0)
     memcpy(&devices[devindex], &devices[numDevices], sizeof(struct input_device));
 }

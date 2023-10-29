@@ -1009,9 +1009,9 @@ void evdev_map(char* device) {
   for (int i = 0; i < 16; i++)
     buf += sprintf(buf, "%02x", ((unsigned char*) guid)[i]);
 
-  struct mapping map;
-  strncpy(map.name, name, sizeof(map.name));
-  strncpy(map.guid, str_guid, sizeof(map.guid));
+  struct mapping map = {0};
+  strncpy(map.name, name, sizeof(map.name) - 1);
+  strncpy(map.guid, str_guid, sizeof(map.guid) - 1);
 
   libevdev_free(evdev);
   close(fd);

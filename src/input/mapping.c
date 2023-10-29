@@ -38,8 +38,8 @@ struct mapping* mapping_parse(char* mapping) {
     exit(EXIT_FAILURE);
   }
 
-  strncpy(map->guid, guid, sizeof(map->guid));
-  strncpy(map->name, name, sizeof(map->name));
+  strncpy(map->guid, guid, sizeof(map->guid) - 1);
+  strncpy(map->name, name, sizeof(map->name) - 1);
 
   /* Initialize all mapping indices to -1 to ensure they won't match anything */
   memset(&map->abs_leftx, -1, offsetof(struct mapping, next) - offsetof(struct mapping, abs_leftx));
@@ -58,7 +58,7 @@ struct mapping* mapping_parse(char* mapping) {
         value++;
       }
       if (strcmp("platform", key) == 0)
-        strncpy(map->platform, value, sizeof(map->platform));
+        strncpy(map->platform, value, sizeof(map->platform) - 1);
       else if (sscanf(value, "b%d", &int_value) == 1) {
         if (strcmp("a", key) == 0)
           map->btn_a = int_value;

@@ -90,7 +90,7 @@ void cec_init() {
   g_iface.init_video_standalone(g_iface.connection);
 
   cec_adapter devices[10];
-  int8_t iDevicesFound = g_iface.find_adapters(g_iface.connection, devices, sizeof(devices) / sizeof(devices), NULL);
+  int8_t iDevicesFound = g_iface.find_adapters(g_iface.connection, devices, sizeof(devices) / sizeof(devices[0]), NULL);
 
   if (iDevicesFound <= 0) {
     fprintf(stderr, "No CEC devices found\n");

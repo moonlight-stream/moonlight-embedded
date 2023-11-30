@@ -48,15 +48,13 @@
 
 static char unique_id[UNIQUEID_CHARS+1];
 static X509 *cert;
-static char cert_hex[4096];
+static char cert_hex[8192];
 static EVP_PKEY *privateKey;
 
 const char* gs_error;
 
 #define LEN_AS_HEX_STR(x) ((x) * 2 + 1)
 #define SIZEOF_AS_HEX_STR(x) LEN_AS_HEX_STR(sizeof(x))
-
-#define SIGNATURE_LEN 256
 
 #define UUID_STRLEN 37
 
@@ -310,6 +308,12 @@ static void bytes_to_hex(unsigned char *in, char *out, size_t len) {
   out[len * 2] = 0;
 }
 
+static void hex_to_bytes(const char *in, unsigned char* out, size_t len) {
+  for (int count = 0; count < len; count += 2) {
+    sscanf(&in[count], "%2hhx", &out[count / 2]);
+  }
+}
+
 static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *slen, EVP_PKEY *pkey) {
   int result = GS_FAILED;
 
@@ -422,13 +426,20 @@ int gs_unpair(PSERVER_DATA server) {
 int gs_pair(PSERVER_DATA server, char* pin) {
   int ret = GS_OK;
   char* result = NULL;
-  char url[5120];
+  size_t url_max_len = 16384;
+  char* url = malloc(url_max_len);
   uuid_t uuid;
   char uuid_str[UUID_STRLEN];
+  char* plaincert = NULL;
+  char* challenge_response = NULL;
+  char* pairing_secret = NULL;
+  char* client_pairing_secret = NULL;
+  char* client_pairing_secret_hex = NULL;
 
   if (server->paired) {
     gs_error = "Already paired";
-    return GS_WRONG_STATE;
+    ret = GS_WRONG_STATE;
+    goto cleanup;
   }
 
   unsigned char salt_data[16];
@@ -438,7 +449,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, salt_hex, cert_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, salt_hex, cert_hex);
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
@@ -461,18 +472,11 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if ((ret = xml_search(data->memory, data->size, "plaincert", &result)) != GS_OK)
     goto cleanup;
 
-  char plaincert[8192];
 
-  if (strlen(result)/2 > sizeof(plaincert) - 1) {
-    gs_error = "Server certificate too big";
-    ret = GS_FAILED;
-    goto cleanup;
-  }
-
-  for (int count = 0; count < strlen(result); count += 2) {
-    sscanf(&result[count], "%2hhx", &plaincert[count / 2]);
-  }
-  plaincert[strlen(result)/2] = '\0';
+  size_t plaincertlen = strlen(result)/2;
+  plaincert = malloc(plaincertlen + 1);
+  hex_to_bytes(result, plaincert, plaincertlen*2);
+  plaincert[plaincertlen] = 0;
 
   unsigned char salt_pin[sizeof(salt_data) + 4];
   unsigned char aes_key[32]; // Must fit SHA256
@@ -494,7 +498,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -527,10 +531,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
 
-  for (int count = 0; count < strlen(result); count += 2) {
-    sscanf(&result[count], "%2hhx", &challenge_response_data_enc[count / 2]);
-  }
-
+  hex_to_bytes(result, challenge_response_data_enc, strlen(result));
   decrypt(challenge_response_data_enc, sizeof(challenge_response_data_enc), aes_key, challenge_response_data);
 
   char client_secret_data[16];
@@ -539,7 +540,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   const ASN1_BIT_STRING *asnSignature;
   X509_get0_signature(&asnSignature, NULL, cert);
 
-  char challenge_response[16 + SIGNATURE_LEN + sizeof(client_secret_data)];
+  challenge_response = malloc(16 + asnSignature->length + sizeof(client_secret_data));
   char challenge_response_hash[32];
   char challenge_response_hash_enc[sizeof(challenge_response_hash)];
   char challenge_response_hex[SIZEOF_AS_HEX_STR(challenge_response_hash_enc)];
@@ -556,7 +557,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_response_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_response_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -580,19 +581,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
 
-  char pairing_secret[16 + SIGNATURE_LEN];
-
-  if (strlen(result) / 2 > sizeof(pairing_secret)) {
-    gs_error = "Pairing secret too big";
-    ret = GS_FAILED;
+  size_t pairing_secret_len = strlen(result) / 2;
+  if (pairing_secret_len <= 16) {
+    ret = GS_INVALID;
     goto cleanup;
   }
 
-  for (int count = 0; count < strlen(result); count += 2) {
-    sscanf(&result[count], "%2hhx", &pairing_secret[count / 2]);
-  }
-
-  if (!verifySignature(pairing_secret, 16, pairing_secret+16, SIGNATURE_LEN, plaincert)) {
+  pairing_secret = malloc(pairing_secret_len);
+  hex_to_bytes(result, pairing_secret, pairing_secret_len*2);
+  if (!verifySignature(pairing_secret, 16, pairing_secret+16, pairing_secret_len-16, plaincert)) {
     gs_error = "MITM attack detected";
     ret = GS_FAILED;
     goto cleanup;
@@ -606,15 +603,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
       goto cleanup;
   }
 
-  char client_pairing_secret[sizeof(client_secret_data) + SIGNATURE_LEN];
-  char client_pairing_secret_hex[SIZEOF_AS_HEX_STR(client_pairing_secret)];
+  client_pairing_secret = malloc(sizeof(client_secret_data) + s_len);
+  client_pairing_secret_hex = malloc(LEN_AS_HEX_STR(sizeof(client_secret_data) + s_len));
   memcpy(client_pairing_secret, client_secret_data, sizeof(client_secret_data));
-  memcpy(client_pairing_secret + sizeof(client_secret_data), signature, SIGNATURE_LEN);
-  bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, sizeof(client_secret_data) + SIGNATURE_LEN);
+  memcpy(client_pairing_secret + sizeof(client_secret_data), signature, s_len);
+  bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, sizeof(client_secret_data) + s_len);
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, client_pairing_secret_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, client_pairing_secret_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -633,7 +630,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "https://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->serverInfo.address, server->httpsPort, unique_id, uuid_str);
+  snprintf(url, url_max_len, "https://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->serverInfo.address, server->httpsPort, unique_id, uuid_str);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -656,8 +653,13 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if (ret != GS_OK)
     gs_unpair(server);
 
-  if (result != NULL)
-    free(result);
+  free(url);
+  free(plaincert);
+  free(challenge_response);
+  free(pairing_secret);
+  free(client_pairing_secret);
+  free(client_pairing_secret_hex);
+  free(result);
 
   http_free_data(data);
 

@@ -87,6 +87,13 @@ add_executable(moonlight ${SRC_LIST})
 target_link_libraries(moonlight m)
 target_link_libraries(moonlight gamestream)
 
+if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  set(ALSA_FOUND FALSE)
+  set(PULSE_FOUND FALSE)
+  set(CEC_FOUND FALSE)
+  target_sources(moonlight PRIVATE ./src/audio/oss.c)
+endif()
+
 if (CEC_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
   list(APPEND MOONLIGHT_OPTIONS CEC)

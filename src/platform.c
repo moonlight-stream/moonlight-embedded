@@ -202,6 +202,9 @@ AUDIO_RENDERER_CALLBACKS* platform_get_audio(enum platform system, char* audio_d
     #ifdef HAVE_ALSA
     return &audio_callbacks_alsa;
     #endif
+    #ifdef __FreeBSD__
+    return &audio_callbacks_oss;
+    #endif
   }
   return NULL;
 }

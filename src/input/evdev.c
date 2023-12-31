@@ -38,7 +38,11 @@
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
+#ifdef __linux__
 #include <endian.h>
+#else
+#include <sys/endian.h>
+#endif
 #include <math.h>
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -66,8 +70,13 @@ struct input_device {
   int hats_state[3][2];
   int fd;
   char modifiers;
+  #ifdef __linux__
   __s32 mouseDeltaX, mouseDeltaY, mouseVScroll, mouseHScroll;
   __s32 touchDownX, touchDownY, touchX, touchY;
+  #else
+  int32_t mouseDeltaX, mouseDeltaY, mouseVScroll, mouseHScroll;
+  int32_t touchDownX, touchDownY, touchX, touchY;
+  #endif
   struct timeval touchDownTime;
   struct timeval btnDownTime;
   short controllerId;

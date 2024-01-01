@@ -19,13 +19,14 @@
 
 #ifdef __FreeBSD__
 #include <sys/soundcard.h>
+#include <sys/ioctl.h>
 #include "audio.h"
 
 #include <opus_multistream.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
 
+#include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -33,7 +34,7 @@ static OpusMSDecoder* decoder;
 static short* pcmBuffer;
 static int samplesPerFrame;
 static int channelCount;
-static int fd;
+static int fd = -1;
 
 static int oss_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURATION opusConfig, void* context, int arFlags) {
   int rc;
@@ -47,25 +48,24 @@ static int oss_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGURA
 
   const char* oss_name = "/dev/dsp";
   fd = open(oss_name, O_WRONLY);
-  // buffer size for fragment ,selector 12 is 4096;11 is 2048;10 is 1024; 13is 8192
   if (fd == -1) {
-    close(fd);
-    printf("Open audio device /dev/dsp faild!!!");
+    printf("Open audio device /dev/dsp failed! error %d\n", errno);
     return -1;
   }
+  // buffer size for fragment ,selector 12 is 4096;11 is 2048;10 is 1024; 13is 8192
   int frag = 12;
   if (ioctl(fd, SNDCTL_DSP_SETFRAGMENT, &frag) == -1)
-    printf("Set framgment for /dev/dsp faild.");
+    printf("Set fragment for /dev/dsp failed.");
 
   int format = AFMT_S16_LE;
   int channels = opusConfig->channelCount;
   int rate = opusConfig->sampleRate;
   if (ioctl(fd, SNDCTL_DSP_SETFMT, &format) == -1)
-    printf("Set framgment for /dev/dsp faild.");
+    printf("Set format for /dev/dsp failed.");
   if (ioctl(fd, SNDCTL_DSP_CHANNELS, &channels) == -1)
-    printf("Set channels for /dev/dsp faild.");
+    printf("Set channels for /dev/dsp failed.");
   if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) == -1)
-    printf("Set sameple rate for /dev/dsp faild.");
+    printf("Set sample rate for /dev/dsp failed.");
 
   return 0;
 }
@@ -81,9 +81,9 @@ static void oss_renderer_cleanup() {
     pcmBuffer = NULL;
   }
 
-  if (fd != 0) {
+  if (fd != -1) {
     close(fd);
-    fd = 0;
+    fd = -1;
   }
 }
 
@@ -91,7 +91,7 @@ static void oss_renderer_decode_and_play_sample(char* data, int length) {
   int decodeLen = opus_multistream_decode(decoder, data, length, pcmBuffer, samplesPerFrame, 0);
   if (decodeLen > 0) {
     write(fd, pcmBuffer, decodeLen * channelCount * sizeof(short));
-  } else {
+  } else if (decodeLen < 0) {
     printf("Opus error from decode: %d\n", decodeLen);
   }
 }

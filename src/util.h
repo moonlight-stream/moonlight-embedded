@@ -23,3 +23,4 @@
 int write_bool(char *path, bool val);
 int read_file(char *path, char *output, int output_len);
 bool ensure_buf_size(void **buf, size_t *buf_size, size_t required_size);
+bool has_fast_aes(void);

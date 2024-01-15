@@ -92,6 +92,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
   target_sources(moonlight PRIVATE ./src/audio/oss.c)
 endif()
 
+check_c_source_compiles("#include <sys/auxv.h>
+                         int main(void) { return getauxval(AT_HWCAP); }" HAVE_GETAUXVAL)
+
 if (CEC_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
   list(APPEND MOONLIGHT_OPTIONS CEC)

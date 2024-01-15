@@ -348,7 +348,14 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.streamingRemotely = STREAM_CFG_AUTO;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportedVideoFormats = SCM_H264;
-  config->stream.encryptionFlags = ENCFLG_AUDIO;
+
+  // Opt in for video encryption if the CPU has good AES performance
+  if (has_fast_aes()) {
+    config->stream.encryptionFlags = ENCFLG_ALL;
+  }
+  else {
+    config->stream.encryptionFlags = ENCFLG_AUDIO;
+  }
 
 #ifdef __arm__
   char cpuinfo[4096] = {};
@@ -358,7 +365,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
     // barely handle Opus decoding alone.
     if (strstr(cpuinfo, "ARMv6")) {
       config->stream.encryptionFlags = ENCFLG_NONE;
-      printf("Disabling audio encryption on low performance CPU\n");
+      printf("Disabling encryption on low performance CPU\n");
     }
   }
 #endif

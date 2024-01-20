@@ -94,6 +94,9 @@ endif()
 
 check_c_source_compiles("#include <sys/auxv.h>
                          int main(void) { return getauxval(AT_HWCAP); }" HAVE_GETAUXVAL)
+if (HAVE_GETAUXVAL)
+  list(APPEND MOONLIGHT_DEFINITIONS HAVE_GETAUXVAL)
+endif()
 
 if (CEC_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)

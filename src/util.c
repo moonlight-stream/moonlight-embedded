@@ -113,10 +113,6 @@ bool ensure_buf_size(void **buf, size_t *buf_size, size_t required_size) {
 }
 
 bool has_fast_aes() {
-#ifndef __has_builtin
-#define __has_builtin(x) 0
-#endif
-
 #if defined(HAVE_GETAUXVAL) && (defined(__arm__) || defined(__aarch64__))
   #if defined(__arm__) && defined(HWCAP2_AES)
     return !!(getauxval(AT_HWCAP2) & HWCAP2_AES);
@@ -125,7 +121,7 @@ bool has_fast_aes() {
   #else
     return false;
   #endif
-#elif __has_builtin(__builtin_cpu_supports) && (defined(__i386__) || defined(__x86_64__))
+#elif defined(HAVE_BICS_AES)
   return __builtin_cpu_supports("aes");
 #elif defined(__BUILTIN_CPU_SUPPORTS__) && defined(__powerpc__)
   return __builtin_cpu_supports("vcrypto");

@@ -98,6 +98,11 @@ if (HAVE_GETAUXVAL)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_GETAUXVAL)
 endif()
 
+check_c_source_compiles("int main(void) { return __builtin_cpu_supports(\"aes\"); }" HAVE_BICS_AES)
+if (HAVE_BICS_AES)
+  list(APPEND MOONLIGHT_DEFINITIONS HAVE_BICS_AES)
+endif()
+
 if (CEC_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
   list(APPEND MOONLIGHT_OPTIONS CEC)

@@ -836,8 +836,10 @@ void evdev_create(const char* device, struct mapping* mappings, bool verbose, in
       libevdev_has_event_code(evdev, EV_ABS, ABS_RZ))) &&
     !libevdev_has_event_type(evdev, EV_KEY);
   bool is_gamepad =
-    libevdev_has_event_code(evdev, EV_ABS, ABS_X) &&
-    libevdev_has_event_code(evdev, EV_ABS, ABS_Y) &&
+    ((libevdev_has_event_code(evdev, EV_ABS, ABS_X) &&
+      libevdev_has_event_code(evdev, EV_ABS, ABS_Y)) ||
+     (libevdev_has_event_code(evdev, EV_ABS, ABS_HAT0X) &&
+      libevdev_has_event_code(evdev, EV_ABS, ABS_HAT0Y))) &&
     (libevdev_has_event_code(evdev, EV_KEY, BTN_TRIGGER) ||
      libevdev_has_event_code(evdev, EV_KEY, BTN_A) ||
      libevdev_has_event_code(evdev, EV_KEY, BTN_1) ||

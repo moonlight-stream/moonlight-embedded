@@ -1,9 +1,11 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.6)
 project(moonlight-embedded VERSION 2.6.2 LANGUAGES C)
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 SET(CMAKE_C_STANDARD 99)
 include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/generate_version_header.cmake)
+
+include(CheckCSourceCompiles)
 
 add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-pointer-sign -Wno-sign-compare -Wno-switch)
 

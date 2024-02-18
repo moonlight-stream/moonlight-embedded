@@ -28,7 +28,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -248,9 +247,7 @@ void *frame_thread(void *param) {
           dmcd.bpp = 8; // hor_stride is already adjusted for 10 vs 8 bit
           dmcd.width = hor_stride;
           dmcd.height = ver_stride * 2; // documentation say not v*2/3 but v*2 (additional info included)
-          do {
-            ret = ioctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &dmcd);
-          } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
+          ret = drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &dmcd);
           assert(!ret);
           assert(dmcd.pitch == dmcd.width);
           assert(dmcd.size == dmcd.pitch * dmcd.height);
@@ -260,9 +257,7 @@ void *frame_thread(void *param) {
           struct drm_prime_handle dph = {0};
           dph.handle = dmcd.handle;
           dph.fd = -1;
-          do {
-            ret = ioctl(fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, &dph);
-          } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
+          ret = drmIoctl(fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, &dph);
           assert(!ret);
           MppBufferInfo info = {0};
           info.type = MPP_BUFFER_TYPE_DRM;
@@ -587,9 +582,7 @@ void rk_cleanup() {
       assert(!ret);
       struct drm_mode_destroy_dumb dmdd = {0};
       dmdd.handle = frame_to_drm[i].handle;
-      do {
-        ret = ioctl(fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dmdd);
-      } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
+      ret = drmIoctl(fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dmdd);
       assert(!ret);
     }
   }

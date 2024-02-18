@@ -502,6 +502,24 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   }
   assert(plane_id);
 
+  // DRM defines rotation in degrees counter-clockwise while we define
+  // rotation in degrees clockwise, so we swap the 90 and 270 cases
+  int displayRotation = drFlags & DISPLAY_ROTATE_MASK;
+  switch (displayRotation) {
+  case DISPLAY_ROTATE_90:
+    set_property(plane_id, DRM_MODE_OBJECT_PLANE, plane_props, "rotation", DRM_MODE_ROTATE_270);
+    break;
+  case DISPLAY_ROTATE_180:
+    set_property(plane_id, DRM_MODE_OBJECT_PLANE, plane_props, "rotation", DRM_MODE_ROTATE_180);
+    break;
+  case DISPLAY_ROTATE_270:
+    set_property(plane_id, DRM_MODE_OBJECT_PLANE, plane_props, "rotation", DRM_MODE_ROTATE_90);
+    break;
+  default:
+    set_property(plane_id, DRM_MODE_OBJECT_PLANE, plane_props, "rotation", DRM_MODE_ROTATE_0);
+    break;
+  }
+
   // hide cursor by move in left lower corner
   drmModeMoveCursor(fd, crtc_id, 0, crtc_height);
 

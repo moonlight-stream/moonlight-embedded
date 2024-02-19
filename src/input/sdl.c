@@ -59,10 +59,231 @@ typedef struct _GAMEPAD_STATE {
 
 static GAMEPAD_STATE gamepads[MAX_GAMEPADS];
 
-static int keyboard_modifiers;
 static int activeGamepadMask = 0;
 
 int sdl_gamepads = 0;
+
+#define VK_0 0x30
+#define VK_A 0x41
+
+// These are real Windows VK_* codes
+#ifndef VK_F1
+#define VK_F1 0x70
+#define VK_F13 0x7C
+#define VK_NUMPAD0 0x60
+#endif
+
+int vk_for_sdl_scancode(SDL_Scancode scancode) {
+  // Set keycode. We explicitly use scancode here because GFE will try to correct
+  // for AZERTY layouts on the host but it depends on receiving VK_ values matching
+  // a QWERTY layout to work.
+  if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_9) {
+    // SDL defines SDL_SCANCODE_0 > SDL_SCANCODE_9, so we need to handle that manually
+    return (scancode - SDL_SCANCODE_1) + VK_0 + 1;
+  }
+  else if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z) {
+    return (scancode - SDL_SCANCODE_A) + VK_A;
+  }
+  else if (scancode >= SDL_SCANCODE_F1 && scancode <= SDL_SCANCODE_F12) {
+    return (scancode - SDL_SCANCODE_F1) + VK_F1;
+  }
+  else if (scancode >= SDL_SCANCODE_F13 && scancode <= SDL_SCANCODE_F24) {
+    return (scancode - SDL_SCANCODE_F13) + VK_F13;
+  }
+  else if (scancode >= SDL_SCANCODE_KP_1 && scancode <= SDL_SCANCODE_KP_9) {
+    // SDL defines SDL_SCANCODE_KP_0 > SDL_SCANCODE_KP_9, so we need to handle that manually
+    return (scancode - SDL_SCANCODE_KP_1) + VK_NUMPAD0 + 1;
+  }
+  else {
+    switch (scancode) {
+    case SDL_SCANCODE_BACKSPACE:
+        return 0x08;
+
+    case SDL_SCANCODE_TAB:
+        return 0x09;
+
+    case SDL_SCANCODE_CLEAR:
+        return 0x0C;
+
+    case SDL_SCANCODE_KP_ENTER:
+    case SDL_SCANCODE_RETURN:
+        return 0x0D;
+
+    case SDL_SCANCODE_PAUSE:
+        return 0x13;
+
+    case SDL_SCANCODE_CAPSLOCK:
+        return 0x14;
+
+    case SDL_SCANCODE_ESCAPE:
+        return 0x1B;
+
+    case SDL_SCANCODE_SPACE:
+        return 0x20;
+
+    case SDL_SCANCODE_PAGEUP:
+        return 0x21;
+
+    case SDL_SCANCODE_PAGEDOWN:
+        return 0x22;
+
+    case SDL_SCANCODE_END:
+        return 0x23;
+
+    case SDL_SCANCODE_HOME:
+        return 0x24;
+
+    case SDL_SCANCODE_LEFT:
+        return 0x25;
+
+    case SDL_SCANCODE_UP:
+        return 0x26;
+
+    case SDL_SCANCODE_RIGHT:
+        return 0x27;
+
+    case SDL_SCANCODE_DOWN:
+        return 0x28;
+
+    case SDL_SCANCODE_SELECT:
+        return 0x29;
+
+    case SDL_SCANCODE_EXECUTE:
+        return 0x2B;
+
+    case SDL_SCANCODE_PRINTSCREEN:
+        return 0x2C;
+
+    case SDL_SCANCODE_INSERT:
+        return 0x2D;
+
+    case SDL_SCANCODE_DELETE:
+        return 0x2E;
+
+    case SDL_SCANCODE_HELP:
+        return 0x2F;
+
+    case SDL_SCANCODE_KP_0:
+        // See comment above about why we only handle SDL_SCANCODE_KP_0 here
+        return VK_NUMPAD0;
+
+    case SDL_SCANCODE_0:
+        // See comment above about why we only handle SDL_SCANCODE_0 here
+        return VK_0;
+
+    case SDL_SCANCODE_KP_MULTIPLY:
+        return 0x6A;
+
+    case SDL_SCANCODE_KP_PLUS:
+        return 0x6B;
+
+    case SDL_SCANCODE_KP_COMMA:
+        return 0x6C;
+
+    case SDL_SCANCODE_KP_MINUS:
+        return 0x6D;
+
+    case SDL_SCANCODE_KP_PERIOD:
+        return 0x6E;
+
+    case SDL_SCANCODE_KP_DIVIDE:
+        return 0x6F;
+
+    case SDL_SCANCODE_NUMLOCKCLEAR:
+        return 0x90;
+
+    case SDL_SCANCODE_SCROLLLOCK:
+        return 0x91;
+
+    case SDL_SCANCODE_LSHIFT:
+        return 0xA0;
+
+    case SDL_SCANCODE_RSHIFT:
+        return 0xA1;
+
+    case SDL_SCANCODE_LCTRL:
+        return 0xA2;
+
+    case SDL_SCANCODE_RCTRL:
+        return 0xA3;
+
+    case SDL_SCANCODE_LALT:
+        return 0xA4;
+
+    case SDL_SCANCODE_RALT:
+        return 0xA5;
+
+    case SDL_SCANCODE_LGUI:
+        return 0x5B;
+
+    case SDL_SCANCODE_RGUI:
+        return 0x5C;
+
+    case SDL_SCANCODE_APPLICATION:
+        return 0x5D;
+
+    case SDL_SCANCODE_AC_BACK:
+        return 0xA6;
+
+    case SDL_SCANCODE_AC_FORWARD:
+        return 0xA7;
+
+    case SDL_SCANCODE_AC_REFRESH:
+        return 0xA8;
+
+    case SDL_SCANCODE_AC_STOP:
+        return 0xA9;
+
+    case SDL_SCANCODE_AC_SEARCH:
+        return 0xAA;
+
+    case SDL_SCANCODE_AC_BOOKMARKS:
+        return 0xAB;
+
+    case SDL_SCANCODE_AC_HOME:
+        return 0xAC;
+
+    case SDL_SCANCODE_SEMICOLON:
+        return 0xBA;
+
+    case SDL_SCANCODE_EQUALS:
+        return 0xBB;
+
+    case SDL_SCANCODE_COMMA:
+        return 0xBC;
+
+    case SDL_SCANCODE_MINUS:
+        return 0xBD;
+
+    case SDL_SCANCODE_PERIOD:
+        return 0xBE;
+
+    case SDL_SCANCODE_SLASH:
+        return 0xBF;
+
+    case SDL_SCANCODE_GRAVE:
+        return 0xC0;
+
+    case SDL_SCANCODE_LEFTBRACKET:
+        return 0xDB;
+
+    case SDL_SCANCODE_BACKSLASH:
+        return 0xDC;
+
+    case SDL_SCANCODE_RIGHTBRACKET:
+        return 0xDD;
+
+    case SDL_SCANCODE_APOSTROPHE:
+        return 0xDE;
+
+    case SDL_SCANCODE_NONUSBACKSLASH:
+        return 0xE2;
+
+    default:
+        return 0;
+    }
+  }
+}
 
 static void send_controller_arrival(PGAMEPAD_STATE state) {
 #if SDL_VERSION_ATLEAST(2, 0, 18)
@@ -274,57 +495,30 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
     return 0;
   case SDL_KEYDOWN:
   case SDL_KEYUP:
-    button = event->key.keysym.sym;
-    if (button >= 0x21 && button <= 0x2f)
-      button = keyCodes1[button - 0x21];
-    else if (button >= 0x3a && button <= 0x40)
-      button = keyCodes2[button - 0x3a];
-    else if (button >= 0x5b && button <= 0x60)
-      button = keyCodes3[button - 0x5b];
-    else if (button >= 0x40000039 && button < 0x40000039 + sizeof(keyCodes4))
-      button = keyCodes4[button - 0x40000039];
-    else if (button >= 0x400000E0 && button <= 0x400000E7)
-      button = keyCodes5[button - 0x400000E0];
-    else if (button >= 0x61 && button <= 0x7a)
-      button -= 0x20;
-    else if (button == 0x7f)
-      button = 0x2e;
+    button = vk_for_sdl_scancode(event->key.keysym.scancode);
 
-    int modifier = 0;
-    switch (event->key.keysym.sym) {
-    case SDLK_RSHIFT:
-    case SDLK_LSHIFT:
-      modifier = MODIFIER_SHIFT;
-      break;
-    case SDLK_RALT:
-    case SDLK_LALT:
-      modifier = MODIFIER_ALT;
-      break;
-    case SDLK_RCTRL:
-    case SDLK_LCTRL:
-      modifier = MODIFIER_CTRL;
-      break;
-    case SDLK_RGUI:
-    case SDLK_LGUI:
-      modifier = MODIFIER_META;
-      break;
+    int modifiers = 0;
+    if (event->key.keysym.mod & KMOD_CTRL) {
+      modifiers |= MODIFIER_CTRL;
+    }
+    if (event->key.keysym.mod & KMOD_ALT) {
+      modifiers |= MODIFIER_ALT;
+    }
+    if (event->key.keysym.mod & KMOD_SHIFT) {
+      modifiers |= MODIFIER_SHIFT;
+    }
+    if (event->key.keysym.mod & KMOD_GUI) {
+      modifiers |= MODIFIER_META;
     }
 
-    if (modifier != 0) {
-      if (event->type==SDL_KEYDOWN)
-        keyboard_modifiers |= modifier;
-      else
-        keyboard_modifiers &= ~modifier;
-    }
-
-    LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, keyboard_modifiers);
+    LiSendKeyboardEvent(0x80 << 8 | button, event->type==SDL_KEYDOWN?KEY_ACTION_DOWN:KEY_ACTION_UP, modifiers);
 
     // Quit the stream if all the required quit keys are down
-    if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == QUIT_KEY && event->type==SDL_KEYUP)
+    if ((modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == QUIT_KEY && event->type==SDL_KEYUP)
       return SDL_QUIT_APPLICATION;
-    else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == FULLSCREEN_KEY && event->type==SDL_KEYUP)
+    else if ((modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == FULLSCREEN_KEY && event->type==SDL_KEYUP)
       return SDL_TOGGLE_FULLSCREEN;
-    else if ((keyboard_modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == UNGRAB_KEY && event->type==SDL_KEYUP)
+    else if ((modifiers & ACTION_MODIFIERS) == ACTION_MODIFIERS && event->key.keysym.sym == UNGRAB_KEY && event->type==SDL_KEYUP)
       return SDL_GetRelativeMouseMode() ? SDL_MOUSE_UNGRAB : SDL_MOUSE_GRAB;
     break;
   case SDL_FINGERDOWN:

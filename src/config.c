@@ -20,6 +20,7 @@
 #include "platform.h"
 #include "config.h"
 #include "util.h"
+#include "cpu.h"
 
 #include "input/evdev.h"
 #include "audio/audio.h"
@@ -353,22 +354,14 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   if (has_fast_aes()) {
     config->stream.encryptionFlags = ENCFLG_ALL;
   }
+  else if (has_slow_aes()) {
+    // For extremely slow CPUs, opt out of audio encryption
+    config->stream.encryptionFlags = ENCFLG_NONE;
+    printf("Disabling encryption on low performance CPU\n");
+  }
   else {
     config->stream.encryptionFlags = ENCFLG_AUDIO;
   }
-
-#ifdef __arm__
-  char cpuinfo[4096] = {};
-  if (read_file("/proc/cpuinfo", cpuinfo, sizeof(cpuinfo) - 1) > 0) {
-    // If this is a ARMv6 CPU (like the Pi 1), we'll assume it's not
-    // powerful enough to handle audio encryption. The Pi 1 could
-    // barely handle Opus decoding alone.
-    if (strstr(cpuinfo, "ARMv6")) {
-      config->stream.encryptionFlags = ENCFLG_NONE;
-      printf("Disabling encryption on low performance CPU\n");
-    }
-  }
-#endif
 
   config->debug_level = 0;
   config->platform = "auto";

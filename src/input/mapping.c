@@ -152,6 +152,8 @@ struct mapping* mapping_parse(char* mapping) {
           map->hat_dpdown = int_value;
           map->hat_dir_dpdown = direction_value;
         }
+      } else if (strcmp("crc", key) == 0) {
+        /* CRC is not supported */
       } else
         fprintf(stderr, "Can't map (%s)\n", option);
     } else if (ret == 0 && option[0] != '\n')

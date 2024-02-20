@@ -158,22 +158,18 @@ void *display_thread(void *param) {
   while (!frm_eos) {
     int _fb_id;
 
-    ret = pthread_mutex_lock(&mutex);
-    assert(!ret);
+    pthread_mutex_lock(&mutex);
     while (fb_id == 0) {
       pthread_cond_wait(&cond, &mutex);
-      assert(!ret);
       if (fb_id == 0 && frm_eos) {
-        ret = pthread_mutex_unlock(&mutex);
-        assert(!ret);
+        pthread_mutex_unlock(&mutex);
         return NULL;
       }
     }
     _fb_id = fb_id;
 
     fb_id = 0;
-    ret = pthread_mutex_unlock(&mutex);
-    assert(!ret);
+    pthread_mutex_unlock(&mutex);
 
     if (atomic) {
       // We may need to modeset to apply colorspace changes when toggling HDR
@@ -313,14 +309,10 @@ void *frame_thread(void *param) {
           }
           assert(i != MAX_FRAMES);
           // send DRM FB to display thread
-          ret = pthread_mutex_lock(&mutex);
-          assert(!ret);
+          pthread_mutex_lock(&mutex);
           fb_id = frame_to_drm[i].fb_id;
-          ret = pthread_cond_signal(&cond);
-          assert(!ret);
-          ret = pthread_mutex_unlock(&mutex);
-          assert(!ret);
-
+          pthread_cond_signal(&cond);
+          pthread_mutex_unlock(&mutex);
         } else {
           fprintf(stderr, "Frame no buff\n");
         }
@@ -551,15 +543,11 @@ int rk_setup(int videoFormat, int width, int height, int redrawRate, void* conte
   ret = mpi_api->control(mpi_ctx, MPP_SET_OUTPUT_BLOCK, &param);
   assert(!ret);
 
-  ret = pthread_mutex_init(&mutex, NULL);
-  assert(!ret);
-  ret = pthread_cond_init(&cond, NULL);
-  assert(!ret);
+  pthread_mutex_init(&mutex, NULL);
+  pthread_cond_init(&cond, NULL);
 
-  ret = pthread_create(&tid_frame, NULL, frame_thread, NULL);
-  assert(!ret);
-  ret = pthread_create(&tid_display, NULL, display_thread, NULL);
-  assert(!ret);
+  pthread_create(&tid_frame, NULL, frame_thread, NULL);
+  pthread_create(&tid_display, NULL, display_thread, NULL);
 
   return 0;
 }
@@ -570,26 +558,19 @@ void rk_cleanup() {
   int ret;
 
   frm_eos = 1;
-  ret = pthread_mutex_lock(&mutex);
-  assert(!ret);
-  ret = pthread_cond_signal(&cond);
-  assert(!ret);
-  ret = pthread_mutex_unlock(&mutex);
-  assert(!ret);
+  pthread_mutex_lock(&mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&mutex);
 
-  ret = pthread_join(tid_display, NULL);
-  assert(!ret);
+  pthread_join(tid_display, NULL);
 
-  ret = pthread_cond_destroy(&cond);
-  assert(!ret);
-  ret = pthread_mutex_destroy(&mutex);
-  assert(!ret);
+  pthread_cond_destroy(&cond);
+  pthread_mutex_destroy(&mutex);
 
   ret = mpi_api->reset(mpi_ctx);
   assert(!ret);
 
-  ret = pthread_join(tid_frame, NULL);
-  assert(!ret);
+  pthread_join(tid_frame, NULL);
 
   if (mpi_frm_grp) {
     ret = mpp_buffer_group_put(mpi_frm_grp);

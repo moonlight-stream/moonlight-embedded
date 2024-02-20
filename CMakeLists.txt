@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(moonlight-embedded VERSION 2.6.2 LANGUAGES C)
+project(moonlight-embedded VERSION 2.7.0 LANGUAGES C)
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 SET(CMAKE_C_STANDARD 99)
 include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)

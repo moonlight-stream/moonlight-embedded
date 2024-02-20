@@ -435,6 +435,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   char* pairing_secret = NULL;
   char* client_pairing_secret = NULL;
   char* client_pairing_secret_hex = NULL;
+  PHTTP_DATA data = NULL;
 
   if (server->paired) {
     gs_error = "Already paired";
@@ -450,7 +451,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
   snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, salt_hex, cert_hex);
-  PHTTP_DATA data = http_create_data();
+  data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
   else if ((ret = http_request(url, data)) != GS_OK)

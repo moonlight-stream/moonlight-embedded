@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_GETAUXVAL
 #include <sys/auxv.h>

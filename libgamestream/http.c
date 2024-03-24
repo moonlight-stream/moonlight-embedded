@@ -51,10 +51,10 @@ int http_init(const char* keyDirectory, int logLevel) {
     return GS_FAILED;
 
   char certificateFilePath[4096];
-  sprintf(certificateFilePath, "%s/%s", keyDirectory, CERTIFICATE_FILE_NAME);
+  snprintf(certificateFilePath, sizeof(certificateFilePath), "%s/%s", keyDirectory, CERTIFICATE_FILE_NAME);
 
   char keyFilePath[4096];
-  sprintf(&keyFilePath[0], "%s/%s", keyDirectory, KEY_FILE_NAME);
+  snprintf(keyFilePath, sizeof(keyFilePath), "%s/%s", keyDirectory, KEY_FILE_NAME);
 
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
   curl_easy_setopt(curl, CURLOPT_SSLENGINE_DEFAULT, 1L);

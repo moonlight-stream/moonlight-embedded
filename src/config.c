@@ -411,11 +411,11 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
     struct passwd *pw = getpwuid(getuid());
     const char *dir;
     if ((dir = getenv("XDG_CACHE_DIR")) != NULL)
-      sprintf(config->key_dir, "%s" MOONLIGHT_PATH, dir);
+      snprintf(config->key_dir, sizeof(config->key_dir), "%s" MOONLIGHT_PATH, dir);
     else if ((dir = getenv("HOME")) != NULL)
-      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, dir);
+      snprintf(config->key_dir, sizeof(config->key_dir), "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, dir);
     else
-      sprintf(config->key_dir, "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, pw->pw_dir);
+      snprintf(config->key_dir, sizeof(config->key_dir), "%s" DEFAULT_CACHE_DIR MOONLIGHT_PATH, pw->pw_dir);
   }
 
   if (config->stream.bitrate == -1) {

@@ -46,6 +46,7 @@ static int udev_handle(int fd) {
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
+        printf("> Udev handle\n");
         evdev_create(devnode, defaultMappings, debug, inputRotate);
       }
     }
@@ -76,6 +77,7 @@ void udev_init(bool autoload, struct mapping* mappings, bool verbose, int rotate
       const char *devnode = udev_device_get_devnode(dev);
       int id;
       if (devnode != NULL && sscanf(devnode, "/dev/input/event%d", &id) == 1) {
+        printf("> Udev init\n");
         evdev_create(devnode, mappings, verbose, rotate);
       }
       udev_device_unref(dev);

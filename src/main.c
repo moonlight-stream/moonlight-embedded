@@ -219,6 +219,10 @@ static void help() {
   printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
   #endif
+  #if defined(HAVE_X11)
+  printf("\n Input compatibility for touchpads etc (X11 only)\n\n");
+  printf("\t-x11input\t\tUse libinput for local input handling.\n");
+  #endif
   #ifdef HAVE_EMBEDDED
   printf("\n I/O options (Not for SDL)\n\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
@@ -251,6 +255,7 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
 
+    printf("> Map\n");
     evdev_create(config.inputs[0], NULL, config.debug_level > 0, config.rotate);
     evdev_map(config.inputs[0]);
     exit(0);
@@ -366,6 +371,7 @@ int main(int argc, char* argv[]) {
           if (config.debug_level > 0)
             printf("Adding input device %s...\n", config.inputs[i]);
 
+          printf("> Embedded input\n");
           evdev_create(config.inputs[i], mappings, config.debug_level > 0, config.rotate);
         }
 

@@ -139,13 +139,17 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     connection_debug = true;
   }
 
-  if (IS_EMBEDDED(system))
+  if (IS_EMBEDDED(system) || config->x11input)
     loop_init();
 
   platform_start(system);
+
+  if( config->x11input )
+    x11_dummy_init();
+
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
-  if (IS_EMBEDDED(system)) {
+  if (IS_EMBEDDED(system) && !(config->x11input)) {
     if (!config->viewonly)
       evdev_start();
     loop_main();
@@ -156,6 +160,9 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   else if (system == SDL)
     sdl_loop();
   #endif
+
+  if( config->x11input )
+    loop_main();
 
   LiStopConnection();
 
@@ -219,6 +226,10 @@ static void help() {
   printf("\n WM options (SDL and X11 only)\n\n");
   printf("\t-windowed\t\tDisplay screen in a window\n");
   #endif
+  #if defined(HAVE_X11)
+  printf("\n Input compatibility for touchpads etc (X11 only)\n\n");
+  printf("\t-x11input\t\tUse libinput for local input handling.\n");
+  #endif
   #ifdef HAVE_EMBEDDED
   printf("\n I/O options (Not for SDL)\n\n");
   printf("\t-input <device>\t\tUse <device> as input. Can be used multiple times\n");
@@ -251,6 +262,7 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
 
+    printf("> Map\n");
     evdev_create(config.inputs[0], NULL, config.debug_level > 0, config.rotate);
     evdev_map(config.inputs[0]);
     exit(0);
@@ -345,7 +357,7 @@ int main(int argc, char* argv[]) {
       if (config.debug_level > 0)
         printf("View-only mode enabled, no input will be sent to the host computer\n");
     } else {
-      if (IS_EMBEDDED(system)) {
+      if (IS_EMBEDDED(system) && !(config.x11input)) {
         char* mapping_env = getenv("SDL_GAMECONTROLLERCONFIG");
         if (config.mapping == NULL && mapping_env == NULL) {
           fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
@@ -361,6 +373,8 @@ int main(int argc, char* argv[]) {
           map->next = mappings;
           mappings = map;
         }
+
+        printf("> Embedded input\n");
 
         for (int i=0;i<config.inputsCount;i++) {
           if (config.debug_level > 0)
@@ -382,6 +396,8 @@ int main(int argc, char* argv[]) {
           fprintf(stderr, "You can't select input devices as SDL will automatically use all available controllers\n");
           exit(-1);
         }
+
+        printf("> SDL input\n");
 
         sdlinput_init(config.mapping);
         rumble_handler = sdlinput_rumble;

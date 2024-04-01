@@ -106,6 +106,7 @@ enum platform platform_check(char* name) {
 }
 
 void platform_start(enum platform system) {
+  printf("> Starting Platform 0x%02X\n", system);
   switch (system) {
   #ifdef HAVE_AML
   case AML:

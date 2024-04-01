@@ -37,6 +37,7 @@
 
 #ifdef HAVE_X11
 int x11_init(bool vdpau, bool vaapi);
+int x11_dummy_init();
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11;
 #ifdef HAVE_VAAPI
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vaapi;

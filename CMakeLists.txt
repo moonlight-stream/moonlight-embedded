@@ -29,8 +29,11 @@ option(ENABLE_X11 "Compile X11 support (requires ENABLE_FFMPEG)" ON)
 option(ENABLE_CEC "Compile CEC support" ON)
 option(ENABLE_PULSE "Compile PulseAudio support" ON)
 
-pkg_check_modules(EVDEV REQUIRED libevdev)
-pkg_check_modules(UDEV REQUIRED libudev)
+if(NOT HAIKU)
+  pkg_check_modules(EVDEV REQUIRED libevdev)
+  pkg_check_modules(UDEV REQUIRED libudev)
+endif()
+
 if (ENABLE_SDL)
   pkg_check_modules(SDL sdl2>=2.0.4)
 endif()
@@ -223,8 +226,15 @@ endif()
 configure_file("./src/configuration.h.in" "${PROJECT_BINARY_DIR}/configuration.h")
 
 set_property(TARGET moonlight PROPERTY COMPILE_DEFINITIONS ${MOONLIGHT_DEFINITIONS})
-target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
-target_link_libraries(moonlight ${EVDEV_LIBRARIES} ${OPUS_LIBRARY} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
+
+if (HAIKU)
+  target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS})
+  target_link_libraries(moonlight ${OPUS_LIBRARY} ${CMAKE_DL_LIBS})
+  target_link_libraries(moonlight network)
+else()
+  target_include_directories(moonlight PRIVATE ${GAMESTREAM_INCLUDE_DIR} ${MOONLIGHT_COMMON_INCLUDE_DIR} ${OPUS_INCLUDE_DIRS} ${EVDEV_INCLUDE_DIRS} ${UDEV_INCLUDE_DIRS})
+  target_link_libraries(moonlight ${EVDEV_LIBRARIES} ${OPUS_LIBRARY} ${UDEV_LIBRARIES} ${CMAKE_DL_LIBS})
+endif()
 
 add_subdirectory(docs)
 

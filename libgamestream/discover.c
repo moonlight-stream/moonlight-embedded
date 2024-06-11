@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef __HAIKU__
 
 #include "errors.h"
 
@@ -116,3 +117,5 @@ void gs_discover_server(char* dest, unsigned short* port) {
   if (simple_poll)
     avahi_simple_poll_free(simple_poll);
 }
+
+#endif

@@ -39,7 +39,7 @@
 
 #include <rockchip/rk_mpi.h>
 
-#define MAX_FRAMES 16
+#define MAX_FRAMES 3
 #define RK_H264 0x7
 #define RK_H265 0x1000004
 #define RK_AV1  0x1000008

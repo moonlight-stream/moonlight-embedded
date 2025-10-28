@@ -77,6 +77,7 @@ static struct option long_options[] = {
   {"pin", required_argument, NULL, '5'},
   {"port", required_argument, NULL, '6'},
   {"hdr", no_argument, NULL, '7'},
+  {"x11input", no_argument, NULL, '8'},
   {0, 0, 0, 0},
 };
 
@@ -260,6 +261,10 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case '7':
     config->hdr = true;
     break;
+  case '8':
+    config->x11input = true;
+    printf("> Using x11 for input\n");
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -399,7 +404,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:7", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:7:8", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

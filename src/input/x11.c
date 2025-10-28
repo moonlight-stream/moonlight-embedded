@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <poll.h>
 
+#include <stdio.h>
+
 #define ACTION_MODIFIERS (MODIFIER_SHIFT|MODIFIER_ALT|MODIFIER_CTRL)
 #define QUIT_KEY 0x18  /* KEY_Q */
 
@@ -47,6 +49,7 @@ static Cursor cursor;
 static bool grabbed = True;
 
 static int x11_handler(int fd) {
+  // printf("> X handler\n");
   XEvent event;
   int button = 0;
   int motion_x, motion_y;
@@ -131,12 +134,13 @@ static int x11_handler(int fd) {
     case MotionNotify:
       motion_x = event.xmotion.x - last_x;
       motion_y = event.xmotion.y - last_y;
+      // printf("> motion [%dx%d]\n", motion_x, motion_y);
       if (abs(motion_x) > 0 || abs(motion_y) > 0) {
         if (last_x >= 0 && last_y >= 0)
           LiSendMouseMoveEvent(motion_x, motion_y);
 
         if (grabbed)
-          XWarpPointer(display, None, window, 0, 0, 0, 0, 640, 360);
+         XWarpPointer(display, None, window, 0, 0, 0, 0, 640, 360);
       }
 
       last_x = grabbed ? 640 : event.xmotion.x;
@@ -168,4 +172,13 @@ void x11_input_init(Display* x11_display, Window x11_window) {
   XDefineCursor(display, window, cursor);
 
   loop_add_fd(ConnectionNumber(display), x11_handler, POLLIN | POLLERR | POLLHUP);
+}
+
+void x11_inputonly_init(Display* x11_display, Window x11_window) {
+  display = x11_display;
+  window = x11_window;
+
+  loop_add_fd(ConnectionNumber(display), x11_handler, POLLIN | POLLERR | POLLHUP);
+
+  printf("> X connection num: %d\n", ConnectionNumber(display));
 }

@@ -776,6 +776,7 @@ static int evdev_handle(int fd) {
 }
 
 void evdev_create(const char* device, struct mapping* mappings, bool verbose, int rotate) {
+  printf("> Evdev create\n");
   int fd = open(device, O_RDWR|O_NONBLOCK);
   if (fd <= 0) {
     fprintf(stderr, "Failed to open device %s\n", device);

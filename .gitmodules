@@ -1,6 +1,9 @@
 [submodule "common"]
 	path = third_party/moonlight-common-c
 	url = https://github.com/moonlight-stream/moonlight-common-c.git
+[submodule "third_party/libcec"]
+	path = third_party/libcec
+	url = https://github.com/Pulse-Eight/libcec.git
 [submodule "third_party/SDL_GameControllerDB"]
 	path = third_party/SDL_GameControllerDB
 	url = https://github.com/gabomdq/SDL_GameControllerDB.git

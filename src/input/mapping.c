@@ -32,7 +32,7 @@ struct mapping* mapping_parse(char* mapping) {
   if (guid == NULL || name == NULL)
     return NULL;
 
-  struct mapping* map = calloc(sizeof(struct mapping), 1);
+  struct mapping* map = calloc(1, sizeof(struct mapping));
   if (map == NULL) {
     fprintf(stderr, "Not enough memory");
     exit(EXIT_FAILURE);

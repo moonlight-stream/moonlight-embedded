@@ -439,14 +439,18 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
         break;
       case BTN_TOUCH:
         if (ev->value == 1) {
-          dev->touchDownTime = ev->time;
+          dev->touchDownTime.tv_sec = ev->input_event_sec;
+          dev->touchDownTime.tv_usec = ev->input_event_usec;
         } else {
           if (dev->touchDownX != TOUCH_UP && dev->touchDownY != TOUCH_UP) {
             int deltaX = dev->touchX - dev->touchDownX;
             int deltaY = dev->touchY - dev->touchDownY;
             if (deltaX * deltaX + deltaY * deltaY < TOUCH_CLICK_RADIUS * TOUCH_CLICK_RADIUS) {
+              struct timeval eventTime;
+              eventTime.tv_sec = ev->input_event_sec;
+              eventTime.tv_usec = ev->input_event_usec;
               struct timeval elapsedTime;
-              timersub(&ev->time, &dev->touchDownTime, &elapsedTime);
+              timersub(&eventTime, &dev->touchDownTime, &elapsedTime);
               int holdTimeMs = elapsedTime.tv_sec * 1000 + elapsedTime.tv_usec / 1000;
               int button = holdTimeMs >= TOUCH_RCLICK_TIME ? BUTTON_RIGHT : BUTTON_LEFT;
               LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, button);
@@ -512,13 +516,17 @@ static bool evdev_handle_event(struct input_event *ev, struct input_device *dev)
       } else if (gamepadCode != 0) {
         if (ev->value) {
           dev->buttonFlags |= gamepadCode;
-          dev->btnDownTime = ev->time;
+          dev->btnDownTime.tv_sec = ev->input_event_sec;
+          dev->btnDownTime.tv_usec = ev->input_event_usec;
         } else
           dev->buttonFlags &= ~gamepadCode;
 
         if (mouseEmulationEnabled && gamepadCode == PLAY_FLAG && ev->value == 0) {
+          struct timeval eventTime;
+          eventTime.tv_sec = ev->input_event_sec;
+          eventTime.tv_usec = ev->input_event_usec;
           struct timeval elapsedTime;
-          timersub(&ev->time, &dev->btnDownTime, &elapsedTime);
+          timersub(&eventTime, &dev->btnDownTime, &elapsedTime);
           int holdTimeMs = elapsedTime.tv_sec * 1000 + elapsedTime.tv_usec / 1000;
           if (holdTimeMs >= MOUSE_EMULATION_LONG_PRESS_TIME) {
             if (dev->mouseEmulation) {

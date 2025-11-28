@@ -22,10 +22,7 @@
 #include <openssl/pem.h>
 #include <openssl/conf.h>
 #include <openssl/pkcs12.h>
-
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
+#include <openssl/rsa.h>
 
 static const int NUM_BITS = 2048;
 static const int SERIAL = 0;
@@ -41,17 +38,9 @@ CERT_KEY_PAIR mkcert_generate() {
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
-
     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
 
     p12 = PKCS12_create("limelight", "GameStream", pkey, x509, NULL, 0, 0, 0, 0, 0);
-
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-#endif
-    CRYPTO_cleanup_all_ex_data();
 
     BIO_free(bio_err);
 

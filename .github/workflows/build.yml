@@ -1,0 +1,59 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04-arm
+            distro: bullseye
+            target: rpi
+
+          - os: ubuntu-24.04-arm
+            distro: bookworm
+            target: rpi
+
+          - os: ubuntu-24.04-arm
+            distro: trixie
+            target: rpi
+
+          - os: ubuntu-24.04-arm
+            distro: bullseye
+            target: rpi64
+
+          - os: ubuntu-24.04-arm
+            distro: bookworm
+            target: rpi64
+
+          - os: ubuntu-24.04-arm
+            distro: trixie
+            target: rpi64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          repository: cgutman/moonlight-embedded-packaging
+          ref: master
+
+      - name: Build Package
+        env:
+          REPO_NAME: ${{ github.event.pull_request.head.repo.clone_url || github.event.repository.clone_url }}
+        run: ./build-single.sh ${{ matrix.target }} ${{ matrix.distro }} ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Upload Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Moonlight-${{ matrix.distro }}-${{ matrix.target }}
+          path: |
+            out_${{ matrix.target }}-${{ matrix.distro }}/*.deb
+            out_${{ matrix.target }}-${{ matrix.distro }}/*.ddeb
+          if-no-files-found: error

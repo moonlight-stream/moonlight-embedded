@@ -4,7 +4,7 @@ Moonlight Embedded - Open source implementation of NVIDIA's GameStream
 
 =head1 SYNOPSIS
 
-Usage: I<moonlight> E<lt>actionE<gt> [options] [host]
+Usage: I<moonlight> E<lt>actionE<gt> [options] [host] [-port E<lt>numberE<gt>]
        I<moonlight> E<lt>configfileE<gt>
 
 =head1 ACTIONS

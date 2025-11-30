@@ -174,7 +174,7 @@ static void help() {
   #else
   printf("Moonlight Embedded %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
   #endif
-  printf("Usage: moonlight [action] (options) [host]\n");
+  printf("Usage: moonlight [action] (options) [host] [-port <number>]\n");
   printf("       moonlight [configfile]\n");
   printf("\n Actions\n\n");
   printf("\tpair\t\t\tPair device with computer\n");

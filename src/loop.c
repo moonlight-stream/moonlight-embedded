@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef __HAIKU__
 
 #include "loop.h"
 
@@ -114,3 +115,4 @@ void loop_main() {
     }
   }
 }
+#endif

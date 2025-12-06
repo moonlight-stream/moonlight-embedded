@@ -75,7 +75,7 @@ int x11_init(bool vdpau, bool vaapi) {
     return 0;
 
   #ifdef HAVE_VAAPI
-  if (vaapi && vaapi_init_lib(display) == 0)
+  if (vaapi && vaapi_init_lib() == 0)
     return INIT_VAAPI;
   #endif
 

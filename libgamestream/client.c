@@ -541,17 +541,17 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   const ASN1_BIT_STRING *asnSignature;
   X509_get0_signature(&asnSignature, NULL, cert);
 
-  challenge_response = malloc(16 + asnSignature->length + sizeof(client_secret_data));
+  challenge_response = malloc(16 + ASN1_STRING_length(asnSignature) + sizeof(client_secret_data));
   char challenge_response_hash[32];
   char challenge_response_hash_enc[sizeof(challenge_response_hash)];
   char challenge_response_hex[SIZEOF_AS_HEX_STR(challenge_response_hash_enc)];
   memcpy(challenge_response, challenge_response_data + hash_length, 16);
-  memcpy(challenge_response + 16, asnSignature->data, asnSignature->length);
-  memcpy(challenge_response + 16 + asnSignature->length, client_secret_data, sizeof(client_secret_data));
+  memcpy(challenge_response + 16, ASN1_STRING_get0_data(asnSignature), ASN1_STRING_length(asnSignature));
+  memcpy(challenge_response + 16 + ASN1_STRING_length(asnSignature), client_secret_data, sizeof(client_secret_data));
   if (server->serverMajorVersion >= 7)
-    SHA256(challenge_response, 16 + asnSignature->length + sizeof(client_secret_data), challenge_response_hash);
+    SHA256(challenge_response, 16 + ASN1_STRING_length(asnSignature) + sizeof(client_secret_data), challenge_response_hash);
   else
-    SHA1(challenge_response, 16 + asnSignature->length + sizeof(client_secret_data), challenge_response_hash);
+    SHA1(challenge_response, 16 + ASN1_STRING_length(asnSignature) + sizeof(client_secret_data), challenge_response_hash);
 
   encrypt(challenge_response_hash, sizeof(challenge_response_hash), aes_key, challenge_response_hash_enc);
   bytes_to_hex(challenge_response_hash_enc, challenge_response_hex, sizeof(challenge_response_hash_enc));

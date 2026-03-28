@@ -103,8 +103,10 @@ void loop_init() {
 }
 
 void loop_main() {
+  printf("> Loop main\n");
   while (poll(fds, numFds, -1)) {
     for (int i=0;i<numFds;i++) {
+      // printf("> i: %d\n", i);
       if (fds[i].revents > 0) {
         int ret = fdHandlers[i](fds[i].fd);
         if (ret == LOOP_RETURN) {

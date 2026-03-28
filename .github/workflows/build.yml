@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: cgutman/moonlight-embedded-packaging
           ref: master
@@ -50,7 +50,7 @@ jobs:
         run: ./build-single.sh ${{ matrix.target }} ${{ matrix.distro }} ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Upload Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Moonlight-${{ matrix.distro }}-${{ matrix.target }}
           path: |

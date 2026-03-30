@@ -17,6 +17,8 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __HAIKU__
+
 #include "../loop.h"
 
 #include "udev.h"
@@ -99,3 +101,5 @@ void udev_destroy() {
   udev_monitor_unref(udev_mon);
   udev_unref(udev);
 }
+
+#endif

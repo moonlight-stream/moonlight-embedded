@@ -48,3 +48,6 @@ extern DECODER_RENDERER_CALLBACKS decoder_callbacks_x11_vdpau;
 #ifdef HAVE_SDL
 extern DECODER_RENDERER_CALLBACKS decoder_callbacks_sdl;
 #endif
+#ifdef HAVE_FFMPEG_DRM
+extern DECODER_RENDERER_CALLBACKS decoder_callbacks_ffmpeg_drm;
+#endif

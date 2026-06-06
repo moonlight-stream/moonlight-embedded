@@ -91,7 +91,9 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   }
 
   int gamepads = 0;
+  #ifndef __HAIKU__
   gamepads += evdev_gamepads;
+  #endif
   #ifdef HAVE_SDL
   gamepads += sdl_gamepads;
   #endif
@@ -139,12 +141,15 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     connection_debug = true;
   }
 
+#ifndef __HAIKU__
   if (IS_EMBEDDED(system))
     loop_init();
+#endif
 
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
+#ifndef __HAIKU__
   if (IS_EMBEDDED(system)) {
     if (!config->viewonly)
       evdev_start();
@@ -155,6 +160,14 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   #ifdef HAVE_SDL
   else if (system == SDL)
     sdl_loop();
+  #endif
+  #endif
+  
+  #ifdef __HAIKU__
+  #ifdef HAVE_SDL
+	if (system == SDL)
+    sdl_loop();
+  #endif
   #endif
 
   LiStopConnection();
@@ -251,8 +264,10 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
 
+#ifndef __HAIKU__
     evdev_create(config.inputs[0], NULL, config.debug_level > 0, config.rotate);
     evdev_map(config.inputs[0]);
+#endif
     exit(0);
   }
 
@@ -263,8 +278,13 @@ int main(int argc, char* argv[]) {
       exit(-1);
     }
     config.address[0] = 0;
+    #ifndef __HAIKU__
     printf("Searching for server...\n");
     gs_discover_server(config.address, &config.port);
+    #else
+    config.address[0] = 0;
+    printf("gs_discover_server not working in Haiku...\n");
+    #endif
     if (config.address[0] == 0) {
       fprintf(stderr, "Autodiscovery failed. Specify an IP address next time.\n");
       exit(-1);
@@ -346,6 +366,7 @@ int main(int argc, char* argv[]) {
         printf("View-only mode enabled, no input will be sent to the host computer\n");
     } else {
       if (IS_EMBEDDED(system)) {
+		  #ifndef __HAIKU__
         char* mapping_env = getenv("SDL_GAMECONTROLLERCONFIG");
         if (config.mapping == NULL && mapping_env == NULL) {
           fprintf(stderr, "Please specify mapping file as default mapping could not be found.\n");
@@ -375,6 +396,7 @@ int main(int argc, char* argv[]) {
         #ifdef HAVE_LIBCEC
         cec_init();
         #endif /* HAVE_LIBCEC */
+        #endif /* Haiku */
       }
       #ifdef HAVE_SDL
       else if (system == SDL) {

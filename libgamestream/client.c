@@ -92,7 +92,7 @@ static int load_unique_id(const char* keyDirectory) {
   snprintf(uniqueFilePath, PATH_MAX, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
 
   FILE *fd = fopen(uniqueFilePath, "r");
-  if (fd == NULL || fread(unique_id, UNIQUEID_CHARS, 1, fd) != UNIQUEID_CHARS) {
+  if (fd == NULL || fread(unique_id, UNIQUEID_CHARS, 1, fd) != 1) {
     snprintf(unique_id,UNIQUEID_CHARS+1,"0123456789ABCDEF");
 
     if (fd)

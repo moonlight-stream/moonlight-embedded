@@ -66,6 +66,10 @@ enum platform platform_check(char* name) {
       return AML;
   }
   #endif
+  #ifdef HAVE_FFMPEG_DRM
+  if (std || strcmp(name, "ffmpeg_drm") == 0)
+    return FFMPEG_DRM;
+  #endif
   #ifdef HAVE_ROCKCHIP
   if (std || strcmp(name, "rk") == 0) {
     void *handle = dlopen("libmoonlight-rk.so", RTLD_NOW | RTLD_GLOBAL);
@@ -176,6 +180,10 @@ DECODER_RENDERER_CALLBACKS* platform_get_video(enum platform system) {
   case RK:
     return (PDECODER_RENDERER_CALLBACKS) dlsym(RTLD_DEFAULT, "decoder_callbacks_rk");
   #endif
+  #ifdef HAVE_FFMPEG_DRM
+  case FFMPEG_DRM:
+    return &decoder_callbacks_ffmpeg_drm;
+  #endif
   }
   return NULL;
 }
@@ -218,6 +226,7 @@ bool platform_prefers_codec(enum platform system, enum codecs codec) {
     switch (system) {
     case AML:
     case RK:
+    case FFMPEG_DRM:
     case X11_VAAPI:
     case X11_VDPAU:
       return true;
@@ -241,6 +250,8 @@ char* platform_name(enum platform system) {
     return "AMLogic VPU";
   case RK:
     return "Rockchip VPU";
+  case FFMPEG_DRM:
+    return "FFmpeg V4L2 + DRM PRIME";
   case X11:
     return "X Window System (software decoding)";
   case X11_VAAPI:

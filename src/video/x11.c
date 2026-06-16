@@ -82,6 +82,31 @@ int x11_init(bool vdpau, bool vaapi) {
   return INIT_EGL;
 }
 
+int x11_dummy_init() {
+  XInitThreads();
+  display = XOpenDisplay(NULL);
+  if (!display)
+    return 0;
+
+  printf("> X Display opened\n");
+
+  Window root = DefaultRootWindow(display);
+  window = root;
+
+  // XGrabKey(display, AnyKey, AnyModifier, window, True, GrabModeAsync, GrabModeAsync);
+
+  // XSelectInput(display, root, PointerMotionMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask);
+
+  XGrabKeyboard(display, root, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+  XGrabPointer(display, root, True, PointerMotionMask | ButtonPressMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
+
+  printf("> X Input grabbed\n");
+
+  x11_inputonly_init(display, window);
+
+  return 1;
+}
+
 int x11_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
   ensure_buf_size(&ffmpeg_buffer, &ffmpeg_buffer_size, INITIAL_DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
 

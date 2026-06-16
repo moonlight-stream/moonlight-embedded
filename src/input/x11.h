@@ -20,3 +20,4 @@
 #include <X11/Xlib.h>
 
 void x11_input_init(Display* display, Window window);
+void x11_inputonly_init(Display* display, Window window);

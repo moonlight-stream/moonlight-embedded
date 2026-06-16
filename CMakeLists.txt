@@ -109,7 +109,7 @@ if (CEC_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
   list(APPEND MOONLIGHT_OPTIONS CEC)
   target_sources(moonlight PRIVATE ./src/input/cec.c)
-  target_include_directories(moonlight PRIVATE ./third_party/libcec ${CEC_INCLUDE_DIRS})
+  target_include_directories(moonlight PRIVATE ./third_party/libcec/include ${CEC_INCLUDE_DIRS})
   target_link_libraries(moonlight ${CEC_LIBRARIES})
 endif()
 

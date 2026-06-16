@@ -1,1 +1,6 @@
+# Ignore JetBrains IDE files
+.idea/
+
+# Ignore build directorys
 build/
+cmake-*/

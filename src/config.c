@@ -25,6 +25,9 @@
 #include "input/evdev.h"
 #include "audio/audio.h"
 
+#include <errno.h>
+#include <limits.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -41,8 +44,10 @@
 #define write_config_string(fd, key, value) fprintf(fd, "%s = %s\n", key, value)
 #define write_config_int(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value ? "true":"false")
+#define EXIT_ON_ERR(bool_value, error_message, arg) if (!(bool_value)) { fprintf(stderr, "Fatal error: %s %s\n", (error_message), (arg)); flaggedErrors = true; }
 
 bool inputAdded = false;
+bool flaggedErrors = false;
 
 static struct option long_options[] = {
   {"720", no_argument, NULL, 'a'},
@@ -79,6 +84,15 @@ static struct option long_options[] = {
   {"hdr", no_argument, NULL, '7'},
   {0, 0, 0, 0},
 };
+
+// trim the right of the string by replacing trailing spaces with NUL chars
+void rtrim(char *in) {
+  char *c = in + strlen(in) - 1;
+  for (;c != in; c--) {
+    if (!isspace((unsigned char)*c)) break;
+    *c = '\0';
+  } 
+}
 
 char* get_path(char* name, char* extra_data_dirs) {
   const char *xdg_config_dir = getenv("XDG_CONFIG_DIR");
@@ -131,6 +145,27 @@ char* get_path(char* name, char* extra_data_dirs) {
   return NULL;
 }
 
+// atoi but with sanity checks
+bool safe_atoi(char* val, int* res) {
+  long parsed = strtol(val, NULL, 10);
+  if (errno == EINVAL || parsed > INT_MAX || parsed < INT_MIN) {
+    fprintf(stderr, "Cannot parse %s as an integer\n", val);
+    return false;
+  }
+  *res = parsed;
+  return true;
+}
+
+bool safe_atosui(char* val, short unsigned int* res) {
+  long parsed = strtol(val, NULL, 10);
+  if (errno == EINVAL || parsed > USHRT_MAX || parsed < 0) {
+    fprintf(stderr, "Cannot parse %s as an unsigned short\n", val);
+    return false;
+  }
+  *res = parsed;
+  return true;
+}
+
 static void parse_argument(int c, char* value, PCONFIGURATION config) {
   switch (c) {
   case 'a':
@@ -146,16 +181,16 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->stream.height = 2160;
     break;
   case 'c':
-    config->stream.width = atoi(value);
+    EXIT_ON_ERR(safe_atoi(value, &(config->stream.width)), "Invalid width specified", value)
     break;
   case 'd':
-    config->stream.height = atoi(value);
+    EXIT_ON_ERR(safe_atoi(value, &(config->stream.height)), "Invalid height specified", value)
     break;
   case 'g':
-    config->stream.bitrate = atoi(value);
+    EXIT_ON_ERR(safe_atoi(value, &(config->stream.bitrate)), "Invalid bitrate specified", value)
     break;
   case 'h':
-    config->stream.packetSize = atoi(value);
+    EXIT_ON_ERR(safe_atoi(value, &(config->stream.packetSize)), "Invalid packetSize specified", value)
     break;
   case 'i':
     config->app = value;
@@ -163,7 +198,8 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case 'j':
     if (config->inputsCount >= MAX_INPUTS) {
       perror("Too many inputs specified");
-      exit(-1);
+      flaggedErrors = true;
+      break;
     }
     config->inputs[config->inputsCount] = value;
     config->inputsCount++;
@@ -173,7 +209,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->mapping = get_path(value, getenv("XDG_DATA_DIRS"));
     if (config->mapping == NULL) {
       fprintf(stderr, "Unable to open custom mapping file: %s\n", value);
-      exit(-1);
+      flaggedErrors = true;
     }
     break;
   case 'l':
@@ -187,7 +223,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     break;
   case 'o':
     if (!config_file_parse(value, config))
-      exit(EXIT_FAILURE);
+      flaggedErrors = true;
 
     break;
   case 'p':
@@ -218,7 +254,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       config->stream.audioConfiguration = AUDIO_CONFIGURATION_71_SURROUND;
     break;
   case 'v':
-    config->stream.fps = atoi(value);
+    EXIT_ON_ERR(safe_atoi(value, &(config->stream.fps)), "Invalid fps specified",  value)
     break;
   case 'x':
     if (strcasecmp(value, "auto") == 0)
@@ -240,7 +276,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->viewonly = true;
     break;
   case '3':
-    config->rotate = atoi(value);
+    EXIT_ON_ERR(safe_atoi(value, &(config->rotate)), "Invalid rotate specified", value)
     break;
   case 'z':
     config->debug_level = 1;
@@ -252,10 +288,10 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
     config->mouse_emulation = false;
     break;
   case '5':
-    config->pin = atoi(value);
+    EXIT_ON_ERR(safe_atoi(value, &(config->pin)), "Invalid pin specified", value)
     break;
   case '6':
-    config->port = atoi(value);
+    EXIT_ON_ERR(safe_atosui(value, &(config->port)), "Invalid port specified", value)
     break;
   case '7':
     config->hdr = true;
@@ -267,7 +303,7 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
       config->address = value;
     else {
       perror("Too many options");
-      exit(-1);
+      flaggedErrors = true;
     }
   }
 }
@@ -281,27 +317,47 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
 
   char *line = NULL;
   size_t len = 0;
-
+  bool ok = true;
+  bool failed = false;
+  size_t line_num = 0;
   while (getline(&line, &len, fd) != -1) {
+    line_num++;
     char *key = NULL, *value = NULL;
-    if (sscanf(line, "%ms = %m[^\n]", &key, &value) == 2) {
+    if (sscanf(line, "%ms = %m[^\n#]", &key, &value) == 2) {
+      rtrim(value);
+      if (strncmp(key, "#", 1) == 0) {
+         continue; // commented keys are gonna be ignored
+      }
       if (strcmp(key, "address") == 0) {
         config->address = value;
       } else if (strcmp(key, "sops") == 0) {
         config->sops = strcmp("true", value) == 0;
+      } else if (strcmp(key, "config") == 0 ) {
+	  if (!config_file_parse(value, config)) {
+            fprintf(stderr, "Failed to parse embedded config file [%s] (included from line %lu)\n", value, line_num);
+            failed = true;
+         }
       } else {
+	ok = false;
         for (int i=0;long_options[i].name != NULL;i++) {
           if (strcmp(long_options[i].name, key) == 0) {
+            ok = true;
             if (long_options[i].has_arg == required_argument)
               parse_argument(long_options[i].val, value, config);
             else if (strcmp("true", value) == 0)
               parse_argument(long_options[i].val, NULL, config);
+	    break; // at this point we've populated the option
           }
         }
+	if (!ok) {
+           fprintf(stderr, "Could not match key %s, can't parse config file [%s] (line %lu)\n", key, filename, line_num);
+	   failed = true;
+	}
       }
     }
   }
-  return true;
+  fclose(fd);
+  return !failed;
 }
 
 void config_save(char* filename, PCONFIGURATION config) {
@@ -394,14 +450,18 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   if (argc == 2 && access(argv[1], F_OK) == 0) {
     config->action = "stream";
     if (!config_file_parse(argv[1], config))
-      exit(EXIT_FAILURE);
-
+      flaggedErrors = true;
   } else {
     int option_index = 0;
     int c;
     while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:7", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
+  }
+
+  if (flaggedErrors) {
+    fprintf(stderr, "We had errors in the config or arguments. Exiting.\n");
+    exit(EXIT_FAILURE);
   }
 
   if (config->config_file != NULL)

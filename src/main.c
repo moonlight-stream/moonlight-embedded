@@ -237,7 +237,13 @@ static void pair_check(PSERVER_DATA server) {
 
 int main(int argc, char* argv[]) {
   CONFIGURATION config;
-  config_parse(argc, argv, &config);
+  bool config_errors = false;
+  config_parse(argc, argv, &config_errors, &config);
+  if (config_errors) {
+    fprintf(stderr, "Config has errors. Please fix them and retry.\n");
+    exit(-1);
+  }
+
 
   if (config.action == NULL || strcmp("help", config.action) == 0)
     help();
@@ -273,9 +279,14 @@ int main(int argc, char* argv[]) {
 
   char host_config_file[128];
   sprintf(host_config_file, "hosts/%s.conf", config.address);
-  if (access(host_config_file, R_OK) != -1)
-    config_file_parse(host_config_file, &config);
+  if (access(host_config_file, R_OK) != -1) {
+    config_file_parse(host_config_file, &config_errors, &config);
+    if (config_errors) {
+      fprintf(stderr, "Host config file %s has errors. Please fix them and retry.\n", host_config_file);
+      exit(-1);
+    }
 
+  }
   SERVER_DATA server;
   printf("Connecting to %s...\n", config.address);
 

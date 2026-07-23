@@ -13,6 +13,11 @@ aux_source_directory(../third_party/h264bitstream GAMESTREAM_SRC_LIST)
 
 aux_source_directory(../third_party/moonlight-common-c/enet MOONLIGHT_COMMON_SRC_LIST)
 aux_source_directory(../third_party/moonlight-common-c/src MOONLIGHT_COMMON_SRC_LIST)
+list(APPEND MOONLIGHT_COMMON_SRC_LIST
+  ../third_party/moonlight-common-c/nanors/rs.c
+  ../third_party/moonlight-common-c/nanors/deps/obl/oblas_common.c
+  ../third_party/moonlight-common-c/nanors/deps/obl/oblas_lite.c
+)
 aux_source_directory(../third_party/moonlight-common-c/reedsolomon MOONLIGHT_COMMON_SRC_LIST)
 
 add_library(moonlight-common SHARED ${MOONLIGHT_COMMON_SRC_LIST})
@@ -24,7 +29,7 @@ set_target_properties(gamestream PROPERTIES SOVERSION ${SO_VERSION} VERSION ${PR
 set_target_properties(moonlight-common PROPERTIES SOVERSION ${SO_VERSION} VERSION ${PROJECT_VERSION})
 
 target_include_directories(gamestream PRIVATE ../third_party/moonlight-common-c/src ../third_party/h264bitstream ${AVAHI_INCLUDE_DIRS} ${LibUUID_INCLUDE_DIRS})
-target_include_directories(moonlight-common PRIVATE ../third_party/moonlight-common-c/reedsolomon ../third_party/moonlight-common-c/enet/include)
+target_include_directories(moonlight-common PRIVATE ../third_party/moonlight-common-c/reedsolomon ../third_party/moonlight-common-c/enet/include ../third_party/moonlight-common-c/nanors ../third_party/moonlight-common-c/nanors/deps/obl)
 target_link_libraries(gamestream ${CURL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXPAT_LIBRARIES} ${AVAHI_LIBRARIES} ${LibUUID_LIBRARIES})
 
 target_link_libraries(gamestream ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})

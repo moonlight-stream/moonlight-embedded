@@ -23,6 +23,7 @@
 #include "platform.h"
 #include "config.h"
 #include "sdl.h"
+#include "stats.h"
 
 #include "audio/audio.h"
 #include "video/video.h"
@@ -142,6 +143,8 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
   if (IS_EMBEDDED(system))
     loop_init();
 
+  stats_init(config->stats);
+
   platform_start(system);
   LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
 
@@ -203,6 +206,7 @@ static void help() {
   printf("\t-packetsize <size>\tSpecify the maximum packetsize in bytes\n");
   printf("\t-codec <codec>\t\tSelect used codec: auto/h264/h265/av1 (default auto)\n");
   printf("\t-hdr\t\tEnable HDR streaming (experimental, requires host and device support)\n");
+  printf("\t-stats\t\tDisplay real-time statistics: bitrate, frame rate, decode time\n");
   printf("\t-remote <yes/no/auto>\t\t\tEnable optimizations for WAN streaming (default auto)\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");

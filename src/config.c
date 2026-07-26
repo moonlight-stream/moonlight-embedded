@@ -77,6 +77,7 @@ static struct option long_options[] = {
   {"pin", required_argument, NULL, '5'},
   {"port", required_argument, NULL, '6'},
   {"hdr", no_argument, NULL, '7'},
+  {"stats", no_argument, NULL, '8'},
   {0, 0, 0, 0},
 };
 
@@ -260,6 +261,9 @@ static void parse_argument(int c, char* value, PCONFIGURATION config) {
   case '7':
     config->hdr = true;
     break;
+  case '8':
+    config->stats = true;
+    break;
   case 1:
     if (config->action == NULL)
       config->action = value;
@@ -380,6 +384,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->rotate = 0;
   config->codec = CODEC_UNSPECIFIED;
   config->hdr = false;
+  config->stats = false;
   config->pin = 0;
   config->port = 47989;
 
@@ -399,7 +404,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   } else {
     int option_index = 0;
     int c;
-    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:7", long_options, &option_index)) != -1) {
+    while ((c = getopt_long_only(argc, argv, "-abc:d:efg:h:i:j:k:lm:no:p:q:r:s:tu:v:w:xy45:6:78", long_options, &option_index)) != -1) {
       parse_argument(c, optarg, config);
     }
   }

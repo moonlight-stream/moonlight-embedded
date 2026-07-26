@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Based upon example code from the Raspberry Pi
 
 #include "video.h"
+#include "../stats.h"
 
 #include <Limelight.h>
 
@@ -230,6 +231,8 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   MMAL_STATUS_T status;
   MMAL_BUFFER_HEADER_T *buf = NULL;
   PLENTRY entry = decodeUnit->bufferList;
+
+  stats_submit_decode_unit(decodeUnit->fullLength);
   bool first_entry = false;
 
   while (entry != NULL) {

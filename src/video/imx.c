@@ -20,6 +20,7 @@
 #include "imx_vpu.h"
 
 #include "../loop.h"
+#include "../stats.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +90,7 @@ static int frame_handle(int pipefd) {
     fprintf(stderr, "Can't get output buffer\n");
     exit(EXIT_FAILURE);
   }
+  stats_frame_displayed();
 
   if (!displaying) {
     int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -251,10 +253,13 @@ static int decoder_renderer_setup(int videoFormat, int width, int height, int re
 
 static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   int frame;
+  stats_submit_decode_unit(decodeUnit->fullLength);
+
   while (read(clearpipefd[0], &frame, sizeof(int)) > 0)
     vpu_clear(frame);
 
   if (vpu_decode(decodeUnit)) {
+    stats_frame_decoded();
     frame = vpu_get_frame();
     write(pipefd[1], &frame, sizeof(int));
   }

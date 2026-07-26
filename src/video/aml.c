@@ -36,6 +36,7 @@
 #include <linux/videodev2.h>
 
 #include "../util.h"
+#include "../stats.h"
 #include "video.h"
 
 #define SYNC_OUTSIDE 0x02
@@ -63,6 +64,8 @@ void* aml_display_thread(void* unused) {
       fprintf(stderr, "VIDIOC_DQBUF failed: %d\n", errno);
       break;
     }
+
+    stats_frame_displayed();
 
     if (ioctl(videoFd, VIDIOC_QBUF, &vbuf) < 0) {
       fprintf(stderr, "VIDIOC_QBUF failed: %d\n", errno);
@@ -174,6 +177,9 @@ void aml_cleanup() {
 }
 
 int aml_submit_decode_unit(PDECODE_UNIT decodeUnit) {
+
+  stats_submit_decode_unit(decodeUnit->fullLength);
+  stats_frame_decoded();
 
   ensure_buf_size(&pkt_buf, &pkt_buf_size, decodeUnit->fullLength);
 

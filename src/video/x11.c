@@ -26,6 +26,7 @@
 
 #include "../input/x11.h"
 #include "../loop.h"
+#include "../stats.h"
 #include "../util.h"
 
 #include <X11/Xatom.h>
@@ -34,6 +35,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -63,6 +65,7 @@ static int frame_handle(int pipefd) {
     else if (ffmpeg_decoder == VAAPI)
       vaapi_queue(frame, window, display_width, display_height);
     #endif
+    stats_frame_displayed();
   }
 
   return LOOP_OK;
@@ -167,6 +170,8 @@ int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   PLENTRY entry = decodeUnit->bufferList;
   int length = 0;
 
+  stats_submit_decode_unit(decodeUnit->fullLength);
+
   ensure_buf_size(&ffmpeg_buffer, &ffmpeg_buffer_size, decodeUnit->fullLength + AV_INPUT_BUFFER_PADDING_SIZE);
 
   while (entry != NULL) {
@@ -175,11 +180,20 @@ int x11_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     entry = entry->next;
   }
 
+  struct timespec ts_before, ts_after;
+  clock_gettime(CLOCK_MONOTONIC, &ts_before);
+
   ffmpeg_decode(ffmpeg_buffer, length);
 
   AVFrame* frame = ffmpeg_get_frame(true);
-  if (frame != NULL)
+  if (frame != NULL) {
+    clock_gettime(CLOCK_MONOTONIC, &ts_after);
+    int64_t us = (ts_after.tv_sec - ts_before.tv_sec) * 1000000LL
+               + (ts_after.tv_nsec - ts_before.tv_nsec) / 1000;
+    stats_decode_finished(us);
+    stats_frame_decoded();
     write(pipefd[1], &frame, sizeof(void*));
+  }
 
   return DR_OK;
 }

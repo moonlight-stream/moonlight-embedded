@@ -432,6 +432,12 @@ static void remove_gamepad(SDL_JoystickID sdl_id) {
 void sdlinput_init(char* mappings) {
   memset(gamepads, 0, sizeof(gamepads));
 
+  // Touch is handled above, either natively or by emulating the mouse there.
+  // Letting SDL also synthesise mouse events from touch moves its internal
+  // cursor, and the compositor then re-reports the real pointer once the touch
+  // ends, which arrives as a large spurious motion.
+  SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+
   SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 #if !SDL_VERSION_ATLEAST(2, 0, 9)
   SDL_InitSubSystem(SDL_INIT_HAPTIC);
@@ -542,8 +548,28 @@ int sdlinput_handle_event(SDL_Window* window, SDL_Event* event) {
     event->tfinger.x = SDL_max(SDL_min(1.0f, event->tfinger.x), 0.0f);
     event->tfinger.y = SDL_max(SDL_min(1.0f, event->tfinger.y), 0.0f);
 
-    LiSendTouchEvent(touchEventType, event->tfinger.fingerId, event->tfinger.x, event->tfinger.y,
-                     event->tfinger.pressure, 0.0f, 0.0f, LI_ROT_UNKNOWN);
+    if (LiSendTouchEvent(touchEventType, event->tfinger.fingerId, event->tfinger.x, event->tfinger.y,
+                         event->tfinger.pressure, 0.0f, 0.0f, LI_ROT_UNKNOWN) == LI_ERR_UNSUPPORTED) {
+      // The host has no native touch support, so drive the mouse instead.
+      int w, h;
+      SDL_GetWindowSize(window, &w, &h);
+
+      // A touchscreen is absolute, so position the pointer where the finger is
+      // rather than following the mouse capture mode.
+      switch (event->type) {
+      case SDL_FINGERDOWN:
+        LiSendMousePositionEvent(event->tfinger.x * w, event->tfinger.y * h, w, h);
+        LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_LEFT);
+        break;
+      case SDL_FINGERMOTION:
+        LiSendMousePositionEvent(event->tfinger.x * w, event->tfinger.y * h, w, h);
+        break;
+      case SDL_FINGERUP:
+        // Deliberately no movement here: a release carries no new position.
+        LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+        break;
+      }
+    }
     break;
   case SDL_CONTROLLERAXISMOTION:
     gamepad = get_gamepad(event->caxis.which, false);

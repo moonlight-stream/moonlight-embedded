@@ -20,7 +20,10 @@
 #ifdef HAVE_SDL
 
 #include "sdl.h"
+#include "stats.h"
 #include "input/sdl.h"
+
+#include <time.h>
 
 #include <Limelight.h>
 
@@ -35,7 +38,14 @@ SDL_mutex *mutex;
 
 int sdlCurrentFrame, sdlNextFrame;
 
+static Uint32 sdl_stats_timer(Uint32 interval, void *param) {
+    (void)param;
+    stats_print();
+    return interval;
+}
+
 void sdl_init(int width, int height, bool fullscreen) {
+  SDL_AddTimer(1000, sdl_stats_timer, NULL);
   sdlCurrentFrame = sdlNextFrame = 0;
 
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
@@ -106,6 +116,7 @@ void sdl_loop() {
             SDL_RenderClear(renderer);
             SDL_RenderCopy(renderer, bmp, NULL, NULL);
             SDL_RenderPresent(renderer);
+            stats_frame_displayed();
           } else
             fprintf(stderr, "Couldn't lock mutex\n");
         }

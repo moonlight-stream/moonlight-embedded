@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Based upon video decode example from the Raspberry Pi firmware
 
 #include "video.h"
+#include "../stats.h"
 
 #include <Limelight.h>
 
@@ -221,6 +222,8 @@ static void decoder_renderer_cleanup() {
 static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   OMX_BUFFERHEADERTYPE *buf = NULL;
 
+  stats_submit_decode_unit(decodeUnit->fullLength);
+
   PLENTRY entry = decodeUnit->bufferList;
   while (entry != NULL) {
     if (buf == NULL) {
@@ -256,6 +259,7 @@ static int decoder_renderer_submit_decode_unit(PDECODE_UNIT decodeUnit) {
         ilclient_change_component_state(video_render, OMX_StateExecuting);
       }
 
+      stats_frame_decoded();
       if(OMX_EmptyThisBuffer(ILC_GET_HANDLE(video_decode), buf) != OMX_ErrorNone){
         fprintf(stderr, "Can't empty video buffer\n");
         exit(EXIT_FAILURE);

@@ -21,12 +21,14 @@
 #include "ffmpeg.h"
 
 #include "../sdl.h"
+#include "../stats.h"
 #include "../util.h"
 
 #include <SDL.h>
 #include <SDL_thread.h>
 
 #include <unistd.h>
+#include <time.h>
 #include <stdbool.h>
 
 #define SLICES_PER_FRAME 4
@@ -53,6 +55,8 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   PLENTRY entry = decodeUnit->bufferList;
   int length = 0;
 
+  stats_submit_decode_unit(decodeUnit->fullLength);
+
   ensure_buf_size(&ffmpeg_buffer, &ffmpeg_buffer_size, decodeUnit->fullLength + AV_INPUT_BUFFER_PADDING_SIZE);
 
   while (entry != NULL) {
@@ -60,11 +64,20 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     length += entry->length;
     entry = entry->next;
   }
+
+  struct timespec ts_before, ts_after;
+  clock_gettime(CLOCK_MONOTONIC, &ts_before);
+
   ffmpeg_decode(ffmpeg_buffer, length);
 
   SDL_LockMutex(mutex);
   AVFrame* frame = ffmpeg_get_frame(false);
   if (frame != NULL) {
+    clock_gettime(CLOCK_MONOTONIC, &ts_after);
+    int64_t us = (ts_after.tv_sec - ts_before.tv_sec) * 1000000LL
+               + (ts_after.tv_nsec - ts_before.tv_nsec) / 1000;
+    stats_decode_finished(us);
+    stats_frame_decoded();
     sdlNextFrame++;
 
     SDL_Event event;

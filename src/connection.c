@@ -18,6 +18,7 @@
  */
 
 #include "connection.h"
+#include "stats.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -94,9 +95,11 @@ static void set_controller_led(unsigned short controllerNumber, unsigned char r,
 }
 
 static void connection_status_update(int status) {
+  stats_connection_status(status);
   switch (status) {
     case CONN_STATUS_OKAY:
-      printf("Connection is okay\n");
+      if (connection_debug)
+        printf("Connection is okay\n");
       break;
     case CONN_STATUS_POOR:
       printf("Connection is poor\n");

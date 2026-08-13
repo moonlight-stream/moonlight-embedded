@@ -19,12 +19,14 @@
  */
 
 #include "video.h"
+#include "../stats.h"
 #include "../util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -177,6 +179,8 @@ void *display_thread(void *param) {
       ret = drmModeAtomicCommit(fd, drm_request, DRM_MODE_ATOMIC_ALLOW_MODESET, NULL);
       if (ret) {
         perror("drmModeAtomicCommit");
+      } else {
+        stats_frame_displayed();
       }
     } else {
       ret = drmModeSetPlane(fd, plane_id, crtc_id, _fb_id, 0,
@@ -184,6 +188,8 @@ void *display_thread(void *param) {
                             0, 0, frm_width << 16, frm_height << 16);
       if (ret) {
         perror("drmModeSetPlane");
+      } else {
+        stats_frame_displayed();
       }
     }
   }
@@ -200,7 +206,21 @@ void *frame_thread(void *param) {
 
   while (!frm_eos) {
 
+    struct timespec ts_decode_before;
+    clock_gettime(CLOCK_MONOTONIC, &ts_decode_before);
+
     ret = mpi_api->decode_get_frame(mpi_ctx, &frame);
+
+    if (ret == MPP_OK || ret == MPP_ERR_TIMEOUT) {
+      struct timespec ts_decode_after;
+      clock_gettime(CLOCK_MONOTONIC, &ts_decode_after);
+      if (frame) {
+        int64_t us = (ts_decode_after.tv_sec - ts_decode_before.tv_sec) * 1000000LL
+                   + (ts_decode_after.tv_nsec - ts_decode_before.tv_nsec) / 1000;
+        stats_decode_finished(us);
+      }
+    }
+
     if (ret != MPP_OK && ret != MPP_ERR_TIMEOUT) {
       if (count < 3) {
          fprintf(stderr, "Waiting for Frame (return code = %d, retry count = %d)\n", ret, count);
@@ -311,6 +331,7 @@ void *frame_thread(void *param) {
         set_property(conn_id, DRM_MODE_OBJECT_CONNECTOR, conn_props, "Colorspace", last_hdr_state ? DRM_MODE_COLORIMETRY_BT2020_RGB : DRM_MODE_COLORIMETRY_DEFAULT);
       } else {
         // regular frame received
+        stats_frame_decoded();
 
         MppBuffer buffer = mpp_frame_get_buffer(frame);
         if (buffer) {
@@ -659,6 +680,8 @@ int rk_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   int result = DR_OK;
   PLENTRY entry = decodeUnit->bufferList;
   int length = 0;
+
+  stats_submit_decode_unit(decodeUnit->fullLength);
 
   if (ensure_buf_size(&pkt_buf, &pkt_buf_size, decodeUnit->fullLength)) {
     // Buffer was reallocated, so update the mpp_packet accordingly

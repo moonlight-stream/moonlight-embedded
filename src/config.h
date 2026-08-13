@@ -46,6 +46,7 @@ typedef struct _CONFIGURATION {
   int inputsCount;
   enum codecs codec;
   bool hdr;
+  bool stats;
   int pin;
   unsigned short port;
 } CONFIGURATION, *PCONFIGURATION;

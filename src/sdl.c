@@ -44,6 +44,7 @@ void sdl_init(int width, int height, bool fullscreen) {
   }
 
   fullscreen_flags = fullscreen?SDL_WINDOW_FULLSCREEN:0;
+  SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, "1");
   window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | fullscreen_flags);
   if(!window) {
     fprintf(stderr, "SDL: could not create window - exiting\n");
@@ -73,6 +74,7 @@ void sdl_loop() {
   SDL_Event event;
 
   SDL_SetRelativeMouseMode(SDL_TRUE);
+  SDL_SetWindowGrab(window, SDL_TRUE);
 
   while(!done && SDL_WaitEvent(&event)) {
     switch (sdlinput_handle_event(window, &event)) {
@@ -84,12 +86,12 @@ void sdl_loop() {
       SDL_SetWindowFullscreen(window, fullscreen_flags);
       break;
     case SDL_MOUSE_GRAB:
-      SDL_ShowCursor(SDL_ENABLE);
       SDL_SetRelativeMouseMode(SDL_TRUE);
+      SDL_SetWindowGrab(window, SDL_TRUE);
       break;
     case SDL_MOUSE_UNGRAB:
       SDL_SetRelativeMouseMode(SDL_FALSE);
-      SDL_ShowCursor(SDL_DISABLE);
+      SDL_SetWindowGrab(window, SDL_FALSE);
       break;
     default:
       if (event.type == SDL_QUIT)

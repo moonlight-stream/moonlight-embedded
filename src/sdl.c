@@ -20,6 +20,9 @@
 #ifdef HAVE_SDL
 
 #include "sdl.h"
+#ifdef HAVE_NATIVE_MIC
+#include "audio/native-mic.h"
+#endif
 #include "input/sdl.h"
 
 #include <Limelight.h>
@@ -113,6 +116,9 @@ void sdl_loop() {
     }
   }
 
+#ifdef HAVE_NATIVE_MIC
+  native_mic_stop();
+#endif
   SDL_DestroyWindow(window);
   SDL_Quit();
 }

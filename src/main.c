@@ -25,6 +25,9 @@
 #include "sdl.h"
 
 #include "audio/audio.h"
+#ifdef HAVE_NATIVE_MIC
+#include "audio/native-mic.h"
+#endif
 #include "video/video.h"
 
 #include "input/mapping.h"
@@ -143,12 +146,28 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     loop_init();
 
   platform_start(system);
-  LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
+#ifdef HAVE_NATIVE_MIC
+  if (config->viewonly)
+    config->stream.requestNativeMic = false;
+#endif
+  ret = LiStartConnection(&server->serverInfo, &config->stream, &connection_callbacks, platform_get_video(system), platform_get_audio(system, config->audio_device), NULL, drFlags, config->audio_device, 0);
+  if (ret != 0) {
+    platform_stop(system);
+    return;
+  }
+
+#ifdef HAVE_NATIVE_MIC
+  if (config->stream.requestNativeMic)
+    native_mic_start();
+#endif
 
   if (IS_EMBEDDED(system)) {
     if (!config->viewonly)
       evdev_start();
     loop_main();
+#ifdef HAVE_NATIVE_MIC
+    native_mic_stop();
+#endif
     if (!config->viewonly)
       evdev_stop();
   }
@@ -157,6 +176,9 @@ static void stream(PSERVER_DATA server, PCONFIGURATION config, enum platform sys
     sdl_loop();
   #endif
 
+#ifdef HAVE_NATIVE_MIC
+  native_mic_stop();
+#endif
   LiStopConnection();
 
   if (config->quitappafter) {
@@ -206,6 +228,9 @@ static void help() {
   printf("\t-remote <yes/no/auto>\t\t\tEnable optimizations for WAN streaming (default auto)\n");
   printf("\t-app <app>\t\tName of app to stream\n");
   printf("\t-nosops\t\t\tDon't allow GFE to modify game settings\n");
+#ifdef HAVE_NATIVE_MIC
+  printf("\t-microphone\t\tForward the default microphone for this stream only\n");
+#endif
   printf("\t-localaudio\t\tPlay audio locally on the host computer\n");
   printf("\t-surround <5.1/7.1>\t\tStream 5.1 or 7.1 surround sound\n");
   printf("\t-keydir <directory>\tLoad encryption keys from directory\n");

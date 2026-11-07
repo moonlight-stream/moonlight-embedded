@@ -25,3 +25,23 @@ Bugs can be reported to the [issue tracker](https://github.com/moonlight-stream/
 1. Fork us
 2. Write code
 3. Send Pull Requests
+
+## Native GameStream microphone
+
+On builds with SDL 2.0.5 or later and a working default SDL recording device,
+pass `-microphone` explicitly for the stream:
+
+```sh
+moonlight stream -microphone HOST
+```
+
+The option applies to this invocation only. Configuration files cannot enable
+it. View-only mode disables forwarding. The client reports when forwarding
+starts or encounters an error. End the stream to stop microphone capture.
+A device or negotiation failure leaves ordinary streaming available.
+
+Use an NVIDIA GameStream host with the compatible
+[Windows host setup](https://github.com/Bargs/native-gamestream-microphone-host)
+on a trusted private IPv4 network or secured tunnel. The native legacy CBC mode
+has no packet authentication. IPv6 and Sunshine microphone forwarding are
+outside this implementation. Device and live host delivery still need testing.

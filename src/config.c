@@ -44,7 +44,12 @@
 
 bool inputAdded = false;
 
+enum { OPT_MICROPHONE = 1000 };
+
 static struct option long_options[] = {
+#ifdef HAVE_NATIVE_MIC
+  {"microphone", no_argument, NULL, OPT_MICROPHONE},
+#endif
   {"720", no_argument, NULL, 'a'},
   {"1080", no_argument, NULL, 'b'},
   {"4k", no_argument, NULL, '0'},
@@ -133,6 +138,11 @@ char* get_path(char* name, char* extra_data_dirs) {
 
 static void parse_argument(int c, char* value, PCONFIGURATION config) {
   switch (c) {
+#ifdef HAVE_NATIVE_MIC
+  case OPT_MICROPHONE:
+    config->stream.requestNativeMic = true;
+    break;
+#endif
   case 'a':
     config->stream.width = 1280;
     config->stream.height = 720;
@@ -292,6 +302,9 @@ bool config_file_parse(char* filename, PCONFIGURATION config) {
       } else {
         for (int i=0;long_options[i].name != NULL;i++) {
           if (strcmp(long_options[i].name, key) == 0) {
+            // Microphone consent is accepted only from the command line.
+            if (long_options[i].val == OPT_MICROPHONE)
+              break;
             if (long_options[i].has_arg == required_argument)
               parse_argument(long_options[i].val, value, config);
             else if (strcmp("true", value) == 0)

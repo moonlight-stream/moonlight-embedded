@@ -52,5 +52,5 @@ typedef struct _CONFIGURATION {
 
 extern bool inputAdded;
 
-bool config_file_parse(char* filename, PCONFIGURATION config);
-void config_parse(int argc, char* argv[], PCONFIGURATION config);
+void config_file_parse(char* filename, bool* has_errors, PCONFIGURATION config);
+void config_parse(int argc, char* argv[], bool* has_errors, PCONFIGURATION config);
